@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Music, User, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,8 +11,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Navigation = () => {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, refreshProfile } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('🔍 Navigation Debug - User ID:', user?.id);
+    console.log('🔍 Navigation Debug - Profile:', profile);
+    console.log('🔍 Navigation Debug - Profile Role:', profile?.role);
+    
+    if (user && !profile) {
+      console.log('⚠️ User exists but no profile loaded, refreshing...');
+      refreshProfile();
+    }
+  }, [user, profile, refreshProfile]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
