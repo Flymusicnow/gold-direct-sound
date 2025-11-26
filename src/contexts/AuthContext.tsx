@@ -29,17 +29,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const fetchProfile = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching profile:', error);
+      if (error) {
+        console.error('Error fetching profile:', error);
+        // If profile doesn't exist, create it as a fallback
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating fallback profile for user:', userId);
+          const { data: user } = await supabase.auth.getUser();
+          if (user.user) {
+            const { data: newProfile, error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: user.user.email || '',
+                full_name: user.user.user_metadata?.full_name || null,
+                role: (user.user.user_metadata?.role as 'admin' | 'artist' | 'fan') || 'fan'
+              })
+              .select()
+              .single();
+            
+            if (insertError) {
+              console.error('Error creating fallback profile:', insertError);
+              return null;
+            }
+            console.log('Fallback profile created successfully');
+            return newProfile;
+          }
+        }
+        return null;
+      }
+      console.log('Profile fetched successfully:', data);
+      return data;
+    } catch (err) {
+      console.error('Unexpected error in fetchProfile:', err);
       return null;
     }
-    return data;
   };
 
   const refreshProfile = async () => {
