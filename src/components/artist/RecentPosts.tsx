@@ -1,0 +1,76 @@
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Globe, Users } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+
+interface Post {
+  id: string;
+  title: string | null;
+  content: string;
+  visibility: string;
+  created_at: string;
+}
+
+interface RecentPostsProps {
+  artistId: string;
+  refreshTrigger?: number;
+}
+
+export function RecentPosts({ artistId, refreshTrigger }: RecentPostsProps) {
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [artistId, refreshTrigger]);
+
+  const fetchPosts = async () => {
+    const { data } = await supabase
+      .from('artist_posts')
+      .select('id, title, content, visibility, created_at')
+      .eq('artist_id', artistId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (data) setPosts(data);
+    setLoading(false);
+  };
+
+  if (loading) {
+    return <Card className="p-6"><p className="text-muted-foreground">Loading...</p></Card>;
+  }
+
+  return (
+    <Card className="p-6">
+      <h3 className="text-lg font-semibold mb-4">Recent Posts</h3>
+      {posts.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No posts yet. Share an update with your fans!</p>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <div key={post.id} className="p-3 rounded-lg border border-border">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                {post.title && (
+                  <p className="font-medium text-sm">{post.title}</p>
+                )}
+                <Badge variant={post.visibility === 'public' ? 'default' : 'secondary'} className="flex-shrink-0">
+                  {post.visibility === 'public' ? (
+                    <><Globe className="h-3 w-3 mr-1" /> Public</>
+                  ) : (
+                    <><Users className="h-3 w-3 mr-1" /> Followers</>
+                  )}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
+              <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}

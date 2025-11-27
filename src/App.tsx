@@ -9,7 +9,12 @@ import Home from "./pages/Home";
 import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
-import MyStudio from "./pages/MyStudio";
+import StudioDashboard from "./pages/studio/StudioDashboard";
+import StudioProfile from "./pages/studio/StudioProfile";
+import StudioTracks from "./pages/studio/StudioTracks";
+import StudioEvents from "./pages/studio/StudioEvents";
+import StudioAnalytics from "./pages/studio/StudioAnalytics";
+import StudioComments from "./pages/studio/StudioComments";
 import FanPortal from "./pages/FanPortal";
 import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
@@ -38,7 +43,32 @@ const App = () => (
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/studio" element={
               <ProtectedRoute allowedRoles={['artist']}>
-                <MyStudio />
+                <StudioDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/profile" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/tracks" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioTracks />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/events" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioEvents />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/analytics" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/comments" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioComments />
               </ProtectedRoute>
             } />
             <Route path="/fan" element={

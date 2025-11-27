@@ -14,6 +14,159 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_activities: {
+        Row: {
+          actor_user_id: string | null
+          artist_id: string
+          comment_id: string | null
+          created_at: string | null
+          id: string
+          track_id: string | null
+          type: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          artist_id: string
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          track_id?: string | null
+          type: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          artist_id?: string
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          track_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_activities_actor_user_id_fkey"
+            columns: ["actor_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_activities_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_activities_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_activities_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artist_events: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          description: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          location: string | null
+          start_time: string
+          status: string
+          ticket_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          start_time: string
+          status?: string
+          ticket_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          location?: string | null
+          start_time?: string
+          status?: string
+          ticket_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_events_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artist_posts: {
+        Row: {
+          artist_id: string
+          content: string
+          created_at: string | null
+          id: string
+          pinned: boolean | null
+          title: string | null
+          updated_at: string | null
+          visibility: string
+        }
+        Insert: {
+          artist_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          pinned?: boolean | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string
+        }
+        Update: {
+          artist_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          pinned?: boolean | null
+          title?: string | null
+          updated_at?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_posts_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_profiles: {
         Row: {
           artist_name: string
