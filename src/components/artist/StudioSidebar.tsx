@@ -15,13 +15,20 @@ export function StudioSidebar() {
   const location = useLocation();
 
   return (
-    <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] border-r border-border bg-card/50 p-6 overflow-y-auto shadow-lg z-40 hidden md:block">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-primary">My Studio</h2>
-        <p className="text-sm text-muted-foreground">Creator Control Room</p>
+    <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] bg-[hsl(0,0%,5%)] border-r border-border/50 p-6 overflow-y-auto shadow-elegant z-40 hidden md:block">
+      <div className="mb-8 pb-6 border-b border-border/30">
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
+            <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            My Studio
+          </h2>
+        </div>
+        <p className="text-xs text-muted-foreground ml-10">Creator Control Room</p>
       </div>
 
-      <nav className="space-y-2">
+      <nav className="space-y-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
@@ -31,13 +38,13 @@ export function StudioSidebar() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
                 isActive
-                  ? "bg-primary/10 text-primary font-medium"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-sm"
+                  : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground hover:border-muted"
               )}
             >
-              <Icon className="h-5 w-5" />
+              <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
               <span>{item.label}</span>
             </Link>
           );

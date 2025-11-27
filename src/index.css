@@ -50,6 +50,23 @@ All colors MUST be HSL.
   }
 }
 
+@layer utilities {
+  /* Premium card gradient */
+  .card-premium {
+    @apply bg-gradient-to-br from-card to-card/80 border-border/50;
+  }
+  
+  /* Gold glow effect */
+  .glow-gold {
+    box-shadow: 0 0 20px hsla(45, 82%, 51%, 0.2);
+  }
+  
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

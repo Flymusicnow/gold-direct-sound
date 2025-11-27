@@ -18,15 +18,15 @@ interface LatestReleasesProps {
 
 export function LatestReleases({ tracks, likes, comments, onPlay }: LatestReleasesProps) {
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-gradient-to-br from-card to-card/80 border-border/50">
       <h3 className="text-lg font-semibold mb-4">Latest Releases</h3>
       {tracks.length === 0 ? (
         <p className="text-sm text-muted-foreground">No tracks uploaded yet. Upload your first track to get started!</p>
       ) : (
         <div className="space-y-3">
           {tracks.slice(0, 5).map((track) => (
-            <div key={track.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
+            <div key={track.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/30 transition-all duration-200 border border-transparent hover:border-border/50">
+              <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                 {track.cover_url ? (
                   <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
                 ) : (
@@ -34,18 +34,18 @@ export function LatestReleases({ tracks, likes, comments, onPlay }: LatestReleas
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium truncate">{track.title}</p>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <p className="font-medium truncate mb-1">{track.title}</p>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Play className="h-3 w-3" />
+                    <Play className="h-3 w-3 text-primary" />
                     {track.play_count || 0}
                   </span>
                   <span className="flex items-center gap-1">
-                    <Heart className="h-3 w-3" />
+                    <Heart className="h-3 w-3 text-primary" />
                     {likes[track.id] || 0}
                   </span>
                   <span className="flex items-center gap-1">
-                    <MessageSquare className="h-3 w-3" />
+                    <MessageSquare className="h-3 w-3 text-primary" />
                     {comments[track.id] || 0}
                   </span>
                 </div>
@@ -55,7 +55,7 @@ export function LatestReleases({ tracks, likes, comments, onPlay }: LatestReleas
                   size="icon"
                   variant="ghost"
                   onClick={() => onPlay(track)}
-                  className="flex-shrink-0"
+                  className="flex-shrink-0 hover:bg-primary/10 hover:text-primary"
                 >
                   <Play className="h-4 w-4" />
                 </Button>

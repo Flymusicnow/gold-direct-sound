@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Calendar, MapPin, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
@@ -144,11 +146,21 @@ export default function StudioEvents() {
   return (
     <div className="flex min-h-screen pt-16">
       <StudioSidebar />
+      <MobileStudioNav />
       
-      <main className="flex-1 p-8">
-        <div className="max-w-4xl mx-auto space-y-8">
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+          {/* Premium Header */}
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Events</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                <Calendar className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Events</h1>
+                <p className="text-sm text-muted-foreground">Schedule and manage your live events</p>
+              </div>
+            </div>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>

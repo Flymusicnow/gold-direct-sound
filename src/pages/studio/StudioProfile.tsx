@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Camera, Save, Music } from "lucide-react";
+import { Camera, Save, Music, User } from "lucide-react";
 
 export default function StudioProfile() {
   const { user } = useAuth();
@@ -234,10 +235,20 @@ export default function StudioProfile() {
   return (
     <div className="flex min-h-screen pt-16">
       <StudioSidebar />
+      <MobileStudioNav />
       
-      <main className="flex-1 p-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <h1 className="text-3xl font-bold">Profile Settings</h1>
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+          {/* Premium Header */}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Profile Settings</h1>
+              <p className="text-sm text-muted-foreground">Manage your artist profile and information</p>
+            </div>
+          </div>
 
           {/* Profile Image */}
           <Card className="p-6">
