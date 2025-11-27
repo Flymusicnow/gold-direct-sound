@@ -2,9 +2,41 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Music, Users, Zap, Mic2, Heart } from "lucide-react";
 import heroImage from "@/assets/hero-music.jpg";
+import { StatsCounter } from "@/components/StatsCounter";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({ artists: 0, tracks: 0, fans: 0 });
+
+  useEffect(() => {
+    async function fetchStats() {
+      // Fetch approved artists count
+      const { count: artistCount } = await supabase
+        .from("artist_profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "approved");
+
+      // Fetch tracks count
+      const { count: trackCount } = await supabase
+        .from("tracks")
+        .select("*", { count: "exact", head: true });
+
+      // Fetch fans count from user_roles
+      const { count: fanCount } = await supabase
+        .from("user_roles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "fan");
+
+      setStats({
+        artists: artistCount || 0,
+        tracks: trackCount || 0,
+        fans: fanCount || 0,
+      });
+    }
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -56,6 +88,32 @@ export default function Home() {
                 <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Statistics Section */}
+      <section className="py-16 px-4 border-y border-border/50 bg-gradient-to-b from-background to-background/95">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <StatsCounter 
+              icon={Mic2} 
+              value={stats.artists} 
+              label="Artists" 
+              suffix="+"
+            />
+            <StatsCounter 
+              icon={Music} 
+              value={stats.tracks} 
+              label="Tracks" 
+              suffix="+"
+            />
+            <StatsCounter 
+              icon={Heart} 
+              value={stats.fans} 
+              label="Superfans" 
+              suffix="+"
+            />
           </div>
         </div>
       </section>
