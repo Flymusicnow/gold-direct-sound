@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const Navigation = () => {
-  const { user, profile, signOut, refreshProfile } = useAuth();
+  const { user, profile, signOut, refreshProfile, hasRole } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,17 +40,17 @@ export const Navigation = () => {
           
           {user ? (
             <>
-              {profile?.role === 'artist' && (
+              {hasRole('artist') && (
                 <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
                   My Studio
                 </Link>
               )}
-              {profile?.role === 'fan' && (
-                <Link to="/dashboard" className="text-foreground/80 hover:text-primary transition-colors">
-                  Dashboard
+              {hasRole('fan') && (
+                <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
+                  Fan Portal
                 </Link>
               )}
-              {profile?.role === 'admin' && (
+              {hasRole('admin') && (
                 <Link to="/admin" className="text-foreground/80 hover:text-primary transition-colors">
                   Admin
                 </Link>
@@ -75,6 +75,9 @@ export const Navigation = () => {
               <Button variant="ghost" onClick={() => navigate('/auth')}>
                 Sign In
               </Button>
+              <Button variant="outline" onClick={() => navigate('/auth?mode=fan')}>
+                Join as Fan
+              </Button>
               <Button className="bg-gradient-gold" onClick={() => navigate('/auth?mode=artist')}>
                 Join as Artist
               </Button>
@@ -95,17 +98,17 @@ export const Navigation = () => {
               </DropdownMenuItem>
               {user ? (
                 <>
-                  {profile?.role === 'artist' && (
+                  {hasRole('artist') && (
                     <DropdownMenuItem onClick={() => navigate('/studio')}>
                       My Studio
                     </DropdownMenuItem>
                   )}
-                  {profile?.role === 'fan' && (
-                    <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                      Dashboard
+                  {hasRole('fan') && (
+                    <DropdownMenuItem onClick={() => navigate('/fan')}>
+                      Fan Portal
                     </DropdownMenuItem>
                   )}
-                  {profile?.role === 'admin' && (
+                  {hasRole('admin') && (
                     <DropdownMenuItem onClick={() => navigate('/admin')}>
                       Admin
                     </DropdownMenuItem>
@@ -119,6 +122,9 @@ export const Navigation = () => {
                 <>
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
                     Sign In
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/auth?mode=fan')}>
+                    Join as Fan
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth?mode=artist')}>
                     Join as Artist

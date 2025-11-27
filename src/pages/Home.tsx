@@ -40,6 +40,14 @@ export default function Home() {
             >
               Join as Artist
             </Button>
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/10 text-lg px-8"
+              onClick={() => navigate('/auth?mode=fan')}
+            >
+              Continue as Fan
+            </Button>
           </div>
         </div>
       </section>
