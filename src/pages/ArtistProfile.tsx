@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music } from "lucide-react";
+import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +47,11 @@ export default function ArtistProfile() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
+  const [spotlightEntry, setSpotlightEntry] = useState<{
+    campaignId: string;
+    campaignName: string;
+    votes: number;
+  } | null>(null);
 
   useEffect(() => {
     if (userId) {
@@ -54,6 +59,7 @@ export default function ArtistProfile() {
       fetchTracks();
       checkFollowStatus();
       fetchUserLikes();
+      fetchSpotlightStatus();
     }
   }, [userId, user]);
 
@@ -178,6 +184,40 @@ export default function ArtistProfile() {
     setLikedTracks(likedMap);
   };
 
+  const fetchSpotlightStatus = async () => {
+    const { data: artistData } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!artistData) return;
+
+    const { data: entry } = await supabase
+      .from('spotlight_entries')
+      .select(`
+        id,
+        campaign_id,
+        total_votes,
+        spotlight_campaigns!inner (
+          name,
+          status
+        )
+      `)
+      .eq('artist_id', artistData.id)
+      .eq('status', 'approved')
+      .eq('spotlight_campaigns.status', 'active')
+      .maybeSingle();
+
+    if (entry) {
+      setSpotlightEntry({
+        campaignId: entry.campaign_id,
+        campaignName: entry.spotlight_campaigns.name,
+        votes: entry.total_votes || 0,
+      });
+    }
+  };
+
   const handleFollow = async () => {
     if (!user) {
       toast.error("Please sign in to follow artists");
@@ -288,13 +328,26 @@ export default function ArtistProfile() {
                 </p>
               )}
 
-              {artist.genre && (
-                <div className="mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                {artist.genre && (
                   <Badge className="bg-primary/10 text-primary border-primary hover:bg-primary/20">
                     {artist.genre}
                   </Badge>
-                </div>
-              )}
+                )}
+                
+                {spotlightEntry && (
+                  <Link 
+                    to={`/spotlight/${spotlightEntry.campaignId}`}
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/50 hover:border-primary transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3 text-primary" />
+                    <span className="text-primary text-xs font-medium">In FlyMusic Spotlight</span>
+                    <Badge variant="outline" className="border-primary/50 text-primary text-xs px-1.5 py-0">
+                      {spotlightEntry.votes}
+                    </Badge>
+                  </Link>
+                )}
+              </div>
 
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                 <Music className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Music, User, LogOut, Menu, Mic2, Heart } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
@@ -60,6 +61,8 @@ export const Navigation = () => {
                   Admin
                 </Link>
               )}
+              
+              <NotificationBell />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

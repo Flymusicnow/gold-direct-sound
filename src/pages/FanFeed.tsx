@@ -9,7 +9,10 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Bell } from "lucide-react";
+import { Music, TrendingUp, Sparkles } from "lucide-react";
+import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
+import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
+import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
 
 interface NewTrack {
   id: string;
@@ -170,6 +173,11 @@ export default function FanFeed() {
               )}
             </Card>
 
+            {/* Trending in Spotlight */}
+            <SpotlightTrendingCard
+              onPlayTrack={(url, title, artist, cover) => setCurrentTrack({ url, title, artist })}
+            />
+
             {/* Recommended For You */}
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-6">
@@ -187,6 +195,14 @@ export default function FanFeed() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
+            {/* Spotlight New Entries */}
+            <SpotlightNewEntryCard
+              onPlayTrack={(url, title, artist, cover) => setCurrentTrack({ url, title, artist })}
+            />
+
+            {/* Your Artists Are Rising */}
+            <SpotlightRisingCard />
+
             {/* Trending on FlyMusic */}
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-6">
@@ -199,52 +215,6 @@ export default function FanFeed() {
                 limit={10}
                 onTrackPlay={setCurrentTrack}
               />
-            </Card>
-
-            {/* Notifications Placeholder */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Bell className="h-6 w-6 text-primary" />
-                <h2 className="text-xl font-semibold">Notifications</h2>
-              </div>
-
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <p className="text-sm text-muted-foreground">
-                    New features coming soon! Stay tuned for real-time notifications about new tracks, replies, and more.
-                  </p>
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">Track uploads from followed artists</p>
-                      <p className="text-xs text-muted-foreground mt-1">Coming soon</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">Comment replies</p>
-                      <p className="text-xs text-muted-foreground mt-1">Coming soon</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-lg bg-muted/50">
-                  <div className="flex items-start gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0"></div>
-                    <div>
-                      <p className="text-sm font-medium">New voting seasons</p>
-                      <p className="text-xs text-muted-foreground mt-1">Coming soon</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </Card>
           </div>
         </div>

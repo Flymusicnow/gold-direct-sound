@@ -41,10 +41,16 @@ export default function SpotlightCampaign() {
   const [topEntries, setTopEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<"votes" | "newest">("votes");
+  const [previousVotes, setPreviousVotes] = useState<Record<string, number>>({});
+  const [changedEntries, setChangedEntries] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (campaignId) {
       fetchData();
+      
+      // Auto-refresh every 10 seconds
+      const interval = setInterval(fetchData, 10000);
+      return () => clearInterval(interval);
     }
   }, [campaignId, sortBy]);
 
@@ -72,8 +78,29 @@ export default function SpotlightCampaign() {
       if (entriesRes.error) throw entriesRes.error;
 
       setCampaign(campaignRes.data);
-      setEntries(entriesRes.data || []);
-      setTopEntries((entriesRes.data || []).slice(0, 10));
+      
+      // Track vote changes
+      const newEntries = entriesRes.data || [];
+      const changed = new Set<string>();
+      
+      newEntries.forEach(entry => {
+        if (previousVotes[entry.id] && previousVotes[entry.id] !== entry.total_votes) {
+          changed.add(entry.id);
+        }
+      });
+      
+      setChangedEntries(changed);
+      setTimeout(() => setChangedEntries(new Set()), 2000); // Clear flash after 2s
+      
+      // Update previous votes
+      const votesMap: Record<string, number> = {};
+      newEntries.forEach(entry => {
+        votesMap[entry.id] = entry.total_votes;
+      });
+      setPreviousVotes(votesMap);
+      
+      setEntries(newEntries);
+      setTopEntries(newEntries.slice(0, 10));
     } catch (error) {
       console.error('Error fetching campaign:', error);
       toast({
@@ -142,7 +169,9 @@ export default function SpotlightCampaign() {
                 {topEntries.map((entry, index) => (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                    className={`flex items-center gap-4 p-3 rounded-lg transition-all spotlight-rank-transition ${
+                      index < 3 ? 'spotlight-glow-gold' : 'hover:bg-muted/50'
+                    } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
                   >
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold">
                       {index + 1}
