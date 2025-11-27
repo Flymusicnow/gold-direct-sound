@@ -79,6 +79,80 @@ export type Database = {
           },
         ]
       }
+      comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          id: string
+          parent_comment_id: string | null
+          text: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          text: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          text?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           artist_id: string
