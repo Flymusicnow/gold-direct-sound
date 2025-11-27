@@ -60,7 +60,7 @@ export default function Home() {
             {/* Primary CTA */}
             <Button 
               size="lg" 
-              className="ticket-gold bg-gradient-to-r from-primary/90 to-primary text-lg px-8 hover:from-primary hover:to-primary/90 transition-all"
+              className="btn-gold-premium text-lg px-8 rounded-lg"
               onClick={() => navigate('/explore')}
             >
               Explore Artists
