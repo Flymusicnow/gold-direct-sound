@@ -60,7 +60,7 @@ export default function Home() {
             {/* Primary CTA */}
             <Button 
               size="lg" 
-              className="bg-gradient-gold text-lg px-8"
+              className="ticket-gold bg-gradient-to-r from-primary/90 to-primary text-lg px-8 hover:from-primary hover:to-primary/90 transition-all"
               onClick={() => navigate('/explore')}
             >
               Explore Artists
@@ -70,7 +70,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
               {/* Artist Track - Gold/Premium styling */}
               <div 
-                className="flex flex-col items-center p-6 rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 cursor-pointer transition-all min-w-[200px]"
+                className="ticket-gold flex flex-col items-center p-6 rounded-xl cursor-pointer transition-all min-w-[200px] hover:shadow-gold"
                 onClick={() => navigate('/auth?mode=artist')}
               >
                 <Mic2 className="h-8 w-8 text-primary mb-2" />
@@ -80,7 +80,7 @@ export default function Home() {
               
               {/* Fan Track - Softer/secondary styling */}
               <div 
-                className="flex flex-col items-center p-6 rounded-xl border border-border hover:border-primary/50 cursor-pointer transition-all min-w-[200px]"
+                className="ticket-gold flex flex-col items-center p-6 rounded-xl cursor-pointer transition-all min-w-[200px] hover:shadow-gold"
                 onClick={() => navigate('/auth?mode=fan')}
               >
                 <Heart className="h-8 w-8 text-foreground/70 mb-2" />
