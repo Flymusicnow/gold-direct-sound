@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
@@ -18,13 +19,16 @@ export function StudioSidebar() {
   return (
     <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] bg-[hsl(0,0%,5%)] border-r border-border/50 p-6 overflow-y-auto shadow-elegant z-40 hidden md:block">
       <div className="mb-8 pb-6 border-b border-border/30">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-            <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
+              <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+            </div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              My Studio
+            </h2>
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            My Studio
-          </h2>
+          <NotificationBell />
         </div>
         <p className="text-xs text-muted-foreground ml-10">Creator Control Room</p>
       </div>

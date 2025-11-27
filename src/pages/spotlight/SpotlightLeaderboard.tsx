@@ -25,10 +25,16 @@ export default function SpotlightLeaderboard() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [campaignName, setCampaignName] = useState("");
   const [loading, setLoading] = useState(true);
+  const [previousVotes, setPreviousVotes] = useState<Record<string, number>>({});
+  const [changedEntries, setChangedEntries] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (campaignId) {
       fetchData();
+      
+      // Auto-refresh every 10 seconds
+      const interval = setInterval(fetchData, 10000);
+      return () => clearInterval(interval);
     }
   }, [campaignId]);
 
@@ -56,7 +62,28 @@ export default function SpotlightLeaderboard() {
       if (entriesRes.error) throw entriesRes.error;
 
       setCampaignName(campaignRes.data.name);
-      setEntries(entriesRes.data || []);
+      
+      // Track vote changes
+      const newEntries = entriesRes.data || [];
+      const changed = new Set<string>();
+      
+      newEntries.forEach(entry => {
+        if (previousVotes[entry.id] && previousVotes[entry.id] !== entry.total_votes) {
+          changed.add(entry.id);
+        }
+      });
+      
+      setChangedEntries(changed);
+      setTimeout(() => setChangedEntries(new Set()), 2000);
+      
+      // Update previous votes
+      const votesMap: Record<string, number> = {};
+      newEntries.forEach(entry => {
+        votesMap[entry.id] = entry.total_votes;
+      });
+      setPreviousVotes(votesMap);
+      
+      setEntries(newEntries);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       toast({
@@ -117,9 +144,9 @@ export default function SpotlightLeaderboard() {
               {entries.map((entry, index) => (
                 <div
                   key={entry.id}
-                  className={`flex items-center gap-4 p-4 rounded-lg ${
-                    index < 3 ? 'bg-gradient-to-r from-[#E8BF1A]/10 to-transparent' : 'hover:bg-muted/50'
-                  } transition-colors`}
+                  className={`flex items-center gap-4 p-4 rounded-lg transition-all spotlight-rank-transition ${
+                    index < 3 ? 'bg-gradient-to-r from-[#E8BF1A]/10 to-transparent spotlight-glow-gold' : 'hover:bg-muted/50'
+                  } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
                 >
                   <div className="flex items-center justify-center w-12 h-12">
                     {getRankIcon(index) || (

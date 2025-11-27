@@ -70,6 +70,55 @@ All colors MUST be HSL.
   .dropdown-solid {
     background-color: hsl(0 0% 6%) !important;
   }
+
+  /* Spotlight Live Animations */
+  .spotlight-glow-gold {
+    animation: glow-pulse-gold 2s ease-in-out infinite;
+  }
+
+  @keyframes glow-pulse-gold {
+    0%, 100% { 
+      box-shadow: 0 0 5px hsla(45, 82%, 51%, 0.25), 0 0 10px hsla(45, 82%, 51%, 0.15); 
+    }
+    50% { 
+      box-shadow: 0 0 15px hsla(45, 82%, 51%, 0.4), 0 0 25px hsla(45, 82%, 51%, 0.25); 
+    }
+  }
+
+  .vote-flash {
+    animation: vote-highlight 1s ease-out;
+  }
+
+  @keyframes vote-highlight {
+    0% { 
+      background-color: hsla(45, 82%, 51%, 0.3); 
+    }
+    100% { 
+      background-color: transparent; 
+    }
+  }
+
+  .spotlight-rank-transition {
+    transition: transform 0.5s ease, background-color 0.3s ease;
+  }
+
+  .spotlight-live-indicator {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .spotlight-entry-highlight {
+    animation: highlight-pulse 2s ease-out;
+  }
+
+  @keyframes highlight-pulse {
+    0%, 100% { 
+      opacity: 1; 
+    }
+    50% { 
+      opacity: 0.8; 
+      transform: scale(1.02);
+    }
+  }
 }
 
 @layer base {

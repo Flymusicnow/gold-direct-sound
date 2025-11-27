@@ -11,7 +11,7 @@ import { QuickActions } from "@/components/artist/QuickActions";
 import { UpcomingEventsPreview } from "@/components/artist/UpcomingEventsPreview";
 import { PostUpdateForm } from "@/components/artist/PostUpdateForm";
 import { RecentPosts } from "@/components/artist/RecentPosts";
-import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
+import { SpotlightStatsCard } from "@/components/spotlight/SpotlightStatsCard";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
@@ -166,9 +166,9 @@ export default function StudioDashboard() {
             </p>
           </div>
 
-          {/* Spotlight Promo - Show if artist has active entry */}
+          {/* Spotlight Stats - Show if artist has active entry */}
           {hasActiveSpotlightEntry && (
-            <SpotlightPromoCard />
+            <SpotlightStatsCard artistId={artistProfile.id} />
           )}
 
           {/* Stats */}
