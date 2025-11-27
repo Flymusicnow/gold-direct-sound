@@ -65,6 +65,11 @@ All colors MUST be HSL.
   .hover-lift {
     @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
   }
+  
+  /* Solid dropdown background */
+  .dropdown-solid {
+    background-color: hsl(0 0% 6%) !important;
+  }
 }
 
 @layer base {
