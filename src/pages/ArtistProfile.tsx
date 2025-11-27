@@ -151,7 +151,7 @@ export default function ArtistProfile() {
   }
 
   return (
-    <div className="min-h-screen pb-32">
+    <div className="min-h-screen pt-16 pb-32">
       {/* Artist Header */}
       <div className="bg-gradient-dark border-b border-border">
         <div className="container mx-auto px-4 py-12 max-w-6xl">
