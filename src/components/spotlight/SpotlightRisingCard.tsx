@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Vote } from "lucide-react";
+import { TrendingUp, Vote, Share2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import SpotlightShareModal from "./SpotlightShareModal";
 
 interface RisingArtist {
   artist_id: string;
@@ -19,6 +20,8 @@ export function SpotlightRisingCard() {
   const navigate = useNavigate();
   const [risingArtists, setRisingArtists] = useState<RisingArtist[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareModalArtist, setShareModalArtist] = useState<RisingArtist | null>(null);
+  const [campaignName, setCampaignName] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -50,7 +53,7 @@ export function SpotlightRisingCard() {
       // Get active campaign
       const { data: campaign } = await supabase
         .from('spotlight_campaigns')
-        .select('id')
+        .select('id, name')
         .eq('status', 'active')
         .single();
 
@@ -58,6 +61,8 @@ export function SpotlightRisingCard() {
         setLoading(false);
         return;
       }
+
+      setCampaignName(campaign.name);
 
       // Get entries from followed artists with votes > 0
       const { data: entries, error } = await supabase
@@ -142,9 +147,19 @@ export function SpotlightRisingCard() {
               <p className="text-xs text-muted-foreground mb-2">Also rising:</p>
               <div className="space-y-1">
                 {risingArtists.slice(1).map((artist) => (
-                  <div key={artist.entry_id} className="flex items-center justify-between text-xs">
+                  <div key={artist.entry_id} className="flex items-center justify-between gap-2 text-xs group/item">
                     <span className="text-foreground/80">{artist.artist_name}</span>
-                    <span className="text-primary font-medium">{artist.total_votes} votes</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-primary font-medium">{artist.total_votes} votes</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                        onClick={() => setShareModalArtist(artist)}
+                      >
+                        <Share2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -152,6 +167,21 @@ export function SpotlightRisingCard() {
           )}
         </div>
       </CardContent>
+
+      {shareModalArtist && (
+        <SpotlightShareModal
+          isOpen={true}
+          onClose={() => setShareModalArtist(null)}
+          entry={{
+            id: shareModalArtist.entry_id,
+            title: shareModalArtist.artist_name,
+            artistName: shareModalArtist.artist_name,
+            campaignName: campaignName,
+            votes: shareModalArtist.total_votes,
+          }}
+          campaignId={shareModalArtist.campaign_id}
+        />
+      )}
     </Card>
   );
 }

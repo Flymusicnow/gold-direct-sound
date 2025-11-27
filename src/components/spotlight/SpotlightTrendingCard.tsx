@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Play, TrendingUp } from "lucide-react";
+import { Sparkles, Play, TrendingUp, Share2 } from "lucide-react";
+import SpotlightShareModal from "./SpotlightShareModal";
 
 interface TrendingEntry {
   id: string;
@@ -29,7 +30,9 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
   const navigate = useNavigate();
   const [trendingEntries, setTrendingEntries] = useState<TrendingEntry[]>([]);
   const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [campaignName, setCampaignName] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [shareModalEntry, setShareModalEntry] = useState<TrendingEntry | null>(null);
 
   useEffect(() => {
     fetchTrendingEntries();
@@ -44,7 +47,7 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
       // Get active campaign
       const { data: campaign } = await supabase
         .from('spotlight_campaigns')
-        .select('id')
+        .select('id, name')
         .eq('status', 'active')
         .single();
 
@@ -54,6 +57,7 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
       }
 
       setCampaignId(campaign.id);
+      setCampaignName(campaign.name);
 
       // Get top 5 entries
       const { data: entries, error } = await supabase
@@ -138,6 +142,15 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
                   {entry.total_votes}
                 </Badge>
                 
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => setShareModalEntry(entry)}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+                
                 {onPlayTrack && (
                   <Button
                     variant="ghost"
@@ -158,6 +171,21 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
           ))}
         </div>
       </CardContent>
+
+      {shareModalEntry && campaignId && (
+        <SpotlightShareModal
+          isOpen={true}
+          onClose={() => setShareModalEntry(null)}
+          entry={{
+            id: shareModalEntry.id,
+            title: shareModalEntry.title || shareModalEntry.tracks.title,
+            artistName: shareModalEntry.artist_profiles.artist_name,
+            campaignName: campaignName,
+            votes: shareModalEntry.total_votes,
+          }}
+          campaignId={campaignId}
+        />
+      )}
     </Card>
   );
 }
