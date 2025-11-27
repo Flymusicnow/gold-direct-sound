@@ -3,13 +3,14 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles } from "lucide-react";
+import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles, Calendar, MapPin, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { CommentsSection } from "@/components/CommentsSection";
 import { SimilarArtists } from "@/components/SimilarArtists";
 import { ShareModal } from "@/components/ShareModal";
+import { format } from "date-fns";
 
 interface Artist {
   id: string;
@@ -34,6 +35,110 @@ interface Track {
   audio_url: string;
   cover_url: string | null;
   play_count: number;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string | null;
+  location: string | null;
+  event_type: string;
+  ticket_url: string | null;
+}
+
+function UpcomingEventsSection({ artistId }: { artistId: string }) {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [artistId]);
+
+  const fetchEvents = async () => {
+    const { data } = await supabase
+      .from('artist_events')
+      .select('*')
+      .eq('artist_id', artistId)
+      .eq('status', 'upcoming')
+      .gte('start_time', new Date().toISOString())
+      .order('start_time', { ascending: true })
+      .limit(3);
+
+    if (data) setEvents(data);
+    setLoading(false);
+  };
+
+  if (loading || events.length === 0) return null;
+
+  return (
+    <div className="container mx-auto px-4 py-10 max-w-6xl border-b border-border">
+      <div className="flex items-center gap-4 mb-6">
+        <h2 className="text-2xl font-bold text-primary">Upcoming Events</h2>
+        <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {events.map((event) => (
+          <div
+            key={event.id}
+            className="group p-5 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-card/80 transition-all"
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-14 h-14 rounded-lg bg-primary/10 flex flex-col items-center justify-center flex-shrink-0 border border-primary/20">
+                <span className="text-xs font-bold text-primary uppercase">
+                  {format(new Date(event.start_time), 'MMM')}
+                </span>
+                <span className="text-xl font-bold text-primary leading-none">
+                  {format(new Date(event.start_time), 'd')}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{event.title}</h3>
+                <Badge variant="outline" className="text-xs border-primary/30">
+                  {event.event_type.replace('_', ' ')}
+                </Badge>
+              </div>
+            </div>
+
+            {event.description && (
+              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                {event.description}
+              </p>
+            )}
+
+            <div className="space-y-2 text-sm text-muted-foreground mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+                <span>{format(new Date(event.start_time), 'PPp')}</span>
+              </div>
+              {event.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="truncate">{event.location}</span>
+                </div>
+              )}
+            </div>
+
+            {event.ticket_url && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full border-primary/50 hover:bg-primary/10 hover:border-primary"
+                asChild
+              >
+                <a href={event.ticket_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <span>Get Tickets</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function ArtistProfile() {
@@ -430,6 +535,9 @@ export default function ArtistProfile() {
           </div>
         </div>
       )}
+
+      {/* Upcoming Events Section */}
+      <UpcomingEventsSection artistId={artist.id} />
 
       {/* Tracks */}
       <div className="container mx-auto px-4 py-12 max-w-6xl">
