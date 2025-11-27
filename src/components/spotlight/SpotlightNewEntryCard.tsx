@@ -3,14 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Play, Vote } from "lucide-react";
+import { Sparkles, Play, Vote, Share2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import SpotlightShareModal from "./SpotlightShareModal";
 
 interface NewEntry {
   id: string;
   title: string | null;
   campaign_id: string;
   created_at: string;
+  total_votes: number | null;
   tracks: {
     title: string;
     cover_url: string | null;
@@ -32,6 +34,8 @@ export function SpotlightNewEntryCard({ onPlayTrack }: SpotlightNewEntryCardProp
   const navigate = useNavigate();
   const [newEntries, setNewEntries] = useState<NewEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareModalEntry, setShareModalEntry] = useState<NewEntry | null>(null);
+  const [campaignName, setCampaignName] = useState<string>("");
 
   useEffect(() => {
     if (user) {
@@ -59,7 +63,7 @@ export function SpotlightNewEntryCard({ onPlayTrack }: SpotlightNewEntryCardProp
       // Get active campaign
       const { data: campaign } = await supabase
         .from('spotlight_campaigns')
-        .select('id')
+        .select('id, name')
         .eq('status', 'active')
         .single();
 
@@ -67,6 +71,8 @@ export function SpotlightNewEntryCard({ onPlayTrack }: SpotlightNewEntryCardProp
         setLoading(false);
         return;
       }
+
+      setCampaignName(campaign.name);
 
       // Get new entries from followed artists (created in last 7 days)
       const sevenDaysAgo = new Date();
@@ -153,6 +159,14 @@ export function SpotlightNewEntryCard({ onPlayTrack }: SpotlightNewEntryCardProp
                     </Button>
                   )}
                   <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShareModalEntry(entry)}
+                  >
+                    <Share2 className="h-3 w-3 mr-1" />
+                    Share
+                  </Button>
+                  <Button
                     variant="default"
                     size="sm"
                     className="bg-gradient-gold"
@@ -167,6 +181,21 @@ export function SpotlightNewEntryCard({ onPlayTrack }: SpotlightNewEntryCardProp
           </CardContent>
         </Card>
       ))}
+
+      {shareModalEntry && (
+        <SpotlightShareModal
+          isOpen={true}
+          onClose={() => setShareModalEntry(null)}
+          entry={{
+            id: shareModalEntry.id,
+            title: shareModalEntry.title || shareModalEntry.tracks.title,
+            artistName: shareModalEntry.artist_profiles.artist_name,
+            campaignName: campaignName,
+            votes: shareModalEntry.total_votes || 0,
+          }}
+          campaignId={shareModalEntry.campaign_id}
+        />
+      )}
     </div>
   );
 }
