@@ -32,16 +32,35 @@ export default function Auth() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
+        
+        // Check user roles and redirect accordingly
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id);
+
         toast.success("Welcome back!");
-        navigate('/');
+
+        if (!roles || roles.length === 0) {
+          navigate('/role-selection');
+        } else {
+          const hasArtist = roles.some(r => r.role === 'artist');
+          const hasFan = roles.some(r => r.role === 'fan');
+          
+          if (hasArtist && !hasFan) {
+            navigate('/studio');
+          } else {
+            navigate('/fan');
+          }
+        }
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -54,8 +73,25 @@ export default function Auth() {
         });
 
         if (error) throw error;
+
+        // Insert role into user_roles table
+        if (data.user) {
+          const mode = searchParams.get('mode');
+          const roleToSet = mode === 'fan' ? 'fan' : isArtistSignup ? 'artist' : 'fan';
+          
+          await supabase.from('user_roles').insert({
+            user_id: data.user.id,
+            role: roleToSet,
+          });
+        }
+
         toast.success(isArtistSignup ? "Artist account created! Complete your profile to get started." : "Account created!");
-        navigate('/');
+        
+        if (isArtistSignup) {
+          navigate('/studio');
+        } else {
+          navigate('/fan');
+        }
       }
     } catch (error: any) {
       toast.error(error.message || "Authentication failed");
