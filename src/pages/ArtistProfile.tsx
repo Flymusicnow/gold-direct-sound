@@ -3,10 +3,13 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe, Youtube } from "lucide-react";
+import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { CommentsSection } from "@/components/CommentsSection";
+import { SimilarArtists } from "@/components/SimilarArtists";
+import { ShareModal } from "@/components/ShareModal";
 
 interface Artist {
   id: string;
@@ -41,6 +44,8 @@ export default function ArtistProfile() {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
 
   useEffect(() => {
     if (userId) {
@@ -49,6 +54,26 @@ export default function ArtistProfile() {
       checkFollowStatus();
     }
   }, [userId]);
+
+  useEffect(() => {
+    if (artist) {
+      fetchFollowerCount();
+
+      // Subscribe to real-time follower count updates
+      const channel = supabase
+        .channel("follows-updates")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "follows", filter: `artist_id=eq.${artist.id}` },
+          () => fetchFollowerCount()
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [artist]);
 
   const fetchArtist = async () => {
     const { data, error } = await supabase
@@ -83,6 +108,17 @@ export default function ArtistProfile() {
         setTracks(data);
       }
     }
+  };
+
+  const fetchFollowerCount = async () => {
+    if (!artist) return;
+
+    const { count } = await supabase
+      .from("follows")
+      .select("*", { count: "exact", head: true })
+      .eq("artist_id", artist.id);
+
+    setFollowerCount(count || 0);
   };
 
   const checkFollowStatus = async () => {
@@ -187,12 +223,17 @@ export default function ArtistProfile() {
               )}
 
               {artist.genre && (
-                <div className="mb-6">
+                <div className="mb-4">
                   <Badge className="bg-primary/10 text-primary border-primary hover:bg-primary/20">
                     {artist.genre}
                   </Badge>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+                <Music className="h-4 w-4" />
+                <span>{followerCount} {followerCount === 1 ? "follower" : "followers"}</span>
+              </div>
               
               <div className="flex flex-wrap gap-3 items-center">
                 <Button
@@ -202,6 +243,15 @@ export default function ArtistProfile() {
                 >
                   <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
                   {isFollowing ? "Following" : "Follow"}
+                </Button>
+
+                <Button
+                  onClick={() => setShowShareModal(true)}
+                  variant="outline"
+                  size="icon"
+                  className="border-primary/50 hover:border-primary hover:bg-primary/10"
+                >
+                  <Share2 className="h-4 w-4" />
                 </Button>
 
                 {artist.instagram_url && (
@@ -321,6 +371,20 @@ export default function ArtistProfile() {
           </div>
         )}
       </div>
+
+      {/* Comments Section */}
+      <CommentsSection artistId={artist.id} currentUserId={artist.user_id} />
+
+      {/* Similar Artists Section */}
+      <SimilarArtists currentArtistId={artist.id} currentGenre={artist.genre} />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        artistName={artist.artist_name}
+        shareUrl={window.location.href}
+      />
 
       {/* Audio Player */}
       {currentTrack && (
