@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Upload, Music, Trash2 } from "lucide-react";
+import { Upload, Music, Trash2, Camera } from "lucide-react";
 
 interface ArtistProfile {
   id: string;
@@ -18,6 +19,7 @@ interface ArtistProfile {
   city: string | null;
   country: string | null;
   status: string;
+  avatar_url: string | null;
 }
 
 interface Track {
@@ -38,7 +40,9 @@ export default function MyStudio() {
   // Track upload form
   const [trackTitle, setTrackTitle] = useState("");
   const [trackDescription, setTrackDescription] = useState("");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -115,6 +119,46 @@ export default function MyStudio() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0] || !user || !artistProfile) return;
+
+    const file = e.target.files[0];
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      const avatarPath = `${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(avatarPath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(avatarPath);
+
+      const { error: updateError } = await supabase
+        .from('artist_profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', artistProfile.id);
+
+      if (updateError) throw updateError;
+
+      toast.success("Profile image updated!");
+      fetchArtistProfile();
+    } catch (error: any) {
+      toast.error(error.message || "Error uploading avatar");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleTrackUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user || !artistProfile) return;
@@ -131,6 +175,23 @@ export default function MyStudio() {
     setUploading(true);
 
     try {
+      // Upload cover image if provided
+      let coverUrl = null;
+      if (coverFile) {
+        const coverPath = `${user.id}/${Date.now()}_${coverFile.name}`;
+        const { error: coverError } = await supabase.storage
+          .from('covers')
+          .upload(coverPath, coverFile);
+
+        if (coverError) throw coverError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('covers')
+          .getPublicUrl(coverPath);
+
+        coverUrl = publicUrl;
+      }
+
       // Upload audio file
       const audioPath = `${user.id}/${Date.now()}_${audioFile.name}`;
       const { error: uploadError } = await supabase.storage
@@ -149,6 +210,7 @@ export default function MyStudio() {
         title: trackTitle,
         description: trackDescription || null,
         audio_url: publicUrl,
+        cover_url: coverUrl,
       });
 
       if (insertError) throw insertError;
@@ -156,6 +218,7 @@ export default function MyStudio() {
       toast.success("Track uploaded successfully!");
       setTrackTitle("");
       setTrackDescription("");
+      setCoverFile(null);
       form.reset();
       fetchTracks();
     } catch (error: any) {
@@ -255,6 +318,38 @@ export default function MyStudio() {
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-3xl font-bold mb-8">My Studio</h1>
 
+        {/* Profile Image */}
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Profile Image</h2>
+          <div className="flex items-center gap-6">
+            <Avatar className="h-32 w-32 border-2 border-primary">
+              <AvatarImage src={artistProfile.avatar_url || undefined} alt={artistProfile.artist_name} />
+              <AvatarFallback className="text-2xl">
+                {artistProfile.artist_name.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <Label htmlFor="avatar" className="cursor-pointer">
+                <div className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-md transition-colors">
+                  <Camera className="h-4 w-4" />
+                  <span>{uploadingAvatar ? "Uploading..." : "Upload New Image"}</span>
+                </div>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                  disabled={uploadingAvatar}
+                />
+              </Label>
+              <p className="text-sm text-muted-foreground mt-2">
+                Your profile image appears on your public artist page
+              </p>
+            </div>
+          </div>
+        </Card>
+
         {/* Upload Track */}
         <Card className="p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Upload New Track</h2>
@@ -278,6 +373,15 @@ export default function MyStudio() {
               />
             </div>
             <div>
+              <Label htmlFor="cover">Cover Image (Optional)</Label>
+              <Input
+                id="cover"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+              />
+            </div>
+            <div>
               <Label htmlFor="audio">Audio File *</Label>
               <Input id="audio" name="audio" type="file" accept="audio/*" required />
             </div>
@@ -297,7 +401,18 @@ export default function MyStudio() {
             <div className="space-y-4">
               {tracks.map((track) => (
                 <Card key={track.id} className="p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {track.cover_url ? (
+                      <img
+                        src={track.cover_url}
+                        alt={track.title}
+                        className="h-12 w-12 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="h-12 w-12 rounded bg-secondary flex items-center justify-center">
+                        <Music className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <h3 className="font-semibold">{track.title}</h3>
                       {track.description && (
