@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MessageSquare, Music, Settings, ArrowRight } from "lucide-react";
+import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { AudioPlayer } from "@/components/AudioPlayer";
+import { DiscoverArtists } from "@/components/DiscoverArtists";
+import { TrendingSection } from "@/components/TrendingSection";
+import { toast } from "sonner";
 
 interface Artist {
   id: string;
@@ -113,6 +116,21 @@ export default function FanPortal() {
 
       setCommentsCount(count || 0);
 
+      // Fetch recent comments
+      const { data: comments } = await supabase
+        .from('comments')
+        .select(`
+          created_at,
+          text,
+          artist_profiles (
+            artist_name,
+            user_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
       // Build activity feed
       const recentActivities: Activity[] = [];
       
@@ -136,6 +154,16 @@ export default function FanPortal() {
         });
       }
 
+      if (comments) {
+        comments.forEach((comment: any) => {
+          recentActivities.push({
+            type: 'comment',
+            timestamp: comment.created_at,
+            details: `Commented on ${comment.artist_profiles.artist_name}'s profile`
+          });
+        });
+      }
+
       recentActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setActivities(recentActivities.slice(0, 5));
 
@@ -143,6 +171,24 @@ export default function FanPortal() {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUnfollow = async (artistId: string) => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from('follows')
+        .delete()
+        .eq('fan_id', user.id)
+        .eq('artist_id', artistId);
+
+      setFollowedArtists(prev => prev.filter(a => a.id !== artistId));
+      toast.success("Unfollowed artist");
+    } catch (error) {
+      console.error('Error unfollowing artist:', error);
+      toast.error("Failed to unfollow");
     }
   };
 
@@ -202,28 +248,43 @@ export default function FanPortal() {
                 {followedArtists.slice(0, 4).map((artist) => (
                   <div
                     key={artist.id}
-                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                    onClick={() => navigate(`/artist/${artist.user_id}`)}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-accent transition-colors group"
                   >
-                    {artist.avatar_url ? (
-                      <img
-                        src={artist.avatar_url}
-                        alt={artist.artist_name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-lg text-primary font-bold">
-                          {artist.artist_name[0]}
-                        </span>
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{artist.artist_name}</h3>
-                      {artist.genre && (
-                        <p className="text-sm text-muted-foreground">{artist.genre}</p>
+                    <div 
+                      className="flex items-center gap-4 flex-1 cursor-pointer"
+                      onClick={() => navigate(`/artist/${artist.user_id}`)}
+                    >
+                      {artist.avatar_url ? (
+                        <img
+                          src={artist.avatar_url}
+                          alt={artist.artist_name}
+                          className="w-12 h-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-lg text-primary font-bold">
+                            {artist.artist_name[0]}
+                          </span>
+                        </div>
                       )}
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{artist.artist_name}</h3>
+                        {artist.genre && (
+                          <p className="text-sm text-muted-foreground">{artist.genre}</p>
+                        )}
+                      </div>
                     </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUnfollow(artist.id);
+                      }}
+                    >
+                      <UserMinus className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -320,6 +381,34 @@ export default function FanPortal() {
               ))}
             </div>
           )}
+        </Card>
+
+        {/* Discover More Artists */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Sparkles className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-semibold">Discover More Artists</h2>
+          </div>
+
+          <DiscoverArtists
+            followedGenres={followedArtists.map(a => a.genre).filter(Boolean) as string[]}
+            followedArtistIds={followedArtists.map(a => a.id)}
+            limit={6}
+          />
+        </Card>
+
+        {/* Trending This Week */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-semibold">Trending This Week</h2>
+          </div>
+
+          <TrendingSection
+            type="tracks"
+            limit={5}
+            onTrackPlay={setCurrentTrack}
+          />
         </Card>
 
         {/* Settings Link */}
