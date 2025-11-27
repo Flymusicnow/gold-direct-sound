@@ -343,6 +343,17 @@ All colors MUST be HSL.
     animation-delay: -7s !important;
   }
 
+  /* Logo Gold Harmony Filter */
+  .logo-gold-harmony {
+    filter: sepia(15%) saturate(120%) brightness(1.05);
+    transition: filter 250ms ease-out, transform 200ms ease-out;
+  }
+
+  .logo-gold-harmony:hover {
+    filter: sepia(20%) saturate(130%) brightness(1.1);
+    transform: scale(1.02);
+  }
+
   /* Spotlight Live Animations */
   .spotlight-glow-gold {
     animation: glow-pulse-gold 2s ease-in-out infinite;
