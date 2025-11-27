@@ -343,15 +343,22 @@ All colors MUST be HSL.
     animation-delay: -7s !important;
   }
 
-  /* Logo Gold Harmony Filter */
-  .logo-gold-harmony {
-    filter: sepia(15%) saturate(120%) brightness(1.05);
-    transition: filter 250ms ease-out, transform 200ms ease-out;
+  /* Brand Wordmark - Flat White Text */
+  .brand-wordmark {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: white;
+    text-decoration: none;
+    transition: opacity 200ms ease-out;
   }
 
-  .logo-gold-harmony:hover {
-    filter: sepia(20%) saturate(130%) brightness(1.1);
-    transform: scale(1.02);
+  .brand-wordmark:hover {
+    opacity: 0.9;
+  }
+
+  .brand-wordmark-light {
+    font-weight: 300;
   }
 
   /* Spotlight Live Animations */
