@@ -107,11 +107,11 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     }
 
     setLoading(true);
-    const { data: commentData, error } = await supabase.from("comments").insert({
+    const { error } = await supabase.from("comments").insert({
       artist_id: artistId,
       user_id: user.id,
       text: newComment.trim(),
-    }).select();
+    });
 
     if (error) {
       console.error("Error posting comment:", error);
@@ -119,16 +119,6 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     } else {
       setNewComment("");
       toast.success("Comment posted!");
-      
-      // Record activity for artist
-      if (commentData && commentData[0]) {
-        await supabase.from("artist_activities").insert({
-          artist_id: artistId,
-          type: "comment",
-          actor_user_id: user.id,
-          comment_id: commentData[0].id,
-        });
-      }
     }
     setLoading(false);
   };

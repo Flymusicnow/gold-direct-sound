@@ -80,13 +80,6 @@ export const SimilarArtists = ({ currentArtistId, currentGenre }: SimilarArtists
     } else {
       await supabase.from("follows").insert({ fan_id: user.id, artist_id: artistId });
       setFollowing({ ...following, [artistId]: true });
-      
-      // Record activity for artist
-      await supabase.from("artist_activities").insert({
-        artist_id: artistId,
-        type: "new_follower",
-        actor_user_id: user.id,
-      });
     }
   };
 

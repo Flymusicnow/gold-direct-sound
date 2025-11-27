@@ -65,12 +65,12 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment 
   const handleReply = async () => {
     if (!currentUserId || !replyText.trim()) return;
 
-    const { data: replyData, error } = await supabase.from("comments").insert({
+    const { error } = await supabase.from("comments").insert({
       artist_id: artistId,
       user_id: currentUserId,
       text: replyText.trim(),
       parent_comment_id: comment.id,
-    }).select();
+    });
 
     if (error) {
       toast.error("Failed to post reply");
@@ -78,17 +78,6 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment 
       setReplyText("");
       setShowReply(false);
       toast.success("Reply posted!");
-      
-      // Record activity for artist (replies are also comments)
-      if (replyData && replyData[0]) {
-        await supabase.from("artist_activities").insert({
-          artist_id: artistId,
-          type: "comment",
-          actor_user_id: currentUserId,
-          comment_id: replyData[0].id,
-        });
-      }
-      
       loadReplies();
     }
   };

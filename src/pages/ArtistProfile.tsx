@@ -206,13 +206,6 @@ export default function ArtistProfile() {
         .insert({ fan_id: user.id, artist_id: artistData.id });
       setIsFollowing(true);
       toast.success("Following!");
-      
-      // Record activity for artist
-      await supabase.from("artist_activities").insert({
-        artist_id: artistData.id,
-        type: "new_follower",
-        actor_user_id: user.id,
-      });
     }
   };
 
@@ -239,22 +232,6 @@ export default function ArtistProfile() {
           .insert({ user_id: user.id, track_id: trackId });
         setLikedTracks({ ...likedTracks, [trackId]: true });
         toast.success("Added to liked tracks");
-        
-        // Get artist_id for this track and record activity
-        const { data: trackData } = await supabase
-          .from('tracks')
-          .select('artist_id')
-          .eq('id', trackId)
-          .single();
-        
-        if (trackData) {
-          await supabase.from("artist_activities").insert({
-            artist_id: trackData.artist_id,
-            type: "track_liked",
-            actor_user_id: user.id,
-            track_id: trackId,
-          });
-        }
       }
     } catch (error) {
       console.error('Error updating like:', error);

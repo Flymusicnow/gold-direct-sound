@@ -125,7 +125,7 @@ export default function StudioDashboard() {
     <div className="flex min-h-screen">
       <StudioSidebar />
       
-      <main className="flex-1 p-8 ml-64 overflow-auto">
+      <main className="flex-1 p-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div>
