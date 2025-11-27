@@ -181,6 +181,152 @@ All colors MUST be HSL.
     left: 100%;
   }
 
+  /* Gold outline button for secondary CTAs */
+  .btn-gold-outline {
+    position: relative;
+    background: transparent;
+    border: 1px solid hsla(45, 82%, 55%, 0.6);
+    color: hsl(45, 82%, 55%) !important;
+    font-weight: 600;
+    box-shadow: 0 0 12px hsla(45, 82%, 51%, 0.08);
+    transition: all 250ms ease-out;
+    overflow: hidden;
+  }
+
+  .btn-gold-outline:hover {
+    border-color: hsla(45, 82%, 60%, 0.8);
+    background: hsla(45, 82%, 51%, 0.08);
+    box-shadow: 0 0 16px hsla(45, 82%, 51%, 0.15);
+    transform: translateY(-1px);
+  }
+
+  /* Continuous diagonal shimmer animation */
+  @keyframes gold-shimmer-sweep {
+    0% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+      transform: translateX(200%) translateY(200%) rotate(45deg);
+    }
+  }
+
+  /* Premium animated gold ticket */
+  .ticket-gold-animated {
+    position: relative;
+    /* 88% transparent background with warm gold tint */
+    background: linear-gradient(
+      135deg, 
+      hsla(0, 0%, 0%, 0.10) 0%, 
+      hsla(45, 50%, 20%, 0.08) 50%,
+      hsla(0, 0%, 0%, 0.10) 100%
+    );
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    /* Soft gold glow @ 20% */
+    box-shadow: 
+      0 0 20px rgba(232, 191, 26, 0.20),
+      inset 0 1px 12px hsla(45, 82%, 55%, 0.06),
+      inset 0 0 24px hsla(45, 82%, 51%, 0.03);
+    transition: all 200ms ease-out;
+    overflow: hidden;
+  }
+
+  /* Metallic gold border */
+  .ticket-gold-animated::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      135deg, 
+      hsl(45 70% 38%) 0%, 
+      hsl(45 80% 50%) 25%, 
+      hsl(45 82% 58%) 50%, 
+      hsl(45 80% 50%) 75%, 
+      hsl(45 70% 38%) 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* Diagonal shimmer sweep */
+  .ticket-gold-animated::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 0%,
+      transparent 40%,
+      hsla(48, 85%, 78%, 0.22) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    animation: gold-shimmer-sweep 3.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Hover state - soft golden lift */
+  .ticket-gold-animated:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 4px 24px rgba(232, 191, 26, 0.25),
+      0 2px 8px hsla(0, 0%, 0%, 0.2),
+      inset 0 1px 12px hsla(45, 82%, 55%, 0.08);
+  }
+
+  /* Increased shimmer on hover */
+  .ticket-gold-animated:hover::after {
+    animation-duration: 2.5s;
+  }
+
+  /* Extremely slow particle drift */
+  @keyframes gold-particle-drift {
+    0%, 100% {
+      opacity: 0.08;
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      opacity: 0.12;
+      transform: translate(2px, -3px) scale(1.02);
+    }
+    66% {
+      opacity: 0.06;
+      transform: translate(-2px, 2px) scale(0.98);
+    }
+  }
+
+  /* Gold particle aura wrapper */
+  .gold-particle-aura {
+    position: relative;
+  }
+
+  /* Particle layer - positioned outside element */
+  .gold-particle-aura::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    border-radius: inherit;
+    background: 
+      radial-gradient(1px 1px at 10% 15%, hsla(48, 80%, 72%, 0.10) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 20%, hsla(45, 82%, 51%, 0.08) 50%, transparent 100%),
+      radial-gradient(1px 1px at 25% 80%, hsla(48, 80%, 72%, 0.09) 50%, transparent 100%),
+      radial-gradient(1px 1px at 90% 75%, hsla(45, 82%, 51%, 0.07) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 5% 50%, hsla(48, 80%, 72%, 0.11) 50%, transparent 100%),
+      radial-gradient(1px 1px at 70% 45%, hsla(45, 82%, 51%, 0.08) 50%, transparent 100%),
+      radial-gradient(1px 1px at 40% 10%, hsla(48, 80%, 72%, 0.09) 50%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 95% 55%, hsla(45, 82%, 51%, 0.06) 50%, transparent 100%);
+    animation: gold-particle-drift 8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+
   /* Spotlight Live Animations */
   .spotlight-glow-gold {
     animation: glow-pulse-gold 2s ease-in-out infinite;

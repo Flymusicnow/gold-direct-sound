@@ -68,24 +68,28 @@ export default function Home() {
             
             {/* Two-track entry with visual distinction */}
             <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              {/* Artist Track - Gold/Premium styling */}
-              <div 
-                className="ticket-gold flex flex-col items-center p-6 rounded-xl cursor-pointer transition-all min-w-[200px] hover:shadow-gold"
-                onClick={() => navigate('/auth?mode=artist')}
-              >
-                <Mic2 className="h-8 w-8 text-primary mb-2" />
-                <span className="font-semibold text-primary text-lg">I'm an Artist</span>
-                <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
+              {/* Artist Track - Premium animated gold ticket */}
+              <div className="gold-particle-aura">
+                <div 
+                  className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
+                  onClick={() => navigate('/auth?mode=artist')}
+                >
+                  <Mic2 className="h-8 w-8 text-primary mb-2" />
+                  <span className="font-semibold text-primary text-lg">I'm an Artist</span>
+                  <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
+                </div>
               </div>
               
-              {/* Fan Track - Softer/secondary styling */}
-              <div 
-                className="ticket-gold flex flex-col items-center p-6 rounded-xl cursor-pointer transition-all min-w-[200px] hover:shadow-gold"
-                onClick={() => navigate('/auth?mode=fan')}
-              >
-                <Heart className="h-8 w-8 text-foreground/70 mb-2" />
-                <span className="font-semibold text-lg">I'm a Fan</span>
-                <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
+              {/* Fan Track - Premium animated gold ticket */}
+              <div className="gold-particle-aura">
+                <div 
+                  className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
+                  onClick={() => navigate('/auth?mode=fan')}
+                >
+                  <Heart className="h-8 w-8 text-foreground/70 mb-2" />
+                  <span className="font-semibold text-lg">I'm a Fan</span>
+                  <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
+                </div>
               </div>
             </div>
           </div>
