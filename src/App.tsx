@@ -22,6 +22,11 @@ import FanActivity from "./pages/FanActivity";
 import FanSettings from "./pages/FanSettings";
 import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminSpotlight from "./pages/admin/AdminSpotlight";
+import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
+import StudioSpotlight from "./pages/studio/StudioSpotlight";
+import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
+import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -71,6 +76,16 @@ const App = () => (
                 <StudioComments />
               </ProtectedRoute>
             } />
+            <Route path="/studio/spotlight" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioSpotlight />
+              </ProtectedRoute>
+            } />
+            <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
+            <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/spotlight" element={<AdminSpotlight />} />
+            <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
@@ -96,7 +111,6 @@ const App = () => (
                 <FanSettings />
               </ProtectedRoute>
             } />
-            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

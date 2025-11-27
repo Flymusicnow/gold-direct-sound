@@ -92,7 +92,12 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen py-24 px-4">
       <div className="container mx-auto max-w-6xl">
-        <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <Button onClick={() => navigate('/admin/spotlight')} variant="outline">
+            Manage Spotlight
+          </Button>
+        </div>
 
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Pending Artist Approvals</h2>
