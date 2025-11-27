@@ -11,6 +11,7 @@ import { QuickActions } from "@/components/artist/QuickActions";
 import { UpcomingEventsPreview } from "@/components/artist/UpcomingEventsPreview";
 import { PostUpdateForm } from "@/components/artist/PostUpdateForm";
 import { RecentPosts } from "@/components/artist/RecentPosts";
+import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
@@ -30,6 +31,7 @@ export default function StudioDashboard() {
   const [trackComments, setTrackComments] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [refreshPosts, setRefreshPosts] = useState(0);
+  const [hasActiveSpotlightEntry, setHasActiveSpotlightEntry] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -111,6 +113,21 @@ export default function StudioDashboard() {
       setTrackComments(commentsMap);
     }
 
+    // Check for active Spotlight entry
+    const { data: spotlightEntry } = await supabase
+      .from('spotlight_entries')
+      .select(`
+        id,
+        spotlight_campaigns!inner (status)
+      `)
+      .eq('artist_id', profile.id)
+      .eq('status', 'approved')
+      .eq('spotlight_campaigns.status', 'active')
+      .limit(1)
+      .maybeSingle();
+
+    setHasActiveSpotlightEntry(!!spotlightEntry);
+
     setLoading(false);
   };
 
@@ -148,6 +165,11 @@ export default function StudioDashboard() {
               Track your impact, releases and fan engagement in one place
             </p>
           </div>
+
+          {/* Spotlight Promo - Show if artist has active entry */}
+          {hasActiveSpotlightEntry && (
+            <SpotlightPromoCard />
+          )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

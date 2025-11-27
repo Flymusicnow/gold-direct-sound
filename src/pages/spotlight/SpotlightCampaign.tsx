@@ -1,0 +1,197 @@
+import { useEffect, useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Trophy } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
+
+interface Campaign {
+  id: string;
+  name: string;
+  description: string | null;
+  status: string;
+  start_date: string;
+  end_date: string;
+}
+
+interface Entry {
+  id: string;
+  track_id: string;
+  title: string | null;
+  description: string | null;
+  total_votes: number;
+  tracks: {
+    title: string;
+    cover_url: string | null;
+    audio_url: string;
+  };
+  artist_profiles: {
+    id: string;
+    artist_name: string;
+  };
+}
+
+export default function SpotlightCampaign() {
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [entries, setEntries] = useState<Entry[]>([]);
+  const [topEntries, setTopEntries] = useState<Entry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<"votes" | "newest">("votes");
+
+  useEffect(() => {
+    if (campaignId) {
+      fetchData();
+    }
+  }, [campaignId, sortBy]);
+
+  const fetchData = async () => {
+    try {
+      const [campaignRes, entriesRes] = await Promise.all([
+        supabase
+          .from('spotlight_campaigns')
+          .select('*')
+          .eq('id', campaignId)
+          .single(),
+        supabase
+          .from('spotlight_entries')
+          .select(`
+            *,
+            tracks (title, cover_url, audio_url),
+            artist_profiles (id, artist_name)
+          `)
+          .eq('campaign_id', campaignId)
+          .eq('status', 'approved')
+          .order(sortBy === 'votes' ? 'total_votes' : 'created_at', { ascending: false })
+      ]);
+
+      if (campaignRes.error) throw campaignRes.error;
+      if (entriesRes.error) throw entriesRes.error;
+
+      setCampaign(campaignRes.data);
+      setEntries(entriesRes.data || []);
+      setTopEntries((entriesRes.data || []).slice(0, 10));
+    } catch (error) {
+      console.error('Error fetching campaign:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load campaign",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Loading campaign...</p>
+      </div>
+    );
+  }
+
+  if (!campaign) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Campaign not found</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-b from-[#E8BF1A]/10 to-background py-16 px-4">
+        <div className="container mx-auto text-center">
+          <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />
+          <h1 className="text-4xl font-bold text-foreground mb-4">{campaign.name}</h1>
+          <p className="text-lg text-muted-foreground mb-4">{campaign.description}</p>
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <span>{new Date(campaign.start_date).toLocaleDateString()}</span>
+            <span>-</span>
+            <span>{new Date(campaign.end_date).toLocaleDateString()}</span>
+          </div>
+          <Badge className="mt-4" variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+            {campaign.status}
+          </Badge>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Leaderboard Section */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Trophy className="h-6 w-6 text-[#E8BF1A]" />
+              <h2 className="text-2xl font-bold">Top 10 Leaderboard</h2>
+            </div>
+            <Link
+              to={`/spotlight/${campaignId}/leaderboard`}
+              className="text-[#E8BF1A] hover:underline text-sm"
+            >
+              View Full Leaderboard →
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                {topEntries.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{entry.title || entry.tracks.title}</p>
+                      <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
+                    </div>
+                    <Badge variant="outline">{entry.total_votes} votes</Badge>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Entries Section */}
+        <div>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold">All Entries</h2>
+            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="votes">Most Voted</SelectItem>
+                <SelectItem value="newest">Newest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {entries.map((entry) => (
+              <SpotlightEntryCard
+                key={entry.id}
+                entry={entry}
+                onVoteSuccess={fetchData}
+              />
+            ))}
+          </div>
+
+          {entries.length === 0 && (
+            <div className="text-center py-12">
+              <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No entries yet</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

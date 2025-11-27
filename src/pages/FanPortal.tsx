@@ -9,6 +9,7 @@ import { StatCard } from "@/components/StatCard";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
+import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
 import { toast } from "sonner";
 
 interface Artist {
@@ -210,6 +211,9 @@ export default function FanPortal() {
           </h1>
           <p className="text-muted-foreground">Welcome to your FlyMusic Gold dashboard</p>
         </div>
+
+        {/* Spotlight Promo */}
+        <SpotlightPromoCard />
 
         {/* Stats */}
         <div className="grid sm:grid-cols-3 gap-6">

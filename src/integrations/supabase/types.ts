@@ -405,6 +405,152 @@ export type Database = {
         }
         Relationships: []
       }
+      spotlight_campaigns: {
+        Row: {
+          banner_image_url: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          name: string
+          start_date: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          banner_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          name: string
+          start_date: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          banner_image_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      spotlight_entries: {
+        Row: {
+          artist_id: string
+          campaign_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string
+          title: string | null
+          total_votes: number | null
+          track_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          campaign_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string | null
+          total_votes?: number | null
+          track_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          campaign_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string | null
+          total_votes?: number | null
+          track_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_entries_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_entries_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_entries_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spotlight_votes: {
+        Row: {
+          campaign_id: string
+          created_at: string | null
+          entry_id: string
+          fan_user_id: string
+          id: string
+          vote_type: string
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string | null
+          entry_id: string
+          fan_user_id: string
+          id?: string
+          vote_type?: string
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string | null
+          entry_id?: string
+          fan_user_id?: string
+          id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_votes_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_votes_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_votes_fan_user_id_fkey"
+            columns: ["fan_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tracks: {
         Row: {
           artist_id: string
