@@ -46,50 +46,46 @@ export default function Home() {
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
         </div>
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 golden-glow-text">
-            The New Era of <span className="bg-gradient-gold bg-clip-text text-transparent golden-glow-text">Music</span>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            The New Era of <span className="bg-gradient-gold bg-clip-text text-transparent">Music</span>
           </h1>
-          <p className="text-xl md:text-2xl text-foreground/90 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Where artists connect directly with superfans. No intermediaries. Just music, passion, and real connection.
           </p>
           <div className="flex flex-col items-center gap-6">
             {/* Primary CTA */}
             <Button 
               size="lg" 
-              className="golden-ticket-primary text-primary-foreground text-lg px-10 py-6 font-semibold"
+              className="bg-gradient-gold text-lg px-8"
               onClick={() => navigate('/explore')}
             >
               Explore Artists
             </Button>
             
             {/* Two-track entry with visual distinction */}
-            <div className="flex flex-col sm:flex-row gap-6 mt-4">
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
               {/* Artist Track - Gold/Premium styling */}
               <div 
-                className="golden-ticket-card flex flex-col items-center p-8 rounded-xl cursor-pointer min-w-[220px]"
+                className="flex flex-col items-center p-6 rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 cursor-pointer transition-all min-w-[200px]"
                 onClick={() => navigate('/auth?mode=artist')}
               >
-                <div className="w-14 h-14 rounded-full bg-primary/20 flex items-center justify-center mb-3 shadow-gold-soft">
-                  <Mic2 className="h-7 w-7 text-primary" />
-                </div>
-                <span className="font-bold text-primary text-xl mb-2 golden-glow-text">I'm an Artist</span>
-                <span className="text-sm text-muted-foreground">Upload & share music</span>
+                <Mic2 className="h-8 w-8 text-primary mb-2" />
+                <span className="font-semibold text-primary text-lg">I'm an Artist</span>
+                <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
               </div>
               
               {/* Fan Track - Softer/secondary styling */}
               <div 
-                className="golden-ticket-card flex flex-col items-center p-8 rounded-xl cursor-pointer min-w-[220px]"
+                className="flex flex-col items-center p-6 rounded-xl border border-border hover:border-primary/50 cursor-pointer transition-all min-w-[200px]"
                 onClick={() => navigate('/auth?mode=fan')}
               >
-                <div className="w-14 h-14 rounded-full bg-foreground/10 flex items-center justify-center mb-3">
-                  <Heart className="h-7 w-7 text-foreground/80" />
-                </div>
-                <span className="font-bold text-foreground text-xl mb-2">I'm a Fan</span>
-                <span className="text-sm text-muted-foreground">Discover & support</span>
+                <Heart className="h-8 w-8 text-foreground/70 mb-2" />
+                <span className="font-semibold text-lg">I'm a Fan</span>
+                <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
               </div>
             </div>
           </div>

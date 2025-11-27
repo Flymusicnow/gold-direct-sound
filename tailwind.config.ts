@@ -50,17 +50,11 @@ export default {
       },
       backgroundImage: {
         'gradient-gold': 'var(--gradient-gold)',
-        'gradient-gold-rich': 'var(--gradient-gold-rich)',
-        'gradient-gold-glow': 'var(--gradient-gold-glow)',
         'gradient-dark': 'var(--gradient-dark)',
-        'gradient-dark-premium': 'var(--gradient-dark-premium)',
       },
       boxShadow: {
         'gold': 'var(--shadow-gold)',
-        'gold-soft': 'var(--shadow-gold-soft)',
-        'gold-intense': 'var(--shadow-gold-intense)',
         'elegant': 'var(--shadow-elegant)',
-        '3d': 'var(--shadow-3d)',
       },
       borderRadius: {
         lg: "var(--radius)",
