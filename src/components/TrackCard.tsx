@@ -62,6 +62,22 @@ export function TrackCard({
         setLiked(true);
         onLikeChange?.(true);
         toast.success("Added to liked tracks");
+        
+        // Get artist_id for this track and record activity
+        const { data: trackData } = await supabase
+          .from('tracks')
+          .select('artist_id')
+          .eq('id', track.id)
+          .single();
+        
+        if (trackData) {
+          await supabase.from("artist_activities").insert({
+            artist_id: trackData.artist_id,
+            type: "track_liked",
+            actor_user_id: user.id,
+            track_id: track.id,
+          });
+        }
       }
     } catch (error) {
       console.error('Error updating like:', error);
