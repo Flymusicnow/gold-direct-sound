@@ -22,6 +22,7 @@ interface SpotlightEntry {
   status: string;
   total_votes: number;
   title: string | null;
+  cached_rank: number | null;
   tracks: {
     title: string;
   };
@@ -179,8 +180,46 @@ export default function StudioSpotlight() {
           )}
         </div>
 
+        {/* Past Campaigns */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Past Campaigns</h2>
+          <div className="grid gap-4">
+            {myEntries
+              .filter((entry) => {
+                const campaign = campaigns.find((c) => c.id === entry.campaign_id);
+                return !campaign; // Entry's campaign is not in active/upcoming list
+              })
+              .map((entry) => (
+                <Card key={entry.id}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle>{entry.title || entry.tracks.title}</CardTitle>
+                        <CardDescription>{entry.spotlight_campaigns.name}</CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{entry.total_votes} votes</Badge>
+                        {entry.cached_rank && (
+                          <Badge variant="secondary">Final Rank: #{entry.cached_rank}</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Card>
+              ))}
+          </div>
+
+          {myEntries.filter((entry) => !campaigns.find((c) => c.id === entry.campaign_id)).length === 0 && (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <p className="text-muted-foreground">No past campaign entries</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         <div>
-          <h2 className="text-2xl font-semibold mb-4">My Spotlight Entries</h2>
+          <h2 className="text-2xl font-semibold mb-4">Current Spotlight Entries</h2>
           <div className="grid gap-4">
             {myEntries.map((entry) => (
               <Card key={entry.id}>

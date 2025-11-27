@@ -14,6 +14,7 @@ import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingC
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
 import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
+import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMilestoneCard";
 
 interface NewTrack {
   id: string;
@@ -199,6 +200,9 @@ export default function FanFeed() {
 
           {/* Sidebar Column */}
           <div className="space-y-8">
+            {/* Your Artists in Top 10 */}
+            <SpotlightRankMilestoneCard />
+
             {/* Spotlight New Entries */}
             <SpotlightNewEntryCard
               onPlayTrack={(url, title, artist, cover) => setCurrentTrack({ url, title, artist })}

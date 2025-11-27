@@ -10,6 +10,7 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
 import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
+import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
 import { toast } from "sonner";
 
 interface Artist {
@@ -49,6 +50,7 @@ export default function FanPortal() {
   const [commentsCount, setCommentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [currentTrack, setCurrentTrack] = useState<{ url: string; title: string; artist: string } | null>(null);
+  const [supporterStats, setSupporterStats] = useState<{ tier: string; totalVotes: number } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -168,6 +170,20 @@ export default function FanPortal() {
       recentActivities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setActivities(recentActivities.slice(0, 5));
 
+      // Fetch supporter stats
+      const { data: statsData } = await supabase
+        .from('fan_spotlight_stats')
+        .select('total_votes, current_tier')
+        .eq('user_id', user.id)
+        .single();
+
+      if (statsData) {
+        setSupporterStats({
+          tier: statsData.current_tier,
+          totalVotes: statsData.total_votes,
+        });
+      }
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -212,8 +228,20 @@ export default function FanPortal() {
           <p className="text-muted-foreground">Welcome to your FlyMusic Gold dashboard</p>
         </div>
 
-        {/* Spotlight Promo */}
-        <SpotlightPromoCard />
+          {/* Spotlight Supporter Badge */}
+          {supporterStats && supporterStats.tier !== 'none' && (
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Spotlight Supporter</h2>
+              <SpotlightSupporterBadge
+                tier={supporterStats.tier}
+                totalVotes={supporterStats.totalVotes}
+                variant="full"
+              />
+            </Card>
+          )}
+
+          {/* Spotlight Promo */}
+          <SpotlightPromoCard />
 
         {/* Stats */}
         <div className="grid sm:grid-cols-3 gap-6">
