@@ -1,7 +1,10 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Play } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Play, Share2 } from "lucide-react";
 import SpotlightVoteButton from "./SpotlightVoteButton";
+import SpotlightShareModal from "./SpotlightShareModal";
 
 interface Entry {
   id: string;
@@ -23,9 +26,11 @@ interface Entry {
 interface SpotlightEntryCardProps {
   entry: Entry;
   onVoteSuccess: () => void;
+  campaignId?: string;
 }
 
-export default function SpotlightEntryCard({ entry, onVoteSuccess }: SpotlightEntryCardProps) {
+export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }: SpotlightEntryCardProps) {
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const handlePlay = () => {
     // This would integrate with your existing AudioPlayer
     // For now, we'll show a toast
@@ -69,12 +74,36 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess }: SpotlightEn
         )}
         <div className="flex items-center justify-between">
           <Badge variant="outline">{entry.total_votes} votes</Badge>
-          <SpotlightVoteButton
-            entryId={entry.id}
-            onVoteSuccess={onVoteSuccess}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShareModalOpen(true)}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+            <SpotlightVoteButton
+              entryId={entry.id}
+              onVoteSuccess={onVoteSuccess}
+            />
+          </div>
         </div>
       </CardContent>
+
+      {campaignId && (
+        <SpotlightShareModal
+          isOpen={shareModalOpen}
+          onClose={() => setShareModalOpen(false)}
+          entry={{
+            id: entry.id,
+            title: entry.title || entry.tracks.title,
+            artistName: entry.artist_profiles.artist_name,
+            campaignName: '', // Will be filled from campaign context
+            votes: entry.total_votes,
+          }}
+          campaignId={campaignId}
+        />
+      )}
     </Card>
   );
 }

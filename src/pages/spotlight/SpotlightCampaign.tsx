@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Trophy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
+import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
 
 interface Campaign {
   id: string;
@@ -35,6 +37,7 @@ interface Entry {
 }
 
 export default function SpotlightCampaign() {
+  const { user } = useAuth();
   const { campaignId } = useParams<{ campaignId: string }>();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -43,6 +46,7 @@ export default function SpotlightCampaign() {
   const [sortBy, setSortBy] = useState<"votes" | "newest">("votes");
   const [previousVotes, setPreviousVotes] = useState<Record<string, number>>({});
   const [changedEntries, setChangedEntries] = useState<Set<string>>(new Set());
+  const [supporterStats, setSupporterStats] = useState<{ tier: string; totalVotes: number } | null>(null);
 
   useEffect(() => {
     if (campaignId) {
@@ -101,6 +105,22 @@ export default function SpotlightCampaign() {
       
       setEntries(newEntries);
       setTopEntries(newEntries.slice(0, 10));
+
+      // Fetch supporter stats if user is logged in
+      if (user) {
+        const { data: statsData } = await supabase
+          .from('fan_spotlight_stats')
+          .select('total_votes, current_tier')
+          .eq('user_id', user.id)
+          .single();
+
+        if (statsData) {
+          setSupporterStats({
+            tier: statsData.current_tier,
+            totalVotes: statsData.total_votes,
+          });
+        }
+      }
     } catch (error) {
       console.error('Error fetching campaign:', error);
       toast({
@@ -145,6 +165,17 @@ export default function SpotlightCampaign() {
           <Badge className="mt-4" variant={campaign.status === 'active' ? 'default' : 'secondary'}>
             {campaign.status}
           </Badge>
+
+          {/* Supporter Badge for logged-in users */}
+          {user && supporterStats && supporterStats.tier !== 'none' && (
+            <div className="mt-6 max-w-xs mx-auto">
+              <SpotlightSupporterBadge
+                tier={supporterStats.tier}
+                totalVotes={supporterStats.totalVotes}
+                variant="compact"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -209,6 +240,7 @@ export default function SpotlightCampaign() {
                 key={entry.id}
                 entry={entry}
                 onVoteSuccess={fetchData}
+                campaignId={campaignId}
               />
             ))}
           </div>

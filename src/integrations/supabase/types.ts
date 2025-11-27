@@ -306,6 +306,36 @@ export type Database = {
           },
         ]
       }
+      fan_spotlight_stats: {
+        Row: {
+          created_at: string | null
+          current_tier: string | null
+          id: string
+          last_voted_at: string | null
+          total_votes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_tier?: string | null
+          id?: string
+          last_voted_at?: string | null
+          total_votes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_tier?: string | null
+          id?: string
+          last_voted_at?: string | null
+          total_votes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           artist_id: string
@@ -488,6 +518,7 @@ export type Database = {
       spotlight_entries: {
         Row: {
           artist_id: string
+          cached_rank: number | null
           campaign_id: string
           created_at: string | null
           description: string | null
@@ -500,6 +531,7 @@ export type Database = {
         }
         Insert: {
           artist_id: string
+          cached_rank?: number | null
           campaign_id: string
           created_at?: string | null
           description?: string | null
@@ -512,6 +544,7 @@ export type Database = {
         }
         Update: {
           artist_id?: string
+          cached_rank?: number | null
           campaign_id?: string
           created_at?: string | null
           description?: string | null
