@@ -51,10 +51,13 @@ export default {
       backgroundImage: {
         'gradient-gold': 'var(--gradient-gold)',
         'gradient-dark': 'var(--gradient-dark)',
+        'gradient-gold-border': 'var(--gradient-gold-border)',
+        'shimmer-gold': 'var(--shimmer-gold)',
       },
       boxShadow: {
         'gold': 'var(--shadow-gold)',
         'elegant': 'var(--shadow-elegant)',
+        'ticket': 'var(--shadow-ticket)',
       },
       borderRadius: {
         lg: "var(--radius)",
