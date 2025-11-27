@@ -200,13 +200,19 @@ All colors MUST be HSL.
     transform: translateY(-1px);
   }
 
-  /* Continuous diagonal shimmer animation */
+  /* Sequential diagonal shimmer animation - sweep + idle phase */
   @keyframes gold-shimmer-sweep {
     0% {
       transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      opacity: 1;
     }
-    100% {
+    45% {
       transform: translateX(200%) translateY(200%) rotate(45deg);
+      opacity: 1;
+    }
+    45.01%, 100% {
+      transform: translateX(-100%) translateY(-100%) rotate(45deg);
+      opacity: 0;
     }
   }
 
@@ -268,8 +274,13 @@ All colors MUST be HSL.
       transparent 60%,
       transparent 100%
     );
-    animation: gold-shimmer-sweep 3.5s ease-in-out infinite;
+    animation: gold-shimmer-sweep 12s ease-in-out infinite;
     pointer-events: none;
+  }
+
+  /* Sequential shimmer delay - starts when first ends */
+  .shimmer-delay-sequential::after {
+    animation-delay: -6s !important;
   }
 
   /* Hover state - soft golden lift */
@@ -283,7 +294,7 @@ All colors MUST be HSL.
 
   /* Increased shimmer on hover */
   .ticket-gold-animated:hover::after {
-    animation-duration: 2.5s;
+    animation-duration: 8s;
   }
 
   /* Extremely slow particle drift */
@@ -322,9 +333,14 @@ All colors MUST be HSL.
       radial-gradient(1px 1px at 70% 45%, hsla(45, 82%, 51%, 0.08) 50%, transparent 100%),
       radial-gradient(1px 1px at 40% 10%, hsla(48, 80%, 72%, 0.09) 50%, transparent 100%),
       radial-gradient(1.5px 1.5px at 95% 55%, hsla(45, 82%, 51%, 0.06) 50%, transparent 100%);
-    animation: gold-particle-drift 8s ease-in-out infinite;
+    animation: gold-particle-drift 14s ease-in-out infinite;
     pointer-events: none;
     z-index: -1;
+  }
+
+  /* Sequential particle delay - offset drift phase */
+  .particle-delay-sequential::before {
+    animation-delay: -7s !important;
   }
 
   /* Spotlight Live Animations */
