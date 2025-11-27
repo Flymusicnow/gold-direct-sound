@@ -11,6 +11,7 @@ import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
 import MyStudio from "./pages/MyStudio";
 import FanPortal from "./pages/FanPortal";
+import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
 import FanActivity from "./pages/FanActivity";
 import FanSettings from "./pages/FanSettings";
@@ -43,6 +44,11 @@ const App = () => (
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/feed" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanFeed />
               </ProtectedRoute>
             } />
             <Route path="/fan/artists" element={

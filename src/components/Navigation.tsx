@@ -46,9 +46,14 @@ export const Navigation = () => {
                 </Link>
               )}
               {hasRole('fan') && (
-                <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
-                  Fan Portal
-                </Link>
+                <>
+                  <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
+                    Fan Portal
+                  </Link>
+                  <Link to="/fan/feed" className="text-foreground/80 hover:text-primary transition-colors">
+                    Feed
+                  </Link>
+                </>
               )}
               {hasRole('admin') && (
                 <Link to="/admin" className="text-foreground/80 hover:text-primary transition-colors">
@@ -113,9 +118,14 @@ export const Navigation = () => {
                     </DropdownMenuItem>
                   )}
                   {hasRole('fan') && (
-                    <DropdownMenuItem onClick={() => navigate('/fan')}>
-                      Fan Portal
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/fan')}>
+                        Fan Portal
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/fan/feed')}>
+                        Feed
+                      </DropdownMenuItem>
+                    </>
                   )}
                   {hasRole('admin') && (
                     <DropdownMenuItem onClick={() => navigate('/admin')}>

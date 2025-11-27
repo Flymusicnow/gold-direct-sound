@@ -46,14 +46,16 @@ export default function ArtistProfile() {
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
+  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (userId) {
       fetchArtist();
       fetchTracks();
       checkFollowStatus();
+      fetchUserLikes();
     }
-  }, [userId]);
+  }, [userId, user]);
 
   useEffect(() => {
     if (artist) {
@@ -142,6 +144,40 @@ export default function ArtistProfile() {
     }
   };
 
+  const fetchUserLikes = async () => {
+    if (!user) return;
+
+    const { data: artistData } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!artistData) return;
+
+    const { data: tracksData } = await supabase
+      .from('tracks')
+      .select('id')
+      .eq('artist_id', artistData.id);
+
+    if (!tracksData) return;
+
+    const trackIds = tracksData.map(t => t.id);
+    if (trackIds.length === 0) return;
+
+    const { data: likes } = await supabase
+      .from('likes')
+      .select('track_id')
+      .eq('user_id', user.id)
+      .in('track_id', trackIds);
+
+    const likedMap: Record<string, boolean> = {};
+    likes?.forEach(like => {
+      likedMap[like.track_id] = true;
+    });
+    setLikedTracks(likedMap);
+  };
+
   const handleFollow = async () => {
     if (!user) {
       toast.error("Please sign in to follow artists");
@@ -170,6 +206,36 @@ export default function ArtistProfile() {
         .insert({ fan_id: user.id, artist_id: artistData.id });
       setIsFollowing(true);
       toast.success("Following!");
+    }
+  };
+
+  const handleLikeTrack = async (e: React.MouseEvent, trackId: string) => {
+    e.stopPropagation();
+    
+    if (!user) {
+      toast.error("Please sign in to like tracks");
+      return;
+    }
+
+    try {
+      if (likedTracks[trackId]) {
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('track_id', trackId);
+        setLikedTracks({ ...likedTracks, [trackId]: false });
+        toast.success("Removed from liked tracks");
+      } else {
+        await supabase
+          .from('likes')
+          .insert({ user_id: user.id, track_id: trackId });
+        setLikedTracks({ ...likedTracks, [trackId]: true });
+        toast.success("Added to liked tracks");
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+      toast.error("Failed to update like");
     }
   };
 
@@ -355,17 +421,28 @@ export default function ArtistProfile() {
                   )}
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentTrack(track);
-                  }}
-                >
-                  <Play className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => handleLikeTrack(e, track.id)}
+                  >
+                    <Heart className={`h-5 w-5 ${likedTracks[track.id] ? "fill-primary text-primary" : ""}`} />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentTrack(track);
+                    }}
+                  >
+                    <Play className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
