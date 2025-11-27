@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
@@ -21,9 +22,7 @@ export function StudioSidebar() {
       <div className="mb-8 pb-6 border-b border-border/30">
           <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-white">
-              fly<span className="font-light">music</span>
-            </span>
+            <FlyMusicLogo size="sm" />
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               My Studio
             </h2>

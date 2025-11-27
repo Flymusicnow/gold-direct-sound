@@ -4,6 +4,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +31,7 @@ export const Navigation = () => {
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <span className="text-2xl font-bold tracking-tight text-white">
-            fly<span className="font-light">music</span>
-          </span>
+          <FlyMusicLogo size="md" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
