@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Play, Share2 } from "lucide-react";
 import SpotlightVoteButton from "./SpotlightVoteButton";
 import SpotlightShareModal from "./SpotlightShareModal";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Entry {
   id: string;
@@ -31,6 +32,26 @@ interface SpotlightEntryCardProps {
 
 export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }: SpotlightEntryCardProps) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [campaignName, setCampaignName] = useState('');
+
+  useEffect(() => {
+    const fetchCampaignName = async () => {
+      if (!campaignId) return;
+      
+      const { data } = await supabase
+        .from('spotlight_campaigns')
+        .select('name')
+        .eq('id', campaignId)
+        .maybeSingle();
+      
+      if (data) {
+        setCampaignName(data.name);
+      }
+    };
+
+    fetchCampaignName();
+  }, [campaignId]);
+
   const handlePlay = () => {
     // This would integrate with your existing AudioPlayer
     // For now, we'll show a toast
@@ -98,7 +119,7 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }:
             id: entry.id,
             title: entry.title || entry.tracks.title,
             artistName: entry.artist_profiles.artist_name,
-            campaignName: '', // Will be filled from campaign context
+            campaignName: campaignName,
             votes: entry.total_votes,
           }}
           campaignId={campaignId}

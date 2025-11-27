@@ -62,7 +62,7 @@ export default function SpotlightArchive() {
             .eq('status', 'approved')
             .order('total_votes', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           return {
             ...campaign,
