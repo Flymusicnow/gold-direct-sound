@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Music, Users, Zap } from "lucide-react";
+import { Music, Users, Zap, Mic2, Heart } from "lucide-react";
 import heroImage from "@/assets/hero-music.jpg";
 
 export default function Home() {
@@ -24,7 +24,8 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Where artists connect directly with superfans. No intermediaries. Just music, passion, and real connection.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col items-center gap-6">
+            {/* Primary CTA */}
             <Button 
               size="lg" 
               className="bg-gradient-gold text-lg px-8"
@@ -32,22 +33,29 @@ export default function Home() {
             >
               Explore Artists
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 text-lg px-8"
-              onClick={() => navigate('/auth?mode=artist')}
-            >
-              Join as Artist
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 text-lg px-8"
-              onClick={() => navigate('/auth?mode=fan')}
-            >
-              Continue as Fan
-            </Button>
+            
+            {/* Two-track entry with visual distinction */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-4">
+              {/* Artist Track - Gold/Premium styling */}
+              <div 
+                className="flex flex-col items-center p-6 rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 cursor-pointer transition-all min-w-[200px]"
+                onClick={() => navigate('/auth?mode=artist')}
+              >
+                <Mic2 className="h-8 w-8 text-primary mb-2" />
+                <span className="font-semibold text-primary text-lg">I'm an Artist</span>
+                <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
+              </div>
+              
+              {/* Fan Track - Softer/secondary styling */}
+              <div 
+                className="flex flex-col items-center p-6 rounded-xl border border-border hover:border-primary/50 cursor-pointer transition-all min-w-[200px]"
+                onClick={() => navigate('/auth?mode=fan')}
+              >
+                <Heart className="h-8 w-8 text-foreground/70 mb-2" />
+                <span className="font-semibold text-lg">I'm a Fan</span>
+                <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
