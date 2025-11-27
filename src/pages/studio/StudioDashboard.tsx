@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { StatCard } from "@/components/StatCard";
 import { RecentFanActivity } from "@/components/artist/RecentFanActivity";
 import { LatestReleases } from "@/components/artist/LatestReleases";
@@ -10,7 +11,7 @@ import { QuickActions } from "@/components/artist/QuickActions";
 import { UpcomingEventsPreview } from "@/components/artist/UpcomingEventsPreview";
 import { PostUpdateForm } from "@/components/artist/PostUpdateForm";
 import { RecentPosts } from "@/components/artist/RecentPosts";
-import { Users, Play, Heart, MessageSquare } from "lucide-react";
+import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
   followers: number;
@@ -124,17 +125,32 @@ export default function StudioDashboard() {
   return (
     <div className="flex min-h-screen pt-16">
       <StudioSidebar />
+      <MobileStudioNav />
       
-      <main className="flex-1 p-8">
-        <div className="max-w-7xl mx-auto space-y-8">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome back, {artistProfile?.artist_name}</h1>
-            <p className="text-muted-foreground">Your Golden Journey so far</p>
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+          {/* Premium Header */}
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
+                <Sparkles className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                  Creator Control Room
+                </h1>
+                <p className="text-sm md:text-base text-muted-foreground">
+                  Welcome back, {artistProfile?.artist_name}
+                </p>
+              </div>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
+              Track your impact, releases and fan engagement in one place
+            </p>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <StatCard label="Followers" value={stats.followers} icon={Users} />
             <StatCard label="Total Plays" value={stats.totalPlays} icon={Play} />
             <StatCard label="Total Likes" value={stats.totalLikes} icon={Heart} />
@@ -142,7 +158,7 @@ export default function StudioDashboard() {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <LatestReleases tracks={tracks} likes={trackLikes} comments={trackComments} />
             <RecentFanActivity artistId={artistProfile.id} />
           </div>
@@ -151,7 +167,7 @@ export default function StudioDashboard() {
           <QuickActions />
 
           {/* Events and Posts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <UpcomingEventsPreview artistId={artistProfile.id} />
             <RecentPosts artistId={artistProfile.id} refreshTrigger={refreshPosts} />
           </div>

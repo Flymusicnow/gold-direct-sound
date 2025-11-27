@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { MessageSquare, Send } from "lucide-react";
+import { MessageSquare, Send, Music } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Comment {
@@ -113,15 +114,26 @@ export default function StudioComments() {
   return (
     <div className="flex min-h-screen pt-16">
       <StudioSidebar />
+      <MobileStudioNav />
       
-      <main className="flex-1 p-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex items-center gap-3">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Comments</h1>
-            {comments.length > 0 && (
-              <Badge variant="secondary">{comments.length}</Badge>
-            )}
+      <main className="flex-1 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+          {/* Premium Header */}
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+              <MessageSquare className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold">Comments</h1>
+                {comments.length > 0 && (
+                  <Badge variant="secondary" className="bg-primary/20 text-primary">
+                    {comments.length}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-muted-foreground">Engage with your fans and respond to feedback</p>
+            </div>
           </div>
 
           {comments.length === 0 ? (

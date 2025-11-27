@@ -53,22 +53,23 @@ export function PostUpdateForm({ artistId, onPostCreated }: PostUpdateFormProps)
   };
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-gradient-to-br from-card to-card/80 border-border/50">
       <h3 className="text-lg font-semibold mb-4">Post an Update</h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <Label htmlFor="post-title">Title (optional)</Label>
+          <Label htmlFor="post-title" className="text-sm font-medium">Title (optional)</Label>
           <Input
             id="post-title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Give your update a title..."
             maxLength={100}
+            className="mt-1.5 focus:ring-2 focus:ring-primary/20"
           />
         </div>
         
         <div>
-          <Label htmlFor="post-content">Content *</Label>
+          <Label htmlFor="post-content" className="text-sm font-medium">Content *</Label>
           <Textarea
             id="post-content"
             value={content}
@@ -76,13 +77,14 @@ export function PostUpdateForm({ artistId, onPostCreated }: PostUpdateFormProps)
             placeholder="Share something with your fans..."
             rows={4}
             required
+            className="mt-1.5 focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         <div>
-          <Label htmlFor="visibility">Who can see this?</Label>
+          <Label htmlFor="visibility" className="text-sm font-medium">Who can see this?</Label>
           <Select value={visibility} onValueChange={(v: "public" | "followers") => setVisibility(v)}>
-            <SelectTrigger id="visibility">
+            <SelectTrigger id="visibility" className="mt-1.5 focus:ring-2 focus:ring-primary/20">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -92,7 +94,7 @@ export function PostUpdateForm({ artistId, onPostCreated }: PostUpdateFormProps)
           </Select>
         </div>
 
-        <Button type="submit" disabled={posting} className="w-full">
+        <Button type="submit" disabled={posting} className="w-full shadow-gold hover:shadow-lg transition-all">
           <Send className="mr-2 h-4 w-4" />
           {posting ? "Posting..." : "Share with Fans"}
         </Button>

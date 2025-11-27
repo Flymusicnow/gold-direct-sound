@@ -46,18 +46,19 @@ export function UpcomingEventsPreview({ artistId }: UpcomingEventsPreviewProps) 
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-gradient-to-br from-card to-card/80 border-border/50">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Upcoming Events</h3>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/studio/events')}>
+        <Button variant="ghost" size="sm" onClick={() => navigate('/studio/events')} className="text-primary hover:text-primary/80">
           View All
         </Button>
       </div>
       
       {events.length === 0 ? (
-        <div className="text-center py-4">
+        <div className="text-center py-6">
+          <Calendar className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
           <p className="text-sm text-muted-foreground mb-3">No upcoming events scheduled</p>
-          <Button variant="outline" size="sm" onClick={() => navigate('/studio/events')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/studio/events')} className="border-primary/20 hover:bg-primary/10">
             Create Event
           </Button>
         </div>
@@ -66,26 +67,34 @@ export function UpcomingEventsPreview({ artistId }: UpcomingEventsPreviewProps) 
           {events.map((event) => (
             <div
               key={event.id}
-              className="p-3 rounded-lg border border-border hover:bg-muted/50 transition-colors cursor-pointer"
+              className="p-3 rounded-lg border border-border/50 hover:bg-muted/30 hover:border-primary/20 transition-all cursor-pointer"
               onClick={() => navigate('/studio/events')}
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
+              <div className="flex items-start gap-3">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center flex-shrink-0 border border-primary/20">
+                  <span className="text-xs font-bold text-primary">
+                    {format(new Date(event.start_time), 'MMM')}
+                  </span>
+                  <span className="text-lg font-bold text-primary leading-none">
+                    {format(new Date(event.start_time), 'd')}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
                   <p className="font-medium mb-1">{event.title}</p>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex flex-col gap-1 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {format(new Date(event.start_time), 'MMM d, yyyy · h:mm a')}
+                      <Calendar className="h-3 w-3 text-primary" />
+                      {format(new Date(event.start_time), 'h:mm a')}
                     </span>
                     {event.location && (
                       <span className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
+                        <MapPin className="h-3 w-3 text-primary" />
                         {event.location}
                       </span>
                     )}
                   </div>
                 </div>
-                <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <ExternalLink className="h-4 w-4 text-muted-foreground/50 flex-shrink-0" />
               </div>
             </div>
           ))}
