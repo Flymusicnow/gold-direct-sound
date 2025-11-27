@@ -15,7 +15,7 @@ export function StudioSidebar() {
   const location = useLocation();
 
   return (
-    <aside className="w-64 border-r border-border bg-card/50 min-h-screen p-6">
+    <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] border-r border-border bg-card/50 p-6 overflow-y-auto shadow-lg z-40 hidden md:block">
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-primary">My Studio</h2>
         <p className="text-sm text-muted-foreground">Creator Control Room</p>

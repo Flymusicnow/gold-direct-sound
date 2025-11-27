@@ -174,7 +174,7 @@ export default function StudioProfile() {
 
   if (!artistProfile) {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen pt-16">
         <StudioSidebar />
         <main className="flex-1 p-8">
           <div className="max-w-2xl mx-auto">
@@ -216,7 +216,7 @@ export default function StudioProfile() {
 
   if (artistProfile.status === 'pending') {
     return (
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen pt-16">
         <StudioSidebar />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center">
@@ -232,7 +232,7 @@ export default function StudioProfile() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pt-16">
       <StudioSidebar />
       
       <main className="flex-1 p-8">

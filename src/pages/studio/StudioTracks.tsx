@@ -150,7 +150,7 @@ export default function StudioTracks() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pt-16">
       <StudioSidebar />
       
       <main className="flex-1 p-8">
