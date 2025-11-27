@@ -13,6 +13,7 @@ import { Music, TrendingUp, Sparkles } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
+import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
 
 interface NewTrack {
   id: string;
@@ -172,6 +173,9 @@ export default function FanFeed() {
                 </div>
               )}
             </Card>
+
+            {/* Upcoming Events */}
+            <UpcomingEventsCard followedArtistIds={followedArtistIds} />
 
             {/* Trending in Spotlight */}
             <SpotlightTrendingCard
