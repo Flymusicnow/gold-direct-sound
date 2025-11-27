@@ -23,6 +23,10 @@ export function SpotlightRisingCard() {
   useEffect(() => {
     if (user) {
       fetchRisingArtists();
+      
+      // Poll for updates every 30 seconds for live feel
+      const interval = setInterval(fetchRisingArtists, 30000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 

@@ -24,13 +24,31 @@ export function SpotlightStatsCard({ artistId }: SpotlightStatsCardProps) {
   const navigate = useNavigate();
   const [stats, setStats] = useState<SpotlightStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [voteChange, setVoteChange] = useState(false);
 
   useEffect(() => {
     fetchStats();
     
-    // Poll for updates every 30 seconds
+    // Real-time subscription for instant vote updates
+    const channel = supabase
+      .channel('spotlight-stats-live')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'spotlight_votes' },
+        () => {
+          fetchStats();
+          setVoteChange(true);
+          setTimeout(() => setVoteChange(false), 2000);
+        }
+      )
+      .subscribe();
+    
+    // Fallback polling every 30 seconds
     const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [artistId]);
 
   const fetchStats = async () => {
@@ -133,12 +151,12 @@ export function SpotlightStatsCard({ artistId }: SpotlightStatsCardProps) {
               <p className="text-xs text-muted-foreground">of {stats.totalEntries}</p>
             </div>
 
-            <div className="p-4 rounded-lg bg-card border border-border">
+            <div className={`p-4 rounded-lg bg-card border border-border transition-all duration-300 ${voteChange ? 'ring-2 ring-primary shadow-lg shadow-primary/50' : ''}`}>
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp className="h-4 w-4 text-primary" />
                 <p className="text-xs text-muted-foreground">Votes</p>
               </div>
-              <p className="text-2xl font-bold text-primary">
+              <p className={`text-2xl font-bold text-primary transition-transform duration-300 ${voteChange ? 'scale-110' : ''}`}>
                 {stats.votes}
               </p>
               <p className="text-xs text-muted-foreground">total votes</p>
