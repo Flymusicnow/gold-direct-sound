@@ -39,6 +39,8 @@ export default function Auth() {
 
         if (error) throw error;
         
+        const mode = searchParams.get('mode');
+        
         // Check user roles and redirect accordingly
         const { data: roles } = await supabase
           .from('user_roles')
@@ -48,8 +50,21 @@ export default function Auth() {
         toast.success("Welcome back!");
 
         if (!roles || roles.length === 0) {
-          navigate('/role-selection');
+          // If user has no roles BUT came with a mode parameter,
+          // automatically set their role instead of redirecting to role-selection
+          if (mode === 'fan' || mode === 'artist') {
+            await supabase.from('user_roles').insert({
+              user_id: data.user.id,
+              role: mode,
+            });
+            
+            navigate(mode === 'fan' ? '/fan' : '/studio');
+          } else {
+            // No mode specified - let them choose
+            navigate('/role-selection');
+          }
         } else {
+          // User already has roles - redirect based on existing roles
           const hasArtist = roles.some(r => r.role === 'artist');
           const hasFan = roles.some(r => r.role === 'fan');
           
