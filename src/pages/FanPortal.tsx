@@ -338,7 +338,7 @@ export default function FanPortal() {
       {currentTrack && (
         <AudioPlayer
           audioUrl={currentTrack.url}
-          trackTitle={currentTrack.title}
+          title={currentTrack.title}
           artistName={currentTrack.artist}
         />
       )}
