@@ -82,6 +82,13 @@ export function DiscoverArtists({ followedGenres, followedArtistIds, limit = 6 }
           .insert({ fan_id: user.id, artist_id: artistId });
         setFollowing({ ...following, [artistId]: true });
         toast.success("Following!");
+        
+        // Record activity for artist
+        await supabase.from("artist_activities").insert({
+          artist_id: artistId,
+          type: "new_follower",
+          actor_user_id: user.id,
+        });
       }
     } catch (error) {
       console.error('Error updating follow:', error);
