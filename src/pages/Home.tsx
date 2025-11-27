@@ -80,10 +80,10 @@ export default function Home() {
                 </div>
               </div>
               
-              {/* Fan Track - Premium animated gold ticket */}
-              <div className="gold-particle-aura">
+              {/* Fan Track - Premium animated gold ticket with sequential delay */}
+              <div className="gold-particle-aura particle-delay-sequential">
                 <div 
-                  className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
+                  className="ticket-gold-animated shimmer-delay-sequential flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
                   onClick={() => navigate('/auth?mode=fan')}
                 >
                   <Heart className="h-8 w-8 text-foreground/70 mb-2" />
