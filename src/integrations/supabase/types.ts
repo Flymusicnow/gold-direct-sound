@@ -31,6 +31,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           website_url: string | null
+          youtube_url: string | null
         }
         Insert: {
           artist_name: string
@@ -48,6 +49,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           website_url?: string | null
+          youtube_url?: string | null
         }
         Update: {
           artist_name?: string
@@ -65,6 +67,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           website_url?: string | null
+          youtube_url?: string | null
         }
         Relationships: [
           {

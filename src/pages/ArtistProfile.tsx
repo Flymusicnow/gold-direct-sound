@@ -3,9 +3,10 @@ import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe } from "lucide-react";
+import { Heart, Play, Instagram, Twitter, Globe, Youtube } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface Artist {
   id: string;
@@ -17,6 +18,8 @@ interface Artist {
   country: string | null;
   avatar_url: string | null;
   instagram_url: string | null;
+  tiktok_url: string | null;
+  youtube_url: string | null;
   twitter_url: string | null;
   website_url: string | null;
 }
@@ -172,11 +175,27 @@ export default function ArtistProfile() {
 
             <div className="flex-1">
               <h1 className="text-4xl font-bold mb-2">{artist.artist_name}</h1>
-              {artist.genre && (
-                <p className="text-primary mb-4">{artist.genre}</p>
+              
+              {(artist.city || artist.country) && (
+                <p className="text-muted-foreground mb-3">
+                  {[artist.city, artist.country].filter(Boolean).join(', ')}
+                </p>
               )}
+
+              {artist.genre && (
+                <div className="mb-4">
+                  <Badge className="bg-primary/10 text-primary border-primary hover:bg-primary/20">
+                    {artist.genre}
+                  </Badge>
+                </div>
+              )}
+
               {artist.bio && (
-                <p className="text-muted-foreground mb-6">{artist.bio}</p>
+                <div className="mb-6">
+                  <p className="text-foreground/90 leading-relaxed whitespace-pre-line">
+                    {artist.bio}
+                  </p>
+                </div>
               )}
               
               <div className="flex flex-wrap gap-3 items-center">
@@ -193,6 +212,22 @@ export default function ArtistProfile() {
                   <Button variant="ghost" size="icon" asChild>
                     <a href={artist.instagram_url} target="_blank" rel="noopener noreferrer">
                       <Instagram className="h-5 w-5" />
+                    </a>
+                  </Button>
+                )}
+                {artist.tiktok_url && (
+                  <Button variant="ghost" size="icon" asChild>
+                    <a href={artist.tiktok_url} target="_blank" rel="noopener noreferrer">
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      </svg>
+                    </a>
+                  </Button>
+                )}
+                {artist.youtube_url && (
+                  <Button variant="ghost" size="icon" asChild>
+                    <a href={artist.youtube_url} target="_blank" rel="noopener noreferrer">
+                      <Youtube className="h-5 w-5" />
                     </a>
                   </Button>
                 )}
