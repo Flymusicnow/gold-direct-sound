@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
@@ -75,11 +75,20 @@ export const Navigation = () => {
               <Button variant="ghost" onClick={() => navigate('/auth')}>
                 Sign In
               </Button>
-              <Button variant="outline" onClick={() => navigate('/auth?mode=fan')}>
-                Join as Fan
+              <Button 
+                variant="ghost" 
+                className="text-foreground/80"
+                onClick={() => navigate('/auth?mode=fan')}
+              >
+                <Heart className="h-4 w-4 mr-1" />
+                Fan
               </Button>
-              <Button className="bg-gradient-gold" onClick={() => navigate('/auth?mode=artist')}>
-                Join as Artist
+              <Button 
+                className="bg-gradient-gold" 
+                onClick={() => navigate('/auth?mode=artist')}
+              >
+                <Mic2 className="h-4 w-4 mr-1" />
+                Artist
               </Button>
             </div>
           )}
@@ -124,9 +133,11 @@ export const Navigation = () => {
                     Sign In
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth?mode=fan')}>
+                    <Heart className="mr-2 h-4 w-4" />
                     Join as Fan
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth?mode=artist')}>
+                    <Mic2 className="mr-2 h-4 w-4 text-primary" />
                     Join as Artist
                   </DropdownMenuItem>
                 </>

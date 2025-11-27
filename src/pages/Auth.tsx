@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Music } from "lucide-react";
+import { Music, Mic2, Heart } from "lucide-react";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -126,7 +126,22 @@ export default function Auth() {
             </h1>
           </div>
           <p className="text-muted-foreground">
-            {isLogin ? "Welcome back" : isArtistSignup ? "Join as an Artist" : "Create your account"}
+            {isLogin 
+              ? "Welcome back" 
+              : isArtistSignup 
+                ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Mic2 className="h-4 w-4 text-primary" />
+                    Join as an Artist — Upload & share your music
+                  </span>
+                )
+                : (
+                  <span className="flex items-center justify-center gap-2">
+                    <Heart className="h-4 w-4" />
+                    Join as a Fan — Discover & support artists
+                  </span>
+                )
+            }
           </p>
         </div>
 
