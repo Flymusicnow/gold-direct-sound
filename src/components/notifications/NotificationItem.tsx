@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart, MessageSquare, Users } from "lucide-react";
+import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
@@ -35,6 +35,10 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
     switch (notification.type) {
       case 'spotlight_vote':
         return <Sparkles className="h-4 w-4 text-primary" />;
+      case 'spotlight_rank_change':
+        return <TrendingUp className="h-4 w-4 text-primary" />;
+      case 'spotlight_rank_milestone':
+        return <Trophy className="h-4 w-4 text-primary" />;
       case 'new_follower':
         return <Users className="h-4 w-4 text-primary" />;
       case 'track_liked':
