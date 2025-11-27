@@ -33,6 +33,10 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
 
   useEffect(() => {
     fetchTrendingEntries();
+    
+    // Poll for updates every 30 seconds for live feel
+    const interval = setInterval(fetchTrendingEntries, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchTrendingEntries = async () => {

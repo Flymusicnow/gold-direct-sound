@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, MessageSquare, UserPlus } from "lucide-react";
+import { Heart, MessageSquare, UserPlus, Sparkles } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +54,7 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
       case 'new_follower': return <UserPlus className="h-4 w-4" />;
       case 'track_liked': return <Heart className="h-4 w-4" />;
       case 'comment': return <MessageSquare className="h-4 w-4" />;
+      case 'spotlight_vote': return <Sparkles className="h-4 w-4" />;
       default: return null;
     }
   };
@@ -63,6 +64,7 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
       case 'new_follower': return 'bg-blue-500/10 text-blue-500';
       case 'track_liked': return 'bg-pink-500/10 text-pink-500';
       case 'comment': return 'bg-green-500/10 text-green-500';
+      case 'spotlight_vote': return 'bg-[#E8BF1A]/10 text-[#E8BF1A]';
       default: return 'bg-primary/10 text-primary';
     }
   };
@@ -77,6 +79,8 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
         return `${fanName} liked ${activity.track?.title || 'your track'}`;
       case 'comment':
         return `${fanName} left a comment`;
+      case 'spotlight_vote':
+        return `${fanName} voted for you in Spotlight`;
       default:
         return 'New activity';
     }
