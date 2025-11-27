@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, Camera } from "lucide-react";
+import { Upload, Music, Trash2, Camera, Save } from "lucide-react";
 
 interface ArtistProfile {
   id: string;
@@ -20,6 +20,11 @@ interface ArtistProfile {
   country: string | null;
   status: string;
   avatar_url: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  youtube_url: string | null;
+  twitter_url: string | null;
+  website_url: string | null;
 }
 
 interface Track {
@@ -43,6 +48,18 @@ export default function MyStudio() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Edit profile form
+  const [editBio, setEditBio] = useState("");
+  const [editGenre, setEditGenre] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editCountry, setEditCountry] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [editTiktok, setEditTiktok] = useState("");
+  const [editYoutube, setEditYoutube] = useState("");
+  const [editTwitter, setEditTwitter] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -70,6 +87,16 @@ export default function MyStudio() {
       console.error('Error fetching artist profile:', error);
     } else if (data) {
       setArtistProfile(data);
+      // Populate edit form with current data
+      setEditBio(data.bio || "");
+      setEditGenre(data.genre || "");
+      setEditCity(data.city || "");
+      setEditCountry(data.country || "");
+      setEditInstagram(data.instagram_url || "");
+      setEditTiktok(data.tiktok_url || "");
+      setEditYoutube(data.youtube_url || "");
+      setEditTwitter(data.twitter_url || "");
+      setEditWebsite(data.website_url || "");
     }
     setLoading(false);
   };
@@ -239,6 +266,38 @@ export default function MyStudio() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    if (!artistProfile) return;
+
+    setSavingProfile(true);
+
+    try {
+      const { error } = await supabase
+        .from('artist_profiles')
+        .update({
+          bio: editBio || null,
+          genre: editGenre || null,
+          city: editCity || null,
+          country: editCountry || null,
+          instagram_url: editInstagram || null,
+          tiktok_url: editTiktok || null,
+          youtube_url: editYoutube || null,
+          twitter_url: editTwitter || null,
+          website_url: editWebsite || null,
+        })
+        .eq('id', artistProfile.id);
+
+      if (error) throw error;
+
+      toast.success("Profile updated successfully!");
+      fetchArtistProfile();
+    } catch (error: any) {
+      toast.error(error.message || "Error updating profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -347,6 +406,90 @@ export default function MyStudio() {
                 Your profile image appears on your public artist page
               </p>
             </div>
+          </div>
+        </Card>
+
+        {/* Edit Profile */}
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-semibold mb-4">Edit Profile</h2>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit_bio">Bio</Label>
+              <Textarea
+                id="edit_bio"
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                rows={6}
+                placeholder="Tell fans about yourself..."
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit_genre">Genre</Label>
+              <Input
+                id="edit_genre"
+                value={editGenre}
+                onChange={(e) => setEditGenre(e.target.value)}
+                placeholder="e.g., Hip-Hop, R&B, Pop"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit_city">City</Label>
+                <Input
+                  id="edit_city"
+                  value={editCity}
+                  onChange={(e) => setEditCity(e.target.value)}
+                  placeholder="Stockholm"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_country">Country</Label>
+                <Input
+                  id="edit_country"
+                  value={editCountry}
+                  onChange={(e) => setEditCountry(e.target.value)}
+                  placeholder="Sweden"
+                />
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Label>Social Links</Label>
+              <div className="space-y-2">
+                <Input
+                  value={editInstagram}
+                  onChange={(e) => setEditInstagram(e.target.value)}
+                  placeholder="Instagram URL"
+                />
+                <Input
+                  value={editTiktok}
+                  onChange={(e) => setEditTiktok(e.target.value)}
+                  placeholder="TikTok URL"
+                />
+                <Input
+                  value={editYoutube}
+                  onChange={(e) => setEditYoutube(e.target.value)}
+                  placeholder="YouTube URL"
+                />
+                <Input
+                  value={editTwitter}
+                  onChange={(e) => setEditTwitter(e.target.value)}
+                  placeholder="Twitter/X URL"
+                />
+                <Input
+                  value={editWebsite}
+                  onChange={(e) => setEditWebsite(e.target.value)}
+                  placeholder="Website URL"
+                />
+              </div>
+            </div>
+            <Button
+              onClick={handleSaveProfile}
+              disabled={savingProfile}
+              className="bg-gradient-gold"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {savingProfile ? "Saving..." : "Save Profile"}
+            </Button>
           </div>
         </Card>
 
