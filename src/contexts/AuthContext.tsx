@@ -15,6 +15,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  userRoles: string[];
+  hasRole: (role: string) => boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -25,11 +27,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const hasRole = (role: string) => userRoles.includes(role);
+
   const fetchProfile = async (userId: string) => {
     try {
+      // Fetch roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      
+      if (rolesData) {
+        setUserRoles(rolesData.map(r => r.role));
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -121,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, userRoles, hasRole, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
