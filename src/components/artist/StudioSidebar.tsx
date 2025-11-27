@@ -19,11 +19,13 @@ export function StudioSidebar() {
   return (
     <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] bg-[hsl(0,0%,5%)] border-r border-border/50 p-6 overflow-y-auto shadow-elegant z-40 hidden md:block">
       <div className="mb-8 pb-6 border-b border-border/30">
-        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-              <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img 
+              src="/flymusic-logo.png" 
+              alt="FlyMusic Gold" 
+              className="h-8 w-auto logo-gold-harmony"
+            />
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               My Studio
             </h2>

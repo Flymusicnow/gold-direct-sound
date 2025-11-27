@@ -29,9 +29,12 @@ export const Navigation = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 text-primary font-bold text-xl">
-          <Music className="h-6 w-6" />
-          <span className="bg-gradient-gold bg-clip-text text-transparent">FlyMusic Gold</span>
+        <Link to="/" className="flex items-center gap-2">
+          <img 
+            src="/flymusic-logo.png" 
+            alt="FlyMusic Gold" 
+            className="h-10 w-auto logo-gold-harmony"
+          />
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
