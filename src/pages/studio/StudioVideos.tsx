@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,10 @@ export default function StudioVideos() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [caption, setCaption] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
   const [collections, setCollections] = useState<Array<{ id: string; name: string }>>([]);
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
@@ -114,13 +118,43 @@ export default function StudioVideos() {
     }
   };
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      setFileValidation(null);
-      return;
-    }
+  const generateThumbnail = async (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
 
+      video.preload = 'metadata';
+      video.src = URL.createObjectURL(file);
+      
+      video.onloadedmetadata = () => {
+        // Seek to 1 second or 10% of duration
+        video.currentTime = Math.min(1, video.duration * 0.1);
+      };
+
+      video.onseeked = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(URL.createObjectURL(blob));
+          } else {
+            resolve(null);
+          }
+          URL.revokeObjectURL(video.src);
+        }, 'image/jpeg', 0.8);
+      };
+
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(null);
+      };
+    });
+  };
+
+  const processFile = async (file: File) => {
     // Calculate file info
     const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
     const fileType = file.name.split('.').pop()?.toLowerCase() || 'unknown';
@@ -140,6 +174,7 @@ export default function StudioVideos() {
         fileInfo
       });
       setPreviewUrl(null);
+      setThumbnailUrl(null);
       setShowSuccess(false);
       return;
     }
@@ -153,19 +188,57 @@ export default function StudioVideos() {
         fileInfo
       });
       setPreviewUrl(null);
+      setThumbnailUrl(null);
       setShowSuccess(false);
       return;
     }
 
-    // Valid file
+    // Valid file - generate preview and thumbnail
     setVideoFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    const videoUrl = URL.createObjectURL(file);
+    setPreviewUrl(videoUrl);
     setFileValidation({
       isValid: true,
       error: null,
       fileInfo
     });
     setShowSuccess(false);
+
+    // Generate thumbnail
+    const thumb = await generateThumbnail(file);
+    setThumbnailUrl(thumb);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      setFileValidation(null);
+      return;
+    }
+    processFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processFile(file);
+    }
   };
 
   const handleUpload = async () => {
@@ -215,6 +288,7 @@ export default function StudioVideos() {
         setVideoFile(null);
         setCaption("");
         setPreviewUrl(null);
+        setThumbnailUrl(null);
         setShowSuccess(false);
         fetchData();
       }, 2000);
@@ -311,31 +385,70 @@ export default function StudioVideos() {
             <h2 className="text-xl font-semibold mb-4">Upload New Video</h2>
             
             <div className="space-y-4">
-              {/* File Input */}
+              {/* Drag & Drop Zone */}
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Video File (MP4 or WebM, max 40MB)
                 </label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="video/mp4,video/webm"
-                    onChange={handleFileSelect}
-                    disabled={uploading}
-                    className="flex-1"
-                  />
-                  {videoFile && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setVideoFile(null);
-                        setPreviewUrl(null);
-                        setFileValidation(null);
-                      }}
-                    >
-                      Clear
-                    </Button>
+                
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={uploading}
+                />
+
+                {/* Drop Zone */}
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  onClick={() => !uploading && fileInputRef.current?.click()}
+                  className={cn(
+                    "relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all",
+                    isDragging && "border-primary bg-primary/10",
+                    !isDragging && !videoFile && "border-muted hover:border-primary/50",
+                    videoFile && fileValidation?.isValid && "border-green-500/50 bg-green-500/5",
+                    videoFile && !fileValidation?.isValid && "border-destructive/50 bg-destructive/5",
+                    uploading && "opacity-50 cursor-not-allowed"
+                  )}
+                >
+                  {!videoFile ? (
+                    <div className="space-y-2">
+                      <Upload className={cn(
+                        "h-12 w-12 mx-auto",
+                        isDragging ? "text-primary" : "text-muted-foreground"
+                      )} />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {isDragging ? "Drop your video here" : "Click to upload or drag and drop"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          MP4 or WebM, max 40MB
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Video className="h-12 w-12 mx-auto text-primary" />
+                      <p className="text-sm font-medium">Video selected</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setVideoFile(null);
+                          setPreviewUrl(null);
+                          setThumbnailUrl(null);
+                          setFileValidation(null);
+                        }}
+                      >
+                        Clear & Choose Another
+                      </Button>
+                    </div>
                   )}
                 </div>
 
@@ -386,12 +499,35 @@ export default function StudioVideos() {
 
               {/* Preview */}
               {previewUrl && (
-                <div className="border border-primary/20 rounded-lg overflow-hidden">
-                  <video
-                    src={previewUrl}
-                    controls
-                    className="w-full max-h-96 bg-black"
-                  />
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium">Preview</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Thumbnail Preview */}
+                    {thumbnailUrl && (
+                      <div className="space-y-2">
+                        <p className="text-xs text-muted-foreground">Thumbnail Preview</p>
+                        <div className="border border-primary/20 rounded-lg overflow-hidden">
+                          <img
+                            src={thumbnailUrl}
+                            alt="Video thumbnail"
+                            className="w-full aspect-video object-cover bg-black"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Video Preview */}
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground">Video Preview</p>
+                      <div className="border border-primary/20 rounded-lg overflow-hidden">
+                        <video
+                          src={previewUrl}
+                          controls
+                          className="w-full aspect-video bg-black"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
