@@ -43,74 +43,77 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
   }
 
   return (
-    <Card className="video-frame-gold overflow-hidden shadow-lg hover:shadow-xl transition-all">
-      {/* Artist Header */}
-      <div className="p-4 flex items-center gap-3 bg-card/50 backdrop-blur-sm">
-        <Link to={`/artist/${artist.user_id}`}>
-          <Avatar className="h-12 w-12 border-2 border-primary/30 hover:border-primary/60 transition-colors">
-            <AvatarImage src={artist.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-              {artist.artist_name?.charAt(0)?.toUpperCase() || "A"}
-            </AvatarFallback>
-          </Avatar>
-        </Link>
-        <div className="flex-1 min-w-0">
-          <Link 
-            to={`/artist/${artist.user_id}`}
-            className="font-semibold text-base hover:text-primary transition-colors block truncate"
-          >
-            {artist.artist_name}
+    <div className="video-card-gold-outer shadow-lg hover:shadow-xl transition-all">
+      <div className="video-card-gold-inner">
+        {/* Artist Header */}
+        <div className="p-4 flex items-center gap-3 bg-card/50 backdrop-blur-sm">
+          <Link to={`/artist/${artist.user_id}`}>
+            <Avatar className="h-12 w-12 border-2 border-primary/30 hover:border-primary/60 transition-colors">
+              <AvatarImage src={artist.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+                {artist.artist_name?.charAt(0)?.toUpperCase() || "A"}
+              </AvatarFallback>
+            </Avatar>
           </Link>
-          <p className="text-xs text-muted-foreground">
-            {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
-          </p>
+          <div className="flex-1 min-w-0">
+            <Link 
+              to={`/artist/${artist.user_id}`}
+              className="font-semibold text-base hover:text-primary transition-colors block truncate"
+            >
+              {artist.artist_name}
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
+            </p>
+          </div>
         </div>
-      </div>
 
-      {/* Premium Video Player with Padding */}
-      <div className="px-3 pb-3">
-        <PremiumVideoPlayer 
-          videoUrl={videoUrl}
-          autoPlay={true}
-          loop={true}
-        />
-      </div>
-
-      {/* Caption */}
-      {caption && (
-        <div className="px-4 pt-2 pb-3">
-          <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{caption}</p>
+        {/* Premium Video Player with Padding */}
+        <div className="px-3 pb-3">
+          <PremiumVideoPlayer 
+            videoUrl={videoUrl}
+            autoPlay={true}
+            loop={true}
+            showFrame={false}
+          />
         </div>
-      )}
 
-      {/* Actions */}
-      <div className="px-4 pb-4 flex gap-2 border-t border-border/50 pt-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowComments(!showComments)}
-          className="gap-2"
-        >
-          <MessageSquare className="w-4 h-4" />
-          Comments
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowShare(true)}
-          className="gap-2"
-        >
-          <Share2 className="w-4 h-4" />
-          Share
-        </Button>
-      </div>
+        {/* Caption */}
+        {caption && (
+          <div className="px-4 pt-2 pb-3">
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{caption}</p>
+          </div>
+        )}
 
-      {/* Comments Section */}
-      {showComments && (
-        <div className="px-4 pb-4 border-t border-border/50 pt-4">
-          <VideoCommentsSection videoId={videoId} artistId={artist.id} />
+        {/* Actions */}
+        <div className="px-4 pb-4 flex gap-2 border-t border-border/50 pt-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowComments(!showComments)}
+            className="gap-2"
+          >
+            <MessageSquare className="w-4 h-4" />
+            Comments
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowShare(true)}
+            className="gap-2"
+          >
+            <Share2 className="w-4 h-4" />
+            Share
+          </Button>
         </div>
-      )}
+
+        {/* Comments Section */}
+        {showComments && (
+          <div className="px-4 pb-4 border-t border-border/50 pt-4">
+            <VideoCommentsSection videoId={videoId} artistId={artist.id} />
+          </div>
+        )}
+      </div>
 
       {showShare && (
         <VideoShareModal
@@ -120,6 +123,6 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
           artist={artist}
         />
       )}
-    </Card>
+    </div>
   );
 }

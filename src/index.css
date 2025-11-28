@@ -343,7 +343,50 @@ All colors MUST be HSL.
     animation-delay: -7s !important;
   }
 
-  /* Premium Video Frame */
+  /* Layered Premium Video Frame System */
+  
+  /* Outer layer - Gold border container (NO overflow-hidden) */
+  .video-card-gold-outer {
+    position: relative;
+    border-radius: 20px;
+    background: transparent;
+  }
+
+  .video-card-gold-outer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+    padding: 1.5px;
+    background: linear-gradient(
+      135deg,
+      #F4D67A 0%,
+      #E8BF1A 50%,
+      #C89F0A 100%
+    );
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Inner layer - Background + padding container */
+  .video-card-gold-inner {
+    position: relative;
+    border-radius: 18px;
+    background: hsl(0 0% 6%);
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  /* Video container inside */
+  .video-card-gold-video {
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  /* Legacy support - for standalone video player */
   .video-frame-gold {
     position: relative;
     border-radius: 20px;

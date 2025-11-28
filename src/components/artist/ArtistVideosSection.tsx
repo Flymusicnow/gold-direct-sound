@@ -73,33 +73,35 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {videos.map((video) => (
-          <Card 
+          <div 
             key={video.id} 
-            className="overflow-hidden border-primary/20 hover:border-primary/50 transition-all shadow-sm"
+            className="video-card-gold-outer hover:shadow-lg transition-all"
           >
-            <video
-              src={video.video_url}
-              controls
-              className="w-full aspect-video bg-black"
-              preload="metadata"
-            />
-            <div className="p-3 space-y-2">
-              {video.caption && (
-                <p className="text-sm text-foreground/80 line-clamp-2">
-                  {video.caption}
-                </p>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShareVideo(video)}
-                className="gap-2 w-full"
-              >
-                <Share2 className="w-3 h-3" />
-                Share Video
-              </Button>
+            <div className="video-card-gold-inner">
+              <video
+                src={video.video_url}
+                controls
+                className="w-full aspect-video bg-black"
+                preload="metadata"
+              />
+              <div className="p-3 space-y-2">
+                {video.caption && (
+                  <p className="text-sm text-foreground/80 line-clamp-2">
+                    {video.caption}
+                  </p>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShareVideo(video)}
+                  className="gap-2 w-full"
+                >
+                  <Share2 className="w-3 h-3" />
+                  Share Video
+                </Button>
+              </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
