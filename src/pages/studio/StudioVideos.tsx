@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus } from "lucide-react";
+import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle } from "lucide-react";
 
 interface VideoPost {
   id: string;
@@ -52,6 +52,15 @@ export default function StudioVideos() {
   const [showCollectionDialog, setShowCollectionDialog] = useState(false);
   const [selectedVideoForCollection, setSelectedVideoForCollection] = useState<string | null>(null);
   const [selectedCollection, setSelectedCollection] = useState<string>("");
+  const [fileValidation, setFileValidation] = useState<{
+    isValid: boolean;
+    error: string | null;
+    fileInfo: {
+      name: string;
+      sizeMB: string;
+      type: string;
+    } | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -107,22 +116,55 @@ export default function StudioVideos() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setFileValidation(null);
+      return;
+    }
+
+    // Calculate file info
+    const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+    const fileType = file.name.split('.').pop()?.toLowerCase() || 'unknown';
+    
+    const fileInfo = {
+      name: file.name,
+      sizeMB,
+      type: fileType.toUpperCase()
+    };
 
     // Validate file type
     if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
-      toast.error("Only MP4 and WebM videos are allowed");
+      setVideoFile(file);
+      setFileValidation({
+        isValid: false,
+        error: "Unsupported format. Please upload an MP4 or WebM video.",
+        fileInfo
+      });
+      setPreviewUrl(null);
+      setShowSuccess(false);
       return;
     }
 
     // Validate file size
     if (file.size > MAX_VIDEO_SIZE) {
-      toast.error("Video must be under 40MB");
+      setVideoFile(file);
+      setFileValidation({
+        isValid: false,
+        error: `This file is ${sizeMB} MB. Maximum allowed is 40 MB.`,
+        fileInfo
+      });
+      setPreviewUrl(null);
+      setShowSuccess(false);
       return;
     }
 
+    // Valid file
     setVideoFile(file);
     setPreviewUrl(URL.createObjectURL(file));
+    setFileValidation({
+      isValid: true,
+      error: null,
+      fileInfo
+    });
     setShowSuccess(false);
   };
 
@@ -178,7 +220,7 @@ export default function StudioVideos() {
       }, 2000);
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Failed to upload video");
+      toast.error("Something went wrong during upload. Please try again or choose a smaller file.");
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -289,12 +331,40 @@ export default function StudioVideos() {
                       onClick={() => {
                         setVideoFile(null);
                         setPreviewUrl(null);
+                        setFileValidation(null);
                       }}
                     >
                       Clear
                     </Button>
                   )}
                 </div>
+
+                {/* File Info & Validation Feedback */}
+                {fileValidation && (
+                  <div className="mt-3 space-y-2">
+                    {/* File Info */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span className="font-medium">{fileValidation.fileInfo?.name}</span>
+                      <span>•</span>
+                      <span>{fileValidation.fileInfo?.sizeMB} MB</span>
+                      <span>•</span>
+                      <span>{fileValidation.fileInfo?.type}</span>
+                    </div>
+                    
+                    {/* Validation Status */}
+                    {fileValidation.isValid ? (
+                      <div className="flex items-center gap-2 text-green-500 text-sm">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>File looks good ({fileValidation.fileInfo?.type}, {fileValidation.fileInfo?.sizeMB} MB)</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-destructive text-sm">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{fileValidation.error}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Caption Input */}
@@ -351,7 +421,7 @@ export default function StudioVideos() {
               {/* Upload Button */}
               <Button
                 onClick={handleUpload}
-                disabled={!videoFile || uploading}
+                disabled={!videoFile || !fileValidation?.isValid || uploading}
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Upload className="h-4 w-4 mr-2" />
