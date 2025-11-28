@@ -237,25 +237,31 @@ export type Database = {
           artist_id: string
           caption: string | null
           created_at: string | null
+          duration_seconds: number | null
           id: string
           updated_at: string | null
           video_url: string
+          view_count: number | null
         }
         Insert: {
           artist_id: string
           caption?: string | null
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           updated_at?: string | null
           video_url: string
+          view_count?: number | null
         }
         Update: {
           artist_id?: string
           caption?: string | null
           created_at?: string | null
+          duration_seconds?: number | null
           id?: string
           updated_at?: string | null
           video_url?: string
+          view_count?: number | null
         }
         Relationships: [
           {
@@ -802,6 +808,201 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      video_collection_items: {
+        Row: {
+          added_at: string | null
+          collection_id: string
+          id: string
+          position: number | null
+          video_id: string
+        }
+        Insert: {
+          added_at?: string | null
+          collection_id: string
+          id?: string
+          position?: number | null
+          video_id: string
+        }
+        Update: {
+          added_at?: string | null
+          collection_id?: string
+          id?: string
+          position?: number | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_collection_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "video_collections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_collection_items_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "artist_video_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_collections: {
+        Row: {
+          artist_id: string
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_collections_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_comment_likes: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comment_likes_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "video_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_comments: {
+        Row: {
+          created_at: string | null
+          id: string
+          parent_comment_id: string | null
+          text: string
+          updated_at: string | null
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          text: string
+          updated_at?: string | null
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          parent_comment_id?: string | null
+          text?: string
+          updated_at?: string | null
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "video_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "artist_video_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_views: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          referrer_id: string | null
+          session_id: string | null
+          user_id: string | null
+          video_id: string
+          watch_duration_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          referrer_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          video_id: string
+          watch_duration_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          referrer_id?: string | null
+          session_id?: string | null
+          user_id?: string | null
+          video_id?: string
+          watch_duration_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_views_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "artist_video_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

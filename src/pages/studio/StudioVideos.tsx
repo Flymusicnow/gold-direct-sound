@@ -9,7 +9,21 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Video, Upload, Trash2, CheckCircle } from "lucide-react";
+import { VideoShareModal } from "@/components/video/VideoShareModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus } from "lucide-react";
 
 interface VideoPost {
   id: string;
@@ -33,6 +47,11 @@ export default function StudioVideos() {
   const [caption, setCaption] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
+  const [collections, setCollections] = useState<Array<{ id: string; name: string }>>([]);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
+  const [selectedVideoForCollection, setSelectedVideoForCollection] = useState<string | null>(null);
+  const [selectedCollection, setSelectedCollection] = useState<string>("");
 
   useEffect(() => {
     if (!user) {
@@ -69,6 +88,15 @@ export default function StudioVideos() {
 
       if (videosError) throw videosError;
       setVideoPosts(videos || []);
+
+      // Fetch collections
+      const { data: collectionsData } = await supabase
+        .from("video_collections")
+        .select("id, name")
+        .eq("artist_id", profile.id)
+        .order("position", { ascending: true });
+
+      setCollections(collectionsData || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load videos");
@@ -181,6 +209,34 @@ export default function StudioVideos() {
     } catch (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete video");
+    }
+  };
+
+  const handleAddToCollection = async () => {
+    if (!selectedVideoForCollection || !selectedCollection) return;
+
+    try {
+      const { error } = await supabase
+        .from("video_collection_items")
+        .insert({
+          collection_id: selectedCollection,
+          video_id: selectedVideoForCollection,
+          position: 0,
+        });
+
+      if (error) throw error;
+
+      toast.success("Video added to collection");
+      setShowCollectionDialog(false);
+      setSelectedVideoForCollection(null);
+      setSelectedCollection("");
+    } catch (error: any) {
+      if (error.code === '23505') {
+        toast.error("Video is already in this collection");
+      } else {
+        console.error("Error adding to collection:", error);
+        toast.error("Failed to add video to collection");
+      }
     }
   };
 
@@ -325,18 +381,41 @@ export default function StudioVideos() {
                       {video.caption && (
                         <p className="text-sm text-foreground/80">{video.caption}</p>
                       )}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">
                           {new Date(video.created_at).toLocaleDateString()}
                         </p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(video.id, video.video_url)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShareVideo(video)}
+                            title="Share"
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                          {collections.length > 0 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedVideoForCollection(video.id);
+                                setShowCollectionDialog(true);
+                              }}
+                              title="Add to Collection"
+                            >
+                              <FolderPlus className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(video.id, video.video_url)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </Card>
@@ -346,6 +425,54 @@ export default function StudioVideos() {
           </div>
         </div>
       </main>
+
+      {shareVideo && artistProfile && (
+        <VideoShareModal
+          isOpen={!!shareVideo}
+          onClose={() => setShareVideo(null)}
+          video={shareVideo}
+          artist={{
+            id: artistProfile.id,
+            artist_name: artistProfile.artist_name,
+          }}
+        />
+      )}
+
+      <Dialog open={showCollectionDialog} onOpenChange={setShowCollectionDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Collection</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Select value={selectedCollection} onValueChange={setSelectedCollection}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a collection" />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map((collection) => (
+                  <SelectItem key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="ghost"
+                onClick={() => setShowCollectionDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAddToCollection}
+                disabled={!selectedCollection}
+              >
+                Add to Collection
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

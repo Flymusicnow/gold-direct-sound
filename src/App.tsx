@@ -13,6 +13,7 @@ import StudioDashboard from "./pages/studio/StudioDashboard";
 import StudioProfile from "./pages/studio/StudioProfile";
 import StudioTracks from "./pages/studio/StudioTracks";
 import StudioVideos from "./pages/studio/StudioVideos";
+import StudioVideoCollections from "./pages/studio/StudioVideoCollections";
 import StudioEvents from "./pages/studio/StudioEvents";
 import StudioAnalytics from "./pages/studio/StudioAnalytics";
 import StudioComments from "./pages/studio/StudioComments";
@@ -71,6 +72,11 @@ const App = () => (
             <Route path="/studio/videos" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioVideos />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/video-collections" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioVideoCollections />
               </ProtectedRoute>
             } />
             <Route path="/studio/events" element={
