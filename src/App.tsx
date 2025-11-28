@@ -30,6 +30,9 @@ import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
 import SpotlightArchive from "./pages/spotlight/SpotlightArchive";
 import SpotlightResults from "./pages/spotlight/SpotlightResults";
 import FanLeaderboard from "./pages/spotlight/FanLeaderboard";
+import FanPlaylists from "./pages/FanPlaylists";
+import PlaylistDetail from "./pages/PlaylistDetail";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -117,6 +120,17 @@ const App = () => (
                 <FanSettings />
               </ProtectedRoute>
             } />
+            <Route path="/fan/playlists" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanPlaylists />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/playlists/:playlistId" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <PlaylistDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/search" element={<Search />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

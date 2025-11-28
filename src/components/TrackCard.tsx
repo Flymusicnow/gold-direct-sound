@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Play, Music } from "lucide-react";
+import { Heart, Play, Music, ListMusic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import AddToPlaylistDialog from "@/components/playlists/AddToPlaylistDialog";
 
 interface TrackCardProps {
   track: {
@@ -31,6 +32,7 @@ export function TrackCard({
   const { user } = useAuth();
   const [liked, setLiked] = useState(isLiked);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,10 +74,11 @@ export function TrackCard({
   };
 
   return (
-    <div
-      className="group flex items-center gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
-      onClick={onPlay}
-    >
+    <>
+      <div
+        className="group flex items-center gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+        onClick={onPlay}
+      >
       <div className="relative w-16 h-16 flex-shrink-0">
         {track.cover_url ? (
           <img
@@ -104,16 +107,42 @@ export function TrackCard({
       </div>
 
       {showLikeButton && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
-          onClick={handleLike}
-          disabled={isUpdating}
-        >
-          <Heart className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`} />
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!user) {
+                toast.error("Please sign in to add to playlist");
+                return;
+              }
+              setPlaylistDialogOpen(true);
+            }}
+          >
+            <ListMusic className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={handleLike}
+            disabled={isUpdating}
+          >
+            <Heart className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`} />
+          </Button>
+        </>
       )}
-    </div>
+      </div>
+      {user && (
+        <AddToPlaylistDialog
+          isOpen={playlistDialogOpen}
+          onClose={() => setPlaylistDialogOpen(false)}
+          trackId={track.id}
+          trackTitle={track.title}
+        />
+      )}
+    </>
   );
 }
