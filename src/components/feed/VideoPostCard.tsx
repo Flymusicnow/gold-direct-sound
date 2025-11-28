@@ -9,6 +9,7 @@ import { VideoShareModal } from "@/components/video/VideoShareModal";
 import { VideoCommentsSection } from "@/components/video/VideoCommentsSection";
 import { useVideoAnalytics } from "@/hooks/useVideoAnalytics";
 import { supabase } from "@/integrations/supabase/client";
+import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
 
 interface VideoPostCardProps {
   videoId: string;
@@ -17,16 +18,16 @@ interface VideoPostCardProps {
   createdAt: string;
   artist: {
     id: string;
+    user_id: string;
     artist_name: string;
     avatar_url: string | null;
   };
 }
 
 export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }: VideoPostCardProps) {
-  const [isMuted, setIsMuted] = useState(true);
   const [showShare, setShowShare] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const { trackView, updateWatchDuration } = useVideoAnalytics({ videoId });
+  const { trackView } = useVideoAnalytics({ videoId });
 
   useEffect(() => {
     const trackViewing = async () => {
@@ -34,24 +35,29 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
       await trackView(user?.id);
     };
     trackViewing();
-  }, [videoId]);
+  }, [videoId, trackView]);
+
+  // Safety check for artist data
+  if (!artist || !artist.user_id) {
+    return null;
+  }
 
   return (
-    <Card className="overflow-hidden border-primary/20 hover:border-primary/50 transition-all shadow-sm">
-      {/* Artist Info */}
-      <div className="p-4 flex items-center gap-3">
-        <Link to={`/artist/${artist.id}`}>
-          <Avatar className="h-10 w-10 border border-primary/20">
+    <Card className="video-frame-gold overflow-hidden shadow-lg hover:shadow-xl transition-all">
+      {/* Artist Header */}
+      <div className="p-4 flex items-center gap-3 bg-card/50 backdrop-blur-sm">
+        <Link to={`/artist/${artist.user_id}`}>
+          <Avatar className="h-12 w-12 border-2 border-primary/30 hover:border-primary/60 transition-colors">
             <AvatarImage src={artist.avatar_url || undefined} />
-            <AvatarFallback className="bg-primary/10 text-primary">
-              {artist.artist_name.charAt(0).toUpperCase()}
+            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+              {artist.artist_name?.charAt(0)?.toUpperCase() || "A"}
             </AvatarFallback>
           </Avatar>
         </Link>
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <Link 
-            to={`/artist/${artist.id}`}
-            className="font-semibold hover:text-primary transition-colors"
+            to={`/artist/${artist.user_id}`}
+            className="font-semibold text-base hover:text-primary transition-colors block truncate"
           >
             {artist.artist_name}
           </Link>
@@ -61,35 +67,24 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
         </div>
       </div>
 
-      {/* Video */}
-      <div 
-        className="relative bg-black cursor-pointer"
-        onClick={() => setIsMuted(!isMuted)}
-      >
-        <video
-          src={videoUrl}
-          autoPlay
-          loop
-          muted={isMuted}
-          playsInline
-          className="w-full aspect-video object-cover"
+      {/* Premium Video Player with Padding */}
+      <div className="px-3 pb-3">
+        <PremiumVideoPlayer 
+          videoUrl={videoUrl}
+          autoPlay={true}
+          loop={true}
         />
-        {isMuted && (
-          <div className="absolute bottom-4 right-4 bg-black/60 px-3 py-1 rounded-full text-xs text-white">
-            Tap to unmute
-          </div>
-        )}
       </div>
 
       {/* Caption */}
       {caption && (
-        <div className="p-4">
-          <p className="text-sm text-foreground/90 whitespace-pre-wrap">{caption}</p>
+        <div className="px-4 pt-2 pb-3">
+          <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed">{caption}</p>
         </div>
       )}
 
       {/* Actions */}
-      <div className="px-4 pb-3 flex gap-2">
+      <div className="px-4 pb-4 flex gap-2 border-t border-border/50 pt-3">
         <Button
           variant="ghost"
           size="sm"
