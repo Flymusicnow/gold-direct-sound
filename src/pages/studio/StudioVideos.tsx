@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
 import {
@@ -282,6 +283,12 @@ export default function StudioVideos() {
       setUploadProgress(100);
       setShowSuccess(true);
       toast.success("Video uploaded successfully!");
+
+      // Update onboarding progress
+      await supabase
+        .from("artist_onboarding_progress")
+        .update({ has_uploaded_video: true })
+        .eq("user_id", user?.id);
 
       // Reset form
       setTimeout(() => {
@@ -570,10 +577,14 @@ export default function StudioVideos() {
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Videos</h2>
             {videoPosts.length === 0 ? (
-              <Card className="p-8 text-center">
-                <Video className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-muted-foreground">No videos yet. Upload your first one!</p>
-              </Card>
+              <EmptyStateCard
+                icon={Video}
+                title="No videos yet"
+                description="Share your first video update and connect with your fans visually."
+                ctaText="Upload your first video above"
+                onCtaClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                variant="gold"
+              />
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 {videoPosts.map((video) => (

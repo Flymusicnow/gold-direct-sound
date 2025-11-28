@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
+import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
 import { Upload, Music, Trash2 } from "lucide-react";
 
@@ -123,6 +124,13 @@ export default function StudioTracks() {
       setTrackDescription("");
       setCoverFile(null);
       form.reset();
+      
+      // Update onboarding progress
+      await supabase
+        .from("artist_onboarding_progress")
+        .update({ has_uploaded_track: true })
+        .eq("user_id", user.id);
+      
       fetchData();
     } catch (error: any) {
       toast.error(error.message || "Error uploading track");
@@ -220,9 +228,16 @@ export default function StudioTracks() {
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Your Tracks</h2>
             {tracks.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No tracks yet. Upload your first track above!
-              </p>
+              <div className="py-8">
+                <EmptyStateCard
+                  icon={Music}
+                  title="No tracks yet"
+                  description="Upload your first song and start building your music catalog."
+                  ctaText="Upload your first track above"
+                  onCtaClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  variant="gold"
+                />
+              </div>
             ) : (
               <div className="space-y-3">
                 {tracks.map((track) => (

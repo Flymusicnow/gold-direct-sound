@@ -73,6 +73,41 @@ export type Database = {
           },
         ]
       }
+      artist_beta_access: {
+        Row: {
+          badge_name: string | null
+          code_id: string
+          id: string
+          redeemed_at: string | null
+          tier: string | null
+          user_id: string
+        }
+        Insert: {
+          badge_name?: string | null
+          code_id: string
+          id?: string
+          redeemed_at?: string | null
+          tier?: string | null
+          user_id: string
+        }
+        Update: {
+          badge_name?: string | null
+          code_id?: string
+          id?: string
+          redeemed_at?: string | null
+          tier?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_beta_access_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_events: {
         Row: {
           artist_id: string
@@ -125,6 +160,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      artist_onboarding_progress: {
+        Row: {
+          created_at: string | null
+          has_shared_profile: boolean | null
+          has_uploaded_track: boolean | null
+          has_uploaded_video: boolean | null
+          id: string
+          onboarding_completed: boolean | null
+          onboarding_skipped: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          has_shared_profile?: boolean | null
+          has_uploaded_track?: boolean | null
+          has_uploaded_video?: boolean | null
+          id?: string
+          onboarding_completed?: boolean | null
+          onboarding_skipped?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          has_shared_profile?: boolean | null
+          has_uploaded_track?: boolean | null
+          has_uploaded_video?: boolean | null
+          id?: string
+          onboarding_completed?: boolean | null
+          onboarding_skipped?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       artist_posts: {
         Row: {
@@ -272,6 +343,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      beta_access_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          current_uses: number | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          current_uses?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          current_uses?: number | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+        }
+        Relationships: []
       }
       comment_likes: {
         Row: {
@@ -1017,6 +1121,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      redeem_beta_code: {
+        Args: { _code: string; _user_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "artist" | "fan"

@@ -7,6 +7,7 @@ import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkle
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { CommentsSection } from "@/components/CommentsSection";
 import { SimilarArtists } from "@/components/SimilarArtists";
 import { ShareModal } from "@/components/ShareModal";
@@ -158,6 +159,7 @@ export default function ArtistProfile() {
     campaignName: string;
     votes: number;
   } | null>(null);
+  const [hasBetaAccess, setHasBetaAccess] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -166,6 +168,7 @@ export default function ArtistProfile() {
       checkFollowStatus();
       fetchUserLikes();
       fetchSpotlightStatus();
+      fetchBetaAccess();
     }
   }, [userId, user]);
 
@@ -324,6 +327,24 @@ export default function ArtistProfile() {
     }
   };
 
+  const fetchBetaAccess = async () => {
+    const { data: artistData } = await supabase
+      .from('artist_profiles')
+      .select('user_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!artistData) return;
+
+    const { data: betaAccess } = await supabase
+      .from("artist_beta_access")
+      .select("badge_name")
+      .eq("user_id", artistData.user_id)
+      .maybeSingle();
+
+    setHasBetaAccess(!!betaAccess);
+  };
+
   const handleFollow = async () => {
     if (!user) {
       toast.error("Please sign in to follow artists");
@@ -440,6 +461,8 @@ export default function ArtistProfile() {
                     {artist.genre}
                   </Badge>
                 )}
+                
+                {hasBetaAccess && <EarlyAccessBadge />}
                 
                 {spotlightEntry && (
                   <Link 

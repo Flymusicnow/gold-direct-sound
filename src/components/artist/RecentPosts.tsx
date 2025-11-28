@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Users } from "lucide-react";
+import { Globe, Users, MessageSquare } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { EmptyStateCard } from "./EmptyStateCard";
 
 interface Post {
   id: string;
@@ -43,41 +44,50 @@ export function RecentPosts({ artistId, refreshTrigger }: RecentPostsProps) {
     return <Card className="p-6"><p className="text-muted-foreground">Loading...</p></Card>;
   }
 
+  if (posts.length === 0) {
+    return (
+      <EmptyStateCard
+        icon={MessageSquare}
+        title="No posts yet"
+        description="Share an update with your fans to keep them engaged."
+        ctaText="Create Post"
+        ctaPath="/studio"
+        variant="gold"
+      />
+    );
+  }
+
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-card/80 border-border/50">
       <h3 className="text-lg font-semibold mb-4">Recent Posts</h3>
-      {posts.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No posts yet. Share an update with your fans!</p>
-      ) : (
-        <div className="space-y-3">
-          {posts.map((post) => (
-            <div key={post.id} className="p-3 rounded-lg border border-border/50 hover:bg-muted/20 hover:border-primary/10 transition-all">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                {post.title && (
-                  <p className="font-medium text-sm">{post.title}</p>
+      <div className="space-y-3">
+        {posts.map((post) => (
+          <div key={post.id} className="p-3 rounded-lg border border-border/50 hover:bg-muted/20 hover:border-primary/10 transition-all">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              {post.title && (
+                <p className="font-medium text-sm">{post.title}</p>
+              )}
+              <Badge 
+                variant={post.visibility === 'public' ? 'default' : 'secondary'} 
+                className={cn(
+                  "flex-shrink-0",
+                  post.visibility === 'public' && "bg-primary/20 text-primary border-primary/30"
                 )}
-                <Badge 
-                  variant={post.visibility === 'public' ? 'default' : 'secondary'} 
-                  className={cn(
-                    "flex-shrink-0",
-                    post.visibility === 'public' && "bg-primary/20 text-primary border-primary/30"
-                  )}
-                >
-                  {post.visibility === 'public' ? (
-                    <><Globe className="h-3 w-3 mr-1" /> Public</>
-                  ) : (
-                    <><Users className="h-3 w-3 mr-1" /> Followers</>
-                  )}
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
-              <p className="text-xs text-muted-foreground/70">
-                {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-              </p>
+              >
+                {post.visibility === 'public' ? (
+                  <><Globe className="h-3 w-3 mr-1" /> Public</>
+                ) : (
+                  <><Users className="h-3 w-3 mr-1" /> Followers</>
+                )}
+              </Badge>
             </div>
-          ))}
-        </div>
-      )}
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
+            <p className="text-xs text-muted-foreground/70">
+              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+            </p>
+          </div>
+        ))}
+      </div>
     </Card>
   );
 }
