@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus } from "lucide-react";
+import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
@@ -254,10 +254,22 @@ export default function FanPortal() {
           <SpotlightPromoCard />
 
         {/* Stats */}
-        <div className="grid sm:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-4 gap-6">
           <StatCard label="Following" value={followedArtists.length} icon={Users} />
           <StatCard label="Liked Tracks" value={likedTracks.length} icon={Heart} />
           <StatCard label="Comments" value={commentsCount} icon={MessageSquare} />
+          <div 
+            className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
+            onClick={() => navigate('/fan/playlists')}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
+                <ListMusic className="h-8 w-8 text-primary" />
+              </div>
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+            </div>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">

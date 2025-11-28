@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu, Mic2, Heart } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart, Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,10 @@ export const Navigation = () => {
         <div className="hidden md:flex items-center gap-6">
           <Link to="/explore" className="text-foreground/80 hover:text-primary transition-colors">
             Explore Artists
+          </Link>
+          <Link to="/search" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+            <Search className="h-4 w-4" />
+            Search
           </Link>
           
           {user ? (
@@ -112,6 +116,10 @@ export const Navigation = () => {
             <DropdownMenuContent align="end" className="w-48 bg-[hsl(0,0%,6%)] border-border">
               <DropdownMenuItem onClick={() => navigate('/explore')}>
                 Explore Artists
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/search')}>
+                <Search className="h-4 w-4 mr-2" />
+                Search
               </DropdownMenuItem>
               {user ? (
                 <>
