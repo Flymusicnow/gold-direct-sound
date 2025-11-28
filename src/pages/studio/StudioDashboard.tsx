@@ -12,6 +12,8 @@ import { UpcomingEventsPreview } from "@/components/artist/UpcomingEventsPreview
 import { PostUpdateForm } from "@/components/artist/PostUpdateForm";
 import { RecentPosts } from "@/components/artist/RecentPosts";
 import { SpotlightStatsCard } from "@/components/spotlight/SpotlightStatsCard";
+import { ArtistOnboardingDialog } from "@/components/artist/ArtistOnboardingDialog";
+import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
@@ -32,6 +34,7 @@ export default function StudioDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshPosts, setRefreshPosts] = useState(0);
   const [hasActiveSpotlightEntry, setHasActiveSpotlightEntry] = useState(false);
+  const [hasBetaAccess, setHasBetaAccess] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -128,6 +131,15 @@ export default function StudioDashboard() {
 
     setHasActiveSpotlightEntry(!!spotlightEntry);
 
+    // Check for beta access
+    const { data: betaAccess } = await supabase
+      .from("artist_beta_access")
+      .select("badge_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    setHasBetaAccess(!!betaAccess);
+
     setLoading(false);
   };
 
@@ -143,23 +155,27 @@ export default function StudioDashboard() {
     <div className="flex min-h-screen pt-16">
       <StudioSidebar />
       <MobileStudioNav />
+      <ArtistOnboardingDialog />
       
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="relative">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
-                <Sparkles className="h-6 w-6 text-primary-foreground" />
+            <div className="flex items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
+                  <Sparkles className="h-6 w-6 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                    Creator Control Room
+                  </h1>
+                  <p className="text-sm md:text-base text-muted-foreground">
+                    Welcome back, {artistProfile?.artist_name}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                  Creator Control Room
-                </h1>
-                <p className="text-sm md:text-base text-muted-foreground">
-                  Welcome back, {artistProfile?.artist_name}
-                </p>
-              </div>
+              {hasBetaAccess && <EarlyAccessBadge />}
             </div>
             <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
               Track your impact, releases and fan engagement in one place

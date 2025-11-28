@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import SpotlightSubmitDialog from "@/components/spotlight/SpotlightSubmitDialog";
@@ -171,12 +172,14 @@ export default function StudioSpotlight() {
           </div>
 
           {campaigns.length === 0 && (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No active campaigns at the moment</p>
-              </CardContent>
-            </Card>
+            <EmptyStateCard
+              icon={Sparkles}
+              title="No active campaigns"
+              description="Spotlight campaigns will appear here when they're live. Check back soon!"
+              ctaText="Learn More"
+              ctaPath="/spotlight/archive"
+              variant="gold"
+            />
           )}
         </div>
 

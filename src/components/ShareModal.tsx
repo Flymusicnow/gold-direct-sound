@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link, Instagram, Music2, Twitter } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -18,9 +19,17 @@ export const ShareModal = ({ isOpen, onClose, artistName, shareUrl }: ShareModal
   const encodedUrl = encodeURIComponent(shareUrlWithRef);
   const encodedText = encodeURIComponent(`Check out ${artistName} on FlyMusic Gold!`);
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     navigator.clipboard.writeText(shareUrlWithRef);
     toast.success("Link copied to clipboard!");
+    
+    // Update onboarding progress
+    if (user) {
+      await supabase
+        .from("artist_onboarding_progress")
+        .update({ has_shared_profile: true })
+        .eq("user_id", user.id);
+    }
   };
 
   const socialLinks = [
