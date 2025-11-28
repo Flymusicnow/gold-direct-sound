@@ -37,6 +37,7 @@ interface VideoPost {
   created_at: string;
   artist_profiles: {
     id: string;
+    user_id: string;
     artist_name: string;
     avatar_url: string | null;
   };
@@ -115,6 +116,7 @@ export default function FanFeed() {
             created_at,
             artist_profiles (
               id,
+              user_id,
               artist_name,
               avatar_url
             )
