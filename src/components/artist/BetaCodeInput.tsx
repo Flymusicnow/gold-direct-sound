@@ -9,9 +9,10 @@ import confetti from "canvas-confetti";
 
 interface BetaCodeInputProps {
   onSuccess?: () => void;
+  compact?: boolean;
 }
 
-export function BetaCodeInput({ onSuccess }: BetaCodeInputProps) {
+export function BetaCodeInput({ onSuccess, compact = false }: BetaCodeInputProps) {
   const { user } = useAuth();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,10 +57,12 @@ export function BetaCodeInput({ onSuccess }: BetaCodeInputProps) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Sparkles className="h-4 w-4 text-primary" />
-        <span className="font-medium">Have a Beta Access Code?</span>
-      </div>
+      {!compact && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <span className="font-medium">Have a Beta Access Code?</span>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Input

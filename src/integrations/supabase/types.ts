@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      artist_achievements: {
+        Row: {
+          achievement_type: string
+          id: string
+          metadata: Json | null
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_type: string
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_type?: string
+          id?: string
+          metadata?: Json | null
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       artist_activities: {
         Row: {
           actor_user_id: string | null
@@ -79,6 +103,7 @@ export type Database = {
           code_id: string
           id: string
           redeemed_at: string | null
+          referral_bonus_tier: string | null
           tier: string | null
           user_id: string
         }
@@ -87,6 +112,7 @@ export type Database = {
           code_id: string
           id?: string
           redeemed_at?: string | null
+          referral_bonus_tier?: string | null
           tier?: string | null
           user_id: string
         }
@@ -95,6 +121,7 @@ export type Database = {
           code_id?: string
           id?: string
           redeemed_at?: string | null
+          referral_bonus_tier?: string | null
           tier?: string | null
           user_id?: string
         }
@@ -299,6 +326,68 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artist_referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          current_uses: number
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          current_uses?: number
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      artist_referral_uses: {
+        Row: {
+          id: string
+          redeemed_at: string
+          referral_code_id: string
+          referred_user_id: string
+        }
+        Insert: {
+          id?: string
+          redeemed_at?: string
+          referral_code_id: string
+          referred_user_id: string
+        }
+        Update: {
+          id?: string
+          redeemed_at?: string
+          referral_code_id?: string
+          referred_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_referral_uses_referral_code_id_fkey"
+            columns: ["referral_code_id"]
+            isOneToOne: false
+            referencedRelation: "artist_referral_codes"
             referencedColumns: ["id"]
           },
         ]
@@ -1113,6 +1202,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_artist_referral_code: {
+        Args: { _user_id: string }
+        Returns: string
+      }
       has_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1122,6 +1215,10 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       redeem_beta_code: {
+        Args: { _code: string; _user_id: string }
+        Returns: Json
+      }
+      redeem_referral_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
       }
