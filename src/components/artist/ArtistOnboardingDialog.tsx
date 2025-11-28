@@ -9,7 +9,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Sparkles, Upload, Video, Share2 } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, Upload, Video, Share2, HelpCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -119,18 +120,21 @@ export function ArtistOnboardingDialog() {
     {
       icon: Upload,
       label: "Upload your first track",
+      tooltip: "Supported formats: MP3, WAV, FLAC (max 50MB). Add cover art for better presentation and engagement.",
       completed: progress.has_uploaded_track,
       action: () => navigate("/studio/tracks"),
     },
     {
       icon: Video,
       label: "Upload your first video",
+      tooltip: "Upload MP4 or WebM videos (max 40MB). Videos autoplay muted in fan feeds for better discovery.",
       completed: progress.has_uploaded_video,
       action: () => navigate("/studio/videos"),
     },
     {
       icon: Share2,
       label: "Share your artist profile",
+      tooltip: "Copy your artist link and share on social media. Add ?ref=yourname to track where traffic comes from.",
       completed: progress.has_shared_profile,
       action: () => toast.info("Use the share button on your profile!"),
     },
@@ -161,37 +165,49 @@ export function ArtistOnboardingDialog() {
           </p>
 
           <div className="space-y-3">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <button
-                  key={index}
-                  onClick={step.action}
-                  className={cn(
-                    "w-full flex items-center gap-3 p-4 rounded-lg border transition-all",
-                    step.completed
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-border hover:border-primary/50 hover:bg-muted/50"
-                  )}
-                >
-                  {step.completed ? (
-                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                  ) : (
-                    <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
-                  )}
-                  <Icon className={cn(
-                    "h-5 w-5 flex-shrink-0",
-                    step.completed ? "text-primary" : "text-muted-foreground"
-                  )} />
-                  <span className={cn(
-                    "text-sm font-medium flex-1 text-left",
-                    step.completed ? "text-primary" : "text-foreground"
-                  )}>
-                    {step.label}
-                  </span>
-                </button>
-              );
-            })}
+            <TooltipProvider>
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={step.action}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-4 rounded-lg border transition-all",
+                      step.completed
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                    )}
+                  >
+                    {step.completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                    )}
+                    <Icon className={cn(
+                      "h-5 w-5 flex-shrink-0",
+                      step.completed ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span className={cn(
+                      "text-sm font-medium flex-1 text-left",
+                      step.completed ? "text-primary" : "text-foreground"
+                    )}>
+                      {step.label}
+                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <button className="text-muted-foreground hover:text-primary transition-colors">
+                          <HelpCircle className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-[250px] border-primary/20">
+                        <p className="text-xs">{step.tooltip}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </button>
+                );
+              })}
+            </TooltipProvider>
           </div>
 
           {allCompleted && (

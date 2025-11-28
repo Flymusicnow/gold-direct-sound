@@ -14,6 +14,7 @@ import { RecentPosts } from "@/components/artist/RecentPosts";
 import { SpotlightStatsCard } from "@/components/spotlight/SpotlightStatsCard";
 import { ArtistOnboardingDialog } from "@/components/artist/ArtistOnboardingDialog";
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
+import { ArtistAchievementsCard } from "@/components/artist/ArtistAchievementsCard";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
@@ -186,6 +187,9 @@ export default function StudioDashboard() {
           {hasActiveSpotlightEntry && (
             <SpotlightStatsCard artistId={artistProfile.id} />
           )}
+
+          {/* Artist Achievements */}
+          <ArtistAchievementsCard />
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
 import { Upload, Music, Trash2 } from "lucide-react";
+import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
+import { useAchievements } from "@/hooks/useAchievements";
 
 interface Track {
   id: string;
@@ -31,6 +33,8 @@ export default function StudioTracks() {
   const [trackDescription, setTrackDescription] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [showLockedModal, setShowLockedModal] = useState(false);
+  const { checkAndUnlockAchievements } = useAchievements();
 
   useEffect(() => {
     if (!user) {
@@ -76,6 +80,12 @@ export default function StudioTracks() {
 
     if (!audioFile) {
       toast.error("Please select an audio file");
+      return;
+    }
+
+    // Check upload limit (5 tracks for free tier)
+    if (tracks.length >= 5) {
+      setShowLockedModal(true);
       return;
     }
 
@@ -130,6 +140,9 @@ export default function StudioTracks() {
         .from("artist_onboarding_progress")
         .update({ has_uploaded_track: true })
         .eq("user_id", user.id);
+      
+      // Check achievements
+      await checkAndUnlockAchievements();
       
       fetchData();
     } catch (error: any) {
@@ -270,6 +283,16 @@ export default function StudioTracks() {
           </Card>
         </div>
       </main>
+
+      {/* Locked Feature Modal */}
+      <LockedFeatureModal
+        open={showLockedModal}
+        onOpenChange={setShowLockedModal}
+        featureName="Unlimited Tracks"
+        featureDescription="You've reached the 5 track limit for Early Access. Upgrade to FlyMusic Gold for unlimited uploads."
+        tierRequired="gold"
+        onSuccess={fetchData}
+      />
     </div>
   );
 }

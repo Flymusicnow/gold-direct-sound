@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Crown, Sparkles, Star, Zap } from "lucide-react";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
+import { InviteFriendsCard } from "@/components/artist/InviteFriendsCard";
 
 const tiers = [
   {
@@ -203,6 +204,9 @@ export default function StudioSubscription() {
               );
             })}
           </div>
+
+          {/* Invite Friends Section */}
+          <InviteFriendsCard />
 
           {/* Beta Code Redemption */}
           {!hasBetaAccess && (

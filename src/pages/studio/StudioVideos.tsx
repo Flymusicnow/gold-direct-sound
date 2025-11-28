@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
+import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
+import { useAchievements } from "@/hooks/useAchievements";
 import {
   Dialog,
   DialogContent,
@@ -66,6 +68,8 @@ export default function StudioVideos() {
       type: string;
     } | null;
   } | null>(null);
+  const [showLockedModal, setShowLockedModal] = useState(false);
+  const { checkAndUnlockAchievements } = useAchievements();
 
   useEffect(() => {
     if (!user) {
@@ -245,6 +249,12 @@ export default function StudioVideos() {
   const handleUpload = async () => {
     if (!videoFile || !artistProfile) return;
 
+    // Check upload limit (3 videos for free tier)
+    if (videoPosts.length >= 3) {
+      setShowLockedModal(true);
+      return;
+    }
+
     setUploading(true);
     setUploadProgress(0);
 
@@ -289,6 +299,9 @@ export default function StudioVideos() {
         .from("artist_onboarding_progress")
         .update({ has_uploaded_video: true })
         .eq("user_id", user?.id);
+
+      // Check achievements
+      await checkAndUnlockAchievements();
 
       // Reset form
       setTimeout(() => {
@@ -690,6 +703,16 @@ export default function StudioVideos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Locked Feature Modal */}
+      <LockedFeatureModal
+        open={showLockedModal}
+        onOpenChange={setShowLockedModal}
+        featureName="Unlimited Videos"
+        featureDescription="You've reached the 3 video limit for Early Access. Upgrade to FlyMusic Gold for unlimited video uploads."
+        tierRequired="gold"
+        onSuccess={fetchData}
+      />
     </div>
   );
 }
