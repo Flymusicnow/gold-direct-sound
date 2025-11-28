@@ -232,6 +232,41 @@ export type Database = {
           },
         ]
       }
+      artist_video_posts: {
+        Row: {
+          artist_id: string
+          caption: string | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          video_url: string
+        }
+        Insert: {
+          artist_id: string
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          video_url: string
+        }
+        Update: {
+          artist_id?: string
+          caption?: string | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_video_posts_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_likes: {
         Row: {
           comment_id: string

@@ -9,12 +9,13 @@ import { AudioPlayer } from "@/components/AudioPlayer";
 import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles } from "lucide-react";
+import { Music, TrendingUp, Sparkles, Video } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
 import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
 import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMilestoneCard";
+import { VideoPostCard } from "@/components/feed/VideoPostCard";
 
 interface NewTrack {
   id: string;
@@ -29,10 +30,23 @@ interface NewTrack {
   };
 }
 
+interface VideoPost {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  artist_profiles: {
+    id: string;
+    artist_name: string;
+    avatar_url: string | null;
+  };
+}
+
 export default function FanFeed() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [newTracks, setNewTracks] = useState<NewTrack[]>([]);
+  const [videoPosts, setVideoPosts] = useState<VideoPost[]>([]);
   const [followedGenres, setFollowedGenres] = useState<string[]>([]);
   const [followedArtistIds, setFollowedArtistIds] = useState<string[]>([]);
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
@@ -90,6 +104,26 @@ export default function FanFeed() {
           .limit(10);
 
         setNewTracks(tracksData || []);
+
+        // Fetch video posts from followed artists
+        const { data: videosData } = await supabase
+          .from('artist_video_posts')
+          .select(`
+            id,
+            video_url,
+            caption,
+            created_at,
+            artist_profiles (
+              id,
+              artist_name,
+              avatar_url
+            )
+          `)
+          .in('artist_id', artistIds)
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        setVideoPosts(videosData || []);
       }
 
       // Fetch user's liked tracks
@@ -174,6 +208,27 @@ export default function FanFeed() {
                 </div>
               )}
             </Card>
+
+            {/* Video Posts */}
+            {videoPosts.length > 0 && (
+              <Card className="p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <Video className="h-6 w-6 text-primary" />
+                  <h2 className="text-2xl font-semibold">New Videos From Your Artists</h2>
+                </div>
+                <div className="space-y-6">
+                  {videoPosts.map((video) => (
+                    <VideoPostCard
+                      key={video.id}
+                      videoUrl={video.video_url}
+                      caption={video.caption}
+                      createdAt={video.created_at}
+                      artist={video.artist_profiles}
+                    />
+                  ))}
+                </div>
+              </Card>
+            )}
 
             {/* Upcoming Events */}
             <UpcomingEventsCard followedArtistIds={followedArtistIds} />

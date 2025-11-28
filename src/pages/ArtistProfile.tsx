@@ -11,6 +11,7 @@ import { CommentsSection } from "@/components/CommentsSection";
 import { SimilarArtists } from "@/components/SimilarArtists";
 import { ShareModal } from "@/components/ShareModal";
 import { format } from "date-fns";
+import { ArtistVideosSection } from "@/components/artist/ArtistVideosSection";
 
 interface Artist {
   id: string;
@@ -538,6 +539,11 @@ export default function ArtistProfile() {
 
       {/* Upcoming Events Section */}
       <UpcomingEventsSection artistId={artist.id} />
+
+      {/* Videos Section */}
+      <div className="container mx-auto px-4 max-w-6xl">
+        <ArtistVideosSection artistId={artist.id} />
+      </div>
 
       {/* Tracks */}
       <div className="container mx-auto px-4 py-12 max-w-6xl">
