@@ -6,13 +6,20 @@ import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
-import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3 } from "lucide-react";
+import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface Track {
   id: string;
   title: string;
   play_count: number;
+}
+
+interface VideoAnalytics {
+  id: string;
+  caption: string | null;
+  view_count: number;
+  created_at: string;
 }
 
 export default function StudioAnalytics() {
@@ -33,6 +40,12 @@ export default function StudioAnalytics() {
     likes7d: 0,
   });
   const [topTracks, setTopTracks] = useState<Array<Track & { likes: number; comments: number }>>([]);
+  const [videoStats, setVideoStats] = useState({
+    totalViews: 0,
+    totalVideos: 0,
+    avgCompletionRate: 0,
+  });
+  const [topVideos, setTopVideos] = useState<VideoAnalytics[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -134,6 +147,36 @@ export default function StudioAnalytics() {
       setTopTracks(enrichedTracks.slice(0, 10));
     }
 
+    // Fetch video analytics
+    const { data: videosData } = await supabase
+      .from('artist_video_posts')
+      .select('id, caption, view_count, created_at')
+      .eq('artist_id', profile.id)
+      .order('view_count', { ascending: false })
+      .limit(5);
+
+    if (videosData) {
+      setTopVideos(videosData);
+      const totalViews = videosData.reduce((sum, v) => sum + (v.view_count || 0), 0);
+      
+      // Get completion rate data
+      const videoIds = videosData.map(v => v.id);
+      const { data: viewsData } = await supabase
+        .from('video_views')
+        .select('completed')
+        .in('video_id', videoIds);
+
+      const completionRate = viewsData && viewsData.length > 0
+        ? (viewsData.filter(v => v.completed).length / viewsData.length) * 100
+        : 0;
+
+      setVideoStats({
+        totalViews,
+        totalVideos: videosData.length,
+        avgCompletionRate: Math.round(completionRate),
+      });
+    }
+
     setLoading(false);
   };
 
@@ -213,6 +256,51 @@ export default function StudioAnalytics() {
               </Table>
             )}
           </Card>
+
+          {/* Video Performance */}
+          {topVideos.length > 0 && (
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Video className="h-5 w-5 text-primary" />
+                <h2 className="text-xl font-semibold">Video Performance</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Views</p>
+                  <p className="text-2xl font-bold">{videoStats.totalViews}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Total Videos</p>
+                  <p className="text-2xl font-bold">{videoStats.totalVideos}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Avg Completion</p>
+                  <p className="text-2xl font-bold">{videoStats.avgCompletionRate}%</p>
+                </div>
+              </div>
+
+              <h3 className="text-sm font-semibold mb-3">Top Videos</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Caption</TableHead>
+                    <TableHead className="text-right">Views</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topVideos.map((video) => (
+                    <TableRow key={video.id}>
+                      <TableCell className="font-medium">
+                        {video.caption || 'Untitled Video'}
+                      </TableCell>
+                      <TableCell className="text-right">{video.view_count || 0}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Card>
+          )}
 
           {/* Engagement Overview */}
           <Card className="p-6">

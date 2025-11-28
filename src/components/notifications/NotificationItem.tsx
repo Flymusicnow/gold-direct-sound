@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy } from "lucide-react";
+import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy, Video } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
@@ -45,6 +45,10 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
         return <Heart className="h-4 w-4 text-primary" />;
       case 'comment_reply':
         return <MessageSquare className="h-4 w-4 text-primary" />;
+      case 'new_video':
+        return <Video className="h-4 w-4 text-primary" />;
+      case 'spotlight_entry':
+        return <Sparkles className="h-4 w-4 text-primary" />;
       default:
         return <Sparkles className="h-4 w-4 text-primary" />;
     }

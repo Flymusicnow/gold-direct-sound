@@ -220,6 +220,7 @@ export default function FanFeed() {
                   {videoPosts.map((video) => (
                     <VideoPostCard
                       key={video.id}
+                      videoId={video.id}
                       videoUrl={video.video_url}
                       caption={video.caption}
                       createdAt={video.created_at}

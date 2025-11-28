@@ -542,7 +542,7 @@ export default function ArtistProfile() {
 
       {/* Videos Section */}
       <div className="container mx-auto px-4 max-w-6xl">
-        <ArtistVideosSection artistId={artist.id} />
+        <ArtistVideosSection artistId={artist.id} artistName={artist.artist_name} />
       </div>
 
       {/* Tracks */}

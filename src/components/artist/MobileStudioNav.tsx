@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Menu, Video } from "lucide-react";
+import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Menu, Video, FolderOpen, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +15,9 @@ const navItems = [
   { icon: User, label: "Profile", path: "/studio/profile" },
   { icon: Music, label: "Tracks", path: "/studio/tracks" },
   { icon: Video, label: "Videos", path: "/studio/videos" },
+  { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
   { icon: Calendar, label: "Events", path: "/studio/events" },
+  { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
   { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
   { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
 ];
