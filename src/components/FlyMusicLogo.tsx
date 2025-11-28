@@ -16,7 +16,7 @@ export function FlyMusicLogo({ size = 'md', className = '' }: FlyMusicLogoProps)
     <svg
       width={width}
       height={height}
-      viewBox="0 0 100 40"
+      viewBox="0 0 120 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
@@ -34,28 +34,50 @@ export function FlyMusicLogo({ size = 'md', className = '' }: FlyMusicLogoProps)
         fl
       </text>
 
-      {/* Wavy "y" - custom SVG path with flowing curve */}
-      <path
-        d="M 50 10 
-           L 50 18 
-           Q 50 22, 52 24
-           Q 54 26, 58 26
-           L 65 26
-           Q 68 26, 70 28
-           Q 72 30, 72 34
-           L 72 38
-           Q 72 42, 68 44
-           Q 64 46, 58 44
-           L 54 42"
-        stroke="white"
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      
-      {/* Top part of y stem */}
-      <circle cx="50" cy="14" r="3" fill="white" />
+      {/* Wavy "y" with flowing tail - integrated with text */}
+      <g>
+        {/* Main stem of y */}
+        <path
+          d="M 48 10 L 48 18"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Left diagonal branch */}
+        <path
+          d="M 48 14 L 42 18"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Right diagonal branch */}
+        <path
+          d="M 48 14 L 54 18"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Signature wavy tail - flowing curve */}
+        <path
+          d="M 48 18 
+             Q 48 22, 50 24
+             Q 52 26, 56 27
+             Q 60 28, 64 27
+             Q 68 26, 70 28
+             Q 72 30, 72 34
+             Q 72 38, 68 40
+             Q 64 42, 58 40
+             L 54 38"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </g>
     </svg>
   );
 }
