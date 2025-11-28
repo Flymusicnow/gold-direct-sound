@@ -231,7 +231,17 @@ export default function FanPortal() {
           {/* Spotlight Supporter Badge */}
           {supporterStats && supporterStats.tier !== 'none' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Spotlight Supporter</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Spotlight Supporter</h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate('/spotlight/leaderboard')}
+                  className="text-primary"
+                >
+                  View Leaderboard <TrendingUp className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
               <SpotlightSupporterBadge
                 tier={supporterStats.tier}
                 totalVotes={supporterStats.totalVotes}

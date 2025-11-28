@@ -29,6 +29,7 @@ import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
 import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
 import SpotlightArchive from "./pages/spotlight/SpotlightArchive";
 import SpotlightResults from "./pages/spotlight/SpotlightResults";
+import FanLeaderboard from "./pages/spotlight/FanLeaderboard";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -83,6 +84,7 @@ const App = () => (
                 <StudioSpotlight />
               </ProtectedRoute>
             } />
+            <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
             <Route path="/spotlight/archive" element={<SpotlightArchive />} />
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
             <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
