@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Trophy, Calendar, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Trophy, Calendar, Users, TrendingUp } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface CampaignArchive {
@@ -23,6 +24,7 @@ interface CampaignArchive {
 export default function SpotlightArchive() {
   const [campaigns, setCampaigns] = useState<CampaignArchive[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchArchive();
@@ -105,6 +107,17 @@ export default function SpotlightArchive() {
           <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />
           <h1 className="text-4xl font-bold mb-2">Spotlight Archive</h1>
           <p className="text-muted-foreground">Browse past FlyMusic Spotlight campaigns</p>
+          
+          <div className="mt-6">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/spotlight/leaderboard')}
+              className="border-primary/20 hover:bg-primary/5"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              View Fan Leaderboard
+            </Button>
+          </div>
         </div>
 
         {/* Campaigns Grid */}
