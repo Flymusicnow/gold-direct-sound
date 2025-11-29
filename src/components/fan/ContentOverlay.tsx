@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { FlightdeckItem } from '@/contexts/FlightdeckContext';
-import { FanActionBar } from './FanActionBar';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useFollowArtist } from '@/hooks/useFollowArtist';
-import { PremiumVideoPlayer } from '@/components/video/PremiumVideoPlayer';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { FlightdeckItem } from "@/contexts/FlightdeckContext";
+import { FanActionBar } from "./FanActionBar";
+import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
+import { useFollowArtist } from "@/hooks/useFollowArtist";
+import { useState } from "react";
 
 interface ContentOverlayProps {
   item: FlightdeckItem | null;
@@ -33,6 +33,7 @@ export function ContentOverlay({
   hasVoted = false,
 }: ContentOverlayProps) {
   const [direction, setDirection] = useState(0);
+  const [dragDirection, setDragDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const { isFollowing: following, toggleFollow } = useFollowArtist(
     item?.artistId || '',
     isFollowing
@@ -55,6 +56,31 @@ export function ContentOverlay({
       setDirection(-1);
       onIndexChange(currentIndex - 1);
     }
+  };
+
+  const handleDragStart = (_: any, info: PanInfo) => {
+    const { offset } = info;
+    if (Math.abs(offset.y) > Math.abs(offset.x)) {
+      setDragDirection('vertical');
+    } else if (Math.abs(offset.x) > 10) {
+      setDragDirection('horizontal');
+    }
+  };
+
+  const handleDragEnd = (_: any, info: PanInfo) => {
+    const { offset, velocity } = info;
+    
+    if (dragDirection === 'vertical' && (offset.y > 100 || velocity.y > 500)) {
+      onClose();
+    } else if (dragDirection === 'horizontal' && items) {
+      if (offset.x < -80 && canGoNext) {
+        handleNext();
+      } else if (offset.x > 80 && canGoPrev) {
+        handlePrev();
+      }
+    }
+    
+    setDragDirection(null);
   };
 
   const slideVariants = {
@@ -114,7 +140,14 @@ export function ContentOverlay({
         )}
 
         {/* Content */}
-        <div className="h-full overflow-y-auto p-6 pt-20">
+        <motion.div
+          drag
+          dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          className="h-full overflow-y-auto p-6 pt-20"
+        >
           <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={item.id}
@@ -206,7 +239,7 @@ export function ContentOverlay({
               )}
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
       </DialogContent>
     </Dialog>
   );

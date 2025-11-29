@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import confetti from 'canvas-confetti';
 
 export function useSpotlightVote(entryId: string, campaignId: string, initialVoted: boolean = false) {
   const { user } = useAuth();
@@ -38,7 +39,16 @@ export function useSpotlightVote(entryId: string, campaignId: string, initialVot
           });
         setHasVoted(true);
         
-        // Show gold star animation
+        // Trigger gold star confetti animation
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#E8BF1A', '#F4D67A', '#C89F0A'],
+          shapes: ['star'],
+          scalar: 1.2,
+        });
+        
         toast.success('⭐ Vote cast!');
       }
     } catch (error) {
