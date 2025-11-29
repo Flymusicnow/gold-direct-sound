@@ -31,7 +31,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Copy, Sparkles } from "lucide-react";
+import { Plus, Copy, Sparkles, Download, Zap } from "lucide-react";
 import { format } from "date-fns";
 
 interface BetaCode {
@@ -56,6 +56,15 @@ interface FormData {
   notes: string;
 }
 
+interface BulkFormData {
+  count: string;
+  type: string;
+  badge_name: string;
+  max_uses: string;
+  expires_at: string;
+  notes: string;
+}
+
 function generateBetaCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Exclude confusing chars (0, O, 1, I)
   const code = Array.from(
@@ -69,6 +78,7 @@ export default function AdminBetaCodes() {
   const [codes, setCodes] = useState<BetaCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     code: "",
     type: "artist",
@@ -77,6 +87,15 @@ export default function AdminBetaCodes() {
     expires_at: "",
     notes: "",
   });
+  const [bulkFormData, setBulkFormData] = useState<BulkFormData>({
+    count: "10",
+    type: "artist",
+    badge_name: "",
+    max_uses: "",
+    expires_at: "",
+    notes: "",
+  });
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
 
   useEffect(() => {
     fetchBetaCodes();
@@ -170,6 +189,111 @@ export default function AdminBetaCodes() {
     toast.success("Code copied to clipboard!");
   };
 
+  const handleBulkGenerate = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const count = parseInt(bulkFormData.count);
+    if (count < 10 || count > 50) {
+      toast.error("Count must be between 10 and 50");
+      return;
+    }
+
+    try {
+      // Generate unique codes
+      const newCodes: string[] = [];
+      const existingCodes = new Set(codes.map(c => c.code));
+
+      while (newCodes.length < count) {
+        const code = generateBetaCode();
+        if (!existingCodes.has(code) && !newCodes.includes(code)) {
+          newCodes.push(code);
+        }
+      }
+
+      // Prepare insert data
+      const insertData = newCodes.map(code => {
+        const data: any = {
+          code: code,
+          type: bulkFormData.type,
+          badge_name: bulkFormData.badge_name.trim(),
+          notes: bulkFormData.notes.trim() || null,
+        };
+
+        if (bulkFormData.max_uses.trim()) {
+          data.max_uses = parseInt(bulkFormData.max_uses);
+        }
+
+        if (bulkFormData.expires_at.trim()) {
+          data.expires_at = new Date(bulkFormData.expires_at).toISOString();
+        }
+
+        return data;
+      });
+
+      const { error } = await supabase
+        .from("beta_access_codes")
+        .insert(insertData);
+
+      if (error) throw error;
+
+      setGeneratedCodes(newCodes);
+      toast.success(`${count} beta codes generated successfully!`);
+      fetchBetaCodes();
+    } catch (error: any) {
+      console.error("Error generating bulk codes:", error);
+      toast.error(error.message || "Failed to generate bulk codes");
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (generatedCodes.length === 0) {
+      toast.error("No codes to export");
+      return;
+    }
+
+    // Create CSV content
+    const headers = ["Code", "Type", "Badge Name", "Max Uses", "Expires At", "Notes"];
+    const rows = generatedCodes.map(code => [
+      code,
+      bulkFormData.type,
+      bulkFormData.badge_name,
+      bulkFormData.max_uses || "Unlimited",
+      bulkFormData.expires_at ? format(new Date(bulkFormData.expires_at), "yyyy-MM-dd HH:mm") : "Never",
+      bulkFormData.notes || "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `flymusic-beta-codes-${Date.now()}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("CSV exported successfully!");
+  };
+
+  const handleCloseBulkDialog = () => {
+    setIsBulkDialogOpen(false);
+    setGeneratedCodes([]);
+    setBulkFormData({
+      count: "10",
+      type: "artist",
+      badge_name: "",
+      max_uses: "",
+      expires_at: "",
+      notes: "",
+    });
+  };
+
   const getUsagePercentage = (current: number, max: number | null) => {
     if (max === null) return 0;
     return (current / max) * 100;
@@ -194,13 +318,177 @@ export default function AdminBetaCodes() {
               Create and manage beta access codes for artists and fans
             </p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-gold hover:opacity-90">
-                <Plus className="mr-2 h-4 w-4" />
-                Create New Code
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="border-primary/20">
+                  <Zap className="mr-2 h-4 w-4" />
+                  Bulk Generate
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Bulk Generate Beta Codes</DialogTitle>
+                  <DialogDescription>
+                    Create multiple beta codes at once (10-50 codes)
+                  </DialogDescription>
+                </DialogHeader>
+                {generatedCodes.length === 0 ? (
+                  <form onSubmit={handleBulkGenerate} className="space-y-4">
+                    {/* Count */}
+                    <div className="space-y-2">
+                      <Label>Number of Codes</Label>
+                      <Input
+                        type="number"
+                        value={bulkFormData.count}
+                        onChange={(e) =>
+                          setBulkFormData({ ...bulkFormData, count: e.target.value })
+                        }
+                        placeholder="10-50"
+                        min="10"
+                        max="50"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Generate between 10 and 50 codes at once
+                      </p>
+                    </div>
+
+                    {/* Type */}
+                    <div className="space-y-2">
+                      <Label>Type</Label>
+                      <Select
+                        value={bulkFormData.type}
+                        onValueChange={(value) =>
+                          setBulkFormData({ ...bulkFormData, type: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="artist">Artist</SelectItem>
+                          <SelectItem value="fan">Fan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Badge Name */}
+                    <div className="space-y-2">
+                      <Label>Badge Name</Label>
+                      <Input
+                        value={bulkFormData.badge_name}
+                        onChange={(e) =>
+                          setBulkFormData({ ...bulkFormData, badge_name: e.target.value })
+                        }
+                        placeholder="e.g., Pioneer Access"
+                        required
+                      />
+                    </div>
+
+                    {/* Max Uses */}
+                    <div className="space-y-2">
+                      <Label>Max Uses Per Code (optional)</Label>
+                      <Input
+                        type="number"
+                        value={bulkFormData.max_uses}
+                        onChange={(e) =>
+                          setBulkFormData({ ...bulkFormData, max_uses: e.target.value })
+                        }
+                        placeholder="Leave empty for unlimited"
+                        min="1"
+                      />
+                    </div>
+
+                    {/* Expires At */}
+                    <div className="space-y-2">
+                      <Label>Expires At (optional)</Label>
+                      <Input
+                        type="datetime-local"
+                        value={bulkFormData.expires_at}
+                        onChange={(e) =>
+                          setBulkFormData({ ...bulkFormData, expires_at: e.target.value })
+                        }
+                      />
+                    </div>
+
+                    {/* Notes */}
+                    <div className="space-y-2">
+                      <Label>Notes (optional)</Label>
+                      <Textarea
+                        value={bulkFormData.notes}
+                        onChange={(e) =>
+                          setBulkFormData({ ...bulkFormData, notes: e.target.value })
+                        }
+                        placeholder="Bulk generation campaign notes..."
+                        rows={2}
+                      />
+                    </div>
+
+                    <Button
+                      type="submit"
+                      className="w-full bg-gradient-gold hover:opacity-90"
+                    >
+                      <Zap className="mr-2 h-4 w-4" />
+                      Generate {bulkFormData.count} Codes
+                    </Button>
+                  </form>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center py-6">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                        <Zap className="w-8 h-8 text-primary" />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">
+                        {generatedCodes.length} Codes Generated!
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Your beta codes have been created successfully
+                      </p>
+                    </div>
+
+                    <div className="bg-muted/50 rounded-lg p-4 max-h-48 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-2">
+                        {generatedCodes.map((code, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleCopyCode(code)}
+                            className="font-mono text-xs p-2 rounded bg-background hover:bg-primary/10 transition-colors text-left"
+                          >
+                            {code}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleExportCSV}
+                        className="flex-1 bg-gradient-gold hover:opacity-90"
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Export as CSV
+                      </Button>
+                      <Button
+                        onClick={handleCloseBulkDialog}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-gold hover:opacity-90">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Create New Code
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Create New Beta Code</DialogTitle>
@@ -312,6 +600,7 @@ export default function AdminBetaCodes() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Table */}
