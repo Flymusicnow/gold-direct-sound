@@ -16,6 +16,10 @@ import { toast } from "sonner";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { useAchievements } from "@/hooks/useAchievements";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Lock, Crown } from "lucide-react";
+import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +40,8 @@ interface VideoPost {
   video_url: string;
   caption: string | null;
   created_at: string;
+  is_supporter_only: boolean;
+  required_tier: string | null;
 }
 
 const MAX_VIDEO_SIZE = 40 * 1024 * 1024; // 40MB
@@ -73,6 +79,8 @@ export default function StudioVideos() {
   const [showLockedModal, setShowLockedModal] = useState(false);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
+  const [isSupporterOnly, setIsSupporterOnly] = useState(false);
+  const [requiredTier, setRequiredTier] = useState<string>("basic");
 
   useEffect(() => {
     if (!user) {
@@ -289,6 +297,8 @@ export default function StudioVideos() {
           artist_id: artistProfile.id,
           video_url: urlData.publicUrl,
           caption: caption.trim() || null,
+          is_supporter_only: isSupporterOnly,
+          required_tier: isSupporterOnly ? requiredTier : null,
         });
 
       if (insertError) throw insertError;
@@ -313,6 +323,8 @@ export default function StudioVideos() {
         setPreviewUrl(null);
         setThumbnailUrl(null);
         setShowSuccess(false);
+        setIsSupporterOnly(false);
+        setRequiredTier("basic");
         fetchData();
       }, 2000);
     } catch (error) {
@@ -578,6 +590,47 @@ export default function StudioVideos() {
                 </div>
               )}
 
+              {/* Supporter Exclusive Settings */}
+              <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="video-supporter-only" className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      Supporter Exclusive
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Restrict this video to supporters only
+                    </p>
+                  </div>
+                  <Switch
+                    id="video-supporter-only"
+                    checked={isSupporterOnly}
+                    onCheckedChange={setIsSupporterOnly}
+                    disabled={uploading}
+                  />
+                </div>
+                
+                {isSupporterOnly && (
+                  <div>
+                    <Label htmlFor="video-required-tier">Required Tier</Label>
+                    <Select value={requiredTier} onValueChange={setRequiredTier} disabled={uploading}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic Supporter (49 kr/mo)</SelectItem>
+                        <SelectItem value="gold">
+                          <div className="flex items-center gap-2">
+                            <Crown className="h-4 w-4 text-primary" />
+                            Gold Supporter (99 kr/mo)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
               {/* Upload Button */}
               <Button
                 onClick={handleUpload}
@@ -612,9 +665,14 @@ export default function StudioVideos() {
                       className="w-full aspect-video bg-black"
                     />
                     <div className="p-4 space-y-3">
-                      {video.caption && (
-                        <p className="text-sm text-foreground/80">{video.caption}</p>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {video.caption && (
+                          <p className="text-sm text-foreground/80 flex-1">{video.caption}</p>
+                        )}
+                        {video.is_supporter_only && video.required_tier && (
+                          <SupporterExclusiveBadge tier={video.required_tier as "basic" | "gold"} />
+                        )}
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">
                           {new Date(video.created_at).toLocaleDateString()}

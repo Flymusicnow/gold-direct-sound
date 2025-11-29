@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Share2, Video } from "lucide-react";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
 import { VideoFullscreenModal } from "./VideoFullscreenModal";
 import { EmptyStateCard } from "./EmptyStateCard";
+import { useSupporterAccess } from "@/hooks/useSupporterAccess";
+import { LockedContentOverlay } from "@/components/supporter/LockedContentOverlay";
+import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
+import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 
 interface VideoPost {
   id: string;
   video_url: string;
   caption: string | null;
   created_at: string;
+  is_supporter_only: boolean;
+  required_tier: string | null;
 }
 
 interface ArtistVideosSectionProps {
@@ -20,6 +27,7 @@ interface ArtistVideosSectionProps {
 }
 
 export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectionProps) {
+  const { user } = useAuth();
   const [videos, setVideos] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
@@ -27,6 +35,7 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
     index: number;
     url: string;
   } | null>(null);
+  const [showSupporterModal, setShowSupporterModal] = useState(false);
 
   useEffect(() => {
     fetchVideos();
@@ -86,38 +95,48 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map((video, index) => (
-          <div key={video.id} className="space-y-3">
-            <div
-              className="cursor-pointer group relative"
-              onClick={() => handleOpenFullscreen(index)}
-            >
-              <PremiumVideoPlayer
-                videoUrl={video.video_url}
-                autoPlay={false}
-                loop
-                showFrame
-              />
-              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl" />
-            </div>
+        {videos.map((video, index) => {
+          const { hasAccess, loading: accessLoading } = useSupporterAccess(
+            artistId,
+            video.is_supporter_only ? video.required_tier : null
+          );
 
-            {video.caption && (
-              <p className="text-sm text-muted-foreground px-2">{video.caption}</p>
-            )}
+          return (
+            <div key={video.id} className="space-y-3">
+              <div className="cursor-pointer group relative" onClick={() => hasAccess && handleOpenFullscreen(index)}>
+                <PremiumVideoPlayer videoUrl={video.video_url} autoPlay={false} loop showFrame />
+                
+                {video.is_supporter_only && !hasAccess && !accessLoading && (
+                  <LockedContentOverlay
+                    requiredTier={video.required_tier as "basic" | "gold"}
+                    onUnlock={() => setShowSupporterModal(true)}
+                  />
+                )}
+                
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl" />
+              </div>
 
-            <div className="flex justify-end px-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShareVideo(video)}
-                className="text-primary hover:text-primary/80"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+              <div className="flex items-center gap-2">
+                {video.caption && <p className="text-sm text-muted-foreground px-2 flex-1">{video.caption}</p>}
+                {video.is_supporter_only && video.required_tier && (
+                  <SupporterExclusiveBadge tier={video.required_tier as "basic" | "gold"} className="flex-shrink-0" />
+                )}
+              </div>
+
+              <div className="flex justify-end px-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShareVideo(video)}
+                  className="text-primary hover:text-primary/80"
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {shareVideo && (
@@ -131,6 +150,13 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
           }}
         />
       )}
+
+      <BecomeASupporterModal
+        open={showSupporterModal}
+        onOpenChange={setShowSupporterModal}
+        artistId={artistId}
+        artistName={artistName}
+      />
 
       {fullscreenVideo && (
         <VideoFullscreenModal

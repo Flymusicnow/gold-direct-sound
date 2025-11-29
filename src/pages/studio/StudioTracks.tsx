@@ -13,10 +13,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, UserPlus } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus, Lock, Crown } from "lucide-react";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { useAchievements } from "@/hooks/useAchievements";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 
 interface Track {
   id: string;
@@ -24,6 +27,8 @@ interface Track {
   description: string | null;
   audio_url: string;
   cover_url: string | null;
+  is_supporter_only: boolean;
+  required_tier: string | null;
 }
 
 export default function StudioTracks() {
@@ -36,6 +41,8 @@ export default function StudioTracks() {
   const [trackDescription, setTrackDescription] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [isSupporterOnly, setIsSupporterOnly] = useState(false);
+  const [requiredTier, setRequiredTier] = useState<string>("basic");
   const [showLockedModal, setShowLockedModal] = useState(false);
   const [showCollaboratorSelector, setShowCollaboratorSelector] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
@@ -131,6 +138,8 @@ export default function StudioTracks() {
         description: trackDescription || null,
         audio_url: publicUrl,
         cover_url: coverUrl,
+        is_supporter_only: isSupporterOnly,
+        required_tier: isSupporterOnly ? requiredTier : null,
       });
 
       if (insertError) throw insertError;
@@ -139,6 +148,8 @@ export default function StudioTracks() {
       setTrackTitle("");
       setTrackDescription("");
       setCoverFile(null);
+      setIsSupporterOnly(false);
+      setRequiredTier("basic");
       form.reset();
       
       // Update onboarding progress
@@ -237,6 +248,47 @@ export default function StudioTracks() {
                   required
                 />
               </div>
+              
+              {/* Supporter Exclusive Settings */}
+              <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="supporter-only" className="flex items-center gap-2">
+                      <Lock className="h-4 w-4 text-primary" />
+                      Supporter Exclusive
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Restrict this track to supporters only
+                    </p>
+                  </div>
+                  <Switch
+                    id="supporter-only"
+                    checked={isSupporterOnly}
+                    onCheckedChange={setIsSupporterOnly}
+                  />
+                </div>
+                
+                {isSupporterOnly && (
+                  <div>
+                    <Label htmlFor="required-tier">Required Tier</Label>
+                    <Select value={requiredTier} onValueChange={setRequiredTier}>
+                      <SelectTrigger className="mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic Supporter (49 kr/mo)</SelectItem>
+                        <SelectItem value="gold">
+                          <div className="flex items-center gap-2">
+                            <Crown className="h-4 w-4 text-primary" />
+                            Gold Supporter (99 kr/mo)
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              
               <Button type="submit" disabled={uploading} className="w-full">
                 <Upload className="mr-2 h-4 w-4" />
                 {uploading ? "Uploading..." : "Upload Track"}
@@ -270,7 +322,12 @@ export default function StudioTracks() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{track.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{track.title}</p>
+                        {track.is_supporter_only && track.required_tier && (
+                          <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
+                        )}
+                      </div>
                       {track.description && (
                         <p className="text-sm text-muted-foreground truncate">{track.description}</p>
                       )}
