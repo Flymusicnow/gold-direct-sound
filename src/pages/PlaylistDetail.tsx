@@ -149,7 +149,7 @@ export default function PlaylistDetail() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <Button
