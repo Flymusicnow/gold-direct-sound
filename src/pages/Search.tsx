@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search as SearchIcon, MapPin, Music2, Mic2 } from "lucide-react";
 import { toast } from "sonner";
 import { TrackCard } from "@/components/TrackCard";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 
 interface Artist {
   id: string;
@@ -37,12 +37,12 @@ interface Track {
 
 export default function Search() {
   const navigate = useNavigate();
+  const { playNow } = useFlightdeck();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [artistResults, setArtistResults] = useState<Artist[]>([]);
   const [trackResults, setTrackResults] = useState<Track[]>([]);
   const [loading, setLoading] = useState(false);
-  const [currentTrack, setCurrentTrack] = useState<{ url: string; title: string; artist: string } | null>(null);
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -257,10 +257,15 @@ export default function Search() {
                       track={track}
                       artistName={track.artist_profiles.artist_name}
                       isLiked={likedTrackIds.has(track.id)}
-                      onPlay={() => setCurrentTrack({
-                        url: track.audio_url,
+                      onPlay={() => playNow({
+                        id: track.id,
+                        type: 'track',
                         title: track.title,
-                        artist: track.artist_profiles.artist_name
+                        artistId: track.artist_profiles.id,
+                        artistName: track.artist_profiles.artist_name,
+                        artistUserId: track.artist_profiles.user_id,
+                        mediaUrl: track.audio_url,
+                        coverUrl: track.cover_url || undefined,
                       })}
                       onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
                     />
@@ -271,15 +276,6 @@ export default function Search() {
           </div>
         )}
       </div>
-
-      {/* Audio Player */}
-      {currentTrack && (
-        <AudioPlayer
-          audioUrl={currentTrack.url}
-          title={currentTrack.title}
-          artistName={currentTrack.artist}
-        />
-      )}
     </div>
   );
 }

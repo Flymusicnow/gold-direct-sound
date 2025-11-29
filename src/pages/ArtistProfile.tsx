@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AudioPlayer } from "@/components/AudioPlayer";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { Award, Music, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -50,9 +50,9 @@ interface Track {
 export default function ArtistProfile() {
   const { userId } = useParams();
   const { user } = useAuth();
+  const { playNow } = useFlightdeck();
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -370,7 +370,16 @@ export default function ArtistProfile() {
                         track={track}
                         artistName={artist.artist_name}
                         isLiked={likedTracks[track.id]}
-                        onPlay={() => setCurrentTrack(track)}
+                        onPlay={() => playNow({
+                          id: track.id,
+                          type: 'track',
+                          title: track.title,
+                          artistId: artist.id,
+                          artistName: artist.artist_name,
+                          artistUserId: artist.user_id,
+                          mediaUrl: track.audio_url,
+                          coverUrl: track.cover_url || undefined,
+                        })}
                         onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
                         showCollaborators={true}
                       />
@@ -455,16 +464,6 @@ export default function ArtistProfile() {
         artistName={artist.artist_name}
         shareUrl={window.location.href}
       />
-
-      {/* Audio Player */}
-      {currentTrack && (
-        <AudioPlayer
-          audioUrl={currentTrack.audio_url}
-          title={currentTrack.title}
-          artistName={artist.artist_name}
-          coverUrl={currentTrack.cover_url || undefined}
-        />
-      )}
     </div>
   );
 }
