@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -117,8 +118,10 @@ export default function AdminSpotlight() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 pt-24 pb-8">
+    <>
+      <MobileAdminNav />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 pt-24 pb-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <Sparkles className="h-8 w-8 text-[#E8BF1A]" />
@@ -229,7 +232,8 @@ export default function AdminSpotlight() {
             <p className="text-muted-foreground">No campaigns yet. Create your first one!</p>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

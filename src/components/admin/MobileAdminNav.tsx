@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Menu, Video, FolderOpen, Sparkles, Users, ShoppingBag, Radio, Star, Crown } from "lucide-react";
+import { LayoutDashboard, Sparkles, Key, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,23 +11,12 @@ import {
 } from "@/components/ui/sheet";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
-  { icon: User, label: "Profile", path: "/studio/profile" },
-  { icon: Music, label: "Tracks", path: "/studio/tracks" },
-  { icon: Video, label: "Videos", path: "/studio/videos" },
-  { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
-  { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
-  { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
-  { icon: Radio, label: "Live", path: "/studio/live" },
-  { icon: Calendar, label: "Events", path: "/studio/events" },
-  { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
-  { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
-  { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
-  { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
-  { icon: Crown, label: "Membership", path: "/studio/subscription" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+  { icon: Sparkles, label: "Spotlight", path: "/admin/spotlight" },
+  { icon: Key, label: "Beta Codes", path: "/admin/beta-codes" },
 ];
 
-export function MobileStudioNav() {
+export function MobileAdminNav() {
   const location = useLocation();
 
   return (
@@ -48,14 +37,14 @@ export function MobileStudioNav() {
               <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
             </div>
             <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Studio
+              Admin Panel
             </SheetTitle>
           </div>
         </SheetHeader>
 
         <nav className="space-y-1">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
             const Icon = item.icon;
 
             return (

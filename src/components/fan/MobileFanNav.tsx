@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Menu, Video, FolderOpen, Sparkles, Users, ShoppingBag, Radio, Star, Crown } from "lucide-react";
+import { Home, Rss, Users, ListMusic, Activity, Settings, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,23 +11,15 @@ import {
 } from "@/components/ui/sheet";
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
-  { icon: User, label: "Profile", path: "/studio/profile" },
-  { icon: Music, label: "Tracks", path: "/studio/tracks" },
-  { icon: Video, label: "Videos", path: "/studio/videos" },
-  { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
-  { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
-  { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
-  { icon: Radio, label: "Live", path: "/studio/live" },
-  { icon: Calendar, label: "Events", path: "/studio/events" },
-  { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
-  { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
-  { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
-  { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
-  { icon: Crown, label: "Membership", path: "/studio/subscription" },
+  { icon: Home, label: "Dashboard", path: "/fan" },
+  { icon: Rss, label: "Feed", path: "/fan/feed" },
+  { icon: Users, label: "My Artists", path: "/fan/artists" },
+  { icon: ListMusic, label: "Playlists", path: "/fan/playlists" },
+  { icon: Activity, label: "Activity", path: "/fan/activity" },
+  { icon: Settings, label: "Settings", path: "/fan/settings" },
 ];
 
-export function MobileStudioNav() {
+export function MobileFanNav() {
   const location = useLocation();
 
   return (
@@ -45,10 +37,10 @@ export function MobileStudioNav() {
         <SheetHeader className="mb-6 pb-4 border-b border-border/30">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-              <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+              <Home className="h-4 w-4 text-primary-foreground" />
             </div>
             <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Studio
+              Fan Portal
             </SheetTitle>
           </div>
         </SheetHeader>

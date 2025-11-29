@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,8 +49,10 @@ export default function FanSettings() {
   };
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-2xl">
+    <>
+      <MobileFanNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-2xl">
         <Button
           variant="ghost"
           onClick={() => navigate('/fan')}
@@ -106,7 +109,8 @@ export default function FanSettings() {
             </Button>
           </form>
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

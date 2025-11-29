@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -131,8 +132,10 @@ export default function AdminSpotlightEntries() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <>
+      <MobileAdminNav />
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
         <Button
           variant="ghost"
           onClick={() => navigate('/admin/spotlight')}
@@ -209,7 +212,8 @@ export default function AdminSpotlightEntries() {
             <p className="text-muted-foreground">No entries found</p>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
