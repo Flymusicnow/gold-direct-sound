@@ -731,6 +731,39 @@ export type Database = {
           },
         ]
       }
+      fan_taste_profile: {
+        Row: {
+          created_at: string | null
+          fan_user_id: string
+          genres: Json | null
+          id: string
+          last_updated: string | null
+          moods: Json | null
+          top_artists: Json | null
+          top_tags: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          fan_user_id: string
+          genres?: Json | null
+          id?: string
+          last_updated?: string | null
+          moods?: Json | null
+          top_artists?: Json | null
+          top_tags?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          fan_user_id?: string
+          genres?: Json | null
+          id?: string
+          last_updated?: string | null
+          moods?: Json | null
+          top_artists?: Json | null
+          top_tags?: Json | null
+        }
+        Relationships: []
+      }
       fan_testimonials: {
         Row: {
           artist_id: string
@@ -1490,6 +1523,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_taste_score: {
+        Args: {
+          _artist_id: string
+          _fan_user_id: string
+          _genre: string
+          _tags?: string[]
+        }
+        Returns: number
+      }
       generate_artist_referral_code: {
         Args: { _user_id: string }
         Returns: string
@@ -1580,6 +1622,16 @@ export type Database = {
       redeem_referral_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
+      }
+      update_taste_profile: {
+        Args: {
+          _artist_id: string
+          _fan_user_id: string
+          _interaction: string
+          _track_id?: string
+          _video_id?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
