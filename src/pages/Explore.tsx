@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Artist {
   id: string;
@@ -19,6 +21,7 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchArtists();
@@ -53,7 +56,8 @@ export default function Explore() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
+    <>
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
       <div className="container mx-auto max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">
@@ -113,6 +117,8 @@ export default function Explore() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarFan />}
+    </>
   );
 }

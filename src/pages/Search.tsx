@@ -16,12 +16,15 @@ import { SearchSuggestions } from '@/components/search/SearchSuggestions';
 import { RecentSearches } from '@/components/search/RecentSearches';
 import { ContentOverlay } from '@/components/fan/ContentOverlay';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
+import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type Category = 'all' | 'tracks' | 'artists' | 'videos' | 'spotlight' | 'stacks';
 
 export default function Search() {
   const navigate = useNavigate();
   const { playNow } = useFlightdeck();
+  const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   
@@ -142,7 +145,7 @@ export default function Search() {
 
   return (
     <>
-      <div className="min-h-screen pb-24 md:pb-8">
+      <div className="min-h-screen pb-32 md:pb-28">
         {/* Sticky Search Header */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border pt-24 pb-4">
           <div className="container mx-auto max-w-6xl px-4">
@@ -397,6 +400,8 @@ export default function Search() {
           )}
         </div>
       </div>
+
+      {isMobile && <BottomNavBarFan />}
 
       {/* Content Overlay */}
       {overlayItem && (
