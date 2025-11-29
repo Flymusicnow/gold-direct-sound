@@ -500,6 +500,7 @@ export default function ArtistProfile() {
         onClose={() => setShowShareModal(false)}
         artistName={artist.artist_name}
         shareUrl={window.location.href}
+        artistId={artist.id}
       />
     </div>
   );
