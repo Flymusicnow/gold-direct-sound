@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
@@ -60,8 +61,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <FlightdeckProvider>
-            <SwipeBackProvider>
+          <FanTasteProvider>
+            <FlightdeckProvider>
+              <SwipeBackProvider>
               <Navigation />
               <Routes>
             <Route path="/" element={<Home />} />
@@ -194,9 +196,10 @@ const App = () => (
             <Route path="/discover" element={<Discover />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <FlightdeckPlayer />
-          </SwipeBackProvider>
-        </FlightdeckProvider>
+              <FlightdeckPlayer />
+              </SwipeBackProvider>
+            </FlightdeckProvider>
+          </FanTasteProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
