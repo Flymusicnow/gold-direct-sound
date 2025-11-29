@@ -12,6 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { motion } from "framer-motion";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
@@ -88,7 +89,20 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
         </div>
 
         {/* Nav items - scrollable */}
-        <nav className="flex-1 overflow-y-auto space-y-1 pb-safe">
+        <motion.nav 
+          className="flex-1 overflow-y-auto space-y-1 pb-safe"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05
+              }
+            }
+          }}
+        >
           {filteredItems.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
           ) : (
@@ -97,24 +111,38 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
               const Icon = item.icon;
 
               return (
-                <Link
+                <motion.div
                   key={item.path}
-                  to={item.path}
-                  onClick={handleNavigate}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                    isActive
-                      ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                  )}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0,
+                      transition: {
+                        duration: 0.3,
+                        ease: "easeOut"
+                      }
+                    }
+                  }}
                 >
-                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                  <span>{item.label}</span>
-                </Link>
+                  <Link
+                    to={item.path}
+                    onClick={handleNavigate}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                    <span>{item.label}</span>
+                  </Link>
+                </motion.div>
               );
             })
           )}
-        </nav>
+        </motion.nav>
       </div>
     );
   }
@@ -160,7 +188,20 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
           )}
         </div>
 
-        <nav className="space-y-1">
+        <motion.nav 
+          className="space-y-1"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.05
+              }
+            }
+          }}
+        >
           {filteredItems.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
           ) : (
@@ -169,24 +210,38 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
             const Icon = item.icon;
 
               return (
-                <Link
+                <motion.div
                   key={item.path}
-                  to={item.path}
-                  onClick={() => setSheetOpen(false)}
-                  className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                  isActive
-                    ? "border-primary bg-primary/10 text-primary font-semibold"
-                    : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                <span>{item.label}</span>
-                </Link>
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    visible: { 
+                      opacity: 1, 
+                      y: 0,
+                      transition: {
+                        duration: 0.3,
+                        ease: "easeOut"
+                      }
+                    }
+                  }}
+                >
+                  <Link
+                    to={item.path}
+                    onClick={() => setSheetOpen(false)}
+                    className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary font-semibold"
+                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                  <span>{item.label}</span>
+                  </Link>
+                </motion.div>
               );
             })
           )}
-        </nav>
+        </motion.nav>
       </SheetContent>
     </Sheet>
   );
