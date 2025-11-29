@@ -52,7 +52,7 @@ export function ArtistAchievementsCard() {
         </div>
 
         {/* Achievement Grid */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {achievements.map((achievement) => (
             <AchievementBadge
               key={achievement.type}
