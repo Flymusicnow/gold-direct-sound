@@ -143,7 +143,7 @@ export default function StudioVideoCollections() {
       <div className="flex-1 lg:ml-64">
         <MobileStudioNav />
 
-        <main className="container mx-auto px-4 py-8 pt-20 lg:pt-8">
+        <main className="container mx-auto px-4 py-8 pt-20 lg:pt-24">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Video Collections</h1>
