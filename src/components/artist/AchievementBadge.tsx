@@ -1,5 +1,5 @@
 import { formatDistanceToNow } from "date-fns";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -75,15 +75,13 @@ export function AchievementBadge({ icon, name, description, unlocked, unlockedAt
 
   // On desktop: use Tooltip (hover to show)
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          {badgeContent}
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[200px] border-primary/20">
-          {infoContent}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {badgeContent}
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[200px] border-primary/20">
+        {infoContent}
+      </TooltipContent>
+    </Tooltip>
   );
 }
