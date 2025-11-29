@@ -1494,6 +1494,77 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_for_you_feed: {
+        Args: { _limit?: number; _offset?: number; _user_id: string }
+        Returns: {
+          artist_avatar: string
+          artist_id: string
+          artist_name: string
+          artist_user_id: string
+          caption: string
+          content_id: string
+          content_type: string
+          cover_url: string
+          created_at: string
+          genre: string
+          media_url: string
+          score: number
+          spotlight_campaign_id: string
+          spotlight_entry_id: string
+          title: string
+        }[]
+      }
+      get_genre_content: {
+        Args: { _genre: string; _limit?: number }
+        Returns: {
+          artist_avatar: string
+          artist_id: string
+          artist_name: string
+          artist_user_id: string
+          content_id: string
+          content_type: string
+          cover_url: string
+          created_at: string
+          genre: string
+          media_url: string
+          title: string
+        }[]
+      }
+      get_rising_artists: {
+        Args: { _days?: number; _limit?: number }
+        Returns: {
+          artist_avatar: string
+          artist_id: string
+          artist_name: string
+          artist_user_id: string
+          created_at: string
+          follower_count: number
+          genre: string
+          new_followers: number
+          new_likes: number
+          rising_score: number
+          supporter_xp: number
+        }[]
+      }
+      get_trending_content: {
+        Args: { _hours?: number; _limit?: number }
+        Returns: {
+          artist_avatar: string
+          artist_id: string
+          artist_name: string
+          artist_user_id: string
+          content_id: string
+          content_type: string
+          cover_url: string
+          genre: string
+          likes: number
+          media_url: string
+          plays: number
+          spotlight_votes: number
+          title: string
+          trending_score: number
+        }[]
+      }
       has_user_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

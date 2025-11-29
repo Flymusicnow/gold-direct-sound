@@ -45,6 +45,7 @@ import FanPlaylists from "./pages/FanPlaylists";
 import PlaylistDetail from "./pages/PlaylistDetail";
 import FanSupporter from "./pages/FanSupporter";
 import Search from "./pages/Search";
+import Discover from "./pages/Discover";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -190,6 +191,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/search" element={<Search />} />
+            <Route path="/discover" element={<Discover />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <FlightdeckPlayer />
