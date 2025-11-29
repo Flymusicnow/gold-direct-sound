@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
+import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
 import { FlightdeckMiniQueue } from './FlightdeckMiniQueue';
 
 export function FlightdeckPlayer() {
@@ -21,6 +22,8 @@ export function FlightdeckPlayer() {
     queue,
     currentIndex,
   } = useFlightdeck();
+  
+  const { pauseAllVideos } = useVideoPlayback();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -49,11 +52,13 @@ export function FlightdeckPlayer() {
     if (!mediaElement) return;
 
     if (isPlaying) {
+      // Pause all videos when Flightdeck starts playing
+      pauseAllVideos();
       mediaElement.play().catch(console.error);
     } else {
       mediaElement.pause();
     }
-  }, [isPlaying, currentItem]);
+  }, [isPlaying, currentItem, pauseAllVideos]);
 
   // Handle volume changes
   useEffect(() => {
