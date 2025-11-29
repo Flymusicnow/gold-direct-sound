@@ -452,7 +452,7 @@ export default function AdminBetaCodes() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="min-h-screen pt-24 pb-8 px-4">
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
