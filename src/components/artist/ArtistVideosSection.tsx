@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
+import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
 import { Button } from "@/components/ui/button";
-import { Video, Share2 } from "lucide-react";
+import { Share2, Video } from "lucide-react";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
+import { VideoFullscreenModal } from "./VideoFullscreenModal";
+import { EmptyStateCard } from "./EmptyStateCard";
 
 interface VideoPost {
   id: string;
@@ -21,85 +23,98 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
   const [videos, setVideos] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
+  const [fullscreenVideo, setFullscreenVideo] = useState<{
+    index: number;
+    url: string;
+  } | null>(null);
 
   useEffect(() => {
     fetchVideos();
   }, [artistId]);
 
   const fetchVideos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("artist_video_posts")
-        .select("*")
-        .eq("artist_id", artistId)
-        .order("created_at", { ascending: false })
-        .limit(3);
+    const { data, error } = await supabase
+      .from("artist_video_posts")
+      .select("*")
+      .eq("artist_id", artistId)
+      .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setVideos(data || []);
-    } catch (error) {
-      console.error("Error fetching videos:", error);
-    } finally {
-      setLoading(false);
+    if (!error && data) {
+      setVideos(data);
     }
+    setLoading(false);
+  };
+
+  const handleOpenFullscreen = (index: number) => {
+    setFullscreenVideo({ index, url: videos[index].video_url });
+  };
+
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (!fullscreenVideo) return;
+
+    const newIndex =
+      direction === "prev"
+        ? Math.max(0, fullscreenVideo.index - 1)
+        : Math.min(videos.length - 1, fullscreenVideo.index + 1);
+
+    setFullscreenVideo({ index: newIndex, url: videos[newIndex].video_url });
   };
 
   if (loading) {
     return (
-      <div className="py-8">
-        <div className="flex items-center gap-2 mb-6">
-          <Video className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">Videos</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="aspect-video animate-pulse bg-muted" />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="aspect-[9/16] rounded-xl bg-muted animate-pulse" />
+        ))}
       </div>
     );
   }
 
   if (videos.length === 0) {
-    return null;
+    return (
+      <EmptyStateCard
+        icon={Video}
+        title="No Videos Yet"
+        description="This artist hasn't uploaded any videos yet. Check back soon!"
+        ctaText="Explore Other Artists"
+        ctaPath="/explore"
+        variant="gold"
+      />
+    );
   }
 
   return (
-    <div className="py-8">
-      <div className="flex items-center gap-2 mb-6">
-        <Video className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-bold">Videos</h2>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {videos.map((video) => (
-          <div 
-            key={video.id} 
-            className="video-card-gold-outer hover:shadow-lg transition-all"
-          >
-            <div className="video-card-gold-inner">
-              <video
-                src={video.video_url}
-                controls
-                className="w-full aspect-video bg-black"
-                preload="metadata"
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {videos.map((video, index) => (
+          <div key={video.id} className="space-y-3">
+            <div
+              className="cursor-pointer group relative"
+              onClick={() => handleOpenFullscreen(index)}
+            >
+              <PremiumVideoPlayer
+                videoUrl={video.video_url}
+                autoPlay={false}
+                loop
+                showFrame
               />
-              <div className="p-3 space-y-2">
-                {video.caption && (
-                  <p className="text-sm text-foreground/80 line-clamp-2">
-                    {video.caption}
-                  </p>
-                )}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShareVideo(video)}
-                  className="gap-2 w-full"
-                >
-                  <Share2 className="w-3 h-3" />
-                  Share Video
-                </Button>
-              </div>
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl" />
+            </div>
+
+            {video.caption && (
+              <p className="text-sm text-muted-foreground px-2">{video.caption}</p>
+            )}
+
+            <div className="flex justify-end px-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShareVideo(video)}
+                className="text-primary hover:text-primary/80"
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
             </div>
           </div>
         ))}
@@ -116,6 +131,17 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
           }}
         />
       )}
-    </div>
+
+      {fullscreenVideo && (
+        <VideoFullscreenModal
+          isOpen={!!fullscreenVideo}
+          onClose={() => setFullscreenVideo(null)}
+          currentVideoUrl={fullscreenVideo.url}
+          videos={videos}
+          currentIndex={fullscreenVideo.index}
+          onNavigate={handleNavigate}
+        />
+      )}
+    </>
   );
 }
