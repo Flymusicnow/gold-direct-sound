@@ -189,11 +189,36 @@ export default function StudioVideoCollections() {
         </main>
       </div>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-...
-        </DialogContent>
-      </Dialog>
+        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create Collection</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateCollection} className="space-y-4">
+              <div>
+                <Input
+                  placeholder="Collection name"
+                  value={newCollection.name}
+                  onChange={(e) => setNewCollection({ ...newCollection, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Textarea
+                  placeholder="Description (optional)"
+                  value={newCollection.description}
+                  onChange={(e) => setNewCollection({ ...newCollection, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Create Collection
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
+
       {isMobile && <BottomNavBarStudio />}
     </>
   );
