@@ -687,6 +687,50 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_support_scores: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          fan_user_id: string
+          id: string
+          level: string
+          paid_support_count: number | null
+          paid_support_value: number | null
+          score: number
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          fan_user_id: string
+          id?: string
+          level?: string
+          paid_support_count?: number | null
+          paid_support_value?: number | null
+          score?: number
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          fan_user_id?: string
+          id?: string
+          level?: string
+          paid_support_count?: number | null
+          paid_support_value?: number | null
+          score?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_support_scores_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fan_testimonials: {
         Row: {
           artist_id: string

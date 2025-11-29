@@ -4,16 +4,19 @@ import { Link, Instagram, Music2, Twitter } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useSupportScore } from "@/hooks/useSupportScore";
 
 interface ShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   artistName: string;
   shareUrl: string;
+  artistId?: string;
 }
 
-export const ShareModal = ({ isOpen, onClose, artistName, shareUrl }: ShareModalProps) => {
+export const ShareModal = ({ isOpen, onClose, artistName, shareUrl, artistId }: ShareModalProps) => {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   
   const shareUrlWithRef = user ? `${shareUrl}?ref=${user.id}` : shareUrl;
   const encodedUrl = encodeURIComponent(shareUrlWithRef);
@@ -22,6 +25,11 @@ export const ShareModal = ({ isOpen, onClose, artistName, shareUrl }: ShareModal
   const handleCopyLink = async () => {
     navigator.clipboard.writeText(shareUrlWithRef);
     toast.success("Link copied to clipboard!");
+    
+    // Update support score
+    if (artistId) {
+      updateSupportScore(artistId, 'share');
+    }
     
     // Update onboarding progress
     if (user) {

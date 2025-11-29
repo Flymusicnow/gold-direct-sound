@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { CommentItem } from "@/components/CommentItem";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { useSupportScore } from "@/hooks/useSupportScore";
 
 interface Comment {
   id: string;
@@ -27,6 +28,7 @@ interface CommentsSectionProps {
 
 export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProps) => {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
@@ -119,6 +121,9 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     } else {
       setNewComment("");
       toast.success("Comment posted!");
+      
+      // Update support score
+      updateSupportScore(artistId, 'comment');
     }
     setLoading(false);
   };

@@ -3,9 +3,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { useSupportScore } from './useSupportScore';
 
-export function useSpotlightVote(entryId: string, campaignId: string, initialVoted: boolean = false) {
+export function useSpotlightVote(entryId: string, campaignId: string, artistId: string, initialVoted: boolean = false) {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   const [hasVoted, setHasVoted] = useState(initialVoted);
   const [isVoting, setIsVoting] = useState(false);
 
@@ -38,6 +40,9 @@ export function useSpotlightVote(entryId: string, campaignId: string, initialVot
             campaign_id: campaignId,
           });
         setHasVoted(true);
+        
+        // Update support score
+        updateSupportScore(artistId, 'spotlight_vote');
         
         // Trigger gold star confetti animation
         confetti({

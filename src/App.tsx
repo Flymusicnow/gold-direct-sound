@@ -43,6 +43,7 @@ import SpotlightResults from "./pages/spotlight/SpotlightResults";
 import FanLeaderboard from "./pages/spotlight/FanLeaderboard";
 import FanPlaylists from "./pages/FanPlaylists";
 import PlaylistDetail from "./pages/PlaylistDetail";
+import FanSupporter from "./pages/FanSupporter";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
@@ -181,6 +182,11 @@ const App = () => (
             <Route path="/fan/playlists/:playlistId" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <PlaylistDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/supporter" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanSupporter />
               </ProtectedRoute>
             } />
             <Route path="/search" element={<Search />} />
