@@ -990,6 +990,54 @@ export type Database = {
           },
         ]
       }
+      track_collaborators: {
+        Row: {
+          collaborator_artist_id: string
+          created_at: string
+          id: string
+          invited_at: string
+          responded_at: string | null
+          role: string | null
+          status: string | null
+          track_id: string
+        }
+        Insert: {
+          collaborator_artist_id: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          responded_at?: string | null
+          role?: string | null
+          status?: string | null
+          track_id: string
+        }
+        Update: {
+          collaborator_artist_id?: string
+          created_at?: string
+          id?: string
+          invited_at?: string
+          responded_at?: string | null
+          role?: string | null
+          status?: string | null
+          track_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_collaborators_collaborator_artist_id_fkey"
+            columns: ["collaborator_artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_collaborators_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tracks: {
         Row: {
           artist_id: string

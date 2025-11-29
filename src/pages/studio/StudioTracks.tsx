@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2 } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus } from "lucide-react";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { useAchievements } from "@/hooks/useAchievements";
+import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 
 interface Track {
   id: string;
@@ -34,6 +35,8 @@ export default function StudioTracks() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showLockedModal, setShowLockedModal] = useState(false);
+  const [showCollaboratorSelector, setShowCollaboratorSelector] = useState(false);
+  const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
 
   useEffect(() => {
@@ -268,14 +271,28 @@ export default function StudioTracks() {
                         <p className="text-sm text-muted-foreground truncate">{track.description}</p>
                       )}
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDeleteTrack(track.id)}
-                      className="flex-shrink-0 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedTrackId(track.id);
+                          setShowCollaboratorSelector(true);
+                        }}
+                        className="flex-shrink-0 gap-2"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Add Collaborator
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleDeleteTrack(track.id)}
+                        className="flex-shrink-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -293,6 +310,16 @@ export default function StudioTracks() {
         tierRequired="gold"
         onSuccess={fetchData}
       />
+
+      {/* Collaborator Selector */}
+      {selectedTrackId && (
+        <CollaboratorSelector
+          open={showCollaboratorSelector}
+          onOpenChange={setShowCollaboratorSelector}
+          trackId={selectedTrackId}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { PremiumTrackCard } from "@/components/artist/PremiumTrackCard";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { ArtistStatsCard } from "@/components/artist/ArtistStatsCard";
 import { FanTestimonialsSection } from "@/components/artist/FanTestimonialsSection";
+import { CrossPromoteSection } from "@/components/artist/CrossPromoteSection";
 
 interface Artist {
   id: string;
@@ -363,6 +364,7 @@ export default function ArtistProfile() {
                         isLiked={likedTracks[track.id]}
                         onPlay={() => setCurrentTrack(track)}
                         onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                        showCollaborators={true}
                       />
                     ))}
                   </div>
@@ -421,6 +423,11 @@ export default function ArtistProfile() {
       {/* Fan Testimonials Section */}
       <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
         <FanTestimonialsSection artistId={artist.id} />
+      </div>
+
+      {/* Cross Promotion Section */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
+        <CrossPromoteSection artistId={artist.id} />
       </div>
 
       {/* Similar Artists Section */}
