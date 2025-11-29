@@ -81,10 +81,22 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       .select("id, full_name")
       .in("id", userIds);
 
+    // Fetch supporter levels
+    const { data: supportScores } = await supabase
+      .from('fan_support_scores')
+      .select('fan_user_id, level')
+      .eq('artist_id', artistId)
+      .in('fan_user_id', userIds);
+
+    const supporterLevels = new Map(
+      supportScores?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
+    );
+
     // Merge profiles with comments
     const commentsWithProfiles = commentsData.map((comment) => ({
       ...comment,
       profiles: profilesData?.find((p) => p.id === comment.user_id) || { full_name: null },
+      supporterLevel: supporterLevels.get(comment.user_id) || 'none',
     }));
 
     let sortedData = commentsWithProfiles;
@@ -94,7 +106,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       sortedData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
 
-    setComments(sortedData);
+    setComments(sortedData as any);
   };
 
   const handleSubmit = async () => {
@@ -184,6 +196,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
               currentUserId={user?.id}
               artistId={artistId}
               isArtistComment={comment.user_id === currentUserId}
+              supporterLevel={(comment as any).supporterLevel || 'none'}
             />
           ))
         )}
