@@ -329,6 +329,39 @@ export type Database = {
         }
         Relationships: []
       }
+      artist_payouts: {
+        Row: {
+          amount_due: number | null
+          amount_paid: number | null
+          artist_user_id: string
+          created_at: string | null
+          id: string
+          last_payout_at: string | null
+          stripe_account_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          artist_user_id: string
+          created_at?: string | null
+          id?: string
+          last_payout_at?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          amount_due?: number | null
+          amount_paid?: number | null
+          artist_user_id?: string
+          created_at?: string | null
+          id?: string
+          last_payout_at?: string | null
+          stripe_account_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       artist_posts: {
         Row: {
           artist_id: string
@@ -1200,6 +1233,59 @@ export type Database = {
             columns: ["fan_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supporter_subscriptions: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          fan_user_id: string
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          total_paid: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          fan_user_id: string
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier: string
+          total_paid?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          fan_user_id?: string
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          total_paid?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supporter_subscriptions_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
             referencedColumns: ["id"]
           },
         ]
