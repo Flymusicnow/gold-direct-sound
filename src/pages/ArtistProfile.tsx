@@ -21,6 +21,8 @@ import { FanTestimonialsSection } from "@/components/artist/FanTestimonialsSecti
 import { CrossPromoteSection } from "@/components/artist/CrossPromoteSection";
 import { MerchSection } from "@/components/artist/MerchSection";
 import TopSupportersCard from "@/components/supporter/TopSupportersCard";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Artist {
   id: string;
@@ -52,6 +54,7 @@ export default function ArtistProfile() {
   const { userId } = useParams();
   const { user } = useAuth();
   const { playNow } = useFlightdeck();
+  const isMobile = useIsMobile();
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -335,7 +338,8 @@ export default function ArtistProfile() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-32">
+    <>
+      <div className="min-h-screen pt-16 pb-32 md:pb-28">
       {/* Premium Hero Section */}
       <ArtistHeroSection
         artist={artist}
@@ -502,6 +506,8 @@ export default function ArtistProfile() {
         shareUrl={window.location.href}
         artistId={artist.id}
       />
-    </div>
+      </div>
+      {isMobile && <BottomNavBarFan />}
+    </>
   );
 }
