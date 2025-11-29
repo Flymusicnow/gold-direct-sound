@@ -119,6 +119,12 @@ All colors MUST be HSL.
     background-color: hsl(0 0% 6%) !important;
   }
 
+  /* Search 2.0 - Gold focus ring for search input */
+  .search-input-gold:focus {
+    ring-color: hsl(45 82% 51%);
+    border-color: hsl(45 82% 51%);
+  }
+
   /* Premium gold button - metallic fill with readable text */
   .btn-gold-premium {
     position: relative;
