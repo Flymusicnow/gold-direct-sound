@@ -101,6 +101,7 @@ export type Database = {
         Row: {
           badge_name: string | null
           code_id: string
+          code_used: string | null
           id: string
           redeemed_at: string | null
           referral_bonus_tier: string | null
@@ -110,6 +111,7 @@ export type Database = {
         Insert: {
           badge_name?: string | null
           code_id: string
+          code_used?: string | null
           id?: string
           redeemed_at?: string | null
           referral_bonus_tier?: string | null
@@ -119,6 +121,7 @@ export type Database = {
         Update: {
           badge_name?: string | null
           code_id?: string
+          code_used?: string | null
           id?: string
           redeemed_at?: string | null
           referral_bonus_tier?: string | null
@@ -435,34 +438,46 @@ export type Database = {
       }
       beta_access_codes: {
         Row: {
+          badge_name: string
           code: string
           created_at: string | null
+          created_by: string | null
           current_uses: number | null
           description: string | null
           expires_at: string | null
           id: string
           is_active: boolean | null
           max_uses: number | null
+          notes: string | null
+          type: string
         }
         Insert: {
+          badge_name?: string
           code: string
           created_at?: string | null
+          created_by?: string | null
           current_uses?: number | null
           description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          notes?: string | null
+          type?: string
         }
         Update: {
+          badge_name?: string
           code?: string
           created_at?: string | null
+          created_by?: string | null
           current_uses?: number | null
           description?: string | null
           expires_at?: string | null
           id?: string
           is_active?: boolean | null
           max_uses?: number | null
+          notes?: string | null
+          type?: string
         }
         Relationships: []
       }
