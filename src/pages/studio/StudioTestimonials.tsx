@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,7 @@ export default function StudioTestimonials() {
   const [loading, setLoading] = useState(true);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -187,13 +190,14 @@ export default function StudioTestimonials() {
   const rejectedTestimonials = testimonials.filter((t) => t.status === "rejected");
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <StudioSidebar />
+    <>
+      <div className="flex min-h-screen bg-background">
+        <StudioSidebar />
 
-      <div className="flex-1 lg:ml-64">
-        <MobileStudioNav />
+        <div className="flex-1 lg:ml-64">
+          <MobileStudioNav />
 
-        <main className="container mx-auto px-4 py-8 pt-20 lg:pt-24">
+          <main className="container mx-auto px-4 py-8 pt-20 lg:pt-24 pb-20 md:pb-8">
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Fan Testimonials</h1>
             <p className="text-muted-foreground">
@@ -404,6 +408,8 @@ export default function StudioTestimonials() {
           )}
         </main>
       </div>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -52,6 +54,7 @@ export default function PlaylistDetail() {
     title: string;
     artistName: string;
   } | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!playlistId) return;
@@ -150,7 +153,7 @@ export default function PlaylistDetail() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4">
+      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
         <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <Button
@@ -271,6 +274,7 @@ export default function PlaylistDetail() {
 
         {currentTrack && <AudioPlayer {...currentTrack} />}
       </div>
+      {isMobile && <BottomNavBarFan />}
     </>
   );
 }

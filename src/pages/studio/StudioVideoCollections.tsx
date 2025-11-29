@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +35,7 @@ export default function StudioVideoCollections() {
     name: "",
     description: "",
   });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -137,13 +140,14 @@ export default function StudioVideoCollections() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <StudioSidebar />
+    <>
+      <div className="flex min-h-screen bg-background">
+        <StudioSidebar />
 
-      <div className="flex-1 lg:ml-64">
-        <MobileStudioNav />
+        <div className="flex-1 lg:ml-64">
+          <MobileStudioNav />
 
-        <main className="container mx-auto px-4 py-8 pt-20 lg:pt-24">
+          <main className="container mx-auto px-4 py-8 pt-20 lg:pt-24 pb-20 md:pb-8">
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold mb-2">Video Collections</h1>
@@ -186,52 +190,11 @@ export default function StudioVideoCollections() {
       </div>
 
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create Video Collection</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateCollection} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Collection Name *
-              </label>
-              <Input
-                value={newCollection.name}
-                onChange={(e) =>
-                  setNewCollection({ ...newCollection, name: e.target.value })
-                }
-                placeholder="e.g., Behind The Scenes"
-                required
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Description
-              </label>
-              <Textarea
-                value={newCollection.description}
-                onChange={(e) =>
-                  setNewCollection({ ...newCollection, description: e.target.value })
-                }
-                placeholder="Describe what this collection is about..."
-                rows={3}
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowCreateDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!newCollection.name.trim()}>
-                Create Collection
-              </Button>
-            </div>
-          </form>
+...
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

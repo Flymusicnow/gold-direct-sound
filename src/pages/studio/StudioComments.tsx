@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +37,7 @@ export default function StudioComments() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -112,11 +115,12 @@ export default function StudioComments() {
   }
 
   return (
-    <div className="flex min-h-screen pt-16">
-      <StudioSidebar />
-      <MobileStudioNav />
-      
-      <main className="flex-1 p-4 md:p-8">
+    <>
+      <div className="flex min-h-screen pt-16">
+        <StudioSidebar />
+        <MobileStudioNav />
+        
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
@@ -215,6 +219,8 @@ export default function StudioComments() {
           )}
         </div>
       </main>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

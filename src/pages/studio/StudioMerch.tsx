@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag } from "lucide-react";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MerchProduct {
   id: string;
@@ -26,6 +28,7 @@ export default function StudioMerch() {
   const [products, setProducts] = useState<MerchProduct[]>([]);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (user) {
@@ -108,11 +111,12 @@ export default function StudioMerch() {
   }
 
   return (
-    <div className="flex min-h-screen w-full">
-      <StudioSidebar />
-      <MobileStudioNav />
-      <div className="flex-1 pt-16 md:pt-0">
-        <div className="p-6 md:p-8">
+    <>
+      <div className="flex min-h-screen w-full">
+        <StudioSidebar />
+        <MobileStudioNav />
+        <div className="flex-1 pt-16 md:pt-0">
+          <div className="p-6 md:p-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -166,6 +170,8 @@ export default function StudioMerch() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

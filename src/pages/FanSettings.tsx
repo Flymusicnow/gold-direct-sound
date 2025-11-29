@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +17,7 @@ export default function FanSettings() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -51,7 +54,7 @@ export default function FanSettings() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4">
+      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
         <div className="container mx-auto max-w-2xl">
         <Button
           variant="ghost"
@@ -111,6 +114,7 @@ export default function FanSettings() {
         </Card>
         </div>
       </div>
+      {isMobile && <BottomNavBarFan />}
     </>
   );
 }

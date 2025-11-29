@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
+import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -24,6 +26,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [pendingArtists, setPendingArtists] = useState<PendingArtist[]>([]);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -93,7 +96,7 @@ export default function AdminDashboard() {
   return (
     <>
       <MobileAdminNav />
-      <div className="min-h-screen py-24 px-4">
+      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
         <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
@@ -152,6 +155,7 @@ export default function AdminDashboard() {
         </div>
         </div>
       </div>
+      {isMobile && <BottomNavBarAdmin />}
     </>
   );
 }
