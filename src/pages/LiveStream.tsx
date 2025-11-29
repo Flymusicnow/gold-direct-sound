@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { LiveStreamPlayer } from "@/components/artist/LiveStreamPlayer";
 import { LiveChatPanel } from "@/components/artist/LiveChatPanel";
 import { LiveViewerCount } from "@/components/artist/LiveViewerCount";
+import { LiveGiftButton } from "@/components/live/LiveGiftButton";
+import { LiveGiftAnimation } from "@/components/live/LiveGiftAnimation";
+import { LiveSpotlightBoost } from "@/components/live/LiveSpotlightBoost";
+import { LiveClipButton } from "@/components/live/LiveClipButton";
+import { StreamControlPanel } from "@/components/live/StreamControlPanel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar } from "lucide-react";
@@ -169,17 +174,38 @@ export default function LiveStream() {
                   <span>Started {format(new Date(stream.actual_start), "PPp")}</span>
                 </div>
               )}
+
+              {/* Live Actions */}
+              <div className="flex flex-wrap gap-3">
+                {!isArtist && (
+                  <>
+                    <LiveGiftButton streamId={stream.id} />
+                    <LiveClipButton streamId={stream.id} streamUrl={stream.stream_url} />
+                  </>
+                )}
+              </div>
+
+              {/* Spotlight Boost */}
+              {!isArtist && (
+                <LiveSpotlightBoost streamId={stream.id} artistId={stream.artist_id} />
+              )}
+
+              {/* Artist Controls */}
+              {isArtist && <StreamControlPanel streamId={stream.id} />}
             </div>
           </div>
 
           {/* Right Column: Chat */}
           <div className="lg:col-span-1">
             <div className="sticky top-20 h-[calc(100vh-8rem)]">
-              <LiveChatPanel streamId={stream.id} isArtist={isArtist} />
+              <LiveChatPanel streamId={stream.id} isArtist={isArtist} artistId={stream.artist_id} />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Gift Animations Overlay */}
+      <LiveGiftAnimation streamId={stream.id} />
     </div>
   );
 }
