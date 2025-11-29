@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
-import { Award, Music, ShoppingBag } from "lucide-react";
+import { Award, Music, ShoppingBag, Crown } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +23,7 @@ import { MerchSection } from "@/components/artist/MerchSection";
 import TopSupportersCard from "@/components/supporter/TopSupportersCard";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
 
 interface Artist {
   id: string;
@@ -70,6 +71,7 @@ export default function ArtistProfile() {
   } | null>(null);
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
   const [topSupporters, setTopSupporters] = useState<any[]>([]);
+  const [showSupporterModal, setShowSupporterModal] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -459,6 +461,17 @@ export default function ArtistProfile() {
               />
             )}
 
+            {/* Become a Supporter */}
+            {user && artist.user_id !== user.id && (
+              <Button
+                onClick={() => setShowSupporterModal(true)}
+                className="w-full bg-gradient-gold hover:opacity-90"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Become a Supporter
+              </Button>
+            )}
+
             {/* Achievements Link */}
             <Link to={`/artist/${userId}/achievements`}>
               <Button
@@ -505,6 +518,14 @@ export default function ArtistProfile() {
         artistName={artist.artist_name}
         shareUrl={window.location.href}
         artistId={artist.id}
+      />
+
+      {/* Become a Supporter Modal */}
+      <BecomeASupporterModal
+        open={showSupporterModal}
+        onOpenChange={setShowSupporterModal}
+        artistId={artist.id}
+        artistName={artist.artist_name}
       />
       </div>
       {isMobile && <BottomNavBarFan />}

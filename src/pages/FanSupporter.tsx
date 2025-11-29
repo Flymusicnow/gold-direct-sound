@@ -9,6 +9,7 @@ import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame } from "lucide-react";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
+import { ManageSubscriptionCard } from "@/components/supporter/ManageSubscriptionCard";
 
 interface SupportScore {
   artist_id: string;
@@ -164,6 +165,9 @@ export default function FanSupporter() {
               <p className="text-3xl font-bold">{totalScore.toFixed(0)}</p>
             </Card>
           </div>
+
+          {/* Active Subscriptions */}
+          <ManageSubscriptionCard />
 
           {/* Top Supported Artist */}
           {topArtist && (

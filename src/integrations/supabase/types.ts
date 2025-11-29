@@ -199,12 +199,14 @@ export type Database = {
           description: string | null
           ended_at: string | null
           id: string
+          is_ticketed: boolean | null
           recording_url: string | null
           scheduled_start: string | null
           status: string
           stream_type: string
           stream_url: string | null
           thumbnail_url: string | null
+          ticket_price: number | null
           title: string
           updated_at: string | null
           viewer_count: number | null
@@ -216,12 +218,14 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string
+          is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
           status?: string
           stream_type?: string
           stream_url?: string | null
           thumbnail_url?: string | null
+          ticket_price?: number | null
           title: string
           updated_at?: string | null
           viewer_count?: number | null
@@ -233,12 +237,14 @@ export type Database = {
           description?: string | null
           ended_at?: string | null
           id?: string
+          is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
           status?: string
           stream_type?: string
           stream_url?: string | null
           thumbnail_url?: string | null
+          ticket_price?: number | null
           title?: string
           updated_at?: string | null
           viewer_count?: number | null
@@ -913,6 +919,121 @@ export type Database = {
           },
         ]
       }
+      live_clips: {
+        Row: {
+          created_at: string | null
+          creator_user_id: string
+          duration_seconds: number | null
+          id: string
+          start_time_seconds: number | null
+          stream_id: string
+          title: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          creator_user_id: string
+          duration_seconds?: number | null
+          id?: string
+          start_time_seconds?: number | null
+          stream_id: string
+          title?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          creator_user_id?: string
+          duration_seconds?: number | null
+          id?: string
+          start_time_seconds?: number | null
+          stream_id?: string
+          title?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_clips_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_gifts: {
+        Row: {
+          created_at: string | null
+          gift_type: string
+          id: string
+          sender_user_id: string
+          stream_id: string
+          xp_value: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          gift_type: string
+          id?: string
+          sender_user_id: string
+          stream_id: string
+          xp_value?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          gift_type?: string
+          id?: string
+          sender_user_id?: string
+          stream_id?: string
+          xp_value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_gifts_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_spotlight_votes: {
+        Row: {
+          created_at: string | null
+          entry_id: string | null
+          id: string
+          stream_id: string
+          voter_user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          entry_id?: string | null
+          id?: string
+          stream_id: string
+          voter_user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          entry_id?: string | null
+          id?: string
+          stream_id?: string
+          voter_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_spotlight_votes_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "live_spotlight_votes_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       live_stream_chat: {
         Row: {
           created_at: string | null
@@ -1233,6 +1354,41 @@ export type Database = {
             columns: ["fan_user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stream_tickets: {
+        Row: {
+          fan_user_id: string
+          id: string
+          price_paid: number
+          purchased_at: string | null
+          stream_id: string
+          stripe_payment_id: string | null
+        }
+        Insert: {
+          fan_user_id: string
+          id?: string
+          price_paid: number
+          purchased_at?: string | null
+          stream_id: string
+          stripe_payment_id?: string | null
+        }
+        Update: {
+          fan_user_id?: string
+          id?: string
+          price_paid?: number
+          purchased_at?: string | null
+          stream_id?: string
+          stripe_payment_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stream_tickets_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
             referencedColumns: ["id"]
           },
         ]

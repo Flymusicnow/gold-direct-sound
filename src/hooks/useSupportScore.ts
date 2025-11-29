@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
+import { useFanTaste } from '@/contexts/FanTasteContext';
 
 // Action weights for supporter score calculation
 const ACTION_WEIGHTS = {
@@ -22,6 +23,16 @@ const LEVEL_THRESHOLDS = {
 
 type SupportAction = keyof typeof ACTION_WEIGHTS;
 
+// Map support actions to taste profile interactions
+const TASTE_INTERACTION_MAP: Record<SupportAction, string> = {
+  like_track: 'like',
+  play_track: 'play',
+  add_to_stack: 'stack_add',
+  spotlight_vote: 'spotlight_vote',
+  share: 'share',
+  comment: 'comment',
+};
+
 // Calculate level based on score
 function calculateLevel(score: number): 'none' | 'bronze' | 'silver' | 'gold' {
   if (score >= LEVEL_THRESHOLDS.gold) return 'gold';
@@ -32,8 +43,14 @@ function calculateLevel(score: number): 'none' | 'bronze' | 'silver' | 'gold' {
 
 export function useSupportScore() {
   const { user } = useAuth();
+  const { updateTasteFromAction } = useFanTaste();
 
-  const updateSupportScore = async (artistId: string, action: SupportAction) => {
+  const updateSupportScore = async (
+    artistId: string, 
+    action: SupportAction,
+    trackId?: string,
+    videoId?: string
+  ) => {
     if (!user) return;
 
     const points = ACTION_WEIGHTS[action];
@@ -86,6 +103,12 @@ export function useSupportScore() {
         toast.success(`🎉 You're now a ${newLevel.toUpperCase()} Supporter!`, {
           description: `You've unlocked ${newLevel} supporter status!`,
         });
+      }
+
+      // Update taste profile with this action
+      const tasteInteraction = TASTE_INTERACTION_MAP[action];
+      if (tasteInteraction && updateTasteFromAction) {
+        await updateTasteFromAction(artistId, tasteInteraction, trackId, videoId);
       }
     } catch (error) {
       // Silent error logging - don't block UI
