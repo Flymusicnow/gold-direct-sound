@@ -56,35 +56,39 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
 
   if (inSheet) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
-            <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+      <div className="flex flex-col h-full max-h-[calc(85vh-4rem)] overflow-hidden">
+        {/* Header - fixed */}
+        <div className="flex-shrink-0 pb-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
+              <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              My Studio
+            </h2>
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            My Studio
-          </h2>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9 bg-muted/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search menu..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 bg-muted/30"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-        </div>
-
-        <nav className="space-y-1">
+        {/* Nav items - scrollable */}
+        <nav className="flex-1 overflow-y-auto space-y-1 pb-safe">
           {filteredItems.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
           ) : (

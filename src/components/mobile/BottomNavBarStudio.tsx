@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Music, BarChart3, Radio, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 
@@ -15,6 +15,17 @@ const mainNavItems = [
 export function BottomNavBarStudio() {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    if (sheetOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sheetOpen]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm pb-safe">
@@ -50,7 +61,7 @@ export function BottomNavBarStudio() {
               <span className="text-xs font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+          <SheetContent side="bottom" className="max-h-[85vh] h-auto rounded-t-2xl flex flex-col overflow-hidden">
             <MobileStudioNav inSheet onNavigate={() => setSheetOpen(false)} />
           </SheetContent>
         </Sheet>
