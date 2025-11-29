@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
+import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
 import Home from "./pages/Home";
@@ -63,8 +64,9 @@ const App = () => (
         <AuthProvider>
           <FanTasteProvider>
             <FlightdeckProvider>
-              <SwipeBackProvider>
-              <Navigation />
+              <VideoPlaybackProvider>
+                <SwipeBackProvider>
+                <Navigation />
               <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
@@ -198,6 +200,7 @@ const App = () => (
           </Routes>
               <FlightdeckPlayer />
               </SwipeBackProvider>
+            </VideoPlaybackProvider>
             </FlightdeckProvider>
           </FanTasteProvider>
         </AuthProvider>

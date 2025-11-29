@@ -1,6 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
+import { useVideoPlayback } from "@/contexts/VideoPlaybackContext";
 
 interface PremiumVideoPlayerProps {
   videoUrl: string;
@@ -19,6 +21,7 @@ export function PremiumVideoPlayer({
   showFrame = true,
   onError 
 }: PremiumVideoPlayerProps) {
+  const videoId = useId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [isMuted, setIsMuted] = useState(true);
@@ -28,6 +31,9 @@ export function PremiumVideoPlayer({
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  const { setIsPlaying: pauseFlightdeck } = useFlightdeck();
+  const { registerVideo, unregisterVideo, setCurrentVideo } = useVideoPlayback();
 
   useEffect(() => {
     const video = videoRef.current;
@@ -61,15 +67,27 @@ export function PremiumVideoPlayer({
     if (!videoRef.current) return;
     if (isPlaying) {
       videoRef.current.pause();
+      setCurrentVideo(null);
     } else {
+      // Pause Flightdeck audio when video starts playing (unmuted)
+      if (!isMuted) {
+        pauseFlightdeck(false);
+      }
+      setCurrentVideo(videoId);
       videoRef.current.play();
     }
   };
 
   const toggleMute = () => {
     if (!videoRef.current) return;
-    videoRef.current.muted = !isMuted;
-    setIsMuted(!isMuted);
+    const newMutedState = !isMuted;
+    videoRef.current.muted = newMutedState;
+    setIsMuted(newMutedState);
+    
+    // When unmuting a playing video, pause Flightdeck audio
+    if (!newMutedState && isPlaying) {
+      pauseFlightdeck(false);
+    }
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
@@ -115,6 +133,18 @@ export function PremiumVideoPlayer({
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  // Register this video with the global video coordination system
+  useEffect(() => {
+    const pauseThisVideo = () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+    };
+    
+    registerVideo(videoId, pauseThisVideo);
+    return () => unregisterVideo(videoId);
+  }, [videoId, registerVideo, unregisterVideo]);
 
   if (hasError) {
     if (showFrame) {
