@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
+import { FlightdeckMiniQueue } from './FlightdeckMiniQueue';
 
 export function FlightdeckPlayer() {
   const {
@@ -25,6 +26,7 @@ export function FlightdeckPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+  const [queueExpanded, setQueueExpanded] = useState(false);
 
   // Update media element when current item changes
   useEffect(() => {
@@ -110,7 +112,12 @@ export function FlightdeckPlayer() {
   if (!currentItem) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* Mini Queue */}
+      <FlightdeckMiniQueue isExpanded={queueExpanded} onToggle={() => setQueueExpanded(!queueExpanded)} />
+      
+      {/* Player Bar */}
+      <div className="bg-card border-t border-border shadow-lg">
       {/* Hidden media elements */}
       <audio
         ref={audioRef}
@@ -202,12 +209,20 @@ export function FlightdeckPlayer() {
                 className="w-24"
               />
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setQueueExpanded(!queueExpanded)}
+              className="h-8 w-8"
+            >
+              <List className="h-4 w-4" />
+            </Button>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ListMusic className="h-4 w-4" />
               <span>{currentIndex + 1}/{queue.length}</span>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
