@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
+import { useSupportScore } from '@/hooks/useSupportScore';
 
 export interface FlightdeckItem {
   id: string;
@@ -46,8 +47,21 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const { updateSupportScore } = useSupportScore();
+  const lastPlayedRef = useRef<string | null>(null);
 
   const currentItem = currentIndex >= 0 && currentIndex < queue.length ? queue[currentIndex] : null;
+
+  // Track plays for support score
+  useEffect(() => {
+    if (currentItem && isPlaying && currentItem.id !== lastPlayedRef.current) {
+      lastPlayedRef.current = currentItem.id;
+      // Update support score for play
+      if (currentItem.artistId) {
+        updateSupportScore(currentItem.artistId, 'play_track');
+      }
+    }
+  }, [currentItem, isPlaying, updateSupportScore]);
 
   const playNow = useCallback((item: FlightdeckItem, context?: FlightdeckItem[]) => {
     if (context && context.length > 0) {

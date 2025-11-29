@@ -9,7 +9,7 @@ import { StatCard } from "@/components/StatCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic } from "lucide-react";
+import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic, Trophy } from "lucide-react";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
@@ -293,6 +293,18 @@ export default function FanPortal() {
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
+              <div 
+                className="p-6 rounded-lg border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent hover:shadow-gold transition-shadow cursor-pointer"
+                onClick={() => navigate('/fan/supporter')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-primary mb-1">Supporter Pass</p>
+                    <Trophy className="h-8 w-8 text-primary" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-primary" />
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid sm:grid-cols-4 gap-6">
@@ -305,7 +317,7 @@ export default function FanPortal() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
+                    <p className="text-sm text-muted-foreground mb-1">My Stacks</p>
                     <ListMusic className="h-8 w-8 text-primary" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
@@ -313,6 +325,23 @@ export default function FanPortal() {
               </div>
             </div>
           )}
+
+          {/* Supporter Pass Card */}
+          <Card 
+            className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent hover:shadow-gold transition-all cursor-pointer"
+            onClick={() => navigate('/fan/supporter')}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-6 w-6 text-primary" />
+                <h2 className="text-xl font-semibold text-primary">Supporter Pass</h2>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Track your support levels and earn badges for supporting your favorite artists
+            </p>
+          </Card>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* My Artists Section */}

@@ -28,11 +28,12 @@ export function FanActionBar({
   contextItems,
 }: FanActionBarProps) {
   const { playNow, addToQueue } = useFlightdeck();
-  const { liked, toggleLike } = useLikeTrack(item.id, isLiked);
+  const { liked, toggleLike } = useLikeTrack(item.id, item.artistId, isLiked);
   const { isFollowing: following, toggleFollow } = useFollowArtist(item.artistId, isFollowing);
   const { hasVoted: voted, toggleVote } = useSpotlightVote(
     item.spotlightEntryId || '',
     item.spotlightCampaignId || '',
+    item.artistId,
     hasVoted
   );
 
@@ -158,6 +159,7 @@ export function FanActionBar({
           onClose={() => setStackOpen(false)}
           trackId={item.id}
           trackTitle={item.title}
+          artistId={item.artistId}
         />
       )}
     </>

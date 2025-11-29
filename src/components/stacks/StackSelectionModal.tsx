@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import CreatePlaylistDialog from '@/components/playlists/CreatePlaylistDialog';
+import { useSupportScore } from '@/hooks/useSupportScore';
 
 interface Stack {
   id: string;
@@ -19,10 +20,12 @@ interface StackSelectionModalProps {
   onClose: () => void;
   trackId: string;
   trackTitle: string;
+  artistId?: string;
 }
 
-export function StackSelectionModal({ isOpen, onClose, trackId, trackTitle }: StackSelectionModalProps) {
+export function StackSelectionModal({ isOpen, onClose, trackId, trackTitle, artistId }: StackSelectionModalProps) {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   const [stacks, setStacks] = useState<Stack[]>([]);
   const [loading, setLoading] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -94,6 +97,12 @@ export function StackSelectionModal({ isOpen, onClose, trackId, trackTitle }: St
       if (error) throw error;
 
       toast.success(`Added "${trackTitle}" to ${stackName}`);
+      
+      // Update support score
+      if (artistId) {
+        updateSupportScore(artistId, 'add_to_stack');
+      }
+      
       onClose();
     } catch (error) {
       console.error('Error adding to stack:', error);

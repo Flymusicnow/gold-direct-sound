@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useSupportScore } from './useSupportScore';
 
-export function useLikeTrack(trackId: string, initialLiked: boolean = false) {
+export function useLikeTrack(trackId: string, artistId: string, initialLiked: boolean = false) {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   const [liked, setLiked] = useState(initialLiked);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -34,6 +36,9 @@ export function useLikeTrack(trackId: string, initialLiked: boolean = false) {
           .insert({ user_id: user.id, track_id: trackId });
         setLiked(true);
         toast.success('Added to liked tracks');
+        
+        // Update support score
+        updateSupportScore(artistId, 'like_track');
       }
     } catch (error) {
       console.error('Error updating like:', error);

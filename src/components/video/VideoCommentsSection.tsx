@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { VideoCommentItem } from "./VideoCommentItem";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send } from "lucide-react";
+import { useSupportScore } from "@/hooks/useSupportScore";
 
 interface VideoComment {
   id: string;
@@ -28,6 +29,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { updateSupportScore } = useSupportScore();
 
   useEffect(() => {
     fetchComments();
@@ -117,6 +119,9 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
         title: "Comment posted",
         description: "Your comment has been added",
       });
+      
+      // Update support score
+      updateSupportScore(artistId, 'comment');
     } catch (error) {
       console.error('Error posting comment:', error);
       toast({

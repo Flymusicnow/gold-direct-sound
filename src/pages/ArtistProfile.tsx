@@ -20,6 +20,7 @@ import { ArtistStatsCard } from "@/components/artist/ArtistStatsCard";
 import { FanTestimonialsSection } from "@/components/artist/FanTestimonialsSection";
 import { CrossPromoteSection } from "@/components/artist/CrossPromoteSection";
 import { MerchSection } from "@/components/artist/MerchSection";
+import TopSupportersCard from "@/components/supporter/TopSupportersCard";
 
 interface Artist {
   id: string;
@@ -65,6 +66,7 @@ export default function ArtistProfile() {
     rank: number | null;
   } | null>(null);
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
+  const [topSupporters, setTopSupporters] = useState<any[]>([]);
 
   useEffect(() => {
     if (userId) {
@@ -74,6 +76,7 @@ export default function ArtistProfile() {
       fetchUserLikes();
       fetchSpotlightStatus();
       fetchBetaAccess();
+      fetchTopSupporters();
     }
   }, [userId, user]);
 
@@ -249,6 +252,35 @@ export default function ArtistProfile() {
       .maybeSingle();
 
     setHasBetaAccess(!!betaAccess);
+  };
+
+  const fetchTopSupporters = async () => {
+    const { data: artistData } = await supabase
+      .from('artist_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .single();
+
+    if (!artistData) return;
+
+    const { data: supporters } = await supabase
+      .from('fan_support_scores')
+      .select(`
+        fan_user_id,
+        score,
+        level,
+        profiles (
+          full_name,
+          email
+        )
+      `)
+      .eq('artist_id', artistData.id)
+      .order('score', { ascending: false })
+      .limit(5);
+
+    if (supporters) {
+      setTopSupporters(supporters);
+    }
   };
 
   const handleFollow = async () => {
@@ -433,6 +465,11 @@ export default function ArtistProfile() {
                 View Achievements
               </Button>
             </Link>
+
+            {/* Top Supporters */}
+            {topSupporters.length > 0 && (
+              <TopSupportersCard supporters={topSupporters} />
+            )}
           </div>
         </div>
       </div>
