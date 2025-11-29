@@ -41,8 +41,8 @@ serve(async (req) => {
 
     // Price IDs based on tier (49 kr and 99 kr)
     const priceIds = {
-      basic: 'price_basic_supporter', // Replace with actual Stripe price ID
-      gold: 'price_gold_supporter',   // Replace with actual Stripe price ID
+      basic: 'price_1SYxCzCSRAUHY3L4d2VZBrg8',
+      gold: 'price_1SYxDyCSRAUHY3L4VXlGOcZb',
     };
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
