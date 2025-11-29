@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Copy, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useSupportScore } from "@/hooks/useSupportScore";
 
 interface VideoShareModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface VideoShareModalProps {
 
 export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareModalProps) {
   const { toast } = useToast();
+  const { updateSupportScore } = useSupportScore();
   
   const getShareUrl = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -33,6 +35,9 @@ export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareMo
       title: "Link copied!",
       description: "Share link has been copied to clipboard",
     });
+    
+    // Update support score
+    updateSupportScore(artist.id, 'share');
   };
 
   const socialPlatforms = [
@@ -59,6 +64,9 @@ export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareMo
       title: "Caption copied!",
       description: "Share caption has been copied to clipboard",
     });
+    
+    // Update support score for sharing
+    updateSupportScore(artist.id, 'share');
   };
 
   return (
