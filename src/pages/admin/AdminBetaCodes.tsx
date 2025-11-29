@@ -31,8 +31,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { Plus, Copy, Sparkles, Download, Zap } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Copy, Sparkles, Download, Zap, AlertTriangle, Clock, CheckSquare, Square, ChevronDown } from "lucide-react";
+import { format, differenceInDays, addDays, parseISO } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface BetaCode {
   id: string;
@@ -96,6 +104,11 @@ export default function AdminBetaCodes() {
     notes: "",
   });
   const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [isExtendDialogOpen, setIsExtendDialogOpen] = useState(false);
+  const [extensionType, setExtensionType] = useState<'add_days' | 'set_date' | 'remove'>('add_days');
+  const [extensionDays, setExtensionDays] = useState<string>("30");
+  const [extensionDate, setExtensionDate] = useState<string>("");
 
   useEffect(() => {
     fetchBetaCodes();
@@ -298,6 +311,137 @@ export default function AdminBetaCodes() {
     if (max === null) return 0;
     return (current / max) * 100;
   };
+
+  const getExpirationStatus = (expiresAt: string | null): {
+    status: 'safe' | 'warning' | 'critical' | 'expired' | 'never';
+    daysRemaining: number | null;
+  } => {
+    if (!expiresAt) return { status: 'never', daysRemaining: null };
+    
+    const now = new Date();
+    const expiryDate = parseISO(expiresAt);
+    const days = differenceInDays(expiryDate, now);
+
+    if (days < 0) return { status: 'expired', daysRemaining: days };
+    if (days < 3) return { status: 'critical', daysRemaining: days };
+    if (days < 7) return { status: 'warning', daysRemaining: days };
+    return { status: 'safe', daysRemaining: days };
+  };
+
+  const handleSelectCode = (id: string) => {
+    setSelectedCodes(prev => 
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCodes.length === codes.length) {
+      setSelectedCodes([]);
+    } else {
+      setSelectedCodes(codes.map(c => c.id));
+    }
+  };
+
+  const handleBulkExtend = async () => {
+    if (selectedCodes.length === 0) return;
+
+    try {
+      let newExpiresAt: string | null = null;
+
+      if (extensionType === 'add_days') {
+        const days = parseInt(extensionDays);
+        // For each selected code, extend from its current expiry or now if null
+        const updates = selectedCodes.map(id => {
+          const code = codes.find(c => c.id === id);
+          const baseDate = code?.expires_at ? parseISO(code.expires_at) : new Date();
+          return {
+            id,
+            expires_at: addDays(baseDate, days).toISOString()
+          };
+        });
+
+        // Update each code individually
+        for (const update of updates) {
+          const { error } = await supabase
+            .from("beta_access_codes")
+            .update({ expires_at: update.expires_at })
+            .eq("id", update.id);
+          if (error) throw error;
+        }
+      } else if (extensionType === 'set_date') {
+        newExpiresAt = new Date(extensionDate).toISOString();
+        const { error } = await supabase
+          .from("beta_access_codes")
+          .update({ expires_at: newExpiresAt })
+          .in("id", selectedCodes);
+        if (error) throw error;
+      } else if (extensionType === 'remove') {
+        const { error } = await supabase
+          .from("beta_access_codes")
+          .update({ expires_at: null })
+          .in("id", selectedCodes);
+        if (error) throw error;
+      }
+
+      toast.success(`Extended ${selectedCodes.length} code(s) successfully`);
+      setIsExtendDialogOpen(false);
+      setSelectedCodes([]);
+      fetchBetaCodes();
+    } catch (error: any) {
+      console.error("Error extending codes:", error);
+      toast.error("Failed to extend codes");
+    }
+  };
+
+  const handleBulkDeactivate = async () => {
+    if (selectedCodes.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from("beta_access_codes")
+        .update({ is_active: false })
+        .in("id", selectedCodes);
+
+      if (error) throw error;
+
+      toast.success(`Deactivated ${selectedCodes.length} code(s)`);
+      setSelectedCodes([]);
+      fetchBetaCodes();
+    } catch (error: any) {
+      console.error("Error deactivating codes:", error);
+      toast.error("Failed to deactivate codes");
+    }
+  };
+
+  const handleQuickExtend = async (id: string, days: number) => {
+    try {
+      const code = codes.find(c => c.id === id);
+      const baseDate = code?.expires_at ? parseISO(code.expires_at) : new Date();
+      const newExpiresAt = addDays(baseDate, days).toISOString();
+
+      const { error } = await supabase
+        .from("beta_access_codes")
+        .update({ expires_at: newExpiresAt })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast.success(`Extended by ${days} days`);
+      fetchBetaCodes();
+    } catch (error: any) {
+      console.error("Error extending code:", error);
+      toast.error("Failed to extend code");
+    }
+  };
+
+  const expiringCodes = codes.filter(code => {
+    const status = getExpirationStatus(code.expires_at);
+    return status.status === 'warning' || status.status === 'critical' || status.status === 'expired';
+  }).sort((a, b) => {
+    const daysA = getExpirationStatus(a.expires_at).daysRemaining || 0;
+    const daysB = getExpirationStatus(b.expires_at).daysRemaining || 0;
+    return daysA - daysB;
+  });
 
   if (loading) {
     return (
@@ -603,6 +747,169 @@ export default function AdminBetaCodes() {
           </div>
         </div>
 
+        {/* Expiring Soon Warning */}
+        {expiringCodes.length > 0 && (
+          <Alert className="border-amber-500/50 bg-amber-500/10">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />
+            <AlertTitle className="text-amber-500">Codes Expiring Soon</AlertTitle>
+            <AlertDescription>
+              <p className="text-sm text-muted-foreground mb-3">
+                {expiringCodes.length} code(s) are expiring soon or have expired
+              </p>
+              <div className="space-y-2">
+                {expiringCodes.slice(0, 5).map(code => {
+                  const { status, daysRemaining } = getExpirationStatus(code.expires_at);
+                  return (
+                    <div key={code.id} className="flex items-center justify-between text-sm bg-background/50 p-2 rounded">
+                      <div className="flex items-center gap-3 flex-1">
+                        <span className="font-mono text-xs">{code.code}</span>
+                        <Badge variant={
+                          status === 'expired' ? 'destructive' : 
+                          status === 'critical' ? 'destructive' : 'secondary'
+                        }>
+                          {status === 'expired' ? '💀 Expired' : 
+                           status === 'critical' ? `🔴 ${daysRemaining}d left` : 
+                           `⚠️ ${daysRemaining}d left`}
+                        </Badge>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleQuickExtend(code.id, 30)}
+                        className="text-xs"
+                      >
+                        +30 days
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+              {expiringCodes.length > 5 && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  And {expiringCodes.length - 5} more...
+                </p>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Bulk Actions Bar */}
+        {selectedCodes.length > 0 && (
+          <Card className="p-4 bg-primary/5 border-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckSquare className="h-5 w-5 text-primary" />
+                <span className="font-medium">{selectedCodes.length} code(s) selected</span>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsExtendDialogOpen(true)}
+                >
+                  <Clock className="mr-2 h-4 w-4" />
+                  Extend Expiration
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBulkDeactivate}
+                  className="border-destructive/50 text-destructive hover:bg-destructive/10"
+                >
+                  Deactivate Selected
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCodes([])}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Extend Expiration Dialog */}
+        <Dialog open={isExtendDialogOpen} onOpenChange={setIsExtendDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Extend Code Expiration</DialogTitle>
+              <DialogDescription>
+                Extending {selectedCodes.length} code(s)
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Extension Type</Label>
+                <Select value={extensionType} onValueChange={(value: any) => setExtensionType(value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="add_days">Add days to current expiration</SelectItem>
+                    <SelectItem value="set_date">Set new expiration date</SelectItem>
+                    <SelectItem value="remove">Remove expiration (never expire)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {extensionType === 'add_days' && (
+                <div className="space-y-2">
+                  <Label>Days to Add</Label>
+                  <Select value={extensionDays} onValueChange={setExtensionDays}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="14">14 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="60">60 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {extensionType === 'set_date' && (
+                <div className="space-y-2">
+                  <Label>New Expiration Date</Label>
+                  <Input
+                    type="datetime-local"
+                    value={extensionDate}
+                    onChange={(e) => setExtensionDate(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {extensionType === 'remove' && (
+                <Alert>
+                  <AlertDescription>
+                    Selected codes will never expire unless manually deactivated.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsExtendDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBulkExtend}
+                  className="bg-gradient-gold hover:opacity-90"
+                >
+                  Apply Extension
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Table */}
         <Card className="p-6">
           {codes.length === 0 ? (
@@ -621,6 +928,12 @@ export default function AdminBetaCodes() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedCodes.length === codes.length}
+                        onCheckedChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="uppercase">Code</TableHead>
                     <TableHead className="uppercase">Type</TableHead>
                     <TableHead className="uppercase">Badge Name</TableHead>
@@ -632,8 +945,22 @@ export default function AdminBetaCodes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {codes.map((code) => (
-                    <TableRow key={code.id}>
+                  {codes.map((code) => {
+                    const { status, daysRemaining } = getExpirationStatus(code.expires_at);
+                    return (
+                    <TableRow key={code.id} className={
+                      status === 'expired' ? 'bg-destructive/5' :
+                      status === 'critical' ? 'bg-destructive/5' :
+                      status === 'warning' ? 'bg-amber-500/5' : ''
+                    }>
+                      {/* Checkbox */}
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedCodes.includes(code.id)}
+                          onCheckedChange={() => handleSelectCode(code.id)}
+                        />
+                      </TableCell>
+                      
                       {/* Code */}
                       <TableCell className="font-mono tracking-wider">
                         <button
@@ -682,9 +1009,33 @@ export default function AdminBetaCodes() {
 
                       {/* Expires */}
                       <TableCell>
-                        {code.expires_at
-                          ? format(new Date(code.expires_at), "MMM d, yyyy")
-                          : "Never"}
+                        <div className="flex items-center gap-2">
+                          <span className={
+                            status === 'expired' ? 'text-destructive' :
+                            status === 'critical' ? 'text-destructive' :
+                            status === 'warning' ? 'text-amber-500' :
+                            ''
+                          }>
+                            {code.expires_at
+                              ? format(new Date(code.expires_at), "MMM d, yyyy")
+                              : "Never"}
+                          </span>
+                          {status === 'warning' && (
+                            <Badge variant="secondary" className="text-xs">
+                              ⏰ {daysRemaining}d
+                            </Badge>
+                          )}
+                          {status === 'critical' && (
+                            <Badge variant="destructive" className="text-xs">
+                              🔴 {daysRemaining}d
+                            </Badge>
+                          )}
+                          {status === 'expired' && (
+                            <Badge variant="destructive" className="text-xs">
+                              💀 Expired
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
 
                       {/* Status */}
@@ -701,18 +1052,46 @@ export default function AdminBetaCodes() {
 
                       {/* Actions */}
                       <TableCell>
-                        {code.is_active && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeactivate(code.id)}
-                          >
-                            Deactivate
-                          </Button>
-                        )}
+                        <div className="flex gap-1">
+                          {code.is_active && (
+                            <>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm">
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    Extend
+                                    <ChevronDown className="h-3 w-3 ml-1" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                  <DropdownMenuItem onClick={() => handleQuickExtend(code.id, 7)}>
+                                    +7 days
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleQuickExtend(code.id, 30)}>
+                                    +30 days
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleQuickExtend(code.id, 60)}>
+                                    +60 days
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleQuickExtend(code.id, 90)}>
+                                    +90 days
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeactivate(code.id)}
+                              >
+                                Deactivate
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
