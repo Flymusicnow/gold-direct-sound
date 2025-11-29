@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +33,7 @@ export default function StudioProfile() {
   const [editTwitter, setEditTwitter] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
   const [artistName, setArtistName] = useState("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -233,11 +236,12 @@ export default function StudioProfile() {
   }
 
   return (
-    <div className="flex min-h-screen pt-16">
-      <StudioSidebar />
-      <MobileStudioNav />
-      
-      <main className="flex-1 p-4 md:p-8">
+    <>
+      <div className="flex min-h-screen pt-16">
+        <StudioSidebar />
+        <MobileStudioNav />
+        
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
@@ -376,6 +380,8 @@ export default function StudioProfile() {
           </Card>
         </div>
       </main>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

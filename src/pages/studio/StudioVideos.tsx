@@ -5,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,7 @@ export default function StudioVideos() {
   } | null>(null);
   const [showLockedModal, setShowLockedModal] = useState(false);
   const { checkAndUnlockAchievements } = useAchievements();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -385,11 +388,12 @@ export default function StudioVideos() {
   }
 
   return (
-    <div className="min-h-screen flex w-full">
-      <StudioSidebar />
-      <MobileStudioNav />
+    <>
+      <div className="min-h-screen flex w-full">
+        <StudioSidebar />
+        <MobileStudioNav />
 
-      <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8">
+        <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -713,6 +717,8 @@ export default function StudioVideos() {
         tierRequired="gold"
         onSuccess={fetchData}
       />
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

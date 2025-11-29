@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
+import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -110,6 +112,7 @@ export default function AdminBetaCodes() {
   const [extensionType, setExtensionType] = useState<'add_days' | 'set_date' | 'remove'>('add_days');
   const [extensionDays, setExtensionDays] = useState<string>("30");
   const [extensionDate, setExtensionDate] = useState<string>("");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchBetaCodes();
@@ -455,7 +458,7 @@ export default function AdminBetaCodes() {
   return (
     <>
       <MobileAdminNav />
-      <div className="min-h-screen pt-24 pb-8 px-4">
+      <div className="min-h-screen pt-24 pb-8 px-4 pb-20 md:pb-8">
         <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -1102,6 +1105,7 @@ export default function AdminBetaCodes() {
         </Card>
         </div>
       </div>
+      {isMobile && <BottomNavBarAdmin />}
     </>
   );
 }

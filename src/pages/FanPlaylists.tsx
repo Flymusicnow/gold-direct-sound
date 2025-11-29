@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Plus, ListMusic } from "lucide-react";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
@@ -23,6 +25,7 @@ export default function FanPlaylists() {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -79,7 +82,7 @@ export default function FanPlaylists() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4">
+      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
         <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -133,6 +136,7 @@ export default function FanPlaylists() {
           onSuccess={fetchPlaylists}
         />
       </div>
+      {isMobile && <BottomNavBarFan />}
     </>
   );
 }

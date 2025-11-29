@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
@@ -46,6 +48,7 @@ export default function StudioAnalytics() {
     avgCompletionRate: 0,
   });
   const [topVideos, setTopVideos] = useState<VideoAnalytics[]>([]);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -189,11 +192,12 @@ export default function StudioAnalytics() {
   }
 
   return (
-    <div className="flex min-h-screen pt-16">
-      <StudioSidebar />
-      <MobileStudioNav />
-      
-      <main className="flex-1 p-4 md:p-8">
+    <>
+      <div className="flex min-h-screen pt-16">
+        <StudioSidebar />
+        <MobileStudioNav />
+        
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
@@ -337,6 +341,8 @@ export default function StudioAnalytics() {
           </Card>
         </div>
       </main>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }

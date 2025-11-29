@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +56,7 @@ export default function FanFeed() {
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
   const [currentTrack, setCurrentTrack] = useState<{ url: string; title: string; artist: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -167,7 +170,7 @@ export default function FanFeed() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4">
+      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div>
@@ -297,6 +300,7 @@ export default function FanFeed() {
           />
         )}
       </div>
+      {isMobile && <BottomNavBarFan />}
     </>
   );
 }

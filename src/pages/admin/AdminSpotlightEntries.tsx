@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
+import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,7 @@ export default function AdminSpotlightEntries() {
   const [entries, setEntries] = useState<SpotlightEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!hasRole('admin')) {
@@ -135,7 +138,7 @@ export default function AdminSpotlightEntries() {
     <>
       <MobileAdminNav />
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 pb-20 md:pb-8">
         <Button
           variant="ghost"
           onClick={() => navigate('/admin/spotlight')}

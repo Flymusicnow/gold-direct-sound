@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import SpotlightSubmitDialog from "@/components/spotlight/SpotlightSubmitDialog";
@@ -40,6 +42,7 @@ export default function StudioSpotlight() {
   const [myEntries, setMyEntries] = useState<SpotlightEntry[]>([]);
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchData();
@@ -116,12 +119,13 @@ export default function StudioSpotlight() {
   }
 
   return (
-    <div className="flex min-h-screen pt-16">
-      <StudioSidebar />
-      <MobileStudioNav />
-      
-      <main className="flex-1 p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
+    <>
+      <div className="flex min-h-screen pt-16">
+        <StudioSidebar />
+        <MobileStudioNav />
+        
+        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+          <div className="max-w-6xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <Sparkles className="h-8 w-8 text-[#E8BF1A]" />
           <h1 className="text-3xl font-bold text-foreground">FlyMusic Spotlight</h1>
@@ -261,5 +265,7 @@ export default function StudioSpotlight() {
       </div>
     </main>
     </div>
+    {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }
