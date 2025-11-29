@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
-import { Search as SearchIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search as SearchIcon, Mic } from 'lucide-react';
+import { useVoiceSearch } from '@/hooks/useVoiceSearch';
 import { useSearch } from '@/hooks/useSearch';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { SearchArtistCard } from '@/components/search/SearchArtistCard';
@@ -30,6 +32,11 @@ export default function Search() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [overlayItem, setOverlayItem] = useState<any>(null);
   const [overlayContext, setOverlayContext] = useState<any[]>([]);
+
+  const { isListening, startListening, stopListening, isSupported: isVoiceSupported } = useVoiceSearch((transcript) => {
+    handleQueryChange(transcript);
+    setShowSuggestions(false);
+  });
 
   useEffect(() => {
     if (urlQuery && urlQuery !== query) {
@@ -140,18 +147,35 @@ export default function Search() {
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border pt-24 pb-4">
           <div className="container mx-auto max-w-6xl px-4">
             <div className="relative">
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
-                <Input
-                  type="text"
-                  placeholder="Search tracks, artists, videos, spotlight..."
-                  value={query}
-                  onChange={(e) => handleQueryChange(e.target.value)}
-                  onFocus={() => setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="pl-10 h-12 text-base search-input-gold"
-                  maxLength={100}
-                />
+              <div className="relative flex items-center gap-2">
+                <div className="relative flex-1">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    type="text"
+                    placeholder="Search tracks, artists, videos, spotlight..."
+                    value={query}
+                    onChange={(e) => handleQueryChange(e.target.value)}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    className="pl-10 pr-4 h-12 text-base search-input-gold"
+                    maxLength={100}
+                  />
+                </div>
+                
+                {isVoiceSupported && (
+                  <Button
+                    type="button"
+                    onClick={isListening ? stopListening : startListening}
+                    className={`h-12 w-12 rounded-full transition-all ${
+                      isListening 
+                        ? 'bg-primary text-primary-foreground animate-pulse' 
+                        : 'bg-muted hover:bg-muted/80'
+                    }`}
+                    aria-label={isListening ? 'Stop recording' : 'Start voice search'}
+                  >
+                    <Mic className={`h-5 w-5 ${isListening ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                  </Button>
+                )}
               </div>
               
               {/* Live Suggestions */}
