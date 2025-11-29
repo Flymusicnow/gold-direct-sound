@@ -3,10 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
+import { StatCard } from "@/components/StatCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic } from "lucide-react";
-import { StatCard } from "@/components/StatCard";
 import { AudioPlayer } from "@/components/AudioPlayer";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
@@ -45,6 +48,7 @@ interface Activity {
 export default function FanPortal() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [likedTracks, setLikedTracks] = useState<LikedTrack[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -220,8 +224,8 @@ export default function FanPortal() {
 
   return (
     <>
-      <MobileFanNav />
-      <div className="min-h-screen py-24 px-4">
+      {!isMobile && <MobileFanNav />}
+      <div className="min-h-screen py-24 px-4 pb-24 md:pb-4">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Welcome Header */}
         <div>
@@ -256,24 +260,59 @@ export default function FanPortal() {
           {/* Spotlight Promo */}
           <SpotlightPromoCard />
 
-        {/* Stats */}
-        <div className="grid sm:grid-cols-4 gap-6">
-          <StatCard label="Following" value={followedArtists.length} icon={Users} />
-          <StatCard label="Liked Tracks" value={likedTracks.length} icon={Heart} />
-          <StatCard label="Comments" value={commentsCount} icon={MessageSquare} />
-          <div 
-            className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
-            onClick={() => navigate('/fan/playlists')}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
-                <ListMusic className="h-8 w-8 text-primary" />
+          {/* Stats */}
+          {isMobile ? (
+            <div className="grid grid-cols-1 gap-3">
+              <CollapsibleStatCard
+                icon={Users}
+                label="Following"
+                value={followedArtists.length}
+                trend="Artists you follow"
+              />
+              <CollapsibleStatCard
+                icon={Heart}
+                label="Liked Tracks"
+                value={likedTracks.length}
+                trend="Your favorite music"
+              />
+              <CollapsibleStatCard
+                icon={MessageSquare}
+                label="Comments"
+                value={commentsCount}
+                trend="Your engagement"
+              />
+              <div 
+                className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate('/fan/playlists')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
+                    <ListMusic className="h-8 w-8 text-primary" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
               </div>
-              <ArrowRight className="h-5 w-5 text-muted-foreground" />
             </div>
-          </div>
-        </div>
+          ) : (
+            <div className="grid sm:grid-cols-4 gap-6">
+              <StatCard label="Following" value={followedArtists.length} icon={Users} />
+              <StatCard label="Liked Tracks" value={likedTracks.length} icon={Heart} />
+              <StatCard label="Comments" value={commentsCount} icon={MessageSquare} />
+              <div 
+                className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate('/fan/playlists')}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
+                    <ListMusic className="h-8 w-8 text-primary" />
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </div>
+              </div>
+            </div>
+          )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* My Artists Section */}
@@ -489,6 +528,7 @@ export default function FanPortal() {
           />
         )}
       </div>
+      {isMobile && <BottomNavBarFan />}
     </>
   );
 }

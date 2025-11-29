@@ -4,7 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
+import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
 import { StatCard } from "@/components/StatCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { RecentFanActivity } from "@/components/artist/RecentFanActivity";
 import { LatestReleases } from "@/components/artist/LatestReleases";
 import { QuickActions } from "@/components/artist/QuickActions";
@@ -27,6 +30,7 @@ interface Stats {
 export default function StudioDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({ followers: 0, totalPlays: 0, totalLikes: 0, totalComments: 0 });
   const [tracks, setTracks] = useState<any[]>([]);
@@ -153,10 +157,11 @@ export default function StudioDashboard() {
   }
 
   return (
-    <div className="flex min-h-screen pt-16">
-      <StudioSidebar />
-      <MobileStudioNav />
-      <ArtistOnboardingDialog />
+    <>
+      <div className="flex min-h-screen pt-16 pb-16 md:pb-0">
+        <StudioSidebar />
+        {!isMobile && <MobileStudioNav />}
+        <ArtistOnboardingDialog />
       
       <main className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
@@ -192,12 +197,41 @@ export default function StudioDashboard() {
           <ArtistAchievementsCard />
 
           {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <StatCard label="Followers" value={stats.followers} icon={Users} />
-            <StatCard label="Total Plays" value={stats.totalPlays} icon={Play} />
-            <StatCard label="Total Likes" value={stats.totalLikes} icon={Heart} />
-            <StatCard label="Comments" value={stats.totalComments} icon={MessageSquare} />
-          </div>
+          {isMobile ? (
+            <div className="grid grid-cols-1 gap-3">
+              <CollapsibleStatCard
+                icon={Users}
+                label="Followers"
+                value={stats.followers}
+                trend="Your fan community"
+              />
+              <CollapsibleStatCard
+                icon={Play}
+                label="Total Plays"
+                value={stats.totalPlays}
+                trend="Across all tracks"
+              />
+              <CollapsibleStatCard
+                icon={Heart}
+                label="Total Likes"
+                value={stats.totalLikes}
+                trend="Fan engagement"
+              />
+              <CollapsibleStatCard
+                icon={MessageSquare}
+                label="Comments"
+                value={stats.totalComments}
+                trend="Community feedback"
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+              <StatCard label="Followers" value={stats.followers} icon={Users} />
+              <StatCard label="Total Plays" value={stats.totalPlays} icon={Play} />
+              <StatCard label="Total Likes" value={stats.totalLikes} icon={Heart} />
+              <StatCard label="Comments" value={stats.totalComments} icon={MessageSquare} />
+            </div>
+          )}
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
@@ -218,6 +252,8 @@ export default function StudioDashboard() {
           <PostUpdateForm artistId={artistProfile.id} onPostCreated={() => setRefreshPosts(prev => prev + 1)} />
         </div>
       </main>
-    </div>
+      </div>
+      {isMobile && <BottomNavBarStudio />}
+    </>
   );
 }
