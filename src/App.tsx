@@ -17,6 +17,7 @@ import StudioVideoCollections from "./pages/studio/StudioVideoCollections";
 import StudioEvents from "./pages/studio/StudioEvents";
 import StudioAnalytics from "./pages/studio/StudioAnalytics";
 import StudioComments from "./pages/studio/StudioComments";
+import StudioTestimonials from "./pages/studio/StudioTestimonials";
 import StudioSubscription from "./pages/studio/StudioSubscription";
 import FanPortal from "./pages/FanPortal";
 import FanFeed from "./pages/FanFeed";
@@ -96,6 +97,11 @@ const App = () => (
             <Route path="/studio/comments" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioComments />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/testimonials" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioTestimonials />
               </ProtectedRoute>
             } />
             <Route path="/studio/spotlight" element={

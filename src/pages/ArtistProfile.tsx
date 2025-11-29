@@ -16,6 +16,8 @@ import { ArtistSpotlightCard } from "@/components/artist/ArtistSpotlightCard";
 import { ArtistVideosSection } from "@/components/artist/ArtistVideosSection";
 import { PremiumTrackCard } from "@/components/artist/PremiumTrackCard";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
+import { ArtistStatsCard } from "@/components/artist/ArtistStatsCard";
+import { FanTestimonialsSection } from "@/components/artist/FanTestimonialsSection";
 
 interface Artist {
   id: string;
@@ -384,6 +386,9 @@ export default function ArtistProfile() {
 
           {/* Sidebar - 1/3 width on desktop */}
           <div className="space-y-6">
+            {/* Artist Stats Card */}
+            <ArtistStatsCard artistId={artist.id} />
+
             {/* Spotlight Card */}
             {spotlightEntry && (
               <ArtistSpotlightCard
@@ -411,6 +416,11 @@ export default function ArtistProfile() {
       {/* Comments Section */}
       <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
         <CommentsSection artistId={artist.id} currentUserId={artist.user_id} />
+      </div>
+
+      {/* Fan Testimonials Section */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
+        <FanTestimonialsSection artistId={artist.id} />
       </div>
 
       {/* Similar Artists Section */}
