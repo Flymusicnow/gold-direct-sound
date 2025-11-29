@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Circle, Sparkles, Upload, Video, Share2, HelpCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
@@ -165,8 +165,7 @@ export function ArtistOnboardingDialog() {
           </p>
 
           <div className="space-y-3">
-            <TooltipProvider>
-              {steps.map((step, index) => {
+            {steps.map((step, index) => {
                 const Icon = step.icon;
                 return (
                   <button
@@ -207,7 +206,6 @@ export function ArtistOnboardingDialog() {
                   </button>
                 );
               })}
-            </TooltipProvider>
           </div>
 
           {allCompleted && (
