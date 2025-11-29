@@ -9,7 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, Crown, Sparkles, Star, DollarSign, Users, TrendingUp } from "lucide-react";
+import { Check, Crown, Sparkles, Star, DollarSign, Users, TrendingUp, Zap } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
