@@ -225,7 +225,7 @@ export default function FanPortal() {
   return (
     <>
       {!isMobile && <MobileFanNav />}
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Welcome Header */}
         <div>
@@ -326,22 +326,24 @@ export default function FanPortal() {
             </div>
           )}
 
-          {/* Supporter Pass Card */}
-          <Card 
-            className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent hover:shadow-gold transition-all cursor-pointer"
-            onClick={() => navigate('/fan/supporter')}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <Trophy className="h-6 w-6 text-primary" />
-                <h2 className="text-xl font-semibold text-primary">Supporter Pass</h2>
+          {/* Supporter Pass Card - Desktop only (mobile has it in stats grid) */}
+          {!isMobile && (
+            <Card 
+              className="p-6 border-primary/30 bg-gradient-to-br from-primary/10 to-transparent hover:shadow-gold transition-all cursor-pointer"
+              onClick={() => navigate('/fan/supporter')}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Trophy className="h-6 w-6 text-primary" />
+                  <h2 className="text-xl font-semibold text-primary">Supporter Pass</h2>
+                </div>
+                <ArrowRight className="h-5 w-5 text-primary" />
               </div>
-              <ArrowRight className="h-5 w-5 text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Track your support levels and earn badges for supporting your favorite artists
-            </p>
-          </Card>
+              <p className="text-sm text-muted-foreground">
+                Track your support levels and earn badges for supporting your favorite artists
+              </p>
+            </Card>
+          )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* My Artists Section */}

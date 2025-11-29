@@ -124,7 +124,7 @@ export default function FanSupporter() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-5xl space-y-8">
           {/* Hero Header */}
           <div className="text-center space-y-4">

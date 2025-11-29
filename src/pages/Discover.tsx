@@ -10,7 +10,7 @@ export default function Discover() {
   const [activeTab, setActiveTab] = useState('for-you');
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen bg-background pb-32 md:pb-28">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
