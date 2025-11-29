@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Heart, Reply, Trash2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import SupporterBadge from "@/components/supporter/SupporterBadge";
 
 interface CommentItemProps {
   comment: {
@@ -20,9 +21,10 @@ interface CommentItemProps {
   currentUserId?: string;
   artistId: string;
   isArtistComment?: boolean;
+  supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
 }
 
-export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment }: CommentItemProps) => {
+export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none' }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState<any[]>([]);
@@ -121,12 +123,15 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment 
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="font-semibold text-foreground">
               {comment.profiles?.full_name || "Anonymous"}
             </span>
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />
+            )}
+            {!isArtistComment && supporterLevel && supporterLevel !== 'none' && (
+              <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-sm text-muted-foreground">
               {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
@@ -193,15 +198,16 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment 
           {/* Replies */}
           {replies.length > 0 && (
             <div className="mt-4 pl-4 border-l-2 border-primary/20 space-y-3">
-              {replies.map((reply) => (
-                <CommentItem
-                  key={reply.id}
-                  comment={reply}
-                  currentUserId={currentUserId}
-                  artistId={artistId}
-                  isArtistComment={reply.user_id === currentUserId}
-                />
-              ))}
+        {replies.map((reply) => (
+          <CommentItem
+            key={reply.id}
+            comment={reply}
+            currentUserId={currentUserId}
+            artistId={artistId}
+            isArtistComment={reply.user_id === currentUserId}
+            supporterLevel="none"
+          />
+        ))}
             </div>
           )}
         </div>

@@ -75,9 +75,22 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
           .in('id', userIds);
 
         const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
+        
+        // Fetch supporter levels
+        const { data: supportScores } = await supabase
+          .from('fan_support_scores')
+          .select('fan_user_id, level')
+          .eq('artist_id', artistId)
+          .in('fan_user_id', userIds);
+
+        const supporterLevels = new Map(
+          supportScores?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
+        );
+
         const commentsWithProfiles = commentsData.map(comment => ({
           ...comment,
           profiles: profilesMap.get(comment.user_id),
+          supporterLevel: supporterLevels.get(comment.user_id) || 'none',
         }));
         setComments(commentsWithProfiles);
       } else {
@@ -170,6 +183,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
             artistId={artistId}
             videoId={videoId}
             onReply={fetchComments}
+            supporterLevel={(comment as any).supporterLevel || 'none'}
           />
         ))}
 

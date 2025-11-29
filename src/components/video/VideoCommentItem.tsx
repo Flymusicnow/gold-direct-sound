@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Reply, Trash2, CheckCircle2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import SupporterBadge from "@/components/supporter/SupporterBadge";
 
 function DeleteButton({ commentUserId, onDelete }: { commentUserId: string; onDelete: () => void }) {
   const [canDelete, setCanDelete] = useState(false);
@@ -50,6 +51,7 @@ interface VideoCommentItemProps {
   videoId: string;
   onReply: () => void;
   depth?: number;
+  supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
 }
 
 export function VideoCommentItem({
@@ -59,6 +61,7 @@ export function VideoCommentItem({
   videoId,
   onReply,
   depth = 0,
+  supporterLevel = 'none',
 }: VideoCommentItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -200,12 +203,15 @@ export function VideoCommentItem({
     <div className={`space-y-3 ${depth > 0 ? 'ml-8 pl-4 border-l-2 border-primary/20' : ''}`}>
       <div className="flex gap-3">
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium">{displayName}</span>
             {isArtist && (
               <span title="Artist">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
               </span>
+            )}
+            {!isArtist && supporterLevel && supporterLevel !== 'none' && (
+              <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
@@ -276,6 +282,7 @@ export function VideoCommentItem({
           videoId={videoId}
           onReply={onReply}
           depth={depth + 1}
+          supporterLevel="none"
         />
       ))}
     </div>
