@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, Play, Music, ListMusic } from "lucide-react";
@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AddToPlaylistDialog from "@/components/playlists/AddToPlaylistDialog";
+import { CollaboratorBadge } from "./CollaboratorBadge";
 
 interface PremiumTrackCardProps {
   track: {
@@ -21,6 +22,7 @@ interface PremiumTrackCardProps {
   isLiked?: boolean;
   onPlay: () => void;
   onLikeChange?: (isLiked: boolean) => void;
+  showCollaborators?: boolean;
 }
 
 export function PremiumTrackCard({
@@ -29,11 +31,47 @@ export function PremiumTrackCard({
   isLiked = false,
   onPlay,
   onLikeChange,
+  showCollaborators = false,
 }: PremiumTrackCardProps) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(isLiked);
   const [isUpdating, setIsUpdating] = useState(false);
   const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (showCollaborators) {
+      fetchCollaborators();
+    }
+  }, [track.id, showCollaborators]);
+
+  const fetchCollaborators = async () => {
+    try {
+      const { data } = await supabase
+        .from("track_collaborators")
+        .select("*")
+        .eq("track_id", track.id)
+        .eq("status", "accepted");
+
+      if (data && data.length > 0) {
+        const collabIds = data.map(c => c.collaborator_artist_id);
+        const { data: profiles } = await supabase
+          .from("artist_profiles")
+          .select("id, artist_name")
+          .in("id", collabIds);
+
+        const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+        const collabsWithProfiles = data.map(collab => ({
+          ...collab,
+          artist_profiles: profileMap.get(collab.collaborator_artist_id),
+        }));
+
+        setCollaborators(collabsWithProfiles);
+      }
+    } catch (error) {
+      console.error("Error fetching collaborators:", error);
+    }
+  };
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -101,11 +139,16 @@ export function PremiumTrackCard({
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-lg truncate">{track.title}</h3>
             <p className="text-sm text-muted-foreground truncate">{artistName}</p>
-            {track.genre && (
-              <Badge className="mt-2 bg-primary/10 text-primary border-primary/30 text-xs">
-                {track.genre}
-              </Badge>
-            )}
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              {track.genre && (
+                <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">
+                  {track.genre}
+                </Badge>
+              )}
+              {showCollaborators && collaborators.length > 0 && (
+                <CollaboratorBadge collaborators={collaborators} />
+              )}
+            </div>
             {track.description && (
               <p className="text-xs text-muted-foreground/70 truncate mt-1">
                 {track.description}
