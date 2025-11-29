@@ -3,7 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles, Calendar, MapPin, ExternalLink } from "lucide-react";
+import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles, Calendar, MapPin, ExternalLink, Award } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -492,6 +492,13 @@ export default function ArtistProfile() {
                   <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
                   {isFollowing ? "Following" : "Follow"}
                 </Button>
+
+                <Link to={`/artist/${userId}/achievements`}>
+                  <Button variant="outline" className="border-primary/50 hover:border-primary hover:bg-primary/10">
+                    <Award className="h-4 w-4 mr-2" />
+                    Achievements
+                  </Button>
+                </Link>
 
                 <Button
                   onClick={() => setShowShareModal(true)}

@@ -37,6 +37,7 @@ import FanPlaylists from "./pages/FanPlaylists";
 import PlaylistDetail from "./pages/PlaylistDetail";
 import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
+import ArtistAchievements from "./pages/ArtistAchievements";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -54,6 +55,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
+            <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/studio" element={
               <ProtectedRoute allowedRoles={['artist']}>
