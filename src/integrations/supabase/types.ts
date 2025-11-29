@@ -543,6 +543,8 @@ export type Database = {
           created_at: string | null
           duration_seconds: number | null
           id: string
+          is_supporter_only: boolean | null
+          required_tier: string | null
           updated_at: string | null
           video_url: string
           view_count: number | null
@@ -553,6 +555,8 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          is_supporter_only?: boolean | null
+          required_tier?: string | null
           updated_at?: string | null
           video_url: string
           view_count?: number | null
@@ -563,6 +567,8 @@ export type Database = {
           created_at?: string | null
           duration_seconds?: number | null
           id?: string
+          is_supporter_only?: boolean | null
+          required_tier?: string | null
           updated_at?: string | null
           video_url?: string
           view_count?: number | null
@@ -1504,7 +1510,9 @@ export type Database = {
           duration: number | null
           genre: string | null
           id: string
+          is_supporter_only: boolean | null
           play_count: number | null
+          required_tier: string | null
           title: string
           updated_at: string | null
         }
@@ -1517,7 +1525,9 @@ export type Database = {
           duration?: number | null
           genre?: string | null
           id?: string
+          is_supporter_only?: boolean | null
           play_count?: number | null
+          required_tier?: string | null
           title: string
           updated_at?: string | null
         }
@@ -1530,7 +1540,9 @@ export type Database = {
           duration?: number | null
           genre?: string | null
           id?: string
+          is_supporter_only?: boolean | null
           play_count?: number | null
+          required_tier?: string | null
           title?: string
           updated_at?: string | null
         }

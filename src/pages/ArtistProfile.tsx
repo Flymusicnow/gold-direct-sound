@@ -48,6 +48,9 @@ interface Track {
   genre: string | null;
   audio_url: string;
   cover_url: string | null;
+  artist_id: string;
+  is_supporter_only: boolean;
+  required_tier: string | null;
   play_count: number;
 }
 
