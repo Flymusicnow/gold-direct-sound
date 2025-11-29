@@ -6,6 +6,7 @@ import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { Card } from "@/components/ui/card";
 import {
   ArrowLeft,
@@ -17,7 +18,6 @@ import {
   Settings,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AudioPlayer } from "@/components/AudioPlayer";
 
 interface Track {
   id: string;
@@ -45,15 +45,11 @@ interface Playlist {
 export default function PlaylistDetail() {
   const { playlistId } = useParams<{ playlistId: string }>();
   const { user } = useAuth();
+  const { playNow } = useFlightdeck();
   const navigate = useNavigate();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentTrack, setCurrentTrack] = useState<{
-    audioUrl: string;
-    title: string;
-    artistName: string;
-  } | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -153,7 +149,7 @@ export default function PlaylistDetail() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
         <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <Button
@@ -245,13 +241,16 @@ export default function PlaylistDetail() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() =>
-                    setCurrentTrack({
-                      audioUrl: track.tracks.audio_url,
-                      title: track.tracks.title,
-                      artistName: track.tracks.artist_profiles.artist_name,
-                    })
-                  }
+                      onClick={() => playNow({
+                        id: track.tracks.id,
+                        type: 'track',
+                        title: track.tracks.title,
+                        artistId: '',
+                        artistName: track.tracks.artist_profiles.artist_name,
+                        artistUserId: track.tracks.artist_profiles.user_id,
+                        mediaUrl: track.tracks.audio_url,
+                        coverUrl: track.tracks.cover_url || undefined,
+                      })}
                     >
                       <Play className="h-4 w-4" />
                     </Button>
@@ -271,8 +270,6 @@ export default function PlaylistDetail() {
           </div>
         )}
         </div>
-
-        {currentTrack && <AudioPlayer {...currentTrack} />}
       </div>
       {isMobile && <BottomNavBarFan />}
     </>

@@ -112,7 +112,7 @@ export function FlightdeckPlayer() {
   if (!currentItem) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
+    <div className="fixed bottom-14 md:bottom-0 left-0 right-0 z-[60]">
       {/* Mini Queue */}
       <FlightdeckMiniQueue isExpanded={queueExpanded} onToggle={() => setQueueExpanded(!queueExpanded)} />
       

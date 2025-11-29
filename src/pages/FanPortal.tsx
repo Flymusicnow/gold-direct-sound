@@ -10,9 +10,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic } from "lucide-react";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
 import { toast } from "sonner";
@@ -48,13 +48,13 @@ interface Activity {
 export default function FanPortal() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  const { playNow } = useFlightdeck();
   const isMobile = useIsMobile();
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [likedTracks, setLikedTracks] = useState<LikedTrack[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [commentsCount, setCommentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [currentTrack, setCurrentTrack] = useState<{ url: string; title: string; artist: string } | null>(null);
   const [supporterStats, setSupporterStats] = useState<{ tier: string; totalVotes: number } | null>(null);
 
   useEffect(() => {
@@ -225,7 +225,7 @@ export default function FanPortal() {
   return (
     <>
       {!isMobile && <MobileFanNav />}
-      <div className="min-h-screen py-24 px-4 pb-24 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Welcome Header */}
         <div>
@@ -409,10 +409,15 @@ export default function FanPortal() {
                   <div
                     key={like.track_id}
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                    onClick={() => setCurrentTrack({
-                      url: like.tracks.audio_url,
+                    onClick={() => playNow({
+                      id: like.tracks.id,
+                      type: 'track',
                       title: like.tracks.title,
-                      artist: like.tracks.artist_profiles.artist_name
+                      artistId: '',
+                      artistName: like.tracks.artist_profiles.artist_name,
+                      artistUserId: '',
+                      mediaUrl: like.tracks.audio_url,
+                      coverUrl: like.tracks.cover_url || undefined,
                     })}
                   >
                     {like.tracks.cover_url ? (
@@ -503,7 +508,15 @@ export default function FanPortal() {
           <TrendingSection
             type="tracks"
             limit={5}
-            onTrackPlay={setCurrentTrack}
+            onTrackPlay={(track) => playNow({
+              id: `trending-${track.url}`,
+              type: 'track',
+              title: track.title,
+              artistId: '',
+              artistName: track.artist,
+              artistUserId: '',
+              mediaUrl: track.url,
+            })}
           />
         </Card>
 
@@ -519,14 +532,6 @@ export default function FanPortal() {
           </Button>
         </div>
         </div>
-
-        {currentTrack && (
-          <AudioPlayer
-            audioUrl={currentTrack.url}
-            title={currentTrack.title}
-            artistName={currentTrack.artist}
-          />
-        )}
       </div>
       {isMobile && <BottomNavBarFan />}
     </>

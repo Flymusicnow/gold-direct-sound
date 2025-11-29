@@ -8,9 +8,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AudioPlayer } from "@/components/AudioPlayer";
 import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { TrendingSection } from "@/components/TrendingSection";
 import { Music, TrendingUp, Sparkles, Video } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
@@ -49,12 +49,12 @@ interface VideoPost {
 export default function FanFeed() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { playNow } = useFlightdeck();
   const [newTracks, setNewTracks] = useState<NewTrack[]>([]);
   const [videoPosts, setVideoPosts] = useState<VideoPost[]>([]);
   const [followedGenres, setFollowedGenres] = useState<string[]>([]);
   const [followedArtistIds, setFollowedArtistIds] = useState<string[]>([]);
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
-  const [currentTrack, setCurrentTrack] = useState<{ url: string; title: string; artist: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
 
@@ -170,7 +170,7 @@ export default function FanFeed() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
+      <div className="min-h-screen py-24 px-4 pb-32 md:pb-4">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div>
@@ -205,10 +205,15 @@ export default function FanFeed() {
                       track={track}
                       artistName={track.artist_profiles.artist_name}
                       isLiked={likedTrackIds.has(track.id)}
-                      onPlay={() => setCurrentTrack({
-                        url: track.audio_url,
+                      onPlay={() => playNow({
+                        id: track.id,
+                        type: 'track',
                         title: track.title,
-                        artist: track.artist_profiles.artist_name
+                        artistId: track.id,
+                        artistName: track.artist_profiles.artist_name,
+                        artistUserId: track.artist_profiles.user_id,
+                        mediaUrl: track.audio_url,
+                        coverUrl: track.cover_url || undefined,
                       })}
                       onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
                     />
@@ -244,7 +249,16 @@ export default function FanFeed() {
 
             {/* Trending in Spotlight */}
             <SpotlightTrendingCard
-              onPlayTrack={(url, title, artist, cover) => setCurrentTrack({ url, title, artist })}
+              onPlayTrack={(url, title, artist, cover) => playNow({
+                id: `spotlight-${url}`,
+                type: 'track',
+                title,
+                artistId: '',
+                artistName: artist,
+                artistUserId: '',
+                mediaUrl: url,
+                coverUrl: cover,
+              })}
             />
 
             {/* Recommended For You */}
@@ -269,7 +283,16 @@ export default function FanFeed() {
 
             {/* Spotlight New Entries */}
             <SpotlightNewEntryCard
-              onPlayTrack={(url, title, artist, cover) => setCurrentTrack({ url, title, artist })}
+              onPlayTrack={(url, title, artist, cover) => playNow({
+                id: `spotlight-new-${url}`,
+                type: 'track',
+                title,
+                artistId: '',
+                artistName: artist,
+                artistUserId: '',
+                mediaUrl: url,
+                coverUrl: cover,
+              })}
             />
 
             {/* Your Artists Are Rising */}
@@ -285,20 +308,20 @@ export default function FanFeed() {
               <TrendingSection
                 type="tracks"
                 limit={10}
-                onTrackPlay={setCurrentTrack}
+                onTrackPlay={(track) => playNow({
+                  id: `trending-${track.url}`,
+                  type: 'track',
+                  title: track.title,
+                  artistId: '',
+                  artistName: track.artist,
+                  artistUserId: '',
+                  mediaUrl: track.url,
+                })}
               />
             </Card>
           </div>
         </div>
         </div>
-
-        {currentTrack && (
-          <AudioPlayer
-            audioUrl={currentTrack.url}
-            title={currentTrack.title}
-            artistName={currentTrack.artist}
-          />
-        )}
       </div>
       {isMobile && <BottomNavBarFan />}
     </>
