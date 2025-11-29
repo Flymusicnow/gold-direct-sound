@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -147,8 +148,10 @@ export default function PlaylistDetail() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <>
+      <MobileFanNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-4xl">
         {/* Header */}
         <Button
           variant="ghost"
@@ -264,9 +267,10 @@ export default function PlaylistDetail() {
             ))}
           </div>
         )}
-      </div>
+        </div>
 
-      {currentTrack && <AudioPlayer {...currentTrack} />}
-    </div>
+        {currentTrack && <AudioPlayer {...currentTrack} />}
+      </div>
+    </>
   );
 }

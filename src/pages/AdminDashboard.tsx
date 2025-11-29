@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -90,8 +91,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-6xl">
+    <>
+      <MobileAdminNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <div className="flex gap-2">
@@ -147,7 +150,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -452,8 +453,10 @@ export default function AdminBetaCodes() {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-4">
-      <div className="flex flex-col gap-6">
+    <>
+      <MobileAdminNav />
+      <div className="min-h-screen pt-24 pb-8 px-4">
+        <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -1097,7 +1100,8 @@ export default function AdminBetaCodes() {
             </div>
           )}
         </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

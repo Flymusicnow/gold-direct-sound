@@ -6,6 +6,8 @@ import { GoLiveDialog } from "@/components/artist/GoLiveDialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Radio } from "lucide-react";
+import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 
 interface LiveStream {
   id: string;
@@ -164,8 +166,12 @@ export default function StudioLiveStreams() {
   const pastStreams = streams.filter((s) => s.status === "ended");
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="flex min-h-screen w-full">
+      <StudioSidebar />
+      <MobileStudioNav />
+      <div className="flex-1 pt-16 md:pt-0">
+        <div className="p-6 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -269,6 +275,8 @@ export default function StudioLiveStreams() {
             </div>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );

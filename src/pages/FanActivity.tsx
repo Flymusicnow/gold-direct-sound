@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -157,8 +158,10 @@ export default function FanActivity() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-4xl">
+    <>
+      <MobileFanNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-4xl">
         <Button
           variant="ghost"
           onClick={() => navigate('/fan')}
@@ -194,7 +197,8 @@ export default function FanActivity() {
             <ActivityList items={filterActivities('follow')} />
           </TabsContent>
         </Tabs>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -164,8 +165,10 @@ export default function FanFeed() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-7xl space-y-8">
+    <>
+      <MobileFanNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-7xl space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-4xl font-bold mb-2">Your Feed</h1>
@@ -284,15 +287,16 @@ export default function FanFeed() {
             </Card>
           </div>
         </div>
-      </div>
+        </div>
 
-      {currentTrack && (
-        <AudioPlayer
-          audioUrl={currentTrack.url}
-          title={currentTrack.title}
-          artistName={currentTrack.artist}
-        />
-      )}
-    </div>
+        {currentTrack && (
+          <AudioPlayer
+            audioUrl={currentTrack.url}
+            title={currentTrack.title}
+            artistName={currentTrack.artist}
+          />
+        )}
+      </div>
+    </>
   );
 }

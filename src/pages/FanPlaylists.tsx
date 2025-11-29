@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { Button } from "@/components/ui/button";
 import { Plus, ListMusic } from "lucide-react";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
@@ -76,8 +77,10 @@ export default function FanPlaylists() {
   }
 
   return (
-    <div className="min-h-screen py-24 px-4">
-      <div className="container mx-auto max-w-6xl">
+    <>
+      <MobileFanNav />
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-6xl">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -122,13 +125,14 @@ export default function FanPlaylists() {
             ))}
           </div>
         )}
-      </div>
+        </div>
 
-      <CreatePlaylistDialog
-        isOpen={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        onSuccess={fetchPlaylists}
-      />
-    </div>
+        <CreatePlaylistDialog
+          isOpen={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          onSuccess={fetchPlaylists}
+        />
+      </div>
+    </>
   );
 }

@@ -5,6 +5,8 @@ import { MerchProductCard } from "@/components/artist/MerchProductCard";
 import { AddMerchDialog } from "@/components/artist/AddMerchDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag } from "lucide-react";
+import { StudioSidebar } from "@/components/artist/StudioSidebar";
+import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 
 interface MerchProduct {
   id: string;
@@ -106,8 +108,12 @@ export default function StudioMerch() {
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="flex min-h-screen w-full">
+      <StudioSidebar />
+      <MobileStudioNav />
+      <div className="flex-1 pt-16 md:pt-0">
+        <div className="p-6 md:p-8">
+          <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -157,6 +163,8 @@ export default function StudioMerch() {
             ))}
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
