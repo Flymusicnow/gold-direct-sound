@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Heart, Play, Instagram, Twitter, Globe, Youtube, Share2, Music, Sparkles, Calendar, MapPin, ExternalLink, Award } from "lucide-react";
+import { Award, Music } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { CommentsSection } from "@/components/CommentsSection";
 import { SimilarArtists } from "@/components/SimilarArtists";
 import { ShareModal } from "@/components/ShareModal";
-import { format } from "date-fns";
+import { ArtistHeroSection } from "@/components/artist/ArtistHeroSection";
+import { ArtistAboutSection } from "@/components/artist/ArtistAboutSection";
+import { ArtistSpotlightCard } from "@/components/artist/ArtistSpotlightCard";
 import { ArtistVideosSection } from "@/components/artist/ArtistVideosSection";
+import { PremiumTrackCard } from "@/components/artist/PremiumTrackCard";
+import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 
 interface Artist {
   id: string;
@@ -34,113 +37,10 @@ interface Track {
   id: string;
   title: string;
   description: string | null;
+  genre: string | null;
   audio_url: string;
   cover_url: string | null;
   play_count: number;
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description: string | null;
-  start_time: string;
-  end_time: string | null;
-  location: string | null;
-  event_type: string;
-  ticket_url: string | null;
-}
-
-function UpcomingEventsSection({ artistId }: { artistId: string }) {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchEvents();
-  }, [artistId]);
-
-  const fetchEvents = async () => {
-    const { data } = await supabase
-      .from('artist_events')
-      .select('*')
-      .eq('artist_id', artistId)
-      .eq('status', 'upcoming')
-      .gte('start_time', new Date().toISOString())
-      .order('start_time', { ascending: true })
-      .limit(3);
-
-    if (data) setEvents(data);
-    setLoading(false);
-  };
-
-  if (loading || events.length === 0) return null;
-
-  return (
-    <div className="container mx-auto px-4 py-10 max-w-6xl border-b border-border">
-      <div className="flex items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-primary">Upcoming Events</h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
-      </div>
-      
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            className="group p-5 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-card/80 transition-all"
-          >
-            <div className="flex items-start gap-4 mb-4">
-              <div className="w-14 h-14 rounded-lg bg-primary/10 flex flex-col items-center justify-center flex-shrink-0 border border-primary/20">
-                <span className="text-xs font-bold text-primary uppercase">
-                  {format(new Date(event.start_time), 'MMM')}
-                </span>
-                <span className="text-xl font-bold text-primary leading-none">
-                  {format(new Date(event.start_time), 'd')}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg mb-1 line-clamp-2">{event.title}</h3>
-                <Badge variant="outline" className="text-xs border-primary/30">
-                  {event.event_type.replace('_', ' ')}
-                </Badge>
-              </div>
-            </div>
-
-            {event.description && (
-              <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                {event.description}
-              </p>
-            )}
-
-            <div className="space-y-2 text-sm text-muted-foreground mb-4">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
-                <span>{format(new Date(event.start_time), 'PPp')}</span>
-              </div>
-              {event.location && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                  <span className="truncate">{event.location}</span>
-                </div>
-              )}
-            </div>
-
-            {event.ticket_url && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full border-primary/50 hover:bg-primary/10 hover:border-primary"
-                asChild
-              >
-                <a href={event.ticket_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                  <span>Get Tickets</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </Button>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export default function ArtistProfile() {
@@ -158,6 +58,7 @@ export default function ArtistProfile() {
     campaignId: string;
     campaignName: string;
     votes: number;
+    rank: number | null;
   } | null>(null);
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
 
@@ -176,7 +77,6 @@ export default function ArtistProfile() {
     if (artist) {
       fetchFollowerCount();
 
-      // Subscribe to real-time follower count updates
       const channel = supabase
         .channel("follows-updates")
         .on(
@@ -308,6 +208,7 @@ export default function ArtistProfile() {
         id,
         campaign_id,
         total_votes,
+        cached_rank,
         spotlight_campaigns!inner (
           name,
           status
@@ -323,6 +224,7 @@ export default function ArtistProfile() {
         campaignId: entry.campaign_id,
         campaignName: entry.spotlight_campaigns.name,
         votes: entry.total_votes || 0,
+        rank: entry.cached_rank,
       });
     }
   };
@@ -376,34 +278,8 @@ export default function ArtistProfile() {
     }
   };
 
-  const handleLikeTrack = async (e: React.MouseEvent, trackId: string) => {
-    e.stopPropagation();
-    
-    if (!user) {
-      toast.error("Please sign in to like tracks");
-      return;
-    }
-
-    try {
-      if (likedTracks[trackId]) {
-        await supabase
-          .from('likes')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('track_id', trackId);
-        setLikedTracks({ ...likedTracks, [trackId]: false });
-        toast.success("Removed from liked tracks");
-      } else {
-        await supabase
-          .from('likes')
-          .insert({ user_id: user.id, track_id: trackId });
-        setLikedTracks({ ...likedTracks, [trackId]: true });
-        toast.success("Added to liked tracks");
-      }
-    } catch (error) {
-      console.error('Error updating like:', error);
-      toast.error("Failed to update like");
-    }
+  const handleLikeChange = (trackId: string, isLiked: boolean) => {
+    setLikedTracks({ ...likedTracks, [trackId]: isLiked });
   };
 
   if (loading) {
@@ -424,233 +300,123 @@ export default function ArtistProfile() {
 
   return (
     <div className="min-h-screen pt-16 pb-32">
-      {/* Artist Header */}
-      <div className="bg-gradient-dark border-b border-border">
-        <div className="container mx-auto px-4 py-12 max-w-6xl">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            <div className="relative">
-              <div className="w-48 h-48 rounded-full ring-4 ring-primary/30 overflow-hidden">
-                {artist.avatar_url ? (
-                  <img
-                    src={artist.avatar_url}
-                    alt={artist.artist_name}
-                    className="w-full h-full object-cover"
+      {/* Premium Hero Section */}
+      <ArtistHeroSection
+        artist={artist}
+        followerCount={followerCount}
+        isFollowing={isFollowing}
+        hasBetaAccess={hasBetaAccess}
+        onFollow={handleFollow}
+        onShare={() => setShowShareModal(true)}
+      />
+
+      {/* Main Content Area with Tabs */}
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content - 2/3 width on desktop */}
+          <div className="lg:col-span-2">
+            <Tabs defaultValue="tracks" className="w-full">
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 mb-8">
+                <TabsTrigger
+                  value="tracks"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
+                >
+                  <Music className="w-4 h-4 mr-2" />
+                  Tracks
+                </TabsTrigger>
+                <TabsTrigger
+                  value="videos"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
+                >
+                  <Music className="w-4 h-4 mr-2" />
+                  Videos
+                </TabsTrigger>
+                <TabsTrigger
+                  value="about"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
+                >
+                  About
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tracks Tab */}
+              <TabsContent value="tracks" className="mt-0">
+                {tracks.length === 0 ? (
+                  <EmptyStateCard
+                    icon={Music}
+                    title="No Tracks Yet"
+                    description="This artist is working on new music. Follow them to get notified when they release!"
+                    ctaText={isFollowing ? "Explore More Artists" : "Follow Artist"}
+                    onCtaClick={isFollowing ? undefined : handleFollow}
+                    ctaPath={isFollowing ? "/explore" : undefined}
+                    variant="gold"
                   />
                 ) : (
-                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-7xl text-primary font-bold">
-                      {artist.artist_name[0]}
-                    </span>
+                  <div className="space-y-3">
+                    {tracks.map((track) => (
+                      <PremiumTrackCard
+                        key={track.id}
+                        track={track}
+                        artistName={artist.artist_name}
+                        isLiked={likedTracks[track.id]}
+                        onPlay={() => setCurrentTrack(track)}
+                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                      />
+                    ))}
                   </div>
                 )}
-              </div>
-            </div>
+              </TabsContent>
 
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-2">{artist.artist_name}</h1>
-              
-              {(artist.city || artist.country) && (
-                <p className="text-muted-foreground mb-3">
-                  {[artist.city, artist.country].filter(Boolean).join(', ')}
-                </p>
-              )}
+              {/* Videos Tab */}
+              <TabsContent value="videos" className="mt-0">
+                <ArtistVideosSection
+                  artistId={artist.id}
+                  artistName={artist.artist_name}
+                />
+              </TabsContent>
 
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                {artist.genre && (
-                  <Badge className="bg-primary/10 text-primary border-primary hover:bg-primary/20">
-                    {artist.genre}
-                  </Badge>
-                )}
-                
-                {hasBetaAccess && <EarlyAccessBadge />}
-                
-                {spotlightEntry && (
-                  <Link 
-                    to={`/spotlight/${spotlightEntry.campaignId}`}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/50 hover:border-primary transition-colors"
-                  >
-                    <Sparkles className="h-3 w-3 text-primary" />
-                    <span className="text-primary text-xs font-medium">In FlyMusic Spotlight</span>
-                    <Badge variant="outline" className="border-primary/50 text-primary text-xs px-1.5 py-0">
-                      {spotlightEntry.votes}
-                    </Badge>
-                  </Link>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                <Music className="h-4 w-4" />
-                <span>{followerCount} {followerCount === 1 ? "follower" : "followers"}</span>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 items-center">
-                <Button
-                  onClick={handleFollow}
-                  variant={isFollowing ? "outline" : "default"}
-                  className={!isFollowing ? "bg-gradient-gold hover:opacity-90" : ""}
-                >
-                  <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
-                  {isFollowing ? "Following" : "Follow"}
-                </Button>
-
-                <Link to={`/artist/${userId}/achievements`}>
-                  <Button variant="outline" className="border-primary/50 hover:border-primary hover:bg-primary/10">
-                    <Award className="h-4 w-4 mr-2" />
-                    Achievements
-                  </Button>
-                </Link>
-
-                <Button
-                  onClick={() => setShowShareModal(true)}
-                  variant="outline"
-                  size="icon"
-                  className="border-primary/50 hover:border-primary hover:bg-primary/10"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-
-                {artist.instagram_url && (
-                  <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-colors" asChild>
-                    <a href={artist.instagram_url} target="_blank" rel="noopener noreferrer">
-                      <Instagram className="h-5 w-5" />
-                    </a>
-                  </Button>
-                )}
-                {artist.tiktok_url && (
-                  <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-colors" asChild>
-                    <a href={artist.tiktok_url} target="_blank" rel="noopener noreferrer">
-                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                      </svg>
-                    </a>
-                  </Button>
-                )}
-                {artist.youtube_url && (
-                  <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-colors" asChild>
-                    <a href={artist.youtube_url} target="_blank" rel="noopener noreferrer">
-                      <Youtube className="h-5 w-5" />
-                    </a>
-                  </Button>
-                )}
-                {artist.twitter_url && (
-                  <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-colors" asChild>
-                    <a href={artist.twitter_url} target="_blank" rel="noopener noreferrer">
-                      <Twitter className="h-5 w-5" />
-                    </a>
-                  </Button>
-                )}
-                {artist.website_url && (
-                  <Button variant="ghost" size="icon" className="hover:text-primary hover:bg-primary/10 transition-colors" asChild>
-                    <a href={artist.website_url} target="_blank" rel="noopener noreferrer">
-                      <Globe className="h-5 w-5" />
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </div>
+              {/* About Tab */}
+              <TabsContent value="about" className="mt-0">
+                <ArtistAboutSection artist={artist} />
+              </TabsContent>
+            </Tabs>
           </div>
-        </div>
-      </div>
 
-      {/* Bio Section */}
-      {artist.bio && (
-        <div className="container mx-auto px-4 py-10 max-w-6xl border-b border-border">
-          <div className="flex items-center gap-4 mb-6">
-            <h2 className="text-2xl font-bold text-primary">Bio</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
-          </div>
-          <div className="max-w-3xl">
-            <p className="text-foreground/90 leading-relaxed text-lg whitespace-pre-line">
-              {artist.bio}
-            </p>
-          </div>
-        </div>
-      )}
+          {/* Sidebar - 1/3 width on desktop */}
+          <div className="space-y-6">
+            {/* Spotlight Card */}
+            {spotlightEntry && (
+              <ArtistSpotlightCard
+                campaignId={spotlightEntry.campaignId}
+                campaignName={spotlightEntry.campaignName}
+                votes={spotlightEntry.votes}
+                rank={spotlightEntry.rank || undefined}
+              />
+            )}
 
-      {/* Upcoming Events Section */}
-      <UpcomingEventsSection artistId={artist.id} />
-
-      {/* Videos Section */}
-      <div className="container mx-auto px-4 max-w-6xl">
-        <ArtistVideosSection artistId={artist.id} artistName={artist.artist_name} />
-      </div>
-
-      {/* Tracks */}
-      <div className="container mx-auto px-4 py-12 max-w-6xl">
-        <div className="flex items-center gap-4 mb-8">
-          <h2 className="text-2xl font-bold text-primary">Tracks</h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
-        </div>
-        
-        {tracks.length === 0 ? (
-          <p className="text-muted-foreground">No tracks yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {tracks.map((track) => (
-              <div
-                key={track.id}
-                className="group flex items-center gap-4 p-4 rounded-lg bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
-                onClick={() => setCurrentTrack(track)}
+            {/* Achievements Link */}
+            <Link to={`/artist/${userId}/achievements`}>
+              <Button
+                variant="outline"
+                className="w-full border-primary/50 hover:border-primary hover:bg-primary/10"
               >
-                <div className="relative w-16 h-16 flex-shrink-0">
-                  {track.cover_url ? (
-                    <img
-                      src={track.cover_url}
-                      alt={track.title}
-                      className="w-full h-full rounded object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full rounded bg-primary/10 flex items-center justify-center">
-                      <Play className="h-6 w-6 text-primary" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 rounded bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Play className="h-8 w-8 text-primary fill-primary" />
-                  </div>
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold truncate">{track.title}</h3>
-                  {track.description && (
-                    <p className="text-sm text-muted-foreground truncate">
-                      {track.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => handleLikeTrack(e, track.id)}
-                  >
-                    <Heart className={`h-5 w-5 ${likedTracks[track.id] ? "fill-primary text-primary" : ""}`} />
-                  </Button>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentTrack(track);
-                    }}
-                  >
-                    <Play className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+                <Award className="h-4 w-4 mr-2" />
+                View Achievements
+              </Button>
+            </Link>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Comments Section */}
-      <CommentsSection artistId={artist.id} currentUserId={artist.user_id} />
+      <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
+        <CommentsSection artistId={artist.id} currentUserId={artist.user_id} />
+      </div>
 
       {/* Similar Artists Section */}
-      <SimilarArtists currentArtistId={artist.id} currentGenre={artist.genre} />
+      <div className="container mx-auto px-4 py-8 max-w-6xl border-t border-border">
+        <SimilarArtists currentArtistId={artist.id} currentGenre={artist.genre} />
+      </div>
 
       {/* Share Modal */}
       <ShareModal
