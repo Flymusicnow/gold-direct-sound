@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AudioPlayer } from "@/components/AudioPlayer";
-import { Award, Music } from "lucide-react";
+import { Award, Music, ShoppingBag } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +19,7 @@ import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { ArtistStatsCard } from "@/components/artist/ArtistStatsCard";
 import { FanTestimonialsSection } from "@/components/artist/FanTestimonialsSection";
 import { CrossPromoteSection } from "@/components/artist/CrossPromoteSection";
+import { MerchSection } from "@/components/artist/MerchSection";
 
 interface Artist {
   id: string;
@@ -335,8 +336,15 @@ export default function ArtistProfile() {
                   Videos
                 </TabsTrigger>
                 <TabsTrigger
-                  value="about"
+                  value="merch"
                   className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
+                >
+                  <ShoppingBag className="w-4 h-4 mr-2" />
+                  Merch
+                </TabsTrigger>
+                <TabsTrigger
+                  value="about"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
                 >
                   About
                 </TabsTrigger>
@@ -377,6 +385,11 @@ export default function ArtistProfile() {
                   artistId={artist.id}
                   artistName={artist.artist_name}
                 />
+              </TabsContent>
+
+              {/* Merch Tab */}
+              <TabsContent value="merch" className="mt-0">
+                <MerchSection artistId={artist.id} />
               </TabsContent>
 
               {/* About Tab */}

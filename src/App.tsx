@@ -20,6 +20,9 @@ import StudioComments from "./pages/studio/StudioComments";
 import StudioTestimonials from "./pages/studio/StudioTestimonials";
 import StudioCollaborations from "./pages/studio/StudioCollaborations";
 import StudioSubscription from "./pages/studio/StudioSubscription";
+import StudioMerch from "./pages/studio/StudioMerch";
+import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
+import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
 import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
@@ -110,6 +113,16 @@ const App = () => (
                 <StudioCollaborations />
               </ProtectedRoute>
             } />
+            <Route path="/studio/merch" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioMerch />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/live" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioLiveStreams />
+              </ProtectedRoute>
+            } />
             <Route path="/studio/spotlight" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioSpotlight />
@@ -125,6 +138,7 @@ const App = () => (
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
             <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
             <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
+            <Route path="/live/:streamId" element={<LiveStream />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/spotlight" element={<AdminSpotlight />} />
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />

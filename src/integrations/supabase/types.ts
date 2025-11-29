@@ -191,6 +191,108 @@ export type Database = {
           },
         ]
       }
+      artist_live_streams: {
+        Row: {
+          actual_start: string | null
+          artist_id: string
+          created_at: string | null
+          description: string | null
+          ended_at: string | null
+          id: string
+          recording_url: string | null
+          scheduled_start: string | null
+          status: string
+          stream_type: string
+          stream_url: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          actual_start?: string | null
+          artist_id: string
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          recording_url?: string | null
+          scheduled_start?: string | null
+          status?: string
+          stream_type?: string
+          stream_url?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          actual_start?: string | null
+          artist_id?: string
+          created_at?: string | null
+          description?: string | null
+          ended_at?: string | null
+          id?: string
+          recording_url?: string | null
+          scheduled_start?: string | null
+          status?: string
+          stream_type?: string
+          stream_url?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
+      artist_merch_products: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          currency: string
+          description: string | null
+          external_url: string | null
+          id: string
+          image_url: string | null
+          is_featured: boolean | null
+          name: string
+          position: number | null
+          price: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          name: string
+          position?: number | null
+          price: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          external_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean | null
+          name?: string
+          position?: number | null
+          price?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       artist_onboarding_progress: {
         Row: {
           created_at: string | null
@@ -697,6 +799,41 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_chat: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_artist: boolean | null
+          message: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_artist?: boolean | null
+          message: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_artist?: boolean | null
+          message?: string
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_chat_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
             referencedColumns: ["id"]
           },
         ]
