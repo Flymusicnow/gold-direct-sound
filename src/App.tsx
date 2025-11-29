@@ -27,6 +27,7 @@ import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSpotlight from "./pages/admin/AdminSpotlight";
 import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
+import AdminBetaCodes from "./pages/admin/AdminBetaCodes";
 import StudioSpotlight from "./pages/studio/StudioSpotlight";
 import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
 import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
@@ -115,6 +116,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/spotlight" element={<AdminSpotlight />} />
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
+            <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />

@@ -94,9 +94,14 @@ export default function AdminDashboard() {
       <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <Button onClick={() => navigate('/admin/spotlight')} variant="outline">
-            Manage Spotlight
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => navigate('/admin/spotlight')} variant="outline">
+              Manage Spotlight
+            </Button>
+            <Button onClick={() => navigate('/admin/beta-codes')} variant="outline">
+              Manage Beta Codes
+            </Button>
+          </div>
         </div>
 
         <div className="mb-8">
