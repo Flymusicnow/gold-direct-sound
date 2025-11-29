@@ -45,6 +45,7 @@ import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 
 const queryClient = new QueryClient();
 
@@ -55,8 +56,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Navigation />
-          <Routes>
+          <SwipeBackProvider>
+            <Navigation />
+            <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/explore" element={<Explore />} />
@@ -181,6 +183,7 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </SwipeBackProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
