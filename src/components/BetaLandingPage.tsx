@@ -2,33 +2,9 @@ import { useNavigate } from "react-router-dom";
 import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { Mic2, TrendingUp, Users, BarChart3 } from "lucide-react";
 
 export function BetaLandingPage() {
   const navigate = useNavigate();
-
-  const features = [
-    {
-      icon: Mic2,
-      title: "Build Your Profile",
-      description: "Upload tracks, videos, and connect with your audience directly",
-    },
-    {
-      icon: TrendingUp,
-      title: "FlyMusic Spotlight",
-      description: "Compete in community-voted campaigns and get discovered",
-    },
-    {
-      icon: Users,
-      title: "Supporter System",
-      description: "Let fans support you with exclusive content and perks",
-    },
-    {
-      icon: BarChart3,
-      title: "Analytics & Insights",
-      description: "Track your growth with professional creator tools",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -76,26 +52,6 @@ export function BetaLandingPage() {
             >
               Create Account
             </Button>
-          </div>
-
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-16 max-w-3xl mx-auto">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="bg-card border border-border rounded-lg p-6 text-left space-y-3 hover:border-primary/50 transition-colors"
-              >
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <feature.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
           </div>
 
           {/* Footer Message */}
