@@ -8,6 +8,7 @@ import { usePublicAchievements } from "@/hooks/usePublicAchievements";
 import { AchievementBadge } from "@/components/artist/AchievementBadge";
 import { Badge } from "@/components/ui/badge";
 import { ShareModal } from "@/components/ShareModal";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Artist {
   id: string;
@@ -99,9 +100,17 @@ export default function ArtistAchievements() {
               </div>
             </div>
 
-            <div className="flex-1">
+            <div>
               <h1 className="text-3xl font-bold mb-2">{artist.artist_name}</h1>
-              <p className="text-muted-foreground mb-4">Achievement Showcase</p>
+              <div className="flex items-center gap-2 mb-4">
+                <p className="text-muted-foreground">Achievement Showcase</p>
+                <InfoTooltip
+                  title="Artist Achievements"
+                  description="Achievements unlock as you reach milestones: upload tracks/videos, gain followers, earn plays, and engage with fans."
+                  forRole="artist"
+                  learnLink="/learn?tab=artist#studio-overview"
+                />
+              </div>
 
               {artist.genre && (
                 <Badge className="bg-primary/10 text-primary border-primary hover:bg-primary/20 mb-4">

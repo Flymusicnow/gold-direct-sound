@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trophy } from "lucide-react";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Supporter {
   fan_user_id: string;
@@ -73,6 +74,12 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
             Top Supporters
+            <InfoTooltip
+              title="Your Top Supporters"
+              description="Fans earn support points by liking, sharing, voting, and engaging with your content. Higher levels mean stronger fans!"
+              forRole="artist"
+              learnLink="/learn?tab=artist#supporters-help"
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,6 +96,12 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
             Top Supporters
+            <InfoTooltip
+              title="Your Top Supporters"
+              description="Fans earn support points by liking, sharing, voting, and engaging with your content. Higher levels mean stronger fans!"
+              forRole="artist"
+              learnLink="/learn?tab=artist#supporters-help"
+            />
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -106,6 +119,12 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
         <CardTitle className="flex items-center gap-2">
           <Trophy className="w-5 h-5 text-primary" />
           Top Supporters
+          <InfoTooltip
+            title="Your Top Supporters"
+            description="Fans earn support points by liking, sharing, voting, and engaging with your content. Higher levels mean stronger fans!"
+            forRole="artist"
+            learnLink="/learn?tab=artist#supporters-help"
+          />
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">

@@ -35,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface VideoPost {
   id: string;
@@ -461,7 +462,15 @@ export default function StudioVideos() {
           <div className="flex items-center gap-3">
             <Video className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">Video Posts</h1>
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-3xl font-bold">Video Posts</h1>
+                <InfoTooltip
+                  title="Videos vs Tracks"
+                  description="Videos are for updates, behind-the-scenes, teasers, and visual content. Tracks are for your music library. Both help fans connect with you!"
+                  forRole="artist"
+                  learnLink="/learn?tab=artist#videos-tracks-collections"
+                />
+              </div>
               <p className="text-muted-foreground">Share video updates with your fans</p>
             </div>
           </div>

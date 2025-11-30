@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Artist {
   id: string;
@@ -233,12 +234,17 @@ export default function FanPortal() {
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-7xl space-y-8">
         {/* Welcome Header */}
-        <div>
-          <h1 className="text-4xl font-bold mb-2">
-            Hi, {profile?.full_name || 'Fan'}!
-          </h1>
-          <p className="text-muted-foreground">Welcome to your FlyMusic Gold dashboard</p>
-        </div>
+          <div>
+            <h1 className="text-4xl font-bold mb-2">
+              Hi, {profile?.full_name || 'Fan'}!
+            </h1>
+            <p className="text-muted-foreground">
+              Welcome to your FlyMusic Gold dashboard · {" "}
+              <Link to="/learn?tab=fan" className="text-primary hover:underline text-sm">
+                Learn how to use FlyMusic →
+              </Link>
+            </p>
+          </div>
 
           {/* Spotlight Supporter Badge */}
           {supporterStats && supporterStats.tier !== 'none' && (
@@ -357,6 +363,12 @@ export default function FanPortal() {
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
                   Supporter Progress
+                  <InfoTooltip
+                    title="Supporter Level"
+                    description="Earn XP through likes, follows, votes, and shares. Higher levels unlock badges and show artists your commitment."
+                    forRole="fan"
+                    learnLink="/learn?tab=fan#supporter-level"
+                  />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

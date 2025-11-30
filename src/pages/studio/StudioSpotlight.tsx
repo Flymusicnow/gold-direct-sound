@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Sparkles } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import SpotlightSubmitDialog from "@/components/spotlight/SpotlightSubmitDialog";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface SpotlightCampaign {
   id: string;
@@ -129,6 +130,12 @@ export default function StudioSpotlight() {
         <div className="flex items-center gap-3 mb-8">
           <Sparkles className="h-8 w-8 text-[#E8BF1A]" />
           <h1 className="text-3xl font-bold text-foreground">FlyMusic Spotlight</h1>
+          <InfoTooltip
+            title="Spotlight Campaigns"
+            description="Submit your tracks to active campaigns to gain visibility. Fans vote for their favorites, and top entries get featured across the platform!"
+            forRole="artist"
+            learnLink="/learn?tab=artist#spotlight-boost"
+          />
         </div>
 
         <div className="mb-8">
