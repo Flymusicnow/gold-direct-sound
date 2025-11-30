@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { Heart, Play, Pause } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FanActionBar } from '@/components/fan/FanActionBar';
 import { DiscoverFeedItem } from '@/hooks/useDiscoverFeed';
 import { useLikeTrack } from '@/hooks/useLikeTrack';
+import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
+import { useFlightdeck } from '@/contexts/FlightdeckContext';
 
 interface DiscoverVideoCardProps {
   item: DiscoverFeedItem;
@@ -12,6 +14,7 @@ interface DiscoverVideoCardProps {
 }
 
 export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVideoCardProps) {
+  const videoId = useId();
   const [isPlaying, setIsPlaying] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -20,6 +23,20 @@ export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVid
     item.artist_id,
     false // Will be fetched on mount
   );
+  const { registerVideo, unregisterVideo, setCurrentVideo } = useVideoPlayback();
+  const { setIsPlaying: pauseFlightdeck } = useFlightdeck();
+
+  // Register this video with global video coordination
+  useEffect(() => {
+    const pauseThisVideo = () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+    };
+    
+    registerVideo(videoId, pauseThisVideo);
+    return () => unregisterVideo(videoId);
+  }, [videoId, registerVideo, unregisterVideo]);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -39,7 +56,11 @@ export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVid
     if (isPlaying) {
       videoRef.current.pause();
       setIsPlaying(false);
+      setCurrentVideo(null);
     } else {
+      // Pause Flightdeck and other videos when this video plays
+      pauseFlightdeck(false);
+      setCurrentVideo(videoId);
       videoRef.current.play().catch(() => {});
       setIsPlaying(true);
     }
