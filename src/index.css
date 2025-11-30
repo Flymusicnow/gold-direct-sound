@@ -498,6 +498,26 @@ All colors MUST be HSL.
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
+  /* Video View Count Pulse Animation */
+  @keyframes view-count-pulse {
+    0% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsla(45, 82%, 51%, 0.4);
+    }
+    50% { 
+      transform: scale(1.05);
+      box-shadow: 0 0 8px 4px hsla(45, 82%, 51%, 0.2);
+    }
+    100% { 
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsla(45, 82%, 51%, 0);
+    }
+  }
+
+  .view-count-pulse {
+    animation: view-count-pulse 0.6s ease-out;
+  }
+
   .spotlight-entry-highlight {
     animation: highlight-pulse 2s ease-out;
   }
