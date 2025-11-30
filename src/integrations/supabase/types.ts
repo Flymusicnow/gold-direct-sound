@@ -1741,6 +1741,7 @@ export type Database = {
           user_id: string | null
           video_id: string
           watch_duration_seconds: number | null
+          watch_segments: Json | null
         }
         Insert: {
           completed?: boolean | null
@@ -1751,6 +1752,7 @@ export type Database = {
           user_id?: string | null
           video_id: string
           watch_duration_seconds?: number | null
+          watch_segments?: Json | null
         }
         Update: {
           completed?: boolean | null
@@ -1761,6 +1763,7 @@ export type Database = {
           user_id?: string | null
           video_id?: string
           watch_duration_seconds?: number | null
+          watch_segments?: Json | null
         }
         Relationships: [
           {
@@ -1860,6 +1863,10 @@ export type Database = {
           title: string
           trending_score: number
         }[]
+      }
+      get_video_engagement_heatmap: {
+        Args: { segment_duration?: number; video_id_param: string }
+        Returns: Json
       }
       has_user_role: {
         Args: {
