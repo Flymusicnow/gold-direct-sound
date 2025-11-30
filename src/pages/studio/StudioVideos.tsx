@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useVideoMilestones } from "@/hooks/useVideoMilestones";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Lock, Crown } from "lucide-react";
@@ -82,6 +83,10 @@ export default function StudioVideos() {
   const isMobile = useIsMobile();
   const [isSupporterOnly, setIsSupporterOnly] = useState(false);
   const [requiredTier, setRequiredTier] = useState<string>("basic");
+  const [pulsingVideoIds, setPulsingVideoIds] = useState<Set<string>>(new Set());
+  
+  // Track milestone achievements
+  useVideoMilestones(videoPosts);
 
   useEffect(() => {
     if (!user) {
@@ -107,6 +112,16 @@ export default function StudioVideos() {
         },
         (payload) => {
           console.log('Real-time video view update in Studio:', payload);
+          
+          // Trigger pulse animation
+          setPulsingVideoIds((current) => new Set(current).add(payload.new.id));
+          setTimeout(() => {
+            setPulsingVideoIds((current) => {
+              const newSet = new Set(current);
+              newSet.delete(payload.new.id);
+              return newSet;
+            });
+          }, 600);
           
           // Update video posts with new view count
           setVideoPosts((current) =>
@@ -693,59 +708,72 @@ export default function StudioVideos() {
             ) : (
               <div className="grid gap-6 md:grid-cols-2">
                 {videoPosts.map((video) => (
-                  <Card key={video.id} className="overflow-hidden border-primary/20">
-                    <video
-                      src={video.video_url}
-                      controls
-                      className="w-full aspect-video bg-black"
-                    />
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-center gap-2">
-                        {video.caption && (
-                          <p className="text-sm text-foreground/80 flex-1">{video.caption}</p>
-                        )}
-                        {video.is_supporter_only && video.required_tier && (
-                          <SupporterExclusiveBadge tier={video.required_tier as "basic" | "gold"} />
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(video.created_at).toLocaleDateString()}
-                        </p>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShareVideo(video)}
-                            title="Share"
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                          {collections.length > 0 && (
+                  <div key={video.id} className="relative">
+                    <Card className="overflow-hidden border-primary/20">
+                      <video
+                        src={video.video_url}
+                        controls
+                        className="w-full aspect-video bg-black"
+                      />
+                      <div className="p-4 space-y-3">
+                        <div className="flex items-center gap-2">
+                          {video.caption && (
+                            <p className="text-sm text-foreground/80 flex-1">{video.caption}</p>
+                          )}
+                          {video.is_supporter_only && video.required_tier && (
+                            <SupporterExclusiveBadge tier={video.required_tier as "basic" | "gold"} />
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(video.created_at).toLocaleDateString()}
+                          </p>
+                          <div className="flex gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setSelectedVideoForCollection(video.id);
-                                setShowCollectionDialog(true);
-                              }}
-                              title="Add to Collection"
+                              onClick={() => setShareVideo(video)}
+                              title="Share"
                             >
-                              <FolderPlus className="h-4 w-4" />
+                              <Share2 className="h-4 w-4" />
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(video.id, video.video_url)}
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            {collections.length > 0 && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedVideoForCollection(video.id);
+                                  setShowCollectionDialog(true);
+                                }}
+                                title="Add to Collection"
+                              >
+                                <FolderPlus className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(video.id, video.video_url)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
+                    </Card>
+                    {/* Live View Counter Badge */}
+                    <div
+                      className={`absolute top-3 right-3 flex items-center gap-1.5 bg-black/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-primary/30 ${
+                        pulsingVideoIds.has(video.id) ? 'view-count-pulse' : ''
+                      }`}
+                    >
+                      <Video className="h-3.5 w-3.5 text-primary" />
+                      <span className="text-xs font-semibold text-primary">
+                        {video.view_count || 0}
+                      </span>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
             )}

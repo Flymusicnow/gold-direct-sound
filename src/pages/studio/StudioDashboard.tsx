@@ -19,6 +19,7 @@ import { ArtistOnboardingDialog } from "@/components/artist/ArtistOnboardingDial
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { ArtistAchievementsCard } from "@/components/artist/ArtistAchievementsCard";
 import { TopSupportersWidget } from "@/components/artist/TopSupportersWidget";
+import { LiveViewerActivityWidget } from "@/components/artist/LiveViewerActivityWidget";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
 
 interface Stats {
@@ -238,6 +239,7 @@ export default function StudioDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             <LatestReleases tracks={tracks} likes={trackLikes} comments={trackComments} />
             <div className="space-y-4 md:space-y-6">
+              <LiveViewerActivityWidget artistId={artistProfile.id} />
               <RecentFanActivity artistId={artistProfile.id} />
               <TopSupportersWidget artistId={artistProfile.id} />
             </div>

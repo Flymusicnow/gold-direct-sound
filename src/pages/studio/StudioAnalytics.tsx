@@ -6,6 +6,7 @@ import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useVideoMilestones } from "@/hooks/useVideoMilestones";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
@@ -49,6 +50,9 @@ export default function StudioAnalytics() {
   });
   const [topVideos, setTopVideos] = useState<VideoAnalytics[]>([]);
   const isMobile = useIsMobile();
+  
+  // Track milestone achievements
+  useVideoMilestones(topVideos.map(v => ({ id: v.id, view_count: v.view_count })));
 
   useEffect(() => {
     if (!user) {
