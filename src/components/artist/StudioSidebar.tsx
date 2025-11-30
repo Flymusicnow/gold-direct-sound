@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio } from "lucide-react";
+import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
@@ -19,6 +19,7 @@ const navItems = [
   { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
   { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
   { icon: Crown, label: "Membership", path: "/studio/subscription" },
+  { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
 ];
 
 export function StudioSidebar() {

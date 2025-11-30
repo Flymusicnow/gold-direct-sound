@@ -63,11 +63,17 @@ serve(async (req) => {
           .single();
 
         if (artist) {
+          const { data: existingPayout } = await supabaseAdmin
+            .from("artist_payouts")
+            .select("amount_due")
+            .eq("artist_user_id", artist.user_id)
+            .maybeSingle();
+
           await supabaseAdmin
             .from("artist_payouts")
             .upsert({
               artist_user_id: artist.user_id,
-              amount_due: supabaseAdmin.rpc('increment', { amount }),
+              amount_due: (existingPayout?.amount_due || 0) + amount,
             }, {
               onConflict: 'artist_user_id'
             });
@@ -75,13 +81,125 @@ serve(async (req) => {
 
         // Award XP bonus to fan_support_scores
         const xpBonus = tier === 'gold' ? 75 : 25;
-        await supabaseAdmin.rpc('update_taste_profile', {
-          _fan_user_id: fan_user_id,
-          _artist_id: artist_id,
-          _interaction: 'share',
-        });
+        
+        const { data: supportScore } = await supabaseAdmin
+          .from("fan_support_scores")
+          .select("score")
+          .eq("fan_user_id", fan_user_id)
+          .eq("artist_id", artist_id)
+          .maybeSingle();
+
+        await supabaseAdmin
+          .from("fan_support_scores")
+          .upsert({
+            fan_user_id,
+            artist_id,
+            score: (supportScore?.score || 0) + xpBonus,
+          }, {
+            onConflict: 'fan_user_id,artist_id'
+          });
 
         console.log(`Subscription created for ${fan_user_id} supporting ${artist_id}`);
+        break;
+      }
+
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = invoice.subscription as string;
+
+        if (!subscriptionId) break;
+
+        const { data: subscription } = await supabaseAdmin
+          .from("supporter_subscriptions")
+          .select("*")
+          .eq("stripe_subscription_id", subscriptionId)
+          .maybeSingle();
+
+        if (!subscription) break;
+
+        // Log payment
+        await supabaseAdmin.from("supporter_payments").insert({
+          subscription_id: subscription.id,
+          amount: invoice.amount_paid / 100,
+          currency: invoice.currency.toUpperCase(),
+          paid_at: new Date(invoice.status_transitions.paid_at! * 1000).toISOString(),
+          stripe_event_id: event.id,
+          stripe_invoice_id: invoice.id,
+          raw: invoice,
+        });
+
+        // Update subscription total_paid
+        await supabaseAdmin
+          .from("supporter_subscriptions")
+          .update({
+            total_paid: (subscription.total_paid || 0) + (invoice.amount_paid / 100),
+          })
+          .eq("id", subscription.id);
+
+        // Award monthly XP bonus
+        const xpBonus = subscription.tier === 'gold' ? 75 : 25;
+        
+        const { data: supportScore } = await supabaseAdmin
+          .from("fan_support_scores")
+          .select("score")
+          .eq("fan_user_id", subscription.fan_user_id)
+          .eq("artist_id", subscription.artist_id)
+          .maybeSingle();
+
+        await supabaseAdmin
+          .from("fan_support_scores")
+          .upsert({
+            fan_user_id: subscription.fan_user_id,
+            artist_id: subscription.artist_id,
+            score: (supportScore?.score || 0) + xpBonus,
+          }, {
+            onConflict: 'fan_user_id,artist_id'
+          });
+
+        // Update artist earnings (70%)
+        const artistEarning = (invoice.amount_paid / 100) * 0.7;
+        
+        const { data: artist } = await supabaseAdmin
+          .from('artist_profiles')
+          .select('user_id')
+          .eq('id', subscription.artist_id)
+          .single();
+
+        if (artist) {
+          const { data: existingPayout } = await supabaseAdmin
+            .from("artist_payouts")
+            .select("amount_due")
+            .eq("artist_user_id", artist.user_id)
+            .maybeSingle();
+
+          await supabaseAdmin
+            .from("artist_payouts")
+            .upsert({
+              artist_user_id: artist.user_id,
+              amount_due: (existingPayout?.amount_due || 0) + artistEarning,
+            }, {
+              onConflict: 'artist_user_id'
+            });
+        }
+
+        console.log(`Invoice paid for subscription ${subscriptionId}`);
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = invoice.subscription as string;
+
+        if (!subscriptionId) break;
+
+        await supabaseAdmin
+          .from("supporter_subscriptions")
+          .update({
+            status: "past_due",
+          })
+          .eq("stripe_subscription_id", subscriptionId);
+
+        console.log(`Payment failed for subscription ${subscriptionId}`);
         break;
       }
 

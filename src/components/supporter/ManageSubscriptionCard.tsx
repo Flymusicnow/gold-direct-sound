@@ -117,16 +117,32 @@ export function ManageSubscriptionCard() {
               </div>
             </div>
 
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                // This would typically open Stripe Customer Portal
-                window.open(`/artist/${sub.artist.id}`, '_blank');
-              }}
-            >
-              View Artist <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const { data, error } = await supabase.functions.invoke('customer-portal');
+                    if (error) throw error;
+                    if (data?.url) window.open(data.url, '_blank');
+                  } catch (error) {
+                    console.error('Error opening portal:', error);
+                  }
+                }}
+              >
+                Manage
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  window.open(`/artist/${sub.artist.id}`, '_blank');
+                }}
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ))}
 
