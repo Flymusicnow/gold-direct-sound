@@ -133,11 +133,67 @@ export default function FanSupporter() {
               <Trophy className="h-5 w-5 text-primary" />
               <span className="text-sm font-semibold text-primary">Your Supporter Pass</span>
             </div>
-            <h1 className="text-4xl font-bold">Support Your Artists</h1>
+            <h1 className="text-4xl font-bold">Grow Your Supporter Level</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Every interaction earns support points. Level up your support and show artists you care.
+              Track your journey across FlyMusic. Every interaction earns support points and helps you level up.
             </p>
           </div>
+
+          {/* Fan XP Progress */}
+          <Card className="p-6 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gradient-gold flex items-center justify-center">
+                <Trophy className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold">Your Activity XP</h2>
+                <p className="text-sm text-muted-foreground">
+                  {totalScore.toFixed(0)} total points earned
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <Progress value={Math.min((totalScore / 200) * 100, 100)} className="h-3" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Keep engaging to level up</span>
+                <span className="font-semibold text-primary">{totalScore.toFixed(0)} XP</span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Fan Achievements Placeholder */}
+          <Card className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <Flame className="h-6 w-6 text-primary" />
+              <div>
+                <h2 className="text-xl font-semibold">Fan Achievements</h2>
+                <p className="text-sm text-muted-foreground">Your milestones on FlyMusic</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 text-center">
+                <div className="text-3xl mb-2">👤</div>
+                <p className="text-xs font-semibold text-primary">First Follow</p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
+                <div className="text-3xl mb-2 opacity-50">⭐</div>
+                <p className="text-xs font-semibold text-muted-foreground">Spotlight Vote</p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
+                <div className="text-3xl mb-2 opacity-50">📚</div>
+                <p className="text-xs font-semibold text-muted-foreground">Create Stack</p>
+              </div>
+              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
+                <div className="text-3xl mb-2 opacity-50">💬</div>
+                <p className="text-xs font-semibold text-muted-foreground">First Comment</p>
+              </div>
+            </div>
+            <div className="mt-4 p-3 rounded-lg bg-muted/50 text-center">
+              <p className="text-sm text-muted-foreground">
+                More achievements unlocked as you engage with music and artists
+              </p>
+            </div>
+          </Card>
 
           {/* Overall Stats */}
           <div className="grid md:grid-cols-3 gap-6">

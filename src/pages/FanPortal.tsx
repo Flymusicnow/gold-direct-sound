@@ -15,6 +15,7 @@ import { TrendingSection } from "@/components/TrendingSection";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
+import { FanAchievementsCard } from "@/components/fan/FanAchievementsCard";
 import { toast } from "sonner";
 
 interface Artist {
@@ -344,6 +345,9 @@ export default function FanPortal() {
               </p>
             </Card>
           )}
+
+          {/* Fan Achievements */}
+          <FanAchievementsCard />
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* My Artists Section */}

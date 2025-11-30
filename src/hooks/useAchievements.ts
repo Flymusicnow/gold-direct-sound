@@ -79,15 +79,18 @@ const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, { name: string; descripti
 };
 
 export function useAchievements() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    // Only fetch for users with artist role
+    if (user && hasRole('artist')) {
       fetchAchievements();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, hasRole]);
 
   const fetchAchievements = async () => {
     if (!user) return;
