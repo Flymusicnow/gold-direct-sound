@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Crown, Sparkles, Star, DollarSign, Users, TrendingUp, Zap } from "lucide-react";
+import { SUPPORTER_TIERS } from "@/config/supporterTiers";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
@@ -172,7 +173,9 @@ export default function StudioSubscription() {
 
   const calculateMonthlyRevenue = () => {
     return supporters.reduce((total, supporter) => {
-      const tierRevenue = supporter.tier === "gold" ? 69.3 : 34.3;
+      const tierRevenue = supporter.tier === "gold" 
+        ? SUPPORTER_TIERS.gold.price * 0.7
+        : SUPPORTER_TIERS.basic.price * 0.7;
       return total + tierRevenue;
     }, 0);
   };
@@ -234,7 +237,7 @@ export default function StudioSubscription() {
                     <div><p className="font-medium">{s.fan.full_name}</p><p className="text-sm text-muted-foreground">{s.fan.email}</p></div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge variant="outline" className={s.tier==="gold"?"bg-primary/10 border-primary text-primary":""}>{s.tier==="gold"&&<Crown className="h-3 w-3 mr-1"/>}{s.tier==="gold"?"Gold":"Basic"} • {s.tier==="gold"?"99":"49"} kr/mo</Badge>
+                    <Badge variant="outline" className={s.tier==="gold"?"bg-primary/10 border-primary text-primary":""}>{s.tier==="gold"&&<Crown className="h-3 w-3 mr-1"/>}{s.tier==="gold"?"Gold":"Basic"} • {s.tier==="gold"?SUPPORTER_TIERS.gold.price:SUPPORTER_TIERS.basic.price} kr/mo</Badge>
                     <p className="text-xs text-muted-foreground">Since {new Date(s.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>

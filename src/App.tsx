@@ -24,6 +24,7 @@ import StudioComments from "./pages/studio/StudioComments";
 import StudioTestimonials from "./pages/studio/StudioTestimonials";
 import StudioCollaborations from "./pages/studio/StudioCollaborations";
 import StudioSubscription from "./pages/studio/StudioSubscription";
+import StudioEarnings from "./pages/studio/StudioEarnings";
 import StudioMerch from "./pages/studio/StudioMerch";
 import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import LiveStream from "./pages/LiveStream";
@@ -37,6 +38,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminSpotlight from "./pages/admin/AdminSpotlight";
 import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
 import AdminBetaCodes from "./pages/admin/AdminBetaCodes";
+import AdminPayouts from "./pages/admin/AdminPayouts";
 import StudioSpotlight from "./pages/studio/StudioSpotlight";
 import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
 import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
@@ -146,6 +148,11 @@ const App = () => (
                 <StudioSubscription />
               </ProtectedRoute>
             } />
+            <Route path="/studio/earnings" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioEarnings />
+              </ProtectedRoute>
+            } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
             <Route path="/spotlight/archive" element={<SpotlightArchive />} />
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
@@ -156,6 +163,7 @@ const App = () => (
             <Route path="/admin/spotlight" element={<AdminSpotlight />} />
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
             <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
+            <Route path="/admin/payouts" element={<AdminPayouts />} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />

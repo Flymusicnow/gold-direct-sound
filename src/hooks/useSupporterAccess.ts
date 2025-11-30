@@ -8,7 +8,11 @@ interface SupporterAccess {
   loading: boolean;
 }
 
-export const useSupporterAccess = (artistId: string, requiredTier?: string | null): SupporterAccess => {
+export const useSupporterAccess = (
+  artistId: string, 
+  requiredTier?: string | null, 
+  releaseDate?: string | null
+): SupporterAccess => {
   const { user } = useAuth();
   const [access, setAccess] = useState<SupporterAccess>({
     hasAccess: false,
@@ -25,6 +29,12 @@ export const useSupporterAccess = (artistId: string, requiredTier?: string | nul
 
       // If content is not supporter-only, allow access
       if (!requiredTier) {
+        setAccess({ hasAccess: true, tier: null, loading: false });
+        return;
+      }
+
+      // Check if release date has passed (content is now public)
+      if (releaseDate && new Date(releaseDate) <= new Date()) {
         setAccess({ hasAccess: true, tier: null, loading: false });
         return;
       }
@@ -64,7 +74,7 @@ export const useSupporterAccess = (artistId: string, requiredTier?: string | nul
     };
 
     checkAccess();
-  }, [user, artistId, requiredTier]);
+  }, [user, artistId, requiredTier, releaseDate]);
 
   return access;
 };

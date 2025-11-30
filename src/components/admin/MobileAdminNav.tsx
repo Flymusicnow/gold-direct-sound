@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sparkles, Key, Menu, Search, X } from "lucide-react";
+import { LayoutDashboard, Sparkles, Key, Menu, Search, X, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
   { icon: Sparkles, label: "Spotlight", path: "/admin/spotlight" },
   { icon: Key, label: "Beta Codes", path: "/admin/beta-codes" },
+  { icon: DollarSign, label: "Payouts", path: "/admin/payouts" },
 ];
 
 interface MobileAdminNavProps {

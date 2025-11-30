@@ -544,7 +544,9 @@ export type Database = {
           duration_seconds: number | null
           id: string
           is_supporter_only: boolean | null
+          release_date: string | null
           required_tier: string | null
+          supporter_early_access: boolean | null
           updated_at: string | null
           video_url: string
           view_count: number | null
@@ -556,7 +558,9 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          release_date?: string | null
           required_tier?: string | null
+          supporter_early_access?: boolean | null
           updated_at?: string | null
           video_url: string
           view_count?: number | null
@@ -568,7 +572,9 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          release_date?: string | null
           required_tier?: string | null
+          supporter_early_access?: boolean | null
           updated_at?: string | null
           video_url?: string
           view_count?: number | null
@@ -1185,6 +1191,47 @@ export type Database = {
           },
         ]
       }
+      payout_history: {
+        Row: {
+          amount: number
+          artist_id: string | null
+          created_at: string | null
+          id: string
+          method: string
+          notes: string | null
+          paid_at: string
+          processed_by: string | null
+        }
+        Insert: {
+          amount: number
+          artist_id?: string | null
+          created_at?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_at: string
+          processed_by?: string | null
+        }
+        Update: {
+          amount?: number
+          artist_id?: string | null
+          created_at?: string | null
+          id?: string
+          method?: string
+          notes?: string | null
+          paid_at?: string
+          processed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payout_history_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlist_tracks: {
         Row: {
           added_at: string | null
@@ -1465,6 +1512,50 @@ export type Database = {
           },
         ]
       }
+      supporter_payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          paid_at: string
+          raw: Json | null
+          stripe_event_id: string
+          stripe_invoice_id: string | null
+          subscription_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          paid_at: string
+          raw?: Json | null
+          stripe_event_id: string
+          stripe_invoice_id?: string | null
+          subscription_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          paid_at?: string
+          raw?: Json | null
+          stripe_event_id?: string
+          stripe_invoice_id?: string | null
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supporter_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "supporter_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supporter_subscriptions: {
         Row: {
           artist_id: string
@@ -1578,7 +1669,9 @@ export type Database = {
           id: string
           is_supporter_only: boolean | null
           play_count: number | null
+          release_date: string | null
           required_tier: string | null
+          supporter_early_access: boolean | null
           title: string
           updated_at: string | null
         }
@@ -1593,7 +1686,9 @@ export type Database = {
           id?: string
           is_supporter_only?: boolean | null
           play_count?: number | null
+          release_date?: string | null
           required_tier?: string | null
+          supporter_early_access?: boolean | null
           title: string
           updated_at?: string | null
         }
@@ -1608,7 +1703,9 @@ export type Database = {
           id?: string
           is_supporter_only?: boolean | null
           play_count?: number | null
+          release_date?: string | null
           required_tier?: string | null
+          supporter_early_access?: boolean | null
           title?: string
           updated_at?: string | null
         }
