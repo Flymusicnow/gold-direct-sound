@@ -42,6 +42,7 @@ interface VideoPost {
   created_at: string;
   is_supporter_only: boolean;
   required_tier: string | null;
+  view_count: number;
 }
 
 const MAX_VIDEO_SIZE = 40 * 1024 * 1024; // 40MB
@@ -89,6 +90,40 @@ export default function StudioVideos() {
     }
     fetchData();
   }, [user, navigate]);
+
+  // Real-time subscription for video view updates
+  useEffect(() => {
+    if (!artistProfile) return;
+
+    const channel = supabase
+      .channel('studio-video-views-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artist_video_posts',
+          filter: `artist_id=eq.${artistProfile.id}`,
+        },
+        (payload) => {
+          console.log('Real-time video view update in Studio:', payload);
+          
+          // Update video posts with new view count
+          setVideoPosts((current) =>
+            current.map((video) =>
+              video.id === payload.new.id
+                ? { ...video, view_count: payload.new.view_count }
+                : video
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [artistProfile]);
 
   const fetchData = async () => {
     try {

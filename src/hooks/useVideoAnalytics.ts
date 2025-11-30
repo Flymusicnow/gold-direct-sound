@@ -42,17 +42,7 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
       sessionStorage.setItem(sessionKey, 'true');
       startTimeRef.current = Date.now();
 
-      // Increment view count on video
-      const { data: currentVideo } = await supabase
-        .from('artist_video_posts')
-        .select('view_count')
-        .eq('id', videoId)
-        .single();
-
-      await supabase
-        .from('artist_video_posts')
-        .update({ view_count: (currentVideo?.view_count || 0) + 1 })
-        .eq('id', videoId);
+      // View count is now automatically incremented by database trigger
     } catch (error) {
       console.error('Error tracking video view:', error);
     }
