@@ -59,8 +59,8 @@ export default function FanAchievements() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 pb-32 md:pb-28">
-      <div className="container max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 pt-24 pb-32 md:pb-28">
+      <div className="container max-w-5xl mx-auto px-4 space-y-8">
         {/* Back Button */}
         <Button
           variant="ghost"
