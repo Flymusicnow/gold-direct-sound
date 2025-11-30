@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { useSupportScore } from './useSupportScore';
 
 export function useFollowArtist(artistId: string, initialFollowing: boolean = false) {
   const { user } = useAuth();
+  const { updateSupportScore } = useSupportScore();
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -33,6 +35,10 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
           .from('follows')
           .insert({ fan_id: user.id, artist_id: artistId });
         setIsFollowing(true);
+        
+        // Update supporter XP and check fan achievements
+        await updateSupportScore(artistId, 'follow');
+        
         toast.success('Following artist');
       }
     } catch (error) {

@@ -2,6 +2,7 @@ import { useGenres } from '@/hooks/useGenreContent';
 import { DiscoverGenreRail } from './DiscoverGenreRail';
 import { Music2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DiscoverSectionHeader } from './DiscoverSectionHeader';
 
 export function DiscoverGenreSection() {
   const { genres, loading } = useGenres();
@@ -9,10 +10,11 @@ export function DiscoverGenreSection() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Music2 className="w-6 h-6 text-primary" />
-          Genres & Vibes
-        </h2>
+        <DiscoverSectionHeader
+          icon={Music2}
+          title="Genres & Vibes"
+          subtitle="Dive into a mood"
+        />
         {[...Array(3)].map((_, i) => (
           <div key={i} className="space-y-4">
             <Skeleton className="h-8 w-32" />
@@ -31,10 +33,11 @@ export function DiscoverGenreSection() {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
-        <Music2 className="w-6 h-6 text-primary" />
-        Genres & Vibes
-      </h2>
+      <DiscoverSectionHeader
+        icon={Music2}
+        title="Genres & Vibes"
+        subtitle="Dive into a mood"
+      />
 
       {genres.map((genre) => (
         <DiscoverGenreRail key={genre} genre={genre} />
