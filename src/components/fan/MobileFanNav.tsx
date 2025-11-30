@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rss, Users, ListMusic, Activity, Settings, Menu, Search, X, Trophy } from "lucide-react";
+import { Home, Rss, Users, ListMusic, Activity, Settings, Menu, Search, X, Trophy, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ const navItems = [
   { icon: Users, label: "My Artists", path: "/fan/artists" },
   { icon: ListMusic, label: "Playlists", path: "/fan/playlists" },
   { icon: Trophy, label: "Supporter Pass", path: "/fan/supporter" },
+  { icon: Award, label: "Achievements", path: "/fan/achievements" },
   { icon: Activity, label: "Activity", path: "/fan/activity" },
   { icon: Settings, label: "Settings", path: "/fan/settings" },
 ];

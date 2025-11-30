@@ -9,8 +9,9 @@ export type FanAchievementType =
   | "first_comment"
   | "likes_10"
   | "bronze_supporter"
-  | "streak_7"
-  | "plays_50";
+  | "active_supporter"
+  | "true_believer"
+  | "comment_voice";
 
 export interface FanAchievement {
   type: FanAchievementType;
@@ -18,11 +19,12 @@ export interface FanAchievement {
   description: string;
   icon: string;
   unlocked: boolean;
+  unlockedAt?: string;
 }
 
 const FAN_ACHIEVEMENT_DEFINITIONS: Record<FanAchievementType, { name: string; description: string; icon: string }> = {
   first_follow: {
-    name: "First Follow",
+    name: "First Step",
     description: "Follow your first artist",
     icon: "👤",
   },
@@ -51,22 +53,36 @@ const FAN_ACHIEVEMENT_DEFINITIONS: Record<FanAchievementType, { name: string; de
     description: "Reach Bronze Supporter tier",
     icon: "🏆",
   },
-  streak_7: {
-    name: "Dedicated Fan",
-    description: "7-day active streak",
-    icon: "🔥",
+  active_supporter: {
+    name: "Active Supporter",
+    description: "Reach 50 XP total",
+    icon: "🎯",
   },
-  plays_50: {
-    name: "Playlist Master",
-    description: "Play 50 tracks",
-    icon: "🎵",
+  true_believer: {
+    name: "True Believer",
+    description: "Reach 150 XP total",
+    icon: "💎",
   },
+  comment_voice: {
+    name: "Comment Voice",
+    description: "Leave 5 comments",
+    icon: "💬",
+  },
+};
+
+// Level thresholds
+const LEVEL_THRESHOLDS = {
+  bronze: 10,
+  silver: 50,
+  gold: 150,
 };
 
 export function useFanAchievements() {
   const { user } = useAuth();
   const [achievements, setAchievements] = useState<FanAchievement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalXP, setTotalXP] = useState(0);
+  const [supporterLevel, setSupporterLevel] = useState<'none' | 'bronze' | 'silver' | 'gold'>('none');
 
   useEffect(() => {
     if (user) {
@@ -78,85 +94,40 @@ export function useFanAchievements() {
     if (!user) return;
 
     try {
-      // Check first follow
-      const { count: followCount } = await supabase
-        .from("follows")
-        .select("*", { count: "exact", head: true })
-        .eq("fan_id", user.id);
-
-      // Check first vote
-      const { count: voteCount } = await supabase
-        .from("spotlight_votes")
-        .select("*", { count: "exact", head: true })
+      // Fetch unlocked achievements from database
+      const { data: unlockedData } = await supabase
+        .from("fan_achievements")
+        .select("achievement_key, unlocked_at")
         .eq("fan_user_id", user.id);
 
-      // Check first stack
-      const { count: stackCount } = await supabase
-        .from("playlists")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
+      const unlockedKeys = new Set(unlockedData?.map((a) => a.achievement_key) || []);
+      const unlockedMap = new Map(unlockedData?.map((a) => [a.achievement_key, a.unlocked_at]) || []);
 
-      // Check first comment
-      const { count: commentCount } = await supabase
-        .from("comments")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      // Check likes count
-      const { count: likeCount } = await supabase
-        .from("likes")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id);
-
-      // Check bronze supporter
+      // Calculate total XP and supporter level
       const { data: supportScores } = await supabase
         .from("fan_support_scores")
-        .select("level")
-        .eq("fan_user_id", user.id)
-        .in("level", ["bronze", "silver", "gold"]);
+        .select("score, level")
+        .eq("fan_user_id", user.id);
 
-      const achievementsList: FanAchievement[] = [
-        {
-          type: "first_follow",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.first_follow,
-          unlocked: (followCount || 0) > 0,
-        },
-        {
-          type: "first_vote",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.first_vote,
-          unlocked: (voteCount || 0) > 0,
-        },
-        {
-          type: "first_stack",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.first_stack,
-          unlocked: (stackCount || 0) > 0,
-        },
-        {
-          type: "first_comment",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.first_comment,
-          unlocked: (commentCount || 0) > 0,
-        },
-        {
-          type: "likes_10",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.likes_10,
-          unlocked: (likeCount || 0) >= 10,
-        },
-        {
-          type: "bronze_supporter",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.bronze_supporter,
-          unlocked: (supportScores?.length || 0) > 0,
-        },
-        {
-          type: "streak_7",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.streak_7,
-          unlocked: false, // Placeholder for future
-        },
-        {
-          type: "plays_50",
-          ...FAN_ACHIEVEMENT_DEFINITIONS.plays_50,
-          unlocked: false, // Placeholder for future
-        },
-      ];
+      const total = supportScores?.reduce((sum, s) => sum + Number(s.score), 0) || 0;
+      setTotalXP(total);
+
+      // Determine highest supporter level
+      const levels = supportScores?.map(s => s.level) || [];
+      if (levels.includes('gold')) setSupporterLevel('gold');
+      else if (levels.includes('silver')) setSupporterLevel('silver');
+      else if (levels.includes('bronze')) setSupporterLevel('bronze');
+      else setSupporterLevel('none');
+
+      // Build achievement list
+      const achievementsList: FanAchievement[] = Object.entries(FAN_ACHIEVEMENT_DEFINITIONS).map(
+        ([key, def]) => ({
+          type: key as FanAchievementType,
+          ...def,
+          unlocked: unlockedKeys.has(key),
+          unlockedAt: unlockedMap.get(key),
+        })
+      );
 
       setAchievements(achievementsList);
     } catch (error) {
@@ -170,5 +141,30 @@ export function useFanAchievements() {
     fetchAchievements();
   };
 
-  return { achievements, loading, refetch };
+  // Calculate progress to next level
+  const nextLevelXP = supporterLevel === 'gold' 
+    ? 0 
+    : supporterLevel === 'silver' 
+    ? LEVEL_THRESHOLDS.gold - totalXP 
+    : supporterLevel === 'bronze'
+    ? LEVEL_THRESHOLDS.silver - totalXP
+    : LEVEL_THRESHOLDS.bronze - totalXP;
+
+  const progressToNextLevel = supporterLevel === 'gold'
+    ? 100
+    : supporterLevel === 'silver'
+    ? (totalXP / LEVEL_THRESHOLDS.gold) * 100
+    : supporterLevel === 'bronze'
+    ? (totalXP / LEVEL_THRESHOLDS.silver) * 100
+    : (totalXP / LEVEL_THRESHOLDS.bronze) * 100;
+
+  return { 
+    achievements, 
+    loading, 
+    refetch,
+    totalXP,
+    supporterLevel,
+    nextLevelXP,
+    progressToNextLevel,
+  };
 }

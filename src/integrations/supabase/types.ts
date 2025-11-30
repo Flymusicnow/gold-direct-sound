@@ -702,6 +702,30 @@ export type Database = {
           },
         ]
       }
+      fan_achievements: {
+        Row: {
+          achievement_key: string
+          fan_user_id: string
+          id: string
+          meta: Json | null
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_key: string
+          fan_user_id: string
+          id?: string
+          meta?: Json | null
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_key?: string
+          fan_user_id?: string
+          id?: string
+          meta?: Json | null
+          unlocked_at?: string
+        }
+        Relationships: []
+      }
       fan_spotlight_stats: {
         Row: {
           created_at: string | null
@@ -1788,6 +1812,10 @@ export type Database = {
           _tags?: string[]
         }
         Returns: number
+      }
+      check_and_unlock_fan_achievements: {
+        Args: { _fan_user_id: string }
+        Returns: Json
       }
       generate_artist_referral_code: {
         Args: { _user_id: string }

@@ -4,10 +4,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { useSupportScore } from './useSupportScore';
+import { useFanAchievementChecker } from './useFanAchievementChecker';
 
 export function useSpotlightVote(entryId: string, campaignId: string, artistId: string, initialVoted: boolean = false) {
   const { user } = useAuth();
   const { updateSupportScore } = useSupportScore();
+  const { checkAndUnlockAchievements } = useFanAchievementChecker();
   const [hasVoted, setHasVoted] = useState(initialVoted);
   const [isVoting, setIsVoting] = useState(false);
 
@@ -43,6 +45,9 @@ export function useSpotlightVote(entryId: string, campaignId: string, artistId: 
         
         // Update support score
         updateSupportScore(artistId, 'spotlight_vote');
+        
+        // Check for new achievements
+        await checkAndUnlockAchievements();
         
         // Trigger gold star confetti animation
         confetti({
