@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { cn, sanitizeFileName } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
@@ -322,7 +322,7 @@ export default function StudioVideos() {
 
     try {
       const timestamp = Date.now();
-      const fileName = `${timestamp}_${videoFile.name}`;
+      const fileName = `${timestamp}_${sanitizeFileName(videoFile.name)}`;
       const filePath = `${artistProfile.id}/${fileName}`;
 
       // Upload video to storage

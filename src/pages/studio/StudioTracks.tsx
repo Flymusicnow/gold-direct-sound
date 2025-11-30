@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeFileName } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
@@ -107,7 +108,7 @@ export default function StudioTracks() {
     try {
       let coverUrl = null;
       if (coverFile) {
-        const coverPath = `${user.id}/${Date.now()}_${coverFile.name}`;
+        const coverPath = `${user.id}/${Date.now()}_${sanitizeFileName(coverFile.name)}`;
         const { error: coverError } = await supabase.storage
           .from('covers')
           .upload(coverPath, coverFile);
@@ -121,7 +122,7 @@ export default function StudioTracks() {
         coverUrl = publicUrl;
       }
 
-      const audioPath = `${user.id}/${Date.now()}_${audioFile.name}`;
+      const audioPath = `${user.id}/${Date.now()}_${sanitizeFileName(audioFile.name)}`;
       const { error: uploadError } = await supabase.storage
         .from('tracks')
         .upload(audioPath, audioFile);
