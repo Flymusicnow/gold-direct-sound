@@ -6,10 +6,18 @@ interface UseVideoAnalyticsProps {
   duration?: number;
 }
 
+interface WatchSegment {
+  start: number;
+  end: number;
+  watched_at: string;
+}
+
 export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps) => {
   const [viewId, setViewId] = useState<string | null>(null);
   const startTimeRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(0);
+  const watchSegmentsRef = useRef<WatchSegment[]>([]);
+  const lastSegmentTimeRef = useRef<number>(0);
   const sessionId = useRef<string>(
     sessionStorage.getItem('video_session_id') || crypto.randomUUID()
   );
@@ -55,6 +63,20 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
     if (now - lastUpdateRef.current < 5000) return; // Update every 5 seconds max
 
     try {
+      // Record watch segment
+      const segmentStart = lastSegmentTimeRef.current;
+      const segmentEnd = currentTime;
+      
+      if (segmentEnd > segmentStart) {
+        watchSegmentsRef.current.push({
+          start: Math.floor(segmentStart),
+          end: Math.floor(segmentEnd),
+          watched_at: new Date().toISOString(),
+        });
+      }
+      
+      lastSegmentTimeRef.current = currentTime;
+
       const watchDuration = Math.floor((now - startTimeRef.current) / 1000);
       const completed = duration ? currentTime >= duration * 0.9 : false;
 
@@ -63,6 +85,7 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
         .update({
           watch_duration_seconds: watchDuration,
           completed,
+          watch_segments: watchSegmentsRef.current as any,
         })
         .eq('id', viewId);
 
