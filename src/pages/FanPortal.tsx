@@ -15,8 +15,11 @@ import { TrendingSection } from "@/components/TrendingSection";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import SpotlightPromoCard from "@/components/spotlight/SpotlightPromoCard";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
-import { FanAchievementsCard } from "@/components/fan/FanAchievementsCard";
+import { useFanAchievements } from "@/hooks/useFanAchievements";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Artist {
   id: string;
@@ -57,6 +60,7 @@ export default function FanPortal() {
   const [commentsCount, setCommentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [supporterStats, setSupporterStats] = useState<{ tier: string; totalVotes: number } | null>(null);
+  const { achievements, totalXP, supporterLevel, nextLevelXP, progressToNextLevel } = useFanAchievements();
 
   useEffect(() => {
     if (!user) {
@@ -346,8 +350,43 @@ export default function FanPortal() {
             </Card>
           )}
 
-          {/* Fan Achievements */}
-          <FanAchievementsCard />
+          {/* Supporter Progress Widget - Desktop Only */}
+          {!isMobile && (
+            <Card className="bg-card/30 backdrop-blur border-primary/10 hover:border-primary/20 transition-colors">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  Supporter Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium capitalize">
+                    {supporterLevel === 'none' ? 'Supporter' : `${supporterLevel} Supporter`}
+                  </span>
+                  <span className="text-sm text-primary font-semibold">{totalXP} XP</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <Progress value={progressToNextLevel} className="h-2" />
+                  <p className="text-xs text-muted-foreground">
+                    {supporterLevel === 'gold' ? 'Max level reached!' : `Next: ${supporterLevel === 'silver' ? 'Gold' : supporterLevel === 'bronze' ? 'Silver' : 'Bronze'}`}
+                  </p>
+                </div>
+
+                <div className="pt-2">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {achievements.filter(a => a.unlocked).length} achievements unlocked
+                  </p>
+                  <Link to="/fan/achievements">
+                    <Button variant="outline" className="w-full gap-2">
+                      View Your Journey →
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* My Artists Section */}

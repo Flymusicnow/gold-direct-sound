@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { useFanTaste } from '@/contexts/FanTasteContext';
+import { useFanAchievementChecker } from './useFanAchievementChecker';
 
 // Action weights for supporter score calculation
 const ACTION_WEIGHTS = {
@@ -44,6 +45,7 @@ function calculateLevel(score: number): 'none' | 'bronze' | 'silver' | 'gold' {
 export function useSupportScore() {
   const { user } = useAuth();
   const { updateTasteFromAction } = useFanTaste();
+  const { checkAndUnlockAchievements } = useFanAchievementChecker();
 
   const updateSupportScore = async (
     artistId: string, 
@@ -110,6 +112,9 @@ export function useSupportScore() {
       if (tasteInteraction && updateTasteFromAction) {
         await updateTasteFromAction(artistId, tasteInteraction, trackId, videoId);
       }
+
+      // Check and unlock achievements
+      await checkAndUnlockAchievements();
     } catch (error) {
       // Silent error logging - don't block UI
       console.error('Error updating support score:', error);

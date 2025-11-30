@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
-import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame } from "lucide-react";
+import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame, ArrowRight } from "lucide-react";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { ManageSubscriptionCard } from "@/components/supporter/ManageSubscriptionCard";
+import { useFanAchievements } from "@/hooks/useFanAchievements";
 
 interface SupportScore {
   artist_id: string;
@@ -40,6 +41,7 @@ export default function FanSupporter() {
   const [supportScores, setSupportScores] = useState<SupportScore[]>([]);
   const [spotlightStats, setSpotlightStats] = useState<SpotlightStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { achievements, totalXP, supporterLevel, nextLevelXP, progressToNextLevel } = useFanAchievements();
 
   useEffect(() => {
     if (!user) {
@@ -148,51 +150,48 @@ export default function FanSupporter() {
               <div className="flex-1">
                 <h2 className="text-xl font-semibold">Your Activity XP</h2>
                 <p className="text-sm text-muted-foreground">
-                  {totalScore.toFixed(0)} total points earned
+                  {totalXP.toFixed(0)} total points earned
                 </p>
               </div>
             </div>
             <div className="space-y-3">
-              <Progress value={Math.min((totalScore / 200) * 100, 100)} className="h-3" />
+              <Progress value={Math.min((totalXP / 200) * 100, 100)} className="h-3" />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Keep engaging to level up</span>
-                <span className="font-semibold text-primary">{totalScore.toFixed(0)} XP</span>
+                <span className="font-semibold text-primary">{totalXP.toFixed(0)} XP</span>
               </div>
             </div>
           </Card>
 
-          {/* Fan Achievements Placeholder */}
-          <Card className="p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Flame className="h-6 w-6 text-primary" />
-              <div>
-                <h2 className="text-xl font-semibold">Fan Achievements</h2>
-                <p className="text-sm text-muted-foreground">Your milestones on FlyMusic</p>
+          {/* Achievements Section */}
+          <Card className="bg-card/30 backdrop-blur border-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-primary" />
+                Your Fan Journey
+              </CardTitle>
+              <CardDescription>Unlock achievements and level up as you support artists</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Progress to Next Level</span>
+                  <span className="text-primary font-semibold">{Math.round(progressToNextLevel)}%</span>
+                </div>
+                <Progress value={progressToNextLevel} className="h-2" />
+                <p className="text-xs text-muted-foreground">
+                  {totalXP} Total XP · {achievements.filter(a => a.unlocked).length}/{achievements.length} Achievements
+                </p>
               </div>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg border border-primary/30 bg-primary/5 text-center">
-                <div className="text-3xl mb-2">👤</div>
-                <p className="text-xs font-semibold text-primary">First Follow</p>
+
+              <div className="pt-2">
+                <Link to="/fan/achievements">
+                  <Button variant="outline" className="w-full gap-2">
+                    View All Achievements <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
               </div>
-              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
-                <div className="text-3xl mb-2 opacity-50">⭐</div>
-                <p className="text-xs font-semibold text-muted-foreground">Spotlight Vote</p>
-              </div>
-              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
-                <div className="text-3xl mb-2 opacity-50">📚</div>
-                <p className="text-xs font-semibold text-muted-foreground">Create Stack</p>
-              </div>
-              <div className="p-4 rounded-lg border border-border bg-muted/30 text-center">
-                <div className="text-3xl mb-2 opacity-50">💬</div>
-                <p className="text-xs font-semibold text-muted-foreground">First Comment</p>
-              </div>
-            </div>
-            <div className="mt-4 p-3 rounded-lg bg-muted/50 text-center">
-              <p className="text-sm text-muted-foreground">
-                More achievements unlocked as you engage with music and artists
-              </p>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Overall Stats */}
