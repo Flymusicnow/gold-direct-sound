@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Sparkles } from 'lucide-react';
 import { SearchResultHighlight } from './SearchResultHighlight';
 import { useFollowArtist } from '@/hooks/useFollowArtist';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 import type { SearchArtist } from '@/hooks/useSearch';
 
 interface SearchArtistCardProps {
@@ -80,15 +81,23 @@ export function SearchArtistCard({ artist, query, hasActiveSpotlight }: SearchAr
               </p>
             )}
 
-            <Button
-              size="sm"
-              variant={isFollowing ? 'secondary' : 'default'}
-              onClick={handleFollowClick}
-              disabled={isUpdating}
-              className="w-full"
-            >
-              {isFollowing ? 'Following' : 'Follow'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant={isFollowing ? 'secondary' : 'default'}
+                onClick={handleFollowClick}
+                disabled={isUpdating}
+                className="flex-1"
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
+              <InfoTooltip
+                title="Why Follow?"
+                description="Stay updated on new releases, support the artist (+8 XP), and see their content in your feed."
+                forRole="fan"
+                learnLink="/learn?tab=fan#support-artists"
+              />
+            </div>
           </div>
         </div>
       </CardContent>

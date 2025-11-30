@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { FanOnboardingTour } from "@/components/fan/FanOnboardingTour";
 
 interface Artist {
   id: string;
@@ -230,6 +231,7 @@ export default function FanPortal() {
 
   return (
     <>
+      <FanOnboardingTour />
       {!isMobile && <MobileFanNav />}
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-7xl space-y-8">

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Users, Share2 } from "lucide-react";
 import { EarlyAccessBadge } from "./EarlyAccessBadge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface ArtistHeroSectionProps {
   artist: {
@@ -85,14 +86,22 @@ export function ArtistHeroSection({
 
             {/* Action Buttons */}
             <div className="flex flex-wrap gap-3 items-center justify-center md:justify-start">
-              <Button
-                onClick={onFollow}
-                className={`rounded-full px-6 ${!isFollowing ? "btn-gold-premium" : ""}`}
-                variant={isFollowing ? "outline" : "default"}
-              >
-                <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
-                {isFollowing ? "Following" : "Follow"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={onFollow}
+                  className={`rounded-full px-6 ${!isFollowing ? "btn-gold-premium" : ""}`}
+                  variant={isFollowing ? "outline" : "default"}
+                >
+                  <Heart className={`mr-2 h-4 w-4 ${isFollowing ? "fill-current" : ""}`} />
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
+                <InfoTooltip
+                  title="Why Follow?"
+                  description="Stay updated on new releases, support the artist (+8 XP), and see their content in your feed."
+                  forRole="fan"
+                  learnLink="/learn?tab=fan#support-artists"
+                />
+              </div>
 
               <Button
                 onClick={onShare}
