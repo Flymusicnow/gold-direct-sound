@@ -25,17 +25,20 @@ interface OnboardingProgress {
 }
 
 export function ArtistOnboardingDialog() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const [showDialog, setShowDialog] = useState(false);
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    // Only show for users with artist role
+    if (user && hasRole('artist')) {
       checkOnboardingStatus();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, hasRole]);
 
   const checkOnboardingStatus = async () => {
     if (!user) return;
