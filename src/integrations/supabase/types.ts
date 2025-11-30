@@ -634,6 +634,36 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string | null
+          name: string | null
+          status: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          status?: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string | null
+          name?: string | null
+          status?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       comment_likes: {
         Row: {
           comment_id: string
