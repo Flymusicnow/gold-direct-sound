@@ -58,6 +58,46 @@ export default function StudioAnalytics() {
     fetchData();
   }, [user, navigate]);
 
+  // Real-time subscription for video view updates
+  useEffect(() => {
+    if (!artistProfile) return;
+
+    const channel = supabase
+      .channel('video-views-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artist_video_posts',
+          filter: `artist_id=eq.${artistProfile.id}`,
+        },
+        (payload) => {
+          console.log('Real-time video update:', payload);
+          
+          // Update topVideos state with new view count
+          setTopVideos((current) =>
+            current.map((video) =>
+              video.id === payload.new.id
+                ? { ...video, view_count: payload.new.view_count }
+                : video
+            )
+          );
+
+          // Recalculate total views
+          setVideoStats((current) => ({
+            ...current,
+            totalViews: current.totalViews + 1,
+          }));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [artistProfile]);
+
   const fetchData = async () => {
     if (!user) return;
 
