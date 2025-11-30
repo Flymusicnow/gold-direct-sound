@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeFileName } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
@@ -108,7 +109,7 @@ export default function StudioProfile() {
     setUploadingAvatar(true);
 
     try {
-      const avatarPath = `${user.id}/${Date.now()}_${file.name}`;
+      const avatarPath = `${user.id}/${Date.now()}_${sanitizeFileName(file.name)}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(avatarPath, file);

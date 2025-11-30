@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { sanitizeFileName } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,7 +160,7 @@ export default function MyStudio() {
     setUploadingAvatar(true);
 
     try {
-      const avatarPath = `${user.id}/${Date.now()}_${file.name}`;
+      const avatarPath = `${user.id}/${Date.now()}_${sanitizeFileName(file.name)}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(avatarPath, file);
@@ -205,7 +206,7 @@ export default function MyStudio() {
       // Upload cover image if provided
       let coverUrl = null;
       if (coverFile) {
-        const coverPath = `${user.id}/${Date.now()}_${coverFile.name}`;
+        const coverPath = `${user.id}/${Date.now()}_${sanitizeFileName(coverFile.name)}`;
         const { error: coverError } = await supabase.storage
           .from('covers')
           .upload(coverPath, coverFile);
@@ -220,7 +221,7 @@ export default function MyStudio() {
       }
 
       // Upload audio file
-      const audioPath = `${user.id}/${Date.now()}_${audioFile.name}`;
+      const audioPath = `${user.id}/${Date.now()}_${sanitizeFileName(audioFile.name)}`;
       const { error: uploadError } = await supabase.storage
         .from('tracks')
         .upload(audioPath, audioFile);
