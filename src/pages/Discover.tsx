@@ -5,6 +5,7 @@ import { DiscoverTrendingRail } from '@/components/discover/DiscoverTrendingRail
 import { DiscoverRisingArtistsRail } from '@/components/discover/DiscoverRisingArtistsRail';
 import { DiscoverGenreSection } from '@/components/discover/DiscoverGenreSection';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
+import { TasteDebugPanel } from '@/components/discover/TasteDebugPanel';
 import { Sparkles } from 'lucide-react';
 
 export default function Discover() {
@@ -70,6 +71,9 @@ export default function Discover() {
           Your Discover activity helps you grow your Supporter Level.
         </p>
       </div>
+
+      {/* Taste Engine Debug Panel (dev only) */}
+      <TasteDebugPanel />
 
       {/* Mobile bottom nav */}
       <BottomNavBarFan />
