@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Artist {
   id: string;
@@ -121,15 +122,23 @@ export const SimilarArtists = ({ currentArtistId, currentGenre }: SimilarArtists
                 )}
               </div>
 
-              {/* Follow Button */}
-              <Button
-                size="sm"
-                variant={following[artist.id] ? "outline" : "default"}
-                onClick={(e) => handleFollow(artist.id, e)}
-                className="w-full"
-              >
-                {following[artist.id] ? "Following" : "Follow"}
-              </Button>
+              {/* Follow Button with Tooltip */}
+              <div className="flex items-center gap-2 w-full">
+                <Button
+                  size="sm"
+                  variant={following[artist.id] ? "outline" : "default"}
+                  onClick={(e) => handleFollow(artist.id, e)}
+                  className="flex-1"
+                >
+                  {following[artist.id] ? "Following" : "Follow"}
+                </Button>
+                <InfoTooltip
+                  title="Why Follow?"
+                  description="Stay updated on new releases, support the artist (+8 XP), and see their content in your feed."
+                  forRole="fan"
+                  learnLink="/learn?tab=fan#support-artists"
+                />
+              </div>
             </div>
           </div>
         ))}

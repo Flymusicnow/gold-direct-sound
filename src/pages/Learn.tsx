@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
@@ -18,6 +18,7 @@ import {
   MessageSquare,
   Calendar,
   BarChart3,
+  Newspaper,
 } from "lucide-react";
 
 export default function Learn() {
@@ -27,8 +28,48 @@ export default function Learn() {
     searchParams.get("tab") || "fan"
   );
 
+  // Recent platform updates
+  const recentUpdates = [
+    {
+      id: '1',
+      date: 'Dec 2024',
+      title: 'InfoTooltips',
+      description: 'Helpful explanations throughout the platform to guide your journey'
+    },
+    {
+      id: '2',
+      date: 'Nov 2024',
+      title: 'Fan Onboarding Tour',
+      description: 'Step-by-step introduction for new fans to discover key features'
+    },
+    {
+      id: '3',
+      date: 'Nov 2024',
+      title: 'Stack Settings',
+      description: 'Manage your stacks directly from the detail view'
+    },
+    {
+      id: '4',
+      date: 'Oct 2024',
+      title: 'Taste Engine V1.5',
+      description: 'Improved personalized recommendations based on your listening'
+    },
+    {
+      id: '5',
+      date: 'Oct 2024',
+      title: 'Video Analytics',
+      description: 'Artists can now see detailed engagement data on their videos'
+    },
+    {
+      id: '6',
+      date: 'Sep 2024',
+      title: 'Fan Achievements',
+      description: 'Unlock badges as you support artists and engage with the platform'
+    },
+  ];
+
+  // Scroll to hash section after tab change
   useEffect(() => {
-    // Scroll to hash section if present
     const hash = window.location.hash.slice(1);
     if (hash) {
       setTimeout(() => {
@@ -55,6 +96,32 @@ export default function Learn() {
             </p>
           </div>
 
+          {/* What's New Section */}
+          <Card className="mb-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Newspaper className="h-5 w-5 text-primary" />
+                What's New on FlyMusic
+              </CardTitle>
+              <CardDescription>Recent platform updates and feature releases</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {recentUpdates.map((update) => (
+                  <div key={update.id} className="flex gap-4 items-start">
+                    <div className="text-xs text-muted-foreground whitespace-nowrap pt-0.5 min-w-[70px]">
+                      {update.date}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm mb-0.5">{update.title}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{update.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Role Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-8">
@@ -66,449 +133,261 @@ export default function Learn() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Fan Content */}
             <TabsContent value="fan" className="space-y-6">
-              <Card id="supporter-level">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    What is a Supporter Level?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Your Supporter Level shows how actively you support artists on
-                    FlyMusic. As you interact with music and artists, you earn XP
-                    (experience points).
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Supporter Tiers:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        <span className="font-medium">Bronze</span> – 10 XP
-                      </li>
-                      <li>
-                        <span className="font-medium">Silver</span> – 50 XP
-                      </li>
-                      <li>
-                        <span className="font-medium">Gold</span> – 150 XP
-                      </li>
-                    </ul>
-                  </div>
-                  <p>
-                    Higher levels unlock badges and show artists how committed you
-                    are to their work.
-                  </p>
-                  <Link
-                    to="/fan/supporter"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    View your supporter progress →
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <Card id="support-artists">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Heart className="h-5 w-5 text-primary" />
-                    How can I support artists?
+                    Supporting Artists
                   </CardTitle>
+                  <CardDescription>
+                    Learn how to support your favorite artists on FlyMusic.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Supporting artists on FlyMusic is simple and rewarding. Every
-                    interaction helps artists grow and earns you XP!
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Ways to support:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        <span className="font-medium">Like tracks</span> – Show love
-                        for their music (+1 XP)
-                      </li>
-                      <li>
-                        <span className="font-medium">Follow artists</span> – Stay
-                        updated with new releases (+8 XP)
-                      </li>
-                      <li>
-                        <span className="font-medium">Share tracks</span> – Spread
-                        the word (+10 XP)
-                      </li>
-                      <li>
-                        <span className="font-medium">Vote in Spotlight</span> –
-                        Boost artists in campaigns (+12 XP)
-                      </li>
-                      <li>
-                        <span className="font-medium">Comment</span> – Give
-                        feedback (+4 XP)
-                      </li>
-                      <li>
-                        <span className="font-medium">Watch videos</span> – Engage
-                        with visual content (+3 XP)
-                      </li>
-                    </ul>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Boost artists in the charts
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Engage with their content to increase their visibility.
+                      </p>
+                    </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              <Card id="spotlight">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    What is Spotlight?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    FlyMusic Spotlight is a fan-driven voting system where artists
-                    compete in campaigns to gain visibility and momentum.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">How it works:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>Artists submit tracks to active campaigns</li>
-                      <li>
-                        You vote for your favorites (one vote per entry, per fan)
-                      </li>
-                      <li>Top-voted artists get featured on leaderboards</li>
-                      <li>Voting earns you Spotlight supporter badges</li>
-                    </ul>
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Grow their fanbase
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Share their music and videos with your friends.
+                      </p>
+                    </div>
                   </div>
-                  <p>
-                    Your votes directly impact which artists rise to the top and get
-                    discovered by more fans!
-                  </p>
-                  <Link
-                    to="/spotlight/leaderboard"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    Check active campaigns →
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Trophy className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Unlock achievements
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Earn badges for your support and engagement.
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/fan#support-artists">
+                    <span className="text-sm text-primary hover:underline">
+                      Learn more about supporting artists →
+                    </span>
                   </Link>
                 </CardContent>
               </Card>
 
-              <Card id="stacks">
+              <Card id="listen-and-discover">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <ListMusic className="h-5 w-5 text-primary" />
-                    What are Stacks?
+                    <Music className="h-5 w-5 text-primary" />
+                    Listening and Discovery
                   </CardTitle>
+                  <CardDescription>
+                    Explore new music and personalize your listening experience.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Stacks are your personal collections of tracks. Think of them as
-                    playlists tailored to your taste and mood.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Stack features:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        Organize tracks by mood, genre, or any theme you like
-                      </li>
-                      <li>Make stacks public or keep them private</li>
-                      <li>Share your favorite stacks with friends</li>
-                      <li>Add tracks from Discover, Search, or artist profiles</li>
-                    </ul>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <ListMusic className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Create playlists
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Curate your favorite tracks into custom playlists.
+                      </p>
+                    </div>
                   </div>
-                  <Link
-                    to="/fan/playlists"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    Create your first stack →
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <Card id="discover">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
-                    How does Discover work?
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    The Discover page helps you find new music tailored to your
-                    taste. It uses smart algorithms to recommend tracks and artists
-                    you'll love.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Discover sections:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        <span className="font-medium">For You</span> – Personalized
-                        based on what you like and follow
-                      </li>
-                      <li>
-                        <span className="font-medium">Trending</span> – Most popular
-                        tracks right now
-                      </li>
-                      <li>
-                        <span className="font-medium">Rising Artists</span> – New
-                        talent gaining momentum
-                      </li>
-                      <li>
-                        <span className="font-medium">Genres</span> – Explore by
-                        your favorite music styles
-                      </li>
-                    </ul>
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <TrendingUp className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Follow trending charts
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Discover what's popular on FlyMusic.
+                      </p>
+                    </div>
                   </div>
-                  <Link
-                    to="/discover"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    Start discovering →
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Sparkles className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Personalized recommendations
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Get suggestions based on your listening history.
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/fan#listen-and-discover">
+                    <span className="text-sm text-primary hover:underline">
+                      Learn more about listening and discovery →
+                    </span>
                   </Link>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Artist Content */}
             <TabsContent value="artist" className="space-y-6">
-              <Card id="studio-overview">
+              <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Mic2 className="h-5 w-5 text-primary" />
-                    My Studio Overview
+                    Uploading Music
                   </CardTitle>
+                  <CardDescription>
+                    Learn how to upload your music and videos to FlyMusic.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    My Studio is your Creator Control Room – a professional
-                    dashboard where you manage everything related to your music
-                    career on FlyMusic.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Studio sections:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        <span className="font-medium">Dashboard</span> – View stats,
-                        fan activity, and quick actions
-                      </li>
-                      <li>
-                        <span className="font-medium">Profile</span> – Edit your
-                        artist info, bio, and social links
-                      </li>
-                      <li>
-                        <span className="font-medium">Tracks</span> – Upload and
-                        manage your music
-                      </li>
-                      <li>
-                        <span className="font-medium">Videos</span> – Share video
-                        updates and behind-the-scenes
-                      </li>
-                      <li>
-                        <span className="font-medium">Analytics</span> – Track
-                        plays, likes, followers, and engagement
-                      </li>
-                      <li>
-                        <span className="font-medium">Spotlight</span> – Submit to
-                        campaigns and track votes
-                      </li>
-                    </ul>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Music className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Audio formats
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Supported audio formats for music uploads.
+                      </p>
+                    </div>
                   </div>
-                  <Link
-                    to="/studio"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    Go to My Studio →
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Video className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Video formats
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Supported video formats for music videos.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Calendar className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Release scheduling
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Schedule your releases in advance.
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/studio#uploading-music">
+                    <span className="text-sm text-primary hover:underline">
+                      Learn more about uploading music →
+                    </span>
                   </Link>
                 </CardContent>
               </Card>
 
-              <Card id="spotlight-boost">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    How Spotlight can boost you
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Spotlight campaigns give you massive visibility by putting your
-                    music in front of engaged fans who are actively voting and
-                    discovering new artists.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Benefits:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>Featured on leaderboards and Fan Feeds</li>
-                      <li>Badge on your artist profile during active campaigns</li>
-                      <li>Reach fans outside your current followers</li>
-                      <li>Build momentum with social sharing and votes</li>
-                      <li>Archive entries show past achievements</li>
-                    </ul>
-                  </div>
-                  <p>
-                    Think of it as a launch pad: submit your best track, rally your
-                    fans to vote, and watch new listeners discover you!
-                  </p>
-                  <Link
-                    to="/studio/spotlight"
-                    className="text-primary hover:underline inline-block mt-2"
-                  >
-                    Submit to Spotlight →
-                  </Link>
-                </CardContent>
-              </Card>
-
-              <Card id="supporters-help">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    How Supporters help your career
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Supporters are fans who actively engage with your music. Every
-                    like, follow, vote, and share earns them XP tied to your artist
-                    profile.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Why it matters:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>Higher supporter levels = stronger fan loyalty</li>
-                      <li>
-                        Fans with Gold/Silver badges spread your music more
-                      </li>
-                      <li>
-                        Supporter activity shows up in your dashboard activity feed
-                      </li>
-                      <li>
-                        You can see your Top Supporters and thank them directly
-                      </li>
-                    </ul>
-                  </div>
-                  <p>
-                    Focus on building relationships with your supporters – they're
-                    your core fanbase and best advocates!
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card id="videos-tracks-collections">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Video className="h-5 w-5 text-primary" />
-                    <Music className="h-4 w-4 text-muted-foreground" />
-                    Videos, Tracks and Collections
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Tracks:</p>
-                    <p>
-                      Your music library. Upload audio files (MP3, WAV), add cover
-                      art, and manage track metadata. Tracks appear in search,
-                      artist profiles, and fan feeds.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Videos:</p>
-                    <p>
-                      Short updates, behind-the-scenes, live sessions, or teasers.
-                      Videos help fans connect with your creative process and
-                      personality beyond just audio.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">
-                      Video Collections:
-                    </p>
-                    <p>
-                      Organize videos into themed collections (e.g., "Behind The
-                      Scenes", "Live Sessions"). Collections appear on your artist
-                      profile and help fans navigate your content.
-                    </p>
-                  </div>
-                  <div className="mt-4 space-y-1">
-                    <Link
-                      to="/studio/tracks"
-                      className="text-primary hover:underline block"
-                    >
-                      Upload tracks →
-                    </Link>
-                    <Link
-                      to="/studio/videos"
-                      className="text-primary hover:underline block"
-                    >
-                      Upload videos →
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card id="grow-audience">
+              <Card id="analytics-and-stats">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <BarChart3 className="h-5 w-5 text-primary" />
-                    How to grow your audience on FlyMusic
+                    Analytics and Stats
                   </CardTitle>
+                  <CardDescription>
+                    Understand your audience and track your performance.
+                  </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3 text-muted-foreground">
-                  <p>
-                    Growing on FlyMusic requires consistent engagement, quality
-                    content, and leveraging platform features strategically.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="font-semibold text-foreground">Growth tips:</p>
-                    <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>
-                        <span className="font-medium">Upload regularly</span> – New
-                        tracks and videos keep fans engaged
-                      </li>
-                      <li>
-                        <span className="font-medium">Submit to Spotlight</span> –
-                        Gain visibility in campaigns
-                      </li>
-                      <li>
-                        <span className="font-medium">Reply to comments</span> –
-                        Build relationships with fans
-                      </li>
-                      <li>
-                        <span className="font-medium">Share on socials</span> – Drive
-                        traffic from Instagram, TikTok, Twitter
-                      </li>
-                      <li>
-                        <span className="font-medium">Post updates</span> – Keep fans
-                        in the loop about new releases
-                      </li>
-                      <li>
-                        <span className="font-medium">Track analytics</span> – See
-                        what content resonates most
-                      </li>
-                    </ul>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Audience demographics
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Learn about your listeners' demographics.
+                      </p>
+                    </div>
                   </div>
-                  <p>
-                    Remember: FlyMusic rewards artist-fan relationships, not just
-                    play counts. Focus on building your supporter community!
-                  </p>
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Engagement metrics
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Track comments, likes, and shares.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="rounded-full bg-secondary h-12 w-12 flex items-center justify-center">
+                      <TrendingUp className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-lg mb-0.5">
+                        Performance trends
+                      </h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Analyze your performance over time.
+                      </p>
+                    </div>
+                  </div>
+                  <Link to="/studio#analytics-and-stats">
+                    <span className="text-sm text-primary hover:underline">
+                      Learn more about analytics and stats →
+                    </span>
+                  </Link>
                 </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
 
           {/* Back to Dashboard Links */}
-          <div className="mt-12 pt-8 border-t border-border text-center space-y-4">
-            <p className="text-muted-foreground">Ready to dive in?</p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="mt-12 text-center space-y-4">
+            {activeTab === 'fan' && (
               <Link to="/fan">
-                <button className="btn-gold-outline px-6 py-2 rounded-lg min-w-[200px]">
-                  Go to Fan Portal
-                </button>
+                <span className="text-sm text-primary hover:underline">← Back to Fan Portal</span>
               </Link>
+            )}
+            {activeTab === 'artist' && (
               <Link to="/studio">
-                <button className="btn-gold-premium px-6 py-2 rounded-lg min-w-[200px]">
-                  Go to My Studio
-                </button>
+                <span className="text-sm text-primary hover:underline">← Back to My Studio</span>
               </Link>
-            </div>
+            )}
           </div>
         </div>
       </div>
-      {isMobile && <BottomNavBarFan />}
+
+      {/* Conditionally render BottomNavBarFan only on mobile and only for fan tab */}
+      {isMobile && activeTab === 'fan' && <BottomNavBarFan />}
     </>
   );
 }

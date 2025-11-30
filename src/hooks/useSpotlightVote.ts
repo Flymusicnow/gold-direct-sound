@@ -49,6 +49,14 @@ export function useSpotlightVote(entryId: string, campaignId: string, artistId: 
         // Check for new achievements
         await checkAndUnlockAchievements();
         
+        // Track onboarding progress
+        await supabase
+          .from('fan_onboarding_progress')
+          .upsert({
+            user_id: user.id,
+            has_voted_spotlight: true,
+          });
+        
         // Trigger gold star confetti animation
         confetti({
           particleCount: 50,

@@ -726,6 +726,48 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_onboarding_progress: {
+        Row: {
+          created_at: string | null
+          has_created_stack: boolean | null
+          has_followed_artist: boolean | null
+          has_viewed_supporter: boolean | null
+          has_visited_discover: boolean | null
+          has_voted_spotlight: boolean | null
+          id: string
+          onboarding_completed: boolean | null
+          onboarding_skipped: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          has_created_stack?: boolean | null
+          has_followed_artist?: boolean | null
+          has_viewed_supporter?: boolean | null
+          has_visited_discover?: boolean | null
+          has_voted_spotlight?: boolean | null
+          id?: string
+          onboarding_completed?: boolean | null
+          onboarding_skipped?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          has_created_stack?: boolean | null
+          has_followed_artist?: boolean | null
+          has_viewed_supporter?: boolean | null
+          has_visited_discover?: boolean | null
+          has_voted_spotlight?: boolean | null
+          id?: string
+          onboarding_completed?: boolean | null
+          onboarding_skipped?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fan_spotlight_stats: {
         Row: {
           created_at: string | null

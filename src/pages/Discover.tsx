@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DiscoverForYouRail } from '@/components/discover/DiscoverForYouRail';
 import { DiscoverTrendingRail } from '@/components/discover/DiscoverTrendingRail';
@@ -8,9 +8,29 @@ import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { TasteDebugPanel } from '@/components/discover/TasteDebugPanel';
 import { Sparkles } from 'lucide-react';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Discover() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('for-you');
+
+  // Track onboarding progress on first visit
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('fan_onboarding_progress')
+        .upsert({
+          user_id: user.id,
+          has_visited_discover: true,
+        })
+        .then(() => {
+          // Progress tracked
+        }, (err) => {
+          console.error('Error tracking discover visit:', err);
+        });
+    }
+  }, [user]);
 
   return (
     <div className="min-h-screen bg-background pb-32 md:pb-28">

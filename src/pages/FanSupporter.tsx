@@ -49,6 +49,19 @@ export default function FanSupporter() {
       return;
     }
     fetchSupporterData();
+    
+    // Track onboarding progress
+    supabase
+      .from('fan_onboarding_progress')
+      .upsert({
+        user_id: user.id,
+        has_viewed_supporter: true,
+      })
+      .then(() => {
+        // Progress tracked
+      }, (err) => {
+        console.error('Error tracking supporter visit:', err);
+      });
   }, [user, navigate]);
 
   const fetchSupporterData = async () => {

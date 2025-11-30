@@ -71,6 +71,14 @@ export default function CreatePlaylistDialog({
 
       if (error) throw error;
 
+      // Track onboarding progress
+      await supabase
+        .from('fan_onboarding_progress')
+        .upsert({
+          user_id: user.id,
+          has_created_stack: true,
+        });
+
       toast.success("Playlist created successfully!");
       setName("");
       setDescription("");

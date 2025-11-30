@@ -39,6 +39,14 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
         // Update supporter XP and check fan achievements
         await updateSupportScore(artistId, 'follow');
         
+        // Track onboarding progress
+        await supabase
+          .from('fan_onboarding_progress')
+          .upsert({
+            user_id: user.id,
+            has_followed_artist: true,
+          });
+        
         toast.success('Following artist');
       }
     } catch (error) {

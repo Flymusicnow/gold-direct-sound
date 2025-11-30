@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { FanActionBar } from "./FanActionBar";
 import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
 import { useFollowArtist } from "@/hooks/useFollowArtist";
-import { useState } from "react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface ContentOverlayProps {
   item: FlightdeckItem | null;
@@ -200,14 +201,22 @@ export function ContentOverlay({
                     <p className="text-sm text-muted-foreground">Artist</p>
                   </div>
                 </div>
-                <Button
-                  variant={following ? 'outline' : 'default'}
-                  size="sm"
-                  onClick={toggleFollow}
-                  className="transition-all hover:scale-105"
-                >
-                  {following ? 'Following' : 'Follow'}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={following ? 'outline' : 'default'}
+                    size="sm"
+                    onClick={toggleFollow}
+                    className="transition-all hover:scale-105"
+                  >
+                    {following ? 'Following' : 'Follow'}
+                  </Button>
+                  <InfoTooltip
+                    title="Why Follow?"
+                    description="Stay updated on new releases, support the artist (+8 XP), and see their content in your feed."
+                    forRole="fan"
+                    learnLink="/learn?tab=fan#support-artists"
+                  />
+                </div>
               </div>
 
               {/* Title and Description */}
