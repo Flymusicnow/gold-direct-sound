@@ -56,7 +56,7 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
     }
   };
 
-  const updateWatchDuration = async (currentTime: number) => {
+  const updateWatchDuration = async (currentTime: number, userId?: string, artistId?: string) => {
     if (!viewId) return;
 
     const now = Date.now();
@@ -78,7 +78,7 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
       lastSegmentTimeRef.current = currentTime;
 
       const watchDuration = Math.floor((now - startTimeRef.current) / 1000);
-      const completed = duration ? currentTime >= duration * 0.9 : false;
+      const completed = duration ? currentTime >= duration * 0.5 : false; // 50% completion threshold
 
       await supabase
         .from('video_views')
@@ -88,6 +88,24 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
           watch_segments: watchSegmentsRef.current as any,
         })
         .eq('id', viewId);
+
+      // Taste Engine V1.5: Update taste profile on video watch completion (>50%)
+      if (completed && userId && artistId) {
+        // Fire-and-forget taste update
+        supabase.rpc('update_taste_profile', {
+          _fan_user_id: userId,
+          _artist_id: artistId,
+          _interaction: 'watch_video',
+          _track_id: null,
+          _video_id: videoId,
+        }).then((result) => {
+          if (result.error) {
+            console.error('Error updating taste for video watch:', result.error);
+          } else {
+            console.log('Taste profile updated for video watch');
+          }
+        });
+      }
 
       lastUpdateRef.current = now;
     } catch (error) {

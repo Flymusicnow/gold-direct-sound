@@ -5,7 +5,13 @@ import confetti from 'canvas-confetti';
 import { useFanTaste } from '@/contexts/FanTasteContext';
 import { useFanAchievementChecker } from './useFanAchievementChecker';
 
-// Action weights for supporter score calculation
+// =====================================================
+// Taste Engine V1.5: Supporter Score + Taste Weights
+// =====================================================
+// Supporter score (XP) and Taste profile use different weights
+// XP rewards immediate engagement, Taste tracks long-term preferences
+
+// Action weights for supporter score calculation (XP)
 const ACTION_WEIGHTS = {
   like_track: 1,
   play_track: 0.5,
@@ -14,6 +20,7 @@ const ACTION_WEIGHTS = {
   share: 3,
   comment: 2,
   follow: 3,
+  watch_video: 0.5, // new
 } as const;
 
 // Level thresholds
@@ -25,15 +32,17 @@ const LEVEL_THRESHOLDS = {
 
 type SupportAction = keyof typeof ACTION_WEIGHTS;
 
-// Map support actions to taste profile interactions
+// Map support actions to taste profile interactions (Taste Engine V1.5)
+// These use the normalized weights defined in update_taste_profile RPC
 const TASTE_INTERACTION_MAP: Record<SupportAction, string> = {
-  like_track: 'like',
-  play_track: 'play',
-  add_to_stack: 'stack_add',
-  spotlight_vote: 'spotlight_vote',
-  share: 'share',
-  comment: 'comment',
-  follow: 'follow',
+  like_track: 'like',           // Taste: +5
+  play_track: 'play',           // Taste: +2
+  add_to_stack: 'stack_add',    // Taste: +10
+  spotlight_vote: 'spotlight_vote', // Taste: +12
+  share: 'share',               // Taste: +10
+  comment: 'comment',           // Taste: +4
+  follow: 'follow',             // Taste: +8
+  watch_video: 'watch_video',   // Taste: +3 (new)
 };
 
 // Calculate level based on score

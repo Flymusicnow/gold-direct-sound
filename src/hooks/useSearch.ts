@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface SearchArtist {
   id: string;
@@ -82,6 +83,7 @@ export interface SearchResults {
 }
 
 export function useSearch(initialQuery = '') {
+  const { user } = useAuth();
   const [query, setQuery] = useState(initialQuery);
   const [debouncedQuery, setDebouncedQuery] = useState(initialQuery);
   const [results, setResults] = useState<SearchResults>({
@@ -236,9 +238,59 @@ export function useSearch(initialQuery = '') {
         };
       });
 
+      // Taste Engine V1.5: Apply taste-based re-ranking if user is logged in
+      let rankedTracks = tracksWithSpotlight;
+      let rankedArtists = artistsRes.data || [];
+
+      if (user) {
+        try {
+          // Compute taste scores for tracks
+          const trackScores = await Promise.all(
+            tracksWithSpotlight.map(async (track) => {
+              const { data: score } = await supabase.rpc('calculate_taste_score', {
+                _fan_user_id: user.id,
+                _artist_id: track.artist_profiles.id,
+                _genre: track.genre || track.artist_profiles.artist_name,
+                _tags: [],
+              });
+              return { ...track, tasteScore: score || 0 };
+            })
+          );
+
+          // Re-rank tracks: base relevance + taste boost
+          rankedTracks = trackScores.sort((a, b) => {
+            // Prioritize exact title matches, then boost by taste
+            const aExactMatch = a.title.toLowerCase() === trimmedQuery.toLowerCase() ? 100 : 0;
+            const bExactMatch = b.title.toLowerCase() === trimmedQuery.toLowerCase() ? 100 : 0;
+            const aScore = aExactMatch + (a.tasteScore || 0);
+            const bScore = bExactMatch + (b.tasteScore || 0);
+            return bScore - aScore;
+          });
+
+          // Compute taste scores for artists
+          const artistScores = await Promise.all(
+            (artistsRes.data || []).map(async (artist) => {
+              const { data: score } = await supabase.rpc('calculate_taste_score', {
+                _fan_user_id: user.id,
+                _artist_id: artist.id,
+                _genre: artist.genre || '',
+                _tags: [],
+              });
+              return { ...artist, tasteScore: score || 0 };
+            })
+          );
+
+          // Re-rank artists by taste score
+          rankedArtists = artistScores.sort((a, b) => (b.tasteScore || 0) - (a.tasteScore || 0));
+        } catch (err) {
+          console.error('Error applying taste ranking:', err);
+          // Fallback to unranked results on error
+        }
+      }
+
       setResults({
-        artists: artistsRes.data || [],
-        tracks: tracksWithSpotlight,
+        artists: rankedArtists,
+        tracks: rankedTracks,
         videos: videosRes.data || [],
         spotlightEntries: spotlightRes.data || [],
         stacks: stacksRes.data || [],
