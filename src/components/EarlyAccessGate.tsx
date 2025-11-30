@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
-import { useLocation, Navigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBetaAccess } from "@/hooks/useBetaAccess";
 import { EarlyAccessWall } from "./EarlyAccessWall";
+import { BetaLandingPage } from "./BetaLandingPage";
 
 interface EarlyAccessGateProps {
   children: ReactNode;
@@ -41,9 +42,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     );
   }
 
-  // If no user, redirect to auth
+  // If no user, show the beta landing page
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <BetaLandingPage />;
   }
 
   // If user doesn't have beta access, show the wall
