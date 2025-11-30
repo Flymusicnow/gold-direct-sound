@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { VideoEngagementHeatmap } from "@/components/video/VideoEngagementHeatmap";
 
 interface Track {
   id: string;
@@ -329,24 +330,23 @@ export default function StudioAnalytics() {
               </div>
 
               <h3 className="text-sm font-semibold mb-3">Top Videos</h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Caption</TableHead>
-                    <TableHead className="text-right">Views</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {topVideos.map((video) => (
-                    <TableRow key={video.id}>
-                      <TableCell className="font-medium">
-                        {video.caption || 'Untitled Video'}
-                      </TableCell>
-                      <TableCell className="text-right">{video.view_count || 0}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <div className="space-y-6">
+                {topVideos.map((video) => (
+                  <Card key={video.id} className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h4 className="font-medium mb-1">
+                          {video.caption || 'Untitled Video'}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {video.view_count || 0} views
+                        </p>
+                      </div>
+                    </div>
+                    <VideoEngagementHeatmap videoId={video.id} />
+                  </Card>
+                ))}
+              </div>
             </Card>
           )}
 
