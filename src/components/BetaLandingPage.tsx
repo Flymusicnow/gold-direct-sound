@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { RequestBetaDialog } from "./RequestBetaDialog";
 
 export function BetaLandingPage() {
   const navigate = useNavigate();
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -54,12 +57,27 @@ export function BetaLandingPage() {
             </Button>
           </div>
 
+          {/* Request Beta Code Button */}
+          <div className="pt-6">
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowRequestDialog(true)}
+              className="w-full sm:w-auto min-w-[200px] border-primary/30 text-primary hover:bg-primary/10"
+            >
+              Request Beta Code
+            </Button>
+          </div>
+
           {/* Footer Message */}
           <div className="pt-12 text-sm text-muted-foreground">
             <p>Want early access? Sign up and request a beta code.</p>
           </div>
         </div>
       </div>
+
+      {/* Request Beta Dialog */}
+      <RequestBetaDialog open={showRequestDialog} onOpenChange={setShowRequestDialog} />
     </div>
   );
 }
