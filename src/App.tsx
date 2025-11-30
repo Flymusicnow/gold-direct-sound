@@ -56,6 +56,7 @@ import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
+import { EarlyAccessGate } from "@/components/EarlyAccessGate";
 
 const queryClient = new QueryClient();
 
@@ -66,12 +67,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <FanTasteProvider>
-            <VideoPlaybackProvider>
-              <FlightdeckProvider>
-                <SwipeBackProvider>
-                <Navigation />
-              <Routes>
+          <EarlyAccessGate>
+            <FanTasteProvider>
+              <VideoPlaybackProvider>
+                <FlightdeckProvider>
+                  <SwipeBackProvider>
+                  <Navigation />
+                <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/explore" element={<Explore />} />
@@ -219,6 +221,7 @@ const App = () => (
             </FlightdeckProvider>
             </VideoPlaybackProvider>
           </FanTasteProvider>
+          </EarlyAccessGate>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
