@@ -69,10 +69,8 @@ export function PremiumVideoPlayer({
       videoRef.current.pause();
       setCurrentVideo(null);
     } else {
-      // Pause Flightdeck audio when video starts playing (unmuted)
-      if (!isMuted) {
-        pauseFlightdeck(false);
-      }
+      // Pause Flightdeck audio when video starts playing
+      pauseFlightdeck(false);
       setCurrentVideo(videoId);
       videoRef.current.play();
     }

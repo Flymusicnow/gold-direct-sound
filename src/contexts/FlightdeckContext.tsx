@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useSupportScore } from '@/hooks/useSupportScore';
+import { useVideoPlayback } from './VideoPlaybackContext';
 
 export interface FlightdeckItem {
   id: string;
@@ -49,6 +50,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState(0);
   const { updateSupportScore } = useSupportScore();
   const lastPlayedRef = useRef<string | null>(null);
+  const { pauseAllVideos } = useVideoPlayback();
 
   const currentItem = currentIndex >= 0 && currentIndex < queue.length ? queue[currentIndex] : null;
 
@@ -64,6 +66,9 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   }, [currentItem, isPlaying, updateSupportScore]);
 
   const playNow = useCallback((item: FlightdeckItem, context?: FlightdeckItem[]) => {
+    // Pause all videos when Flightdeck starts playing
+    pauseAllVideos();
+    
     if (context && context.length > 0) {
       // Set entire queue from context
       const itemIndex = context.findIndex(i => i.id === item.id);
@@ -75,7 +80,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
       setCurrentIndex(0);
     }
     setIsPlaying(true);
-  }, []);
+  }, [pauseAllVideos]);
 
   const addToQueue = useCallback((item: FlightdeckItem) => {
     setQueue(prev => [...prev, item]);
@@ -96,8 +101,15 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   }, [currentIndex]);
 
   const togglePlay = useCallback(() => {
-    setIsPlaying(prev => !prev);
-  }, []);
+    setIsPlaying(prev => {
+      const newState = !prev;
+      // If we're starting to play, pause all videos
+      if (newState) {
+        pauseAllVideos();
+      }
+      return newState;
+    });
+  }, [pauseAllVideos]);
 
   const seek = useCallback((time: number) => {
     setCurrentTime(time);

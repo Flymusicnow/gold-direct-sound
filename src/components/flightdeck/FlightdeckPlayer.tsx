@@ -202,7 +202,7 @@ export function FlightdeckPlayer() {
 
           {/* Volume and Queue */}
           <div className="flex items-center gap-4 flex-1 justify-end">
-            <div className="hidden sm:flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
               <Button variant="ghost" size="icon" onClick={toggleMute}>
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </Button>
@@ -211,7 +211,7 @@ export function FlightdeckPlayer() {
                 max={1}
                 step={0.01}
                 onValueChange={handleVolumeChange}
-                className="w-24"
+                className="w-32"
               />
             </div>
             <Button
