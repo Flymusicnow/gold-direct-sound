@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
 import { FlightdeckMiniQueue } from './FlightdeckMiniQueue';
@@ -30,6 +30,8 @@ export function FlightdeckPlayer() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [queueExpanded, setQueueExpanded] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Update media element when current item changes
   useEffect(() => {
@@ -117,12 +119,29 @@ export function FlightdeckPlayer() {
   if (!currentItem) return null;
 
   return (
-    <div className="fixed bottom-14 md:bottom-0 left-0 right-0 z-[60]">
-      {/* Mini Queue */}
-      <FlightdeckMiniQueue isExpanded={queueExpanded} onToggle={() => setQueueExpanded(!queueExpanded)} />
-      
-      {/* Player Bar */}
-      <div className="bg-card border-t border-border shadow-lg">
+    <>
+      <div 
+        className="fixed bottom-14 md:bottom-0 left-0 right-0 z-[60]"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Mini Queue */}
+        <FlightdeckMiniQueue isExpanded={queueExpanded} onToggle={() => setQueueExpanded(!queueExpanded)} />
+        
+        {/* Close button - appears on hover (desktop only) */}
+        <button
+          onClick={() => setIsMinimized(true)}
+          className={`absolute -top-3 right-4 hidden md:flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all duration-200 ${
+            isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+          }`}
+        >
+          <ChevronDown className="h-4 w-4" />
+        </button>
+
+        {/* Player Bar */}
+        <div className={`bg-card border-t border-border shadow-lg transition-transform duration-300 ease-in-out ${
+          isMinimized ? 'translate-y-full' : ''
+        }`}>
       {/* Hidden media elements */}
       <audio
         ref={audioRef}
@@ -229,6 +248,18 @@ export function FlightdeckPlayer() {
         </div>
       </div>
       </div>
-    </div>
+      </div>
+
+      {/* Floating restore button when minimized */}
+      {isMinimized && (
+        <button
+          onClick={() => setIsMinimized(false)}
+          className="fixed bottom-20 md:bottom-4 right-4 z-[60] flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 animate-fade-in"
+        >
+          <Play className="h-4 w-4" />
+          <span className="text-sm font-medium">Now Playing</span>
+        </button>
+      )}
+    </>
   );
 }
