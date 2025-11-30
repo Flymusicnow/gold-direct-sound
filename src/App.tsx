@@ -64,8 +64,8 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <FanTasteProvider>
-            <FlightdeckProvider>
-              <VideoPlaybackProvider>
+            <VideoPlaybackProvider>
+              <FlightdeckProvider>
                 <SwipeBackProvider>
                 <Navigation />
               <Routes>
@@ -206,8 +206,8 @@ const App = () => (
           </Routes>
               <FlightdeckPlayer />
               </SwipeBackProvider>
-            </VideoPlaybackProvider>
             </FlightdeckProvider>
+            </VideoPlaybackProvider>
           </FanTasteProvider>
         </AuthProvider>
       </BrowserRouter>
