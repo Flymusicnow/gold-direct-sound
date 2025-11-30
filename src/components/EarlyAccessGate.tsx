@@ -10,7 +10,6 @@ interface EarlyAccessGateProps {
 
 // Routes that don't require beta access
 const PUBLIC_ROUTES = [
-  '/',
   '/auth',
   '/learn',
 ];
