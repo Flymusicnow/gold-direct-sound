@@ -10,6 +10,7 @@ import { Plus, ListMusic } from "lucide-react";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Playlist {
   id: string;
@@ -87,12 +88,18 @@ export default function FanPlaylists() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2">
               <ListMusic className="h-10 w-10 text-primary" />
-              My Playlists
-            </h1>
+              <h1 className="text-4xl font-bold">My Stacks</h1>
+              <InfoTooltip
+                title="What are Stacks?"
+                description="Stacks are your personal track collections. Organize by mood, genre, or any theme. Make them public to share with others!"
+                forRole="fan"
+                learnLink="/learn?tab=fan#stacks"
+              />
+            </div>
             <p className="text-muted-foreground">
-              Organize your favorite tracks into custom playlists
+              Organize your favorite tracks into custom collections
             </p>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>

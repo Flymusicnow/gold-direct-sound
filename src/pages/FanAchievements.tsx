@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export default function FanAchievements() {
   const { user, profile } = useAuth();
@@ -135,7 +136,15 @@ export default function FanAchievements() {
 
         {/* Achievement Gallery */}
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Achievement Gallery</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">Achievement Gallery</h2>
+            <InfoTooltip
+              title="Fan Achievements"
+              description="Unlock achievements by following artists, voting in Spotlight, creating stacks, and reaching XP milestones. Show off your journey!"
+              forRole="fan"
+              learnLink="/learn?tab=fan#supporter-level"
+            />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {achievements.map((achievement) => (
               <FanAchievementBadge key={achievement.type} achievement={achievement} />

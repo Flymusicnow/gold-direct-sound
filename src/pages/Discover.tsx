@@ -7,6 +7,7 @@ import { DiscoverGenreSection } from '@/components/discover/DiscoverGenreSection
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { TasteDebugPanel } from '@/components/discover/TasteDebugPanel';
 import { Sparkles } from 'lucide-react';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 export default function Discover() {
   const [activeTab, setActiveTab] = useState('for-you');
@@ -16,7 +17,14 @@ export default function Discover() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <h1 className="text-3xl font-bold mb-4">Discover</h1>
+          <div className="flex items-center gap-2 mb-4">
+            <h1 className="text-3xl font-bold">Discover</h1>
+            <InfoTooltip
+              title="How Discover Works"
+              description="Explore music tailored to your taste. 'For You' is personalized, 'Trending' shows what's hot now, and 'Rising' highlights new talent."
+              learnLink="/learn?tab=fan#discover"
+            />
+          </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full grid grid-cols-4 bg-muted/50">

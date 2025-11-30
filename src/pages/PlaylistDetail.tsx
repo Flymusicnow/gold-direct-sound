@@ -8,6 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { Card } from "@/components/ui/card";
+import { StackSettingsDialog } from "@/components/playlists/StackSettingsDialog";
 import {
   ArrowLeft,
   Play,
@@ -50,6 +51,7 @@ export default function PlaylistDetail() {
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -185,7 +187,7 @@ export default function PlaylistDetail() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => navigate(`/fan/playlists/${playlistId}/settings`)}
+                  onClick={() => setSettingsOpen(true)}
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -272,6 +274,20 @@ export default function PlaylistDetail() {
         </div>
       </div>
       {isMobile && <BottomNavBarFan />}
+      
+      {/* Stack Settings Dialog */}
+      {isOwner && playlist && (
+        <StackSettingsDialog
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          playlistId={playlist.id}
+          initialName={playlist.name}
+          initialDescription={playlist.description}
+          initialIsPublic={playlist.is_public}
+          onUpdate={fetchPlaylistData}
+          onDelete={() => navigate("/fan/playlists")}
+        />
+      )}
     </>
   );
 }

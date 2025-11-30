@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Campaign {
   id: string;
@@ -222,7 +223,14 @@ export default function SpotlightCampaign() {
         {/* Entries Section */}
         <div>
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold">All Entries</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-bold">All Entries</h2>
+              <InfoTooltip
+                title="How Spotlight Voting Works"
+                description="Vote for your favorite tracks in this campaign! Each fan gets one vote per entry. Your vote helps artists gain visibility and rise on the leaderboard."
+                learnLink="/learn?tab=fan#spotlight"
+              />
+            </div>
             <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue />

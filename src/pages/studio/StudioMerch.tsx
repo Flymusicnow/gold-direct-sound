@@ -9,6 +9,7 @@ import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface MerchProduct {
   id: string;
@@ -121,10 +122,16 @@ export default function StudioMerch() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2">
               <ShoppingBag className="h-8 w-8 text-primary" />
-              My Merch
-            </h1>
+              <h1 className="text-3xl font-bold">My Merch</h1>
+              <InfoTooltip
+                title="Merchandise & Products"
+                description="Add your merch products here. Link to external stores like Shopify. Fans will see them on your artist profile!"
+                forRole="artist"
+                learnLink="/learn?tab=artist#videos-tracks-collections"
+              />
+            </div>
             <p className="text-muted-foreground mt-2">
               Manage your merchandise and products
             </p>

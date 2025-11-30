@@ -21,6 +21,8 @@ import { ArtistAchievementsCard } from "@/components/artist/ArtistAchievementsCa
 import { TopSupportersWidget } from "@/components/artist/TopSupportersWidget";
 import { LiveViewerActivityWidget } from "@/components/artist/LiveViewerActivityWidget";
 import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Link } from "react-router-dom";
 
 interface Stats {
   followers: number;
@@ -179,7 +181,10 @@ export default function StudioDashboard() {
                     Creator Control Room
                   </h1>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Welcome back, {artistProfile?.artist_name}
+                    Welcome back, {artistProfile?.artist_name} ·{" "}
+                    <Link to="/learn?tab=artist" className="text-primary hover:underline">
+                      Learn FlyMusic →
+                    </Link>
                   </p>
                 </div>
               </div>
