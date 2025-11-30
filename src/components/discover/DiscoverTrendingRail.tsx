@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { ContentOverlay } from '@/components/fan/ContentOverlay';
+import { DiscoverSectionHeader } from './DiscoverSectionHeader';
 
 export function DiscoverTrendingRail() {
   const { items, loading } = useTrendingContent(48, 10);
@@ -13,10 +14,11 @@ export function DiscoverTrendingRail() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Flame className="w-6 h-6 text-primary" />
-          Trending Now
-        </h2>
+        <DiscoverSectionHeader
+          icon={Flame}
+          title="Trending Now"
+          subtitle="What the scene is reacting to"
+        />
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
           {[...Array(5)].map((_, i) => (
             <Skeleton key={i} className="w-48 h-64 rounded-xl flex-shrink-0" />
@@ -31,16 +33,17 @@ export function DiscoverTrendingRail() {
   return (
     <>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Flame className="w-6 h-6 text-primary animate-pulse" />
-          Trending Now
-        </h2>
+        <DiscoverSectionHeader
+          icon={Flame}
+          title="Trending Now"
+          subtitle="What the scene is reacting to"
+        />
 
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
           {items.map((item, index) => (
             <Card
               key={item.content_id}
-              className="w-48 flex-shrink-0 overflow-hidden cursor-pointer hover:scale-105 transition-transform border-primary/20 bg-card/50"
+              className="w-48 flex-shrink-0 overflow-hidden cursor-pointer group transition-all duration-300 border-primary/20 bg-card/50 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(232,191,26,0.15)]"
               onClick={() => setOverlayItem(item)}
             >
               {/* Cover/Thumbnail */}
@@ -59,9 +62,9 @@ export function DiscoverTrendingRail() {
                   />
                 )}
 
-                {/* Trending badge */}
-                <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-primary/90 text-primary-foreground rounded-full text-xs font-bold">
-                  <Flame className="w-3 h-3" />
+                {/* Trending badge with flame glow */}
+                <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-1 bg-primary/90 text-primary-foreground rounded-full text-xs font-bold shadow-[0_0_12px_rgba(232,191,26,0.6)]">
+                  <Flame className="w-3 h-3 animate-pulse" />
                   #{index + 1}
                 </div>
 

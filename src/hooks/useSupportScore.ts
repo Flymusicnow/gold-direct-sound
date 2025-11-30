@@ -13,6 +13,7 @@ const ACTION_WEIGHTS = {
   spotlight_vote: 5,
   share: 3,
   comment: 2,
+  follow: 3,
 } as const;
 
 // Level thresholds
@@ -32,6 +33,7 @@ const TASTE_INTERACTION_MAP: Record<SupportAction, string> = {
   spotlight_vote: 'spotlight_vote',
   share: 'share',
   comment: 'comment',
+  follow: 'follow',
 };
 
 // Calculate level based on score

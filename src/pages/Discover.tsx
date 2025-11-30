@@ -5,6 +5,7 @@ import { DiscoverTrendingRail } from '@/components/discover/DiscoverTrendingRail
 import { DiscoverRisingArtistsRail } from '@/components/discover/DiscoverRisingArtistsRail';
 import { DiscoverGenreSection } from '@/components/discover/DiscoverGenreSection';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
+import { Sparkles } from 'lucide-react';
 
 export default function Discover() {
   const [activeTab, setActiveTab] = useState('for-you');
@@ -60,6 +61,14 @@ export default function Discover() {
             <DiscoverGenreSection />
           </div>
         )}
+      </div>
+
+      {/* Bottom supporter note */}
+      <div className="py-8 text-center">
+        <p className="text-xs text-muted-foreground flex items-center justify-center gap-2">
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary"></span>
+          Your Discover activity helps you grow your Supporter Level.
+        </p>
       </div>
 
       {/* Mobile bottom nav */}

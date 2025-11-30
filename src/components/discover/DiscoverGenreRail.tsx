@@ -32,13 +32,16 @@ export function DiscoverGenreRail({ genre }: DiscoverGenreRailProps) {
   return (
     <>
       <div className="space-y-4">
-        <h3 className="text-xl font-bold">{genre}</h3>
+        <h3 className="text-xl font-bold relative inline-block">
+          {genre}
+          <div className="absolute -bottom-1 left-0 right-0 h-[2px] bg-gradient-to-r from-primary/60 via-primary to-primary/60"></div>
+        </h3>
 
         <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
           {items.map((item) => (
             <Card
               key={item.content_id}
-              className="w-44 flex-shrink-0 overflow-hidden cursor-pointer hover:scale-105 transition-transform border-primary/10 bg-card/30"
+              className="w-44 flex-shrink-0 overflow-hidden cursor-pointer group transition-all duration-300 border-primary/10 bg-card/30 hover:border-primary/40 hover:shadow-[0_0_15px_rgba(232,191,26,0.1)]"
               onClick={() => setOverlayItem(item)}
             >
               {/* Cover/Thumbnail */}
