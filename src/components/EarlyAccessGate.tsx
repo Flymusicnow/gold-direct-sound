@@ -48,7 +48,7 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   }
 
   // If user doesn't have beta access, show the wall
-  if (!hasBetaAccess) {
+  if (hasBetaAccess === false) {
     return <EarlyAccessWall onCodeRedeemed={refetch} />;
   }
 
