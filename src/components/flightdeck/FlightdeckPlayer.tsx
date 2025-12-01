@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
 import { FlightdeckMiniQueue } from './FlightdeckMiniQueue';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+
+type MiniPlayerPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
 export function FlightdeckPlayer() {
   const {
@@ -21,6 +25,7 @@ export function FlightdeckPlayer() {
     setDuration,
     queue,
     currentIndex,
+    clearQueue,
   } = useFlightdeck();
   
   const { pauseAllVideos } = useVideoPlayback();
@@ -32,6 +37,22 @@ export function FlightdeckPlayer() {
   const [queueExpanded, setQueueExpanded] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
+    return (localStorage.getItem('miniPlayerPosition') as MiniPlayerPosition) || 'bottom-right';
+  });
+
+  // Position classes map
+  const positionClasses: Record<MiniPlayerPosition, string> = {
+    'bottom-right': 'bottom-20 md:bottom-4 right-4',
+    'bottom-left': 'bottom-20 md:bottom-4 left-4',
+    'top-right': 'top-20 right-4',
+    'top-left': 'top-20 left-4',
+  };
+
+  // Save position to localStorage
+  useEffect(() => {
+    localStorage.setItem('miniPlayerPosition', miniPlayerPosition);
+  }, [miniPlayerPosition]);
 
   // Update media element when current item changes
   useEffect(() => {
@@ -115,6 +136,48 @@ export function FlightdeckPlayer() {
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch (e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'arrowleft':
+          e.preventDefault();
+          if (currentTime > 0) {
+            handleSeek([Math.max(0, currentTime - 10)]);
+          }
+          break;
+        case 'arrowright':
+          e.preventDefault();
+          if (duration > 0) {
+            handleSeek([Math.min(duration, currentTime + 10)]);
+          }
+          break;
+        case 'm':
+          e.preventDefault();
+          toggleMute();
+          break;
+        case 'arrowup':
+          e.preventDefault();
+          setVolume(prev => Math.min(1, prev + 0.1));
+          break;
+        case 'arrowdown':
+          e.preventDefault();
+          setVolume(prev => Math.max(0, prev - 0.1));
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentTime, duration, togglePlay, toggleMute]);
 
   if (!currentItem) return null;
 
@@ -250,15 +313,109 @@ export function FlightdeckPlayer() {
       </div>
       </div>
 
-      {/* Floating restore button when minimized */}
-      {isMinimized && (
-        <button
-          onClick={() => setIsMinimized(false)}
-          className="fixed bottom-20 md:bottom-4 right-4 z-[60] flex items-center gap-2 px-3 py-2 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 animate-fade-in"
-        >
-          <Play className="h-4 w-4" />
-          <span className="text-sm font-medium">Now Playing</span>
-        </button>
+      {/* Compact Mini-Player when minimized */}
+      {isMinimized && currentItem && (
+        <div className={cn(
+          "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
+          positionClasses[miniPlayerPosition]
+        )}>
+          {/* Album Art */}
+          {currentItem.coverUrl && (
+            <img 
+              src={currentItem.coverUrl} 
+              alt={currentItem.title}
+              className="w-10 h-10 rounded-full object-cover border-2 border-primary/30 shadow-md" 
+            />
+          )}
+          
+          {/* Track Info */}
+          <div className="max-w-[120px] hidden sm:block">
+            <p className="text-sm font-medium truncate text-foreground">{currentItem.title}</p>
+            <p className="text-xs text-muted-foreground truncate">{currentItem.artistName}</p>
+          </div>
+          
+          {/* Play/Pause Button */}
+          <Button
+            size="sm"
+            onClick={togglePlay}
+            className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 p-0"
+          >
+            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          
+          {/* Expand Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsMinimized(false)}
+            className="w-8 h-8 rounded-full p-0"
+          >
+            <ChevronUp className="h-4 w-4" />
+          </Button>
+          
+          {/* Position Settings */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-8 h-8 rounded-full p-0"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-44 p-3" side="top">
+              <p className="text-xs font-semibold mb-2 text-foreground">Mini Player Position</p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button
+                  size="sm"
+                  variant={miniPlayerPosition === 'top-left' ? 'default' : 'outline'}
+                  onClick={() => setMiniPlayerPosition('top-left')}
+                  className="text-xs h-8"
+                >
+                  ↖ Top Left
+                </Button>
+                <Button
+                  size="sm"
+                  variant={miniPlayerPosition === 'top-right' ? 'default' : 'outline'}
+                  onClick={() => setMiniPlayerPosition('top-right')}
+                  className="text-xs h-8"
+                >
+                  ↗ Top Right
+                </Button>
+                <Button
+                  size="sm"
+                  variant={miniPlayerPosition === 'bottom-left' ? 'default' : 'outline'}
+                  onClick={() => setMiniPlayerPosition('bottom-left')}
+                  className="text-xs h-8"
+                >
+                  ↙ Bottom Left
+                </Button>
+                <Button
+                  size="sm"
+                  variant={miniPlayerPosition === 'bottom-right' ? 'default' : 'outline'}
+                  onClick={() => setMiniPlayerPosition('bottom-right')}
+                  className="text-xs h-8"
+                >
+                  ↘ Bottom Right
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          {/* Close Button */}
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setIsMinimized(false);
+              clearQueue();
+            }}
+            className="w-8 h-8 rounded-full p-0 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       )}
     </>
   );
