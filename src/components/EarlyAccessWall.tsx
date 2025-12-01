@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,14 @@ interface EarlyAccessWallProps {
 }
 
 export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
+  const navigate = useNavigate();
+
+  const handleCodeSuccess = () => {
+    onCodeRedeemed();
+    // Redirect to role selection after successful code redemption
+    navigate('/role-selection');
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-6xl mx-auto">
@@ -92,7 +101,7 @@ export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
                 Enter your exclusive beta access code below to unlock the full FlyMusic Gold experience.
               </p>
               
-              <BetaCodeInput onSuccess={onCodeRedeemed} />
+              <BetaCodeInput onSuccess={handleCodeSuccess} />
 
               <div className="pt-4 border-t border-border">
                 <p className="text-sm text-muted-foreground text-center">

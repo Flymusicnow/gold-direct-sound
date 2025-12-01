@@ -35,13 +35,13 @@ export default function RoleSelection() {
 
       await refreshProfile();
       
-      toast.success("Profile setup complete!");
+      toast.success("Role selected successfully!");
       
-      // Redirect based on selected role
+      // Redirect to onboarding based on selected role
       if (bothRoles || selectedRole === 'fan') {
-        navigate('/fan');
+        navigate('/fan/onboarding');
       } else {
-        navigate('/studio');
+        navigate('/studio/onboarding');
       }
     } catch (error: any) {
       console.error('Error setting role:', error);

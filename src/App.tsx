@@ -14,6 +14,7 @@ import Auth from "./pages/Auth";
 import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
 import StudioDashboard from "./pages/studio/StudioDashboard";
+import StudioOnboarding from "./pages/studio/StudioOnboarding";
 import StudioProfile from "./pages/studio/StudioProfile";
 import StudioTracks from "./pages/studio/StudioTracks";
 import StudioVideos from "./pages/studio/StudioVideos";
@@ -29,6 +30,7 @@ import StudioMerch from "./pages/studio/StudioMerch";
 import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
+import FanOnboarding from "./pages/fan/FanOnboarding";
 import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
 import FanActivity from "./pages/FanActivity";
@@ -80,6 +82,16 @@ const App = () => (
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
             <Route path="/role-selection" element={<RoleSelection />} />
+            <Route path="/studio/onboarding" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioOnboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/onboarding" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanOnboarding />
+              </ProtectedRoute>
+            } />
             <Route path="/studio" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioDashboard />
