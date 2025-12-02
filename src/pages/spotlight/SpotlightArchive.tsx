@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Trophy, Calendar, Users, TrendingUp } from "lucide-react";
+import { Sparkles, Trophy, Calendar, Users, TrendingUp, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface CampaignArchive {
@@ -102,6 +102,17 @@ export default function SpotlightArchive() {
   return (
     <div className="min-h-screen bg-background py-24 px-4">
       <div className="container mx-auto max-w-6xl">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
         {/* Header */}
         <div className="text-center mb-12">
           <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />

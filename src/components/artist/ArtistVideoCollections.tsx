@@ -13,9 +13,10 @@ interface VideoCollection {
 
 interface ArtistVideoCollectionsProps {
   artistId: string;
+  artistUserId: string;
 }
 
-export function ArtistVideoCollections({ artistId }: ArtistVideoCollectionsProps) {
+export function ArtistVideoCollections({ artistId, artistUserId }: ArtistVideoCollectionsProps) {
   const [collections, setCollections] = useState<VideoCollection[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,7 +66,7 @@ export function ArtistVideoCollections({ artistId }: ArtistVideoCollectionsProps
           <VideoCollectionCard
             key={collection.id}
             collection={collection}
-            artistId={artistId}
+            artistUserId={artistUserId}
           />
         ))}
       </div>

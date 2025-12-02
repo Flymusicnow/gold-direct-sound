@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Video } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -11,12 +11,12 @@ interface VideoCollectionCardProps {
     cover_url: string | null;
     video_count?: number;
   };
-  artistId: string;
+  artistUserId: string;
 }
 
-export function VideoCollectionCard({ collection, artistId }: VideoCollectionCardProps) {
+export function VideoCollectionCard({ collection, artistUserId }: VideoCollectionCardProps) {
   return (
-    <Link to={`/artist/${artistId}?collection=${collection.id}`}>
+    <Link to={`/artist/${artistUserId}?collection=${collection.id}`}>
       <Card className="group hover:border-primary/50 transition-all cursor-pointer overflow-hidden">
         <div className="relative aspect-video bg-gradient-to-br from-primary/5 to-primary/10">
           {collection.cover_url ? (

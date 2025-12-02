@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings } from 'lucide-react';
@@ -244,8 +245,11 @@ export function FlightdeckPlayer() {
 
         {/* Controls */}
         <div className="flex items-center justify-between gap-4">
-          {/* Track Info */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+          {/* Track Info - Clickable link to artist */}
+          <Link 
+            to={`/artist/${currentItem.artistUserId}`}
+            className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+          >
             {currentItem.coverUrl && (
               <img
                 src={currentItem.coverUrl}
@@ -257,7 +261,7 @@ export function FlightdeckPlayer() {
               <p className="font-semibold truncate">{currentItem.title}</p>
               <p className="text-sm text-muted-foreground truncate">{currentItem.artistName}</p>
             </div>
-          </div>
+          </Link>
 
           {/* Playback Controls */}
           <div className="flex items-center gap-2">
@@ -324,20 +328,22 @@ export function FlightdeckPlayer() {
           "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
           positionClasses[miniPlayerPosition]
         )}>
-          {/* Album Art */}
-          {currentItem.coverUrl && (
-            <img 
-              src={currentItem.coverUrl} 
-              alt={currentItem.title}
-              className="w-10 h-10 rounded-full object-cover border-2 border-primary/30 shadow-md" 
-            />
-          )}
+          {/* Album Art - Clickable */}
+          <Link to={`/artist/${currentItem.artistUserId}`} className="hover:opacity-80 transition-opacity">
+            {currentItem.coverUrl && (
+              <img 
+                src={currentItem.coverUrl} 
+                alt={currentItem.title}
+                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30 shadow-md" 
+              />
+            )}
+          </Link>
           
-          {/* Track Info */}
-          <div className="max-w-[120px] hidden sm:block">
+          {/* Track Info - Clickable */}
+          <Link to={`/artist/${currentItem.artistUserId}`} className="max-w-[120px] hidden sm:block hover:opacity-80 transition-opacity">
             <p className="text-sm font-medium truncate text-foreground">{currentItem.title}</p>
             <p className="text-xs text-muted-foreground truncate">{currentItem.artistName}</p>
-          </div>
+          </Link>
           
           {/* Play/Pause Button */}
           <Button
