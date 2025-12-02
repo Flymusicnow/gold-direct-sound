@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Sparkles, Award, Medal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Sparkles, Award, Medal, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
@@ -16,6 +18,7 @@ interface FanLeaderboardEntry {
 }
 
 export default function FanLeaderboard() {
+  const navigate = useNavigate();
   const [leaderboard, setLeaderboard] = useState<FanLeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,31 +28,51 @@ export default function FanLeaderboard() {
 
   const fetchLeaderboard = async () => {
     try {
-      const { data, error } = await supabase
+      // First fetch spotlight stats
+      const { data: statsData, error: statsError } = await supabase
         .from('fan_spotlight_stats')
-        .select(`
-          user_id,
-          total_votes,
-          current_tier,
-          last_voted_at,
-          profiles!inner (
-            full_name,
-            email
-          )
-        `)
+        .select('user_id, total_votes, current_tier, last_voted_at')
         .order('total_votes', { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (statsError) throw statsError;
 
-      const formattedData = (data || []).map((entry: any) => ({
-        user_id: entry.user_id,
-        full_name: entry.profiles.full_name,
-        email: entry.profiles.email,
-        total_votes: entry.total_votes,
-        current_tier: entry.current_tier,
-        last_voted_at: entry.last_voted_at,
-      }));
+      if (!statsData || statsData.length === 0) {
+        setLeaderboard([]);
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = statsData.map(s => s.user_id);
+
+      // Fetch profiles separately
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of profiles
+      const profilesMap = new Map(
+        (profilesData || []).map(p => [p.id, p])
+      );
+
+      // Combine the data
+      const formattedData: FanLeaderboardEntry[] = statsData
+        .map((entry) => {
+          const profile = profilesMap.get(entry.user_id);
+          if (!profile) return null;
+          return {
+            user_id: entry.user_id,
+            full_name: profile.full_name,
+            email: profile.email,
+            total_votes: entry.total_votes || 0,
+            current_tier: entry.current_tier || 'none',
+            last_voted_at: entry.last_voted_at,
+          };
+        })
+        .filter((entry): entry is FanLeaderboardEntry => entry !== null);
 
       setLeaderboard(formattedData);
     } catch (error) {
@@ -110,6 +133,16 @@ export default function FanLeaderboard() {
   return (
     <div className="min-h-screen bg-background py-24 px-4">
       <div className="container mx-auto max-w-4xl">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
         {/* Header */}
         <div className="text-center mb-12">
           <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />
