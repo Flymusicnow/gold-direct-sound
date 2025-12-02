@@ -7,6 +7,7 @@ import { CommentItem } from "@/components/CommentItem";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useSupportScore } from "@/hooks/useSupportScore";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 interface Comment {
   id: string;
@@ -158,7 +159,10 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
             maxLength={1000}
           />
           <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">{newComment.length}/1000</span>
+            <div className="flex items-center gap-2">
+              <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
+              <span className="text-sm text-muted-foreground">{newComment.length}/1000</span>
+            </div>
             <Button onClick={handleSubmit} disabled={loading || !newComment.trim()}>
               Post Comment
             </Button>

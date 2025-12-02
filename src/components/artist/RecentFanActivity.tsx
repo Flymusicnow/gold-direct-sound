@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,6 +11,8 @@ interface Activity {
   id: string;
   type: string;
   created_at: string;
+  actor_user_id: string | null;
+  track_id: string | null;
   actor_user: {
     full_name: string | null;
     email: string;
@@ -24,6 +27,7 @@ interface RecentFanActivityProps {
 }
 
 export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +42,8 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
         id,
         type,
         created_at,
+        actor_user_id,
+        track_id,
         actor_user:profiles!artist_activities_actor_user_id_fkey(full_name, email),
         track:tracks(title)
       `)
@@ -47,6 +53,17 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
 
     if (data) setActivities(data as Activity[]);
     setLoading(false);
+  };
+
+  const handleActivityClick = (activity: Activity) => {
+    if (activity.type === 'track_liked' && activity.track_id) {
+      // Navigate to tracks page - could enhance to open specific track
+      navigate('/studio/tracks');
+    } else if (activity.type === 'comment') {
+      navigate('/studio/comments');
+    } else if (activity.type === 'spotlight_vote') {
+      navigate('/studio/spotlight');
+    }
   };
 
   const getActivityIcon = (type: string) => {
@@ -98,7 +115,11 @@ export function RecentFanActivity({ artistId }: RecentFanActivityProps) {
       ) : (
         <div className="space-y-3">
           {activities.map((activity) => (
-            <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/20 transition-colors">
+            <div 
+              key={activity.id} 
+              className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/20 transition-colors cursor-pointer border border-transparent hover:border-primary/20"
+              onClick={() => handleActivityClick(activity)}
+            >
               <div className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0",
                 getActivityColor(activity.type)
