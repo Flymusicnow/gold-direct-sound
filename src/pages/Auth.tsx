@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Music, Mic2, Heart } from "lucide-react";
+import { Music, Mic2, Heart, ArrowLeft } from "lucide-react";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get('mode');
   const [isLogin, setIsLogin] = useState(initialMode !== 'artist');
   const [isArtistSignup, setIsArtistSignup] = useState(initialMode === 'artist');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -25,6 +26,26 @@ export default function Auth() {
       navigate('/');
     }
   }, [user, navigate]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth?reset=true`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Password reset email sent! Check your inbox.");
+      setIsForgotPassword(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset email");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,6 +136,53 @@ export default function Auth() {
     }
   };
 
+  if (isForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <Button
+            variant="ghost"
+            onClick={() => setIsForgotPassword(false)}
+            className="mb-6 gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Sign In
+          </Button>
+
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Music className="h-8 w-8 text-primary" />
+              <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
+                Reset Password
+              </h1>
+            </div>
+            <p className="text-muted-foreground">
+              Enter your email to receive a password reset link
+            </p>
+          </div>
+
+          <form onSubmit={handleForgotPassword} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="Enter your email"
+              />
+            </div>
+
+            <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
+              {loading ? "Sending..." : "Send Reset Link"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
@@ -197,6 +265,18 @@ export default function Auth() {
             >
               {isLogin ? "Need an account? Sign up" : "Already have an account? Sign in"}
             </button>
+            
+            {isLogin && (
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotPassword(true)}
+                  className="text-sm text-muted-foreground hover:text-primary"
+                >
+                  Forgot your password?
+                </button>
+              </div>
+            )}
             
             {!isLogin && (
               <div>

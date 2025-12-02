@@ -6,6 +6,7 @@ import { VideoCommentItem } from "./VideoCommentItem";
 import { useToast } from "@/hooks/use-toast";
 import { MessageSquare, Send } from "lucide-react";
 import { useSupportScore } from "@/hooks/useSupportScore";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 
 interface VideoComment {
   id: string;
@@ -164,14 +165,17 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
           className="min-h-[80px] bg-background/50 border-border"
           disabled={loading}
         />
-        <Button 
-          type="submit" 
-          disabled={loading || !newComment.trim()}
-          className="gap-2"
-        >
-          <Send className="w-4 h-4" />
-          Post Comment
-        </Button>
+        <div className="flex justify-between items-center">
+          <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
+          <Button 
+            type="submit" 
+            disabled={loading || !newComment.trim()}
+            className="gap-2"
+          >
+            <Send className="w-4 h-4" />
+            Post Comment
+          </Button>
+        </div>
       </form>
 
       <div className="space-y-4">
