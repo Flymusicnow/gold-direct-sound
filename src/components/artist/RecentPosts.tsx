@@ -23,6 +23,7 @@ interface RecentPostsProps {
 export function RecentPosts({ artistId, refreshTrigger }: RecentPostsProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedPost, setExpandedPost] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPosts();
@@ -56,8 +57,6 @@ export function RecentPosts({ artistId, refreshTrigger }: RecentPostsProps) {
       />
     );
   }
-
-  const [expandedPost, setExpandedPost] = useState<string | null>(null);
 
   return (
     <Card className="p-6 bg-gradient-to-br from-card to-card/80 border-border/50">
