@@ -547,6 +547,7 @@ export type Database = {
           release_date: string | null
           required_tier: string | null
           supporter_early_access: boolean | null
+          thumbnail_url: string | null
           updated_at: string | null
           video_url: string
           view_count: number | null
@@ -561,6 +562,7 @@ export type Database = {
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          thumbnail_url?: string | null
           updated_at?: string | null
           video_url: string
           view_count?: number | null
@@ -575,6 +577,7 @@ export type Database = {
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          thumbnail_url?: string | null
           updated_at?: string | null
           video_url?: string
           view_count?: number | null
@@ -1358,6 +1361,114 @@ export type Database = {
         }
         Relationships: []
       }
+      promo_events: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_hash: string | null
+          promo_id: string
+          user_agent: string | null
+          user_id: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          promo_id: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          promo_id?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_events_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_events_promo_id_fkey"
+            columns: ["promo_id"]
+            isOneToOne: false
+            referencedRelation: "promo_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "promo_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      promo_links: {
+        Row: {
+          artist_id: string
+          campaign_name: string | null
+          click_count: number | null
+          content_id: string | null
+          content_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          slug: string
+          updated_at: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          artist_id: string
+          campaign_name?: string | null
+          click_count?: number | null
+          content_id?: string | null
+          content_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          slug: string
+          updated_at?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          artist_id?: string
+          campaign_name?: string | null
+          click_count?: number | null
+          content_id?: string | null
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          slug?: string
+          updated_at?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_links_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spotlight_campaigns: {
         Row: {
           banner_image_url: string | null
@@ -2026,6 +2137,16 @@ export type Database = {
           title: string
         }[]
       }
+      get_promo_link_stats: {
+        Args: { _artist_id: string }
+        Returns: {
+          total_clicks: number
+          total_follows: number
+          total_spotlight_votes: number
+          total_supporters: number
+          total_views: number
+        }[]
+      }
       get_rising_artists: {
         Args: { _days?: number; _limit?: number }
         Returns: {
@@ -2070,6 +2191,11 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      increment_promo_click: { Args: { _promo_id: string }; Returns: undefined }
+      increment_video_view_safe: {
+        Args: { _user_id?: string; _video_id: string }
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
