@@ -201,7 +201,7 @@ export function useSearch(initialQuery = '') {
           `)
           .eq('status', 'approved')
           .eq('spotlight_campaigns.status', 'active')
-          .or(`tracks.title.ilike.%${trimmedQuery}%,tracks.artist_profiles.artist_name.ilike.%${trimmedQuery}%`)
+          .ilike('title', `%${trimmedQuery}%`)
           .limit(10),
 
         // Search public stacks

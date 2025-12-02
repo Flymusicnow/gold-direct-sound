@@ -120,28 +120,32 @@ export default function StudioMerch() {
           <div className="p-6 md:p-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <ShoppingBag className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold">My Merch</h1>
-              <InfoTooltip
-                title="Merchandise & Products"
-                description="Add your merch products here. Link to external stores like Shopify. Fans will see them on your artist profile!"
-                forRole="artist"
-                learnLink="/learn?tab=artist#videos-tracks-collections"
-              />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <ShoppingBag className="h-8 w-8 text-primary shrink-0" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold">My Merch</h1>
+                <InfoTooltip
+                  title="Merchandise & Products"
+                  description="Add your merch products here. Link to external stores like Shopify. Fans will see them on your artist profile!"
+                  forRole="artist"
+                  learnLink="/learn?tab=artist#videos-tracks-collections"
+                />
+              </div>
+              <p className="text-muted-foreground text-sm md:text-base">
+                Manage your merchandise and products
+              </p>
             </div>
-            <p className="text-muted-foreground mt-2">
-              Manage your merchandise and products
-            </p>
           </div>
           
           {artistId && (
-            <AddMerchDialog
-              artistId={artistId}
-              onSuccess={() => artistId && fetchProducts(artistId)}
-            />
+            <div className="shrink-0">
+              <AddMerchDialog
+                artistId={artistId}
+                onSuccess={() => artistId && fetchProducts(artistId)}
+              />
+            </div>
           )}
         </div>
 

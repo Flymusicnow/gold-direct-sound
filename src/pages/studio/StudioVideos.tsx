@@ -460,10 +460,10 @@ export default function StudioVideos() {
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center gap-3">
-            <Video className="h-8 w-8 text-primary" />
+            <Video className="h-8 w-8 text-primary shrink-0" />
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h1 className="text-3xl font-bold">Video Posts</h1>
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <h1 className="text-2xl md:text-3xl font-bold">Video Posts</h1>
                 <InfoTooltip
                   title="Videos vs Tracks"
                   description="Videos are for updates, behind-the-scenes, teasers, and visual content. Tracks are for your music library. Both help fans connect with you!"
@@ -471,7 +471,7 @@ export default function StudioVideos() {
                   learnLink="/learn?tab=artist#videos-tracks-collections"
                 />
               </div>
-              <p className="text-muted-foreground">Share video updates with your fans</p>
+              <p className="text-muted-foreground text-sm md:text-base">Share video updates with your fans</p>
             </div>
           </div>
 
