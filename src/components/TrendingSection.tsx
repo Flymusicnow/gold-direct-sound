@@ -11,8 +11,10 @@ interface TrendingTrack {
   audio_url: string;
   play_count: number;
   artist_profiles: {
+    id: string;
     artist_name: string;
     user_id: string;
+    avatar_url: string | null;
   };
 }
 
@@ -28,7 +30,17 @@ interface TrendingArtist {
 interface TrendingSectionProps {
   type: 'tracks' | 'artists';
   limit?: number;
-  onTrackPlay?: (track: { url: string; title: string; artist: string }) => void;
+  onTrackPlay?: (item: {
+    id: string;
+    type: 'track';
+    title: string;
+    artistId: string;
+    artistName: string;
+    artistUserId: string;
+    artistAvatar?: string;
+    coverUrl?: string;
+    mediaUrl: string;
+  }) => void;
 }
 
 export function TrendingSection({ type, limit = 5, onTrackPlay }: TrendingSectionProps) {
@@ -56,8 +68,10 @@ export function TrendingSection({ type, limit = 5, onTrackPlay }: TrendingSectio
           audio_url,
           play_count,
           artist_profiles (
+            id,
             artist_name,
-            user_id
+            user_id,
+            avatar_url
           )
         `)
         .order('play_count', { ascending: false })
@@ -128,9 +142,15 @@ export function TrendingSection({ type, limit = 5, onTrackPlay }: TrendingSectio
             onClick={() => {
               if (onTrackPlay) {
                 onTrackPlay({
-                  url: track.audio_url,
+                  id: track.id,
+                  type: 'track',
                   title: track.title,
-                  artist: track.artist_profiles.artist_name
+                  artistId: track.artist_profiles.id,
+                  artistName: track.artist_profiles.artist_name,
+                  artistUserId: track.artist_profiles.user_id,
+                  artistAvatar: track.artist_profiles.avatar_url || undefined,
+                  coverUrl: track.cover_url || undefined,
+                  mediaUrl: track.audio_url,
                 });
               }
             }}
