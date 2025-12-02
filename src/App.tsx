@@ -28,6 +28,8 @@ import StudioSubscription from "./pages/studio/StudioSubscription";
 import StudioEarnings from "./pages/studio/StudioEarnings";
 import StudioMerch from "./pages/studio/StudioMerch";
 import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
+import StudioPromo from "./pages/studio/StudioPromo";
+import PromoPreview from "./pages/PromoPreview";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
 import FanOnboarding from "./pages/fan/FanOnboarding";
@@ -69,6 +71,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          {/* Public promo route - outside EarlyAccessGate */}
+          <Routes>
+            <Route path="/link/:slug" element={<PromoPreview />} />
+            <Route path="*" element={
           <EarlyAccessGate>
             <FanTasteProvider>
               <VideoPlaybackProvider>
@@ -167,6 +173,11 @@ const App = () => (
                 <StudioEarnings />
               </ProtectedRoute>
             } />
+            <Route path="/studio/promo" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioPromo />
+              </ProtectedRoute>
+            } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
             <Route path="/spotlight/archive" element={<SpotlightArchive />} />
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
@@ -234,6 +245,8 @@ const App = () => (
             </VideoPlaybackProvider>
           </FanTasteProvider>
           </EarlyAccessGate>
+            } />
+          </Routes>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

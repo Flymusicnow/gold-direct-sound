@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign } from "lucide-react";
+import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Radio, label: "Live", path: "/studio/live" },
   { icon: Calendar, label: "Events", path: "/studio/events" },
   { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
+  { icon: Link2, label: "Promo Links", path: "/studio/promo" },
   { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
   { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
   { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
