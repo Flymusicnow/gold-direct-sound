@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePromoFunnel } from "@/hooks/usePromoFunnel";
 import { Music, Mic2, Heart, ArrowLeft } from "lucide-react";
 
 export default function Auth() {
@@ -21,8 +22,13 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Process promo funnel after authentication
+  usePromoFunnel(user?.id);
+
   useEffect(() => {
-    if (user) {
+    // Check if there's a promo context - if so, don't auto-redirect
+    const promoContext = localStorage.getItem('flymusic_promo');
+    if (user && !promoContext) {
       navigate('/');
     }
   }, [user, navigate]);
