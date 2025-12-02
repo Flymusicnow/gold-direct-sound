@@ -116,7 +116,7 @@ export default function StudioComments() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16">
+      <div className="flex min-h-screen pt-16 lg:ml-64">
         <StudioSidebar />
         <MobileStudioNav />
         

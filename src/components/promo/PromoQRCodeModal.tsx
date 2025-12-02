@@ -13,7 +13,15 @@ interface PromoQRCodeModalProps {
 
 type QRSize = 'sm' | 'md' | 'lg';
 
-const sizeMap: Record<QRSize, number> = {
+// Display size capped for modal fit
+const displaySizeMap: Record<QRSize, number> = {
+  sm: 128,
+  md: 256,
+  lg: 320,
+};
+
+// Full size for downloads
+const downloadSizeMap: Record<QRSize, number> = {
   sm: 128,
   md: 256,
   lg: 512,
@@ -35,18 +43,22 @@ export function PromoQRCodeModal({ slug, campaignName }: PromoQRCodeModalProps) 
   };
 
   const handleDownload = () => {
-    if (!qrRef.current) return;
-    
-    const svg = qrRef.current;
+    // Create a new QR code at full download size
+    const downloadSize = downloadSizeMap[size];
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const pixelSize = sizeMap[size];
-    canvas.width = pixelSize;
-    canvas.height = pixelSize;
+    canvas.width = downloadSize;
+    canvas.height = downloadSize;
     
-    // Create image from SVG
+    // Create a temporary SVG at download size
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="${downloadSize}" height="${downloadSize}"></svg>`;
+    
+    // Use the existing ref but render at download size
+    if (!qrRef.current) return;
+    const svg = qrRef.current;
     const svgData = new XMLSerializer().serializeToString(svg);
     const img = new Image();
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
@@ -54,8 +66,8 @@ export function PromoQRCodeModal({ slug, campaignName }: PromoQRCodeModalProps) 
     
     img.onload = () => {
       ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, pixelSize, pixelSize);
-      ctx.drawImage(img, 0, 0, pixelSize, pixelSize);
+      ctx.fillRect(0, 0, downloadSize, downloadSize);
+      ctx.drawImage(img, 0, 0, downloadSize, downloadSize);
       URL.revokeObjectURL(url);
       
       const pngUrl = canvas.toDataURL('image/png');
@@ -89,11 +101,11 @@ export function PromoQRCodeModal({ slug, campaignName }: PromoQRCodeModalProps) 
 
         <div className="flex flex-col items-center py-6">
           {/* QR Code */}
-          <div className="p-4 bg-white rounded-xl shadow-lg mb-4">
+          <div className="p-4 bg-white rounded-xl shadow-lg mb-4 max-w-full overflow-hidden">
             <QRCodeSVG
               ref={qrRef}
               value={fullUrl}
-              size={sizeMap[size]}
+              size={displaySizeMap[size]}
               level="H"
               includeMargin
               fgColor="#1a1a1a"

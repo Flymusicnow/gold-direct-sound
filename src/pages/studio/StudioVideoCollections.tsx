@@ -29,6 +29,7 @@ export default function StudioVideoCollections() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [artistId, setArtistId] = useState<string | null>(null);
+  const [artistUserId, setArtistUserId] = useState<string | null>(null);
   const [collections, setCollections] = useState<VideoCollection[]>([]);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newCollection, setNewCollection] = useState({
@@ -56,7 +57,7 @@ export default function StudioVideoCollections() {
 
       const { data: profile } = await supabase
         .from("artist_profiles")
-        .select("id")
+        .select("id, user_id")
         .eq("user_id", user.id)
         .single();
 
@@ -66,6 +67,7 @@ export default function StudioVideoCollections() {
       }
 
       setArtistId(profile.id);
+      setArtistUserId(profile.user_id);
 
       // Fetch collections with video counts
       const { data: collectionsData, error } = await supabase
@@ -181,7 +183,7 @@ export default function StudioVideoCollections() {
                 <VideoCollectionCard
                   key={collection.id}
                   collection={collection}
-                  artistId={artistId!}
+                  artistUserId={artistUserId!}
                 />
               ))}
             </div>
