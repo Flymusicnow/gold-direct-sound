@@ -1427,6 +1427,7 @@ export type Database = {
           content_id: string | null
           content_type: string
           created_at: string | null
+          expires_at: string | null
           id: string
           is_active: boolean | null
           slug: string
@@ -1440,6 +1441,7 @@ export type Database = {
           content_id?: string | null
           content_type: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean | null
           slug: string
@@ -1453,6 +1455,7 @@ export type Database = {
           content_id?: string | null
           content_type?: string
           created_at?: string | null
+          expires_at?: string | null
           id?: string
           is_active?: boolean | null
           slug?: string

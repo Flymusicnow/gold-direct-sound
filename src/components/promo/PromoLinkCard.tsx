@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, ExternalLink, BarChart3, Music, Video, Calendar, Sparkles, User, Check } from 'lucide-react';
+import { Copy, ExternalLink, BarChart3, Music, Video, Calendar, Sparkles, User, Check, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { EditPromoLinkDialog } from './EditPromoLinkDialog';
+import { PromoQRCodeModal } from './PromoQRCodeModal';
+import { format, isBefore, addDays, isAfter } from 'date-fns';
 
 interface PromoLinkCardProps {
   promoLink: {
@@ -16,8 +19,11 @@ interface PromoLinkCardProps {
     click_count: number | null;
     is_active: boolean | null;
     created_at: string | null;
+    expires_at?: string | null;
   };
   contentTitle?: string;
+  onUpdated: () => void;
+  onDeleted: () => void;
 }
 
 const contentTypeIcons: Record<string, typeof Music> = {
@@ -36,10 +42,15 @@ const contentTypeLabels: Record<string, string> = {
   profile: 'Profile',
 };
 
-export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
+export function PromoLinkCard({ promoLink, contentTitle, onUpdated, onDeleted }: PromoLinkCardProps) {
   const [copied, setCopied] = useState(false);
   const Icon = contentTypeIcons[promoLink.content_type] || Music;
   const fullUrl = `${window.location.origin}/link/${promoLink.slug}`;
+
+  const isExpired = promoLink.expires_at && isBefore(new Date(promoLink.expires_at), new Date());
+  const isExpiringSoon = promoLink.expires_at && 
+    isAfter(new Date(promoLink.expires_at), new Date()) && 
+    isBefore(new Date(promoLink.expires_at), addDays(new Date(), 7));
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(fullUrl);
@@ -49,7 +60,7 @@ export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
   };
 
   return (
-    <Card className="border-border/50 hover:border-primary/30 transition-all">
+    <Card className={`border-border/50 hover:border-primary/30 transition-all ${isExpired ? 'opacity-60' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -57,7 +68,7 @@ export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
               <Icon className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <Badge variant="outline" className="text-xs">
                   {contentTypeLabels[promoLink.content_type]}
                 </Badge>
@@ -71,9 +82,22 @@ export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
                     Inactive
                   </Badge>
                 )}
+                {isExpired && (
+                  <Badge variant="destructive" className="text-xs">
+                    Expired
+                  </Badge>
+                )}
+                {isExpiringSoon && !isExpired && (
+                  <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-500">
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    Expires soon
+                  </Badge>
+                )}
               </div>
               {contentTitle && (
-                <p className="font-medium text-sm truncate">{contentTitle}</p>
+                <p className={`font-medium text-sm truncate ${isExpired ? 'line-through' : ''}`}>
+                  {contentTitle}
+                </p>
               )}
               <p className="text-xs text-muted-foreground font-mono truncate">
                 /link/{promoLink.slug}
@@ -81,6 +105,11 @@ export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
               {promoLink.utm_source && (
                 <p className="text-xs text-muted-foreground mt-1">
                   UTM: {promoLink.utm_source}
+                </p>
+              )}
+              {promoLink.expires_at && !isExpired && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Expires: {format(new Date(promoLink.expires_at), 'MMM d, yyyy')}
                 </p>
               )}
             </div>
@@ -113,6 +142,15 @@ export function PromoLinkCard({ promoLink, contentTitle }: PromoLinkCardProps) {
               >
                 <ExternalLink className="h-4 w-4" />
               </Button>
+              <EditPromoLinkDialog
+                promoLink={promoLink}
+                onUpdated={onUpdated}
+                onDeleted={onDeleted}
+              />
+              <PromoQRCodeModal
+                slug={promoLink.slug}
+                campaignName={promoLink.campaign_name}
+              />
             </div>
           </div>
         </div>
