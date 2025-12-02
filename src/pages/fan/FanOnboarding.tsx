@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, Music, Sparkles, CheckCircle2 } from "lucide-react";
+import { Heart, Music, Sparkles, CheckCircle2, Award, Trophy, Star } from "lucide-react";
 
 export default function FanOnboarding() {
   const navigate = useNavigate();
@@ -100,17 +100,40 @@ export default function FanOnboarding() {
                 </div>
               </div>
 
-              <div className="bg-muted/30 rounded-lg p-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <Heart className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <h3 className="font-semibold mb-1">Get Started:</h3>
-                    <ul className="text-sm text-muted-foreground space-y-2">
-                      <li>• Browse the Discover feed for personalized recommendations</li>
-                      <li>• Follow your first artist to unlock achievements</li>
-                      <li>• Create stacks (playlists) to organize your favorite tracks</li>
-                      <li>• Vote in active Spotlight campaigns</li>
-                    </ul>
+              <div className="space-y-4">
+                <div className="bg-muted/30 rounded-lg p-6">
+                  <div className="flex items-start gap-3">
+                    <Heart className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <h3 className="font-semibold mb-1">Get Started:</h3>
+                      <ul className="text-sm text-muted-foreground space-y-2">
+                        <li>• Browse the Discover feed for personalized recommendations</li>
+                        <li>• Follow your first artist to unlock achievements</li>
+                        <li>• Create stacks (playlists) to organize your favorite tracks</li>
+                        <li>• Vote in active Spotlight campaigns</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Award className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold text-sm">Unlock Achievements</h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
+                      <Trophy className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-muted-foreground text-center">First Follow</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
+                      <Star className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-muted-foreground text-center">First Vote</span>
+                    </div>
+                    <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
+                      <Music className="h-4 w-4 text-primary" />
+                      <span className="text-xs text-muted-foreground text-center">First Stack</span>
+                    </div>
                   </div>
                 </div>
               </div>
