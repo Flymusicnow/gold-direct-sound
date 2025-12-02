@@ -308,15 +308,7 @@ export default function FanFeed() {
               <TrendingSection
                 type="tracks"
                 limit={10}
-                onTrackPlay={(track) => playNow({
-                  id: `trending-${track.url}`,
-                  type: 'track',
-                  title: track.title,
-                  artistId: '',
-                  artistName: track.artist,
-                  artistUserId: '',
-                  mediaUrl: track.url,
-                })}
+                onTrackPlay={(item) => playNow(item)}
               />
             </Card>
           </div>
