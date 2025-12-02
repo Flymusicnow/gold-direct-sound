@@ -21,6 +21,7 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
   const watchSegmentsRef = useRef<WatchSegment[]>([]);
   const lastSegmentTimeRef = useRef<number>(0);
   const hasAwardedXPRef = useRef<boolean>(false);
+  const hasIncrementedViewRef = useRef<boolean>(false);
   const sessionId = useRef<string>(
     sessionStorage.getItem('video_session_id') || crypto.randomUUID()
   );
@@ -91,6 +92,25 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
           watch_segments: watchSegmentsRef.current as any,
         })
         .eq('id', viewId);
+
+      // On 50% completion: increment view count safely (with 30-second cooldown)
+      if (completed && !hasIncrementedViewRef.current) {
+        hasIncrementedViewRef.current = true;
+        
+        // Fire-and-forget safe view increment with cooldown
+        supabase.rpc('increment_video_view_safe', {
+          _video_id: videoId,
+          _user_id: userId || null,
+        }).then((result) => {
+          if (result.error) {
+            console.error('Error incrementing video view:', result.error);
+          } else if (result.data) {
+            console.log('Video view counted (cooldown passed)');
+          } else {
+            console.log('Video view skipped (within 30s cooldown)');
+          }
+        });
+      }
 
       // Taste Engine V1.5: Update taste profile on video watch completion (>50%)
       if (completed && userId && artistId && !hasAwardedXPRef.current) {
