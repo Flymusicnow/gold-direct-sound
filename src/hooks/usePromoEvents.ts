@@ -20,6 +20,64 @@ interface PromoContext {
   timestamp: number;
 }
 
+// Throttle tracking: prevent spam from same session
+const THROTTLE_WINDOW_MS = 30000; // 30 seconds
+const eventThrottleMap = new Map<string, number>();
+
+// Event sequence validation: preview_50 requires view first
+const eventSequenceMap = new Map<string, Set<PromoEventType>>();
+
+function getThrottleKey(promoId: string, eventType: PromoEventType, userId?: string): string {
+  return `${promoId}:${eventType}:${userId || 'anon'}`;
+}
+
+function isThrottled(promoId: string, eventType: PromoEventType, userId?: string): boolean {
+  // Only throttle view and preview_50 events
+  if (eventType !== 'view' && eventType !== 'preview_50') return false;
+  
+  const key = getThrottleKey(promoId, eventType, userId);
+  const lastTime = eventThrottleMap.get(key);
+  
+  if (lastTime && Date.now() - lastTime < THROTTLE_WINDOW_MS) {
+    return true;
+  }
+  return false;
+}
+
+function recordThrottle(promoId: string, eventType: PromoEventType, userId?: string): void {
+  const key = getThrottleKey(promoId, eventType, userId);
+  eventThrottleMap.set(key, Date.now());
+}
+
+function validateEventSequence(promoId: string, eventType: PromoEventType, userId?: string): boolean {
+  const key = `${promoId}:${userId || 'anon'}`;
+  const recordedEvents = eventSequenceMap.get(key) || new Set();
+  
+  // preview_50 requires view to have been tracked first
+  if (eventType === 'preview_50' && !recordedEvents.has('view')) {
+    return false;
+  }
+  
+  // follow_success requires follow_click
+  if (eventType === 'follow_success' && !recordedEvents.has('follow_click')) {
+    return false;
+  }
+  
+  // support_success requires support_click
+  if (eventType === 'support_success' && !recordedEvents.has('support_click')) {
+    return false;
+  }
+  
+  return true;
+}
+
+function recordEventSequence(promoId: string, eventType: PromoEventType, userId?: string): void {
+  const key = `${promoId}:${userId || 'anon'}`;
+  const recordedEvents = eventSequenceMap.get(key) || new Set();
+  recordedEvents.add(eventType);
+  eventSequenceMap.set(key, recordedEvents);
+}
+
 export function usePromoEvents() {
   const trackPromoEvent = async (
     promoId: string,
@@ -27,8 +85,20 @@ export function usePromoEvents() {
     eventType: PromoEventType,
     userId?: string,
     utmSource?: string
-  ) => {
+  ): Promise<boolean> => {
     try {
+      // Anti-fraud: Check throttling
+      if (isThrottled(promoId, eventType, userId)) {
+        console.log(`[PromoEvents] Throttled: ${eventType} for ${promoId}`);
+        return false;
+      }
+      
+      // Anti-fraud: Validate event sequence
+      if (!validateEventSequence(promoId, eventType, userId)) {
+        console.log(`[PromoEvents] Invalid sequence: ${eventType} for ${promoId}`);
+        return false;
+      }
+      
       await supabase.from('promo_events').insert({
         promo_id: promoId,
         artist_id: artistId,
@@ -39,12 +109,19 @@ export function usePromoEvents() {
         user_agent: navigator.userAgent,
       });
 
+      // Record throttle and sequence
+      recordThrottle(promoId, eventType, userId);
+      recordEventSequence(promoId, eventType, userId);
+
       // If it's a view event, also increment click count
       if (eventType === 'view') {
         await supabase.rpc('increment_promo_click', { _promo_id: promoId });
       }
+      
+      return true;
     } catch (error) {
       console.error('Error tracking promo event:', error);
+      return false;
     }
   };
 
