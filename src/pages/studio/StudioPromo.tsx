@@ -22,6 +22,7 @@ interface PromoLink {
   click_count: number | null;
   is_active: boolean | null;
   created_at: string | null;
+  expires_at: string | null;
 }
 
 interface PromoStats {
@@ -223,7 +224,12 @@ export default function StudioPromo() {
                     ) : (
                       <div className="space-y-3">
                         {promoLinks.map((link) => (
-                          <PromoLinkCard key={link.id} promoLink={link} />
+                          <PromoLinkCard 
+                            key={link.id} 
+                            promoLink={link} 
+                            onUpdated={fetchData}
+                            onDeleted={fetchData}
+                          />
                         ))}
                       </div>
                     )}

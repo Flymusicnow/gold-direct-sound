@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
-import { Loader2, Play, Pause, Heart, UserPlus, Crown, Sparkles, Music, ExternalLink, Instagram, Youtube } from 'lucide-react';
+import { Loader2, Play, Pause, Heart, UserPlus, Crown, Sparkles, Music, ExternalLink, Instagram, Youtube, AlertTriangle } from 'lucide-react';
+import { isBefore } from 'date-fns';
 import { toast } from 'sonner';
 
 interface PromoLink {
@@ -20,6 +21,8 @@ interface PromoLink {
   slug: string;
   utm_source: string | null;
   click_count: number | null;
+  is_active: boolean | null;
+  expires_at: string | null;
 }
 
 interface ArtistData {
@@ -84,7 +87,14 @@ export default function PromoPreview() {
           return;
         }
 
-        setPromoLink(linkData);
+        // Check if link is expired
+        if (linkData.expires_at && isBefore(new Date(linkData.expires_at), new Date())) {
+          // Still show artist info but mark as expired
+          setPromoLink({ ...linkData, is_active: false });
+        } else {
+          setPromoLink(linkData);
+        }
+
         setPromoContext(linkData);
 
         // Fetch artist
@@ -242,12 +252,28 @@ export default function PromoPreview() {
     );
   }
 
+  // Check if link is expired
+  const isExpired = promoLink.expires_at && isBefore(new Date(promoLink.expires_at), new Date());
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
       {/* Header */}
       <header className="p-4 flex items-center justify-center">
         <FlyMusicLogo size="md" />
       </header>
+
+      {/* Expired Banner */}
+      {isExpired && !isOwner && (
+        <div className="bg-destructive/20 border-y border-destructive/30 px-4 py-4">
+          <div className="flex items-center justify-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            <p className="font-medium">This promo link has expired</p>
+          </div>
+          <p className="text-sm text-center text-muted-foreground mt-2">
+            You can still visit the artist's profile below
+          </p>
+        </div>
+      )}
 
       {/* Owner Banner */}
       {isOwner && (
