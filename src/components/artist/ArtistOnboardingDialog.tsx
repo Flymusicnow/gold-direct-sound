@@ -9,12 +9,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Circle, Sparkles, Upload, Video, Share2, HelpCircle } from "lucide-react";
+import { CheckCircle2, Circle, Sparkles, Upload, Video, Share2, HelpCircle, Award } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { useAchievements } from "@/hooks/useAchievements";
 
 interface OnboardingProgress {
   has_uploaded_track: boolean;
@@ -27,6 +28,7 @@ interface OnboardingProgress {
 export function ArtistOnboardingDialog() {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
+  const { checkAndUnlockAchievements } = useAchievements();
   const [showDialog, setShowDialog] = useState(false);
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -101,6 +103,9 @@ export function ArtistOnboardingDialog() {
         .from("artist_onboarding_progress")
         .update({ onboarding_completed: true })
         .eq("user_id", user.id);
+
+      // Check for unlockable achievements
+      await checkAndUnlockAchievements();
 
       // Trigger confetti
       confetti({
@@ -212,10 +217,14 @@ export function ArtistOnboardingDialog() {
           </div>
 
           {allCompleted && (
-            <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 text-center">
-              <p className="text-sm font-medium text-primary mb-3">
+            <div className="p-4 rounded-lg bg-primary/10 border border-primary/30 text-center space-y-3">
+              <p className="text-sm font-medium text-primary mb-2">
                 🎉 All steps completed!
               </p>
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Award className="h-4 w-4 text-primary" />
+                <span>Achievements unlocked!</span>
+              </div>
               <Button
                 onClick={handleComplete}
                 className="bg-gradient-gold hover:opacity-90 w-full"
