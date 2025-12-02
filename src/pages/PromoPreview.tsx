@@ -56,6 +56,7 @@ export default function PromoPreview() {
   const [content, setContent] = useState<ContentData | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [ownerStats, setOwnerStats] = useState<{ views: number; follows: number; supporters: number; topUtm: string | null }>({ views: 0, follows: 0, supporters: 0, topUtm: null });
   const [hasTrackedView, setHasTrackedView] = useState(false);
   const [hasTrackedPreview50, setHasTrackedPreview50] = useState(false);
   
@@ -98,6 +99,34 @@ export default function PromoPreview() {
           // Check if current user is the owner
           if (user && artistData.user_id === user.id) {
             setIsOwner(true);
+            // Fetch owner stats for this promo link
+            const { data: events } = await supabase
+              .from('promo_events')
+              .select('event_type, utm_source')
+              .eq('promo_id', linkData.id);
+            
+            if (events) {
+              const views = events.filter(e => e.event_type === 'view').length;
+              const follows = events.filter(e => e.event_type === 'follow_success').length;
+              const supporters = events.filter(e => e.event_type === 'support_success').length;
+              
+              // Calculate top UTM
+              const utmCounts = new Map<string, number>();
+              events.forEach(e => {
+                const source = e.utm_source || 'direct';
+                utmCounts.set(source, (utmCounts.get(source) || 0) + 1);
+              });
+              let topUtm: string | null = null;
+              let maxCount = 0;
+              utmCounts.forEach((count, source) => {
+                if (count > maxCount) {
+                  maxCount = count;
+                  topUtm = source;
+                }
+              });
+              
+              setOwnerStats({ views, follows, supporters, topUtm });
+            }
           }
         }
 
@@ -222,10 +251,30 @@ export default function PromoPreview() {
 
       {/* Owner Banner */}
       {isOwner && (
-        <div className="bg-primary/20 border-y border-primary/30 px-4 py-3 text-center">
-          <p className="text-sm font-medium">
-            This is your promo link — <span className="text-primary">{promoLink.click_count || 0} clicks</span>
+        <div className="bg-primary/20 border-y border-primary/30 px-4 py-4">
+          <p className="text-sm font-medium text-center mb-3">
+            This is your promo link — here's how it performs:
           </p>
+          <div className="flex justify-center gap-6 text-center">
+            <div>
+              <p className="text-xl font-bold text-primary">{ownerStats.views}</p>
+              <p className="text-xs text-muted-foreground">Views</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">{ownerStats.follows}</p>
+              <p className="text-xs text-muted-foreground">Follows</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">{ownerStats.supporters}</p>
+              <p className="text-xs text-muted-foreground">Supporters</p>
+            </div>
+            {ownerStats.topUtm && (
+              <div>
+                <p className="text-xl font-bold text-primary capitalize">{ownerStats.topUtm}</p>
+                <p className="text-xs text-muted-foreground">Top Source</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
