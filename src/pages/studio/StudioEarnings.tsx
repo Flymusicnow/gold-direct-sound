@@ -8,6 +8,7 @@ import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Clock } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Payout {
   id: string;
@@ -114,6 +115,11 @@ export default function StudioEarnings() {
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
                     Pending Payout
+                    <InfoTooltip
+                      title="Pending Payout"
+                      description="Earnings ready for withdrawal. Minimum payout threshold is 500 kr, processed monthly by admin team."
+                      forRole="artist"
+                    />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -166,7 +172,14 @@ export default function StudioEarnings() {
 
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
-                <h3 className="font-semibold mb-2">How Payouts Work</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-semibold">How Payouts Work</h3>
+                  <InfoTooltip
+                    title="Revenue Split"
+                    description="You receive 70% of supporter subscription revenue. FlyMusic takes 20%, and 10% covers payment processing fees."
+                    forRole="artist"
+                  />
+                </div>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• You receive 70% of supporter subscription revenue</li>
                   <li>• Payouts are processed monthly by our admin team</li>

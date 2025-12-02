@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { cn } from "@/lib/utils";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import {
   DndContext,
   closestCenter,
@@ -127,7 +128,13 @@ export function FlightdeckQueueSidebar({ isOpen, onClose }: FlightdeckQueueSideb
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
-          <h2 className="font-semibold text-lg">Queue</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-semibold text-lg">Queue</h2>
+            <InfoTooltip
+              title="Queue vs Play Now"
+              description="'Add to Queue' adds tracks to your playback list without interrupting current track. 'Play Now' starts playing immediately."
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
             {queue.length} {queue.length === 1 ? "item" : "items"}
           </p>

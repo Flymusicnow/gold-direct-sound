@@ -19,6 +19,7 @@ import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard"
 import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
 import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMilestoneCard";
 import { VideoPostCard } from "@/components/feed/VideoPostCard";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface NewTrack {
   id: string;
@@ -186,6 +187,11 @@ export default function FanFeed() {
               <div className="flex items-center gap-2 mb-6">
                 <Music className="h-6 w-6 text-primary" />
                 <h2 className="text-2xl font-semibold">New From Your Artists</h2>
+                <InfoTooltip
+                  title="Latest From Followed"
+                  description="Newest tracks from artists you follow, sorted by release date. Follow more artists to see more content here."
+                  forRole="fan"
+                />
               </div>
 
               {newTracks.length === 0 ? (
@@ -303,6 +309,11 @@ export default function FanFeed() {
               <div className="flex items-center gap-2 mb-6">
                 <TrendingUp className="h-6 w-6 text-primary" />
                 <h2 className="text-xl font-semibold">Trending</h2>
+                <InfoTooltip
+                  title="Trending Content"
+                  description="Top tracks based on plays, likes, shares, and Spotlight votes in the last 48 hours."
+                  forRole="fan"
+                />
               </div>
 
               <TrendingSection

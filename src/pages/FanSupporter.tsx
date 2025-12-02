@@ -11,6 +11,7 @@ import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame, Ar
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { ManageSubscriptionCard } from "@/components/supporter/ManageSubscriptionCard";
 import { useFanAchievements } from "@/hooks/useFanAchievements";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface SupportScore {
   artist_id: string;
@@ -161,7 +162,14 @@ export default function FanSupporter() {
                 <Trophy className="h-6 w-6 text-primary-foreground" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold">Your Activity XP</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold">Your Activity XP</h2>
+                  <InfoTooltip
+                    title="Activity XP"
+                    description="Total support points earned across all artists. XP accumulates from likes (+1), plays (+0.5), comments (+2), votes (+5), shares (+3), and stacks (+2)."
+                    forRole="fan"
+                  />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   {totalXP.toFixed(0)} total points earned
                 </p>
@@ -315,11 +323,18 @@ export default function FanSupporter() {
                         </div>
                       </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Support Points</span>
-                          <span className="font-semibold">{Number(score.score).toFixed(1)}</span>
-                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground">Support Points</span>
+                              <InfoTooltip
+                                title="Artist Support Points"
+                                description="XP earned with this specific artist. Bronze (10), Silver (50), Gold (150). Points unlock supporter tiers per artist."
+                                forRole="fan"
+                              />
+                            </div>
+                            <span className="font-semibold">{Number(score.score).toFixed(1)}</span>
+                          </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-xs text-muted-foreground">

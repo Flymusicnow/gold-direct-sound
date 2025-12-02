@@ -12,6 +12,7 @@ import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { VideoEngagementHeatmap } from "@/components/video/VideoEngagementHeatmap";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface Track {
   id: string;
@@ -259,14 +260,28 @@ export default function StudioAnalytics() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-6">
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Total Followers</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm text-muted-foreground">Total Followers</p>
+                  <InfoTooltip
+                    title="Followers"
+                    description="Total fans following your profile. New followers in the last 30 days are shown as trending growth."
+                    forRole="artist"
+                  />
+                </div>
                 <p className="text-3xl font-bold">{stats.totalFollowers}</p>
                 <p className="text-xs text-primary">+{stats.followers30d} last 30 days</p>
               </div>
             </Card>
             <Card className="p-6">
               <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Total Plays</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm text-muted-foreground">Total Plays</p>
+                  <InfoTooltip
+                    title="Track Plays"
+                    description="Total plays across all your tracks. Plays are counted when fans listen to your music through the Flightdeck player."
+                    forRole="artist"
+                  />
+                </div>
                 <p className="text-3xl font-bold">{stats.totalPlays}</p>
                 <p className="text-xs text-primary">+{stats.plays30d} last 30 days</p>
               </div>
@@ -324,7 +339,14 @@ export default function StudioAnalytics() {
                   <p className="text-2xl font-bold">{videoStats.totalVideos}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground mb-1">Avg Completion</p>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <p className="text-sm text-muted-foreground">Avg Completion</p>
+                    <InfoTooltip
+                      title="Completion Rate"
+                      description="Percentage of viewers who watched at least 50% of your videos. Higher rates indicate engaging content."
+                      forRole="artist"
+                    />
+                  </div>
                   <p className="text-2xl font-bold">{videoStats.avgCompletionRate}%</p>
                 </div>
               </div>
