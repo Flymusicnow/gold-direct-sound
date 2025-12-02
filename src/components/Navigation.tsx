@@ -27,10 +27,19 @@ export const Navigation = () => {
     }
   }, [user, profile, refreshProfile]);
 
+  // Role-aware logo routing
+  const getLogoRoute = () => {
+    if (!user) return "/";
+    if (hasRole('fan')) return "/fan/feed";
+    if (hasRole('artist')) return "/studio";
+    if (hasRole('admin')) return "/admin";
+    return "/";
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center">
+        <Link to={getLogoRoute()} className="flex items-center">
           <FlyMusicLogo size="md" />
         </Link>
 
