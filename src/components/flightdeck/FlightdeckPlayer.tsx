@@ -4,7 +4,8 @@ import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
-import { FlightdeckMiniQueue } from './FlightdeckMiniQueue';
+import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
+import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +35,7 @@ export function FlightdeckPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [queueExpanded, setQueueExpanded] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
@@ -183,13 +184,17 @@ export function FlightdeckPlayer() {
 
   return (
     <>
+      {/* Desktop Queue Sidebar */}
+      <FlightdeckQueueSidebar isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
+      
+      {/* Mobile Queue Drawer */}
+      <FlightdeckQueueDrawer isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
+
       <div 
         className="fixed bottom-14 md:bottom-0 left-0 right-0 z-[60]"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Mini Queue */}
-        <FlightdeckMiniQueue isExpanded={queueExpanded} onToggle={() => setQueueExpanded(!queueExpanded)} />
         
         {/* Close button - appears on hover (desktop only) */}
         <button
@@ -299,7 +304,7 @@ export function FlightdeckPlayer() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setQueueExpanded(!queueExpanded)}
+              onClick={() => setQueueOpen(!queueOpen)}
               className="h-8 w-8"
             >
               <List className="h-4 w-4" />
