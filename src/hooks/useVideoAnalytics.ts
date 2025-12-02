@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupportScore } from './useSupportScore';
 
 interface UseVideoAnalyticsProps {
   videoId: string;
@@ -14,10 +15,12 @@ interface WatchSegment {
 
 export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps) => {
   const [viewId, setViewId] = useState<string | null>(null);
+  const { updateSupportScore } = useSupportScore();
   const startTimeRef = useRef<number>(0);
   const lastUpdateRef = useRef<number>(0);
   const watchSegmentsRef = useRef<WatchSegment[]>([]);
   const lastSegmentTimeRef = useRef<number>(0);
+  const hasAwardedXPRef = useRef<boolean>(false);
   const sessionId = useRef<string>(
     sessionStorage.getItem('video_session_id') || crypto.randomUUID()
   );
@@ -90,7 +93,9 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
         .eq('id', viewId);
 
       // Taste Engine V1.5: Update taste profile on video watch completion (>50%)
-      if (completed && userId && artistId) {
+      if (completed && userId && artistId && !hasAwardedXPRef.current) {
+        hasAwardedXPRef.current = true;
+        
         // Fire-and-forget taste update
         supabase.rpc('update_taste_profile', {
           _fan_user_id: userId,
@@ -105,6 +110,10 @@ export const useVideoAnalytics = ({ videoId, duration }: UseVideoAnalyticsProps)
             console.log('Taste profile updated for video watch');
           }
         });
+
+        // Award Supporter XP for video watch (watch_video action = +3 XP)
+        updateSupportScore(artistId, 'watch_video', undefined, videoId)
+          .catch(err => console.error('Error updating support score for video watch:', err));
       }
 
       lastUpdateRef.current = now;

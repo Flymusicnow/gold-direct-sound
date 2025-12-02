@@ -18,6 +18,7 @@ import { ContentOverlay } from '@/components/fan/ContentOverlay';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { InfoTooltip } from '@/components/ui/info-tooltip';
 
 type Category = 'all' | 'tracks' | 'artists' | 'videos' | 'spotlight' | 'stacks';
 
@@ -166,18 +167,27 @@ export default function Search() {
                 </div>
                 
                 {isVoiceSupported && (
-                  <Button
-                    type="button"
-                    onClick={isListening ? stopListening : startListening}
-                    className={`h-12 w-12 rounded-full transition-all ${
-                      isListening 
-                        ? 'bg-primary text-primary-foreground animate-pulse' 
-                        : 'bg-muted hover:bg-muted/80'
-                    }`}
-                    aria-label={isListening ? 'Stop recording' : 'Start voice search'}
-                  >
-                    <Mic className={`h-5 w-5 ${isListening ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-                  </Button>
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      onClick={isListening ? stopListening : startListening}
+                      className={`h-12 w-12 rounded-full transition-all ${
+                        isListening 
+                          ? 'bg-primary text-primary-foreground animate-pulse' 
+                          : 'bg-muted hover:bg-muted/80'
+                      }`}
+                      aria-label={isListening ? 'Stop recording' : 'Start voice search'}
+                    >
+                      <Mic className={`h-5 w-5 ${isListening ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
+                    </Button>
+                    <div className="absolute -top-2 -right-2">
+                      <InfoTooltip
+                        title="Voice Search"
+                        description="Search hands-free by speaking your query. Tap the microphone to start, speak clearly, and search results will appear automatically."
+                        forRole="fan"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
               
