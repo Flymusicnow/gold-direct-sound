@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -58,7 +59,7 @@ export function useSupportScore() {
   const { updateTasteFromAction } = useFanTaste();
   const { checkAndUnlockAchievements } = useFanAchievementChecker();
 
-  const updateSupportScore = async (
+  const updateSupportScore = useCallback(async (
     artistId: string, 
     action: SupportAction,
     trackId?: string,
@@ -130,7 +131,7 @@ export function useSupportScore() {
       // Silent error logging - don't block UI
       console.error('Error updating support score:', error);
     }
-  };
+  }, [user, updateTasteFromAction, checkAndUnlockAchievements]);
 
   return { updateSupportScore };
 }
