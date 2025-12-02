@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { sanitizeFileName } from "@/lib/utils";
+import { sanitizeFileName, cn } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
@@ -13,8 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Camera, Save, Music, User } from "lucide-react";
+import { Camera, Save, Music, User, X, Plus, Upload } from "lucide-react";
 
 export default function StudioProfile() {
   const { user } = useAuth();
@@ -23,9 +24,11 @@ export default function StudioProfile() {
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [editBio, setEditBio] = useState("");
-  const [editGenre, setEditGenre] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [genreInput, setGenreInput] = useState("");
   const [editCity, setEditCity] = useState("");
   const [editCountry, setEditCountry] = useState("");
   const [editInstagram, setEditInstagram] = useState("");
@@ -35,6 +38,11 @@ export default function StudioProfile() {
   const [editWebsite, setEditWebsite] = useState("");
   const [artistName, setArtistName] = useState("");
   const isMobile = useIsMobile();
+
+  const popularGenres = [
+    "Pop", "Hip-Hop", "R&B", "Rock", "Electronic", 
+    "Jazz", "Country", "Reggae", "Latin", "Afrobeats"
+  ];
 
   useEffect(() => {
     if (!user) {
@@ -59,7 +67,9 @@ export default function StudioProfile() {
       setArtistProfile(data);
       setArtistName(data.artist_name || "");
       setEditBio(data.bio || "");
-      setEditGenre(data.genre || "");
+      // Parse genre string into array
+      const genres = data.genre ? data.genre.split(',').map((g: string) => g.trim()).filter(Boolean) : [];
+      setSelectedGenres(genres);
       setEditCity(data.city || "");
       setEditCountry(data.country || "");
       setEditInstagram(data.instagram_url || "");
@@ -96,10 +106,8 @@ export default function StudioProfile() {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !user || !artistProfile) return;
-
-    const file = e.target.files[0];
+  const uploadAvatarFile = async (file: File) => {
+    if (!user || !artistProfile) return;
 
     if (!file.type.startsWith('image/')) {
       toast.error("Please select an image file");
@@ -136,18 +144,66 @@ export default function StudioProfile() {
     }
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) return;
+    uploadAvatarFile(e.target.files[0]);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+      uploadAvatarFile(files[0]);
+    } else {
+      toast.error("Please drop an image file");
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const addGenre = (genre: string) => {
+    const trimmed = genre.trim();
+    if (trimmed && !selectedGenres.includes(trimmed)) {
+      setSelectedGenres([...selectedGenres, trimmed]);
+      setGenreInput("");
+    }
+  };
+
+  const removeGenre = (genre: string) => {
+    setSelectedGenres(selectedGenres.filter(g => g !== genre));
+  };
+
+  const handleGenreInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addGenre(genreInput);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!artistProfile) return;
 
     setSavingProfile(true);
 
     try {
+      // Convert genres array to comma-separated string
+      const genreString = selectedGenres.length > 0 ? selectedGenres.join(', ') : null;
+      
       const { error } = await supabase
         .from('artist_profiles')
         .update({
           artist_name: artistName || null,
           bio: editBio || null,
-          genre: editGenre || null,
+          genre: genreString,
           city: editCity || null,
           country: editCountry || null,
           instagram_url: editInstagram || null,
@@ -255,34 +311,48 @@ export default function StudioProfile() {
             </div>
           </div>
 
-          {/* Profile Image */}
+          {/* Profile Image with Drag & Drop */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Profile Image</h2>
-            <div className="flex items-center gap-6">
-              <Avatar className="h-32 w-32 border-2 border-primary">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              <Avatar className="h-32 w-32 border-2 border-primary flex-shrink-0">
                 <AvatarImage src={artistProfile.avatar_url || undefined} alt={artistProfile.artist_name} />
                 <AvatarFallback className="text-2xl">
                   {artistProfile.artist_name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <Label htmlFor="avatar" className="cursor-pointer">
-                  <div className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-md transition-colors">
-                    <Camera className="h-4 w-4" />
-                    <span>{uploadingAvatar ? "Uploading..." : "Upload New Image"}</span>
-                  </div>
-                  <Input
-                    id="avatar"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleAvatarUpload}
-                    disabled={uploadingAvatar}
-                  />
-                </Label>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Your profile image appears on your public artist page
-                </p>
+              <div className="flex-1 w-full">
+                <div
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
+                    isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                  <Label htmlFor="avatar" className="cursor-pointer">
+                    <div className="text-sm">
+                      <span className="text-primary font-medium">Click to upload</span>
+                      {" or drag and drop"}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PNG, JPG, WEBP up to 10MB
+                    </p>
+                    <Input
+                      id="avatar"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleAvatarUpload}
+                      disabled={uploadingAvatar}
+                    />
+                  </Label>
+                  {uploadingAvatar && (
+                    <p className="text-sm text-primary mt-2">Uploading...</p>
+                  )}
+                </div>
               </div>
             </div>
           </Card>
@@ -311,13 +381,80 @@ export default function StudioProfile() {
                 />
               </div>
               <div>
-                <Label htmlFor="edit_genre">Genre</Label>
-                <Input
-                  id="edit_genre"
-                  value={editGenre}
-                  onChange={(e) => setEditGenre(e.target.value)}
-                  placeholder="e.g., Hip-Hop, R&B, Pop"
-                />
+                <Label htmlFor="edit_genre">Genres</Label>
+                <div className="space-y-3">
+                  {/* Selected Genres */}
+                  {selectedGenres.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedGenres.map((genre) => (
+                        <Badge
+                          key={genre}
+                          variant="secondary"
+                          className="pl-3 pr-2 py-1 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20"
+                        >
+                          {genre}
+                          <button
+                            onClick={() => removeGenre(genre)}
+                            className="ml-2 hover:text-primary"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Add Genre Input */}
+                  <div className="flex gap-2">
+                    <Input
+                      id="edit_genre"
+                      value={genreInput}
+                      onChange={(e) => setGenreInput(e.target.value)}
+                      onKeyDown={handleGenreInputKeyDown}
+                      placeholder="Type a genre and press Enter"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => addGenre(genreInput)}
+                      disabled={!genreInput.trim()}
+                      size="sm"
+                      variant="outline"
+                      className="border-primary/50 hover:bg-primary/10"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {/* Popular Genres */}
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Popular genres:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {popularGenres.map((genre) => (
+                        <Badge
+                          key={genre}
+                          variant="outline"
+                          className={cn(
+                            "cursor-pointer transition-colors",
+                            selectedGenres.includes(genre)
+                              ? "bg-primary/10 border-primary/30 text-primary"
+                              : "hover:border-primary/50 hover:bg-muted/50"
+                          )}
+                          onClick={() => {
+                            if (selectedGenres.includes(genre)) {
+                              removeGenre(genre);
+                            } else {
+                              addGenre(genre);
+                            }
+                          }}
+                        >
+                          {selectedGenres.includes(genre) && <X className="h-3 w-3 mr-1" />}
+                          {genre}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
