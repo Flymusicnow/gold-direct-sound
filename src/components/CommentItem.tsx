@@ -6,6 +6,14 @@ import { Heart, Reply, Trash2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
+import { z } from "zod";
+
+const commentSchema = z.object({
+  text: z.string()
+    .trim()
+    .min(1, { message: "Reply cannot be empty" })
+    .max(1000, { message: "Reply must be less than 1000 characters" })
+});
 
 interface CommentItemProps {
   comment: {
@@ -65,12 +73,22 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
   };
 
   const handleReply = async () => {
-    if (!currentUserId || !replyText.trim()) return;
+    if (!currentUserId) {
+      toast.error("Please sign in to reply");
+      return;
+    }
+
+    // Validate with zod schema
+    const validation = commentSchema.safeParse({ text: replyText });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0]?.message || "Invalid reply");
+      return;
+    }
 
     const { error } = await supabase.from("comments").insert({
       artist_id: artistId,
       user_id: currentUserId,
-      text: replyText.trim(),
+      text: validation.data.text,
       parent_comment_id: comment.id,
     });
 
