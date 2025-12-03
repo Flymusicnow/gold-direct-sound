@@ -8,6 +8,14 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useSupportScore } from "@/hooks/useSupportScore";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
+import { z } from "zod";
+
+const commentSchema = z.object({
+  text: z.string()
+    .trim()
+    .min(1, { message: "Comment cannot be empty" })
+    .max(1000, { message: "Comment must be less than 1000 characters" })
+});
 
 interface Comment {
   id: string;
@@ -116,8 +124,10 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       return;
     }
 
-    if (!newComment.trim() || newComment.length > 1000) {
-      toast.error("Comment must be between 1 and 1000 characters");
+    // Validate with zod schema
+    const validation = commentSchema.safeParse({ text: newComment });
+    if (!validation.success) {
+      toast.error(validation.error.errors[0]?.message || "Invalid comment");
       return;
     }
 
@@ -125,7 +135,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     const { error } = await supabase.from("comments").insert({
       artist_id: artistId,
       user_id: user.id,
-      text: newComment.trim(),
+      text: validation.data.text,
     });
 
     if (error) {
