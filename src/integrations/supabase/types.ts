@@ -536,6 +536,47 @@ export type Database = {
           },
         ]
       }
+      artist_stripe_accounts: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          details_submitted: boolean | null
+          id: string
+          payouts_enabled: boolean | null
+          status: string | null
+          stripe_account_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          details_submitted?: boolean | null
+          id?: string
+          payouts_enabled?: boolean | null
+          status?: string | null
+          stripe_account_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          details_submitted?: boolean | null
+          id?: string
+          payouts_enabled?: boolean | null
+          status?: string | null
+          stripe_account_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_stripe_accounts_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: true
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_video_posts: {
         Row: {
           artist_id: string
@@ -1667,6 +1708,7 @@ export type Database = {
           stripe_event_id: string
           stripe_invoice_id: string | null
           subscription_id: string | null
+          type: string | null
         }
         Insert: {
           amount: number
@@ -1678,6 +1720,7 @@ export type Database = {
           stripe_event_id: string
           stripe_invoice_id?: string | null
           subscription_id?: string | null
+          type?: string | null
         }
         Update: {
           amount?: number
@@ -1689,6 +1732,7 @@ export type Database = {
           stripe_event_id?: string
           stripe_invoice_id?: string | null
           subscription_id?: string | null
+          type?: string | null
         }
         Relationships: [
           {
@@ -1712,6 +1756,7 @@ export type Database = {
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           tier: string
+          tier_id: string | null
           total_paid: number | null
           updated_at: string | null
         }
@@ -1726,6 +1771,7 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier: string
+          tier_id?: string | null
           total_paid?: number | null
           updated_at?: string | null
         }
@@ -1740,12 +1786,79 @@ export type Database = {
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           tier?: string
+          tier_id?: string | null
           total_paid?: number | null
           updated_at?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "supporter_subscriptions_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supporter_subscriptions_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "supporter_tiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supporter_tiers: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          interval: string | null
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          slug: string
+          sort_order: number | null
+          stripe_price_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          interval?: string | null
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          slug: string
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          interval?: string | null
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          slug?: string
+          sort_order?: number | null
+          stripe_price_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supporter_tiers_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artist_profiles"
