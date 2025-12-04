@@ -9,6 +9,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Clock } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
+import { ArtistTierManager } from "@/components/supporter/ArtistTierManager";
 
 interface Payout {
   id: string;
@@ -170,21 +172,27 @@ export default function StudioEarnings() {
               </CardContent>
             </Card>
 
+            {/* Stripe Connect Setup */}
+            <StripeConnectSetup />
+
+            {/* Supporter Tier Management */}
+            <ArtistTierManager />
+
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
                   <h3 className="font-semibold">How Payouts Work</h3>
                   <InfoTooltip
                     title="Revenue Split"
-                    description="You receive 70% of supporter subscription revenue. FlyMusic takes 20%, and 10% covers payment processing fees."
+                    description="You receive 70% of supporter subscription revenue. FlyMusic takes 30% to cover platform costs and payment processing fees."
                     forRole="artist"
                   />
                 </div>
                 <ul className="text-sm text-muted-foreground space-y-1">
                   <li>• You receive 70% of supporter subscription revenue</li>
-                  <li>• Payouts are processed monthly by our admin team</li>
-                  <li>• Minimum payout threshold: 500 kr</li>
-                  <li>• Payment methods: Bank transfer (Swish) or Stripe Connect</li>
+                  <li>• With Stripe Connect: Automatic payouts to your bank</li>
+                  <li>• Without Stripe Connect: Manual monthly payouts (min 500 kr)</li>
+                  <li>• Manage your tiers above to customize supporter benefits</li>
                 </ul>
               </CardContent>
             </Card>
