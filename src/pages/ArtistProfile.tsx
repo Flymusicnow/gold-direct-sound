@@ -23,7 +23,7 @@ import { MerchSection } from "@/components/artist/MerchSection";
 import TopSupportersCard from "@/components/supporter/TopSupportersCard";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
+import { SupportTierModal } from "@/components/supporter/SupportTierModal";
 
 interface Artist {
   id: string;
@@ -524,7 +524,7 @@ export default function ArtistProfile() {
       />
 
       {/* Become a Supporter Modal */}
-      <BecomeASupporterModal
+      <SupportTierModal
         open={showSupporterModal}
         onOpenChange={setShowSupporterModal}
         artistId={artist.id}

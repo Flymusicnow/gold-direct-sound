@@ -90,7 +90,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       .select("id, full_name")
       .in("id", userIds);
 
-    // Fetch supporter levels
+    // Fetch supporter levels (XP-based)
     const { data: supportScores } = await supabase
       .from('fan_support_scores')
       .select('fan_user_id, level')
@@ -101,11 +101,24 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       supportScores?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
     );
 
+    // Fetch paid subscriptions
+    const { data: paidSubscriptions } = await supabase
+      .from('supporter_subscriptions')
+      .select('fan_user_id, tier')
+      .eq('artist_id', artistId)
+      .eq('status', 'active')
+      .in('fan_user_id', userIds);
+
+    const paidTiers = new Map(
+      paidSubscriptions?.map(s => [s.fan_user_id, s.tier as 'basic' | 'gold']) || []
+    );
+
     // Merge profiles with comments
     const commentsWithProfiles = commentsData.map((comment) => ({
       ...comment,
       profiles: profilesData?.find((p) => p.id === comment.user_id) || { full_name: null },
       supporterLevel: supporterLevels.get(comment.user_id) || 'none',
+      paidTier: paidTiers.get(comment.user_id) || null,
     }));
 
     let sortedData = commentsWithProfiles;
@@ -211,6 +224,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
               artistId={artistId}
               isArtistComment={comment.user_id === currentUserId}
               supporterLevel={(comment as any).supporterLevel || 'none'}
+              paidTier={(comment as any).paidTier || null}
             />
           ))
         )}
