@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
+import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
 import Home from "./pages/Home";
@@ -43,6 +44,12 @@ import AdminSpotlight from "./pages/admin/AdminSpotlight";
 import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
 import AdminBetaCodes from "./pages/admin/AdminBetaCodes";
 import AdminPayouts from "./pages/admin/AdminPayouts";
+import AdminFeatures from "./pages/admin/AdminFeatures";
+import TrustPage from "./pages/trust/TrustPage";
+import PrinciplesPage from "./pages/trust/PrinciplesPage";
+import CulturePage from "./pages/trust/CulturePage";
+import SafetyPage from "./pages/trust/SafetyPage";
+import DataPage from "./pages/trust/DataPage";
 import StudioSpotlight from "./pages/studio/StudioSpotlight";
 import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
 import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
@@ -67,14 +74,20 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <FeatureFlagProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          {/* Public promo route - outside EarlyAccessGate */}
+          {/* Public routes - outside EarlyAccessGate */}
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
+            <Route path="/trust" element={<TrustPage />} />
+            <Route path="/principles" element={<PrinciplesPage />} />
+            <Route path="/culture" element={<CulturePage />} />
+            <Route path="/safety" element={<SafetyPage />} />
+            <Route path="/data" element={<DataPage />} />
             <Route path="*" element={
           <EarlyAccessGate>
             <FanTasteProvider>
@@ -191,6 +204,7 @@ const App = () => (
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
             <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
             <Route path="/admin/payouts" element={<AdminPayouts />} />
+            <Route path="/admin/features" element={<AdminFeatures />} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
@@ -252,6 +266,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </FeatureFlagProvider>
   </QueryClientProvider>
 );
 

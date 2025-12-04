@@ -8,7 +8,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { Check, X } from "lucide-react";
+import { Check, X, Settings } from "lucide-react";
 
 interface PendingArtist {
   id: string;
@@ -100,12 +100,16 @@ export default function AdminDashboard() {
         <div className="container mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={() => navigate('/admin/spotlight')} variant="outline">
               Manage Spotlight
             </Button>
             <Button onClick={() => navigate('/admin/beta-codes')} variant="outline">
               Manage Beta Codes
+            </Button>
+            <Button onClick={() => navigate('/admin/features')} variant="outline">
+              <Settings className="h-4 w-4 mr-2" />
+              Feature Flags
             </Button>
           </div>
         </div>
