@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
@@ -76,6 +77,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
     <FeatureFlagProvider>
     <TooltipProvider>
       <Toaster />
@@ -279,6 +281,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
     </FeatureFlagProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

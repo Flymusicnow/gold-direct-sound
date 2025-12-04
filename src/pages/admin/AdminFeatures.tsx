@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Shield, Sparkles, Rocket, Radio, Loader2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ArrowLeft, Shield, Sparkles, Rocket, Radio, Loader2, ChevronDown, ExternalLink, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { MobileAdminNav } from '@/components/admin/MobileAdminNav';
 import { BottomNavBarAdmin } from '@/components/mobile/BottomNavBarAdmin';
@@ -29,10 +31,12 @@ const flagIcons: Record<string, React.ReactNode> = {
 
 const AdminFeatures: React.FC = () => {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+  const [expandedFlags, setExpandedFlags] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!user) {
@@ -57,7 +61,7 @@ const AdminFeatures: React.FC = () => {
       setFlags(data || []);
     } catch (error) {
       console.error('Error fetching flags:', error);
-      toast.error('Kunde inte hämta feature flags');
+      toast.error(t('admin.fetchError'));
     } finally {
       setLoading(false);
     }
@@ -77,13 +81,32 @@ const AdminFeatures: React.FC = () => {
         f.id === flag.id ? { ...f, is_enabled: !f.is_enabled } : f
       ));
       
-      toast.success(`${flag.flag_name} är nu ${!flag.is_enabled ? 'aktiverad' : 'avaktiverad'}`);
+      const statusText = !flag.is_enabled ? t('admin.flagEnabled') : t('admin.flagDisabled');
+      toast.success(`${flag.flag_name} ${statusText}`);
     } catch (error) {
       console.error('Error toggling flag:', error);
-      toast.error('Kunde inte uppdatera feature flag');
+      toast.error(t('admin.updateError'));
     } finally {
       setUpdating(null);
     }
+  };
+
+  const toggleExpanded = (flagId: string) => {
+    setExpandedFlags(prev => {
+      const next = new Set(prev);
+      if (next.has(flagId)) {
+        next.delete(flagId);
+      } else {
+        next.add(flagId);
+      }
+      return next;
+    });
+  };
+
+  const getFlagDocumentation = (flagKey: string) => {
+    const docs = t(`featureFlags.${flagKey}`) as any;
+    if (typeof docs === 'string') return null;
+    return docs;
   };
 
   if (loading) {
@@ -105,58 +128,119 @@ const AdminFeatures: React.FC = () => {
           className="mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Tillbaka till Admin
+          {t('admin.backToAdmin')}
         </Button>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Feature Flags</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('admin.featureFlags')}</h1>
           <p className="text-muted-foreground">
-            Kontrollera vilka funktioner som är aktiverade på plattformen
+            {t('admin.featureFlagsDescription')}
           </p>
         </div>
 
         <div className="space-y-4">
-          {flags.map((flag) => (
-            <Card key={flag.id} className="border-border/50">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {flagIcons[flag.flag_key] || <Shield className="h-5 w-5 text-primary" />}
-                    <div>
-                      <CardTitle className="text-lg">{flag.flag_name}</CardTitle>
-                      <Badge variant="outline" className="mt-1 text-xs font-mono">
-                        {flag.flag_key}
-                      </Badge>
+          {flags.map((flag) => {
+            const docs = getFlagDocumentation(flag.flag_key);
+            const isExpanded = expandedFlags.has(flag.id);
+
+            return (
+              <Card key={flag.id} className="border-border/50">
+                <Collapsible open={isExpanded} onOpenChange={() => toggleExpanded(flag.id)}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {flagIcons[flag.flag_key] || <Shield className="h-5 w-5 text-primary" />}
+                        <div>
+                          <CardTitle className="text-lg">{flag.flag_name}</CardTitle>
+                          <Badge variant="outline" className="mt-1 text-xs font-mono">
+                            {flag.flag_key}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {updating === flag.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                        <Switch
+                          checked={flag.is_enabled}
+                          onCheckedChange={() => toggleFlag(flag)}
+                          disabled={updating === flag.id}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {updating === flag.id && (
-                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                    <Switch
-                      checked={flag.is_enabled}
-                      onCheckedChange={() => toggleFlag(flag)}
-                      disabled={updating === flag.id}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription>{flag.description}</CardDescription>
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant={flag.is_enabled ? 'default' : 'secondary'}>
-                    {flag.is_enabled ? 'Aktiv' : 'Inaktiv'}
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="mb-3">
+                      {docs?.description || flag.description}
+                    </CardDescription>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant={flag.is_enabled ? 'default' : 'secondary'}>
+                        {flag.is_enabled ? t('common.active') : t('common.inactive')}
+                      </Badge>
+                      {docs && (
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+                            <Info className="h-3 w-3" />
+                            {t('common.viewMore')}
+                            <ChevronDown className={`h-3 w-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                      )}
+                    </div>
+
+                    <CollapsibleContent>
+                      {docs && (
+                        <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+                          <div>
+                            <h4 className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                              <Info className="h-4 w-4 text-primary" />
+                              {t('admin.whatItEnables')}
+                            </h4>
+                            <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                              {docs.enables?.map((item: string, i: number) => (
+                                <li key={i} className="list-disc">{item}</li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div>
+                            <h4 className="text-sm font-medium text-foreground mb-2">
+                              {t('admin.routesAffected')}
+                            </h4>
+                            <div className="flex flex-wrap gap-2">
+                              {docs.routes?.map((route: string, i: number) => (
+                                <Badge key={i} variant="outline" className="font-mono text-xs">
+                                  {route}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+
+                          {docs.primaryLink && (
+                            <div className="pt-2">
+                              <Link to={docs.primaryLink}>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                  <ExternalLink className="h-3 w-3" />
+                                  {docs.primaryLinkLabel || t('admin.viewPage')}
+                                </Button>
+                              </Link>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </CardContent>
+                </Collapsible>
+              </Card>
+            );
+          })}
         </div>
 
         {flags.length === 0 && (
           <Card className="border-dashed">
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground">Inga feature flags hittades</p>
+              <p className="text-muted-foreground">{t('admin.noFlags')}</p>
             </CardContent>
           </Card>
         )}
