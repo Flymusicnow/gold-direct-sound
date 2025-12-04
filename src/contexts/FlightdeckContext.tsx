@@ -63,10 +63,10 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
       if (currentItem.artistId) {
         updateSupportScore(currentItem.artistId, 'play_track');
       }
-      // Increment play count for tracks
+      // Increment play count for tracks using raw rpc call
       if (currentItem.type === 'track') {
-        supabase.rpc('increment_play_count', { track_id: currentItem.id })
-          .then(({ error }) => {
+        (supabase.rpc as any)('increment_play_count', { track_id: currentItem.id })
+          .then(({ error }: { error: any }) => {
             if (error) console.error('Error incrementing play count:', error);
           });
       }
