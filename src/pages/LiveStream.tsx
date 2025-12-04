@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { LiveStreamPlayer } from "@/components/artist/LiveStreamPlayer";
 import { LiveChatPanel } from "@/components/artist/LiveChatPanel";
 import { LiveViewerCount } from "@/components/artist/LiveViewerCount";
+import { LiveViewerActivityWidget } from "@/components/artist/LiveViewerActivityWidget";
+import { TopSupportersWidget } from "@/components/artist/TopSupportersWidget";
 import { LiveGiftButton } from "@/components/live/LiveGiftButton";
 import { LiveGiftAnimation } from "@/components/live/LiveGiftAnimation";
 import { LiveSpotlightBoost } from "@/components/live/LiveSpotlightBoost";
@@ -14,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
 
 interface LiveStream {
   id: string;
@@ -37,6 +40,7 @@ export default function LiveStream() {
   const [stream, setStream] = useState<LiveStream | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isArtist, setIsArtist] = useState(false);
+  const liveOsV2Enabled = useFeatureFlag('LIVE_OS_V2_ENABLED');
 
   useEffect(() => {
     if (streamId) {
@@ -55,7 +59,6 @@ export default function LiveStream() {
 
       if (streamError) throw streamError;
 
-      // Fetch artist profile separately
       const { data: artistProfile } = await supabase
         .from("artist_profiles")
         .select("artist_name, avatar_url, user_id")
@@ -69,7 +72,6 @@ export default function LiveStream() {
 
       setStream(streamWithProfile);
       
-      // Check if current user is the artist
       if (user && artistProfile?.user_id === user.id) {
         setIsArtist(true);
       }
@@ -107,7 +109,6 @@ export default function LiveStream() {
   return (
     <div className="min-h-screen bg-background pt-20 pb-8">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
-        {/* Back Button */}
         <Link to="/">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -115,21 +116,17 @@ export default function LiveStream() {
           </Button>
         </Link>
 
-        {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column: Stream Player */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Player */}
             <div className="relative">
               <LiveStreamPlayer streamUrl={stream.stream_url} />
               
-              {/* Viewer Count Overlay */}
               <div className="absolute top-4 right-4">
                 <LiveViewerCount streamId={stream.id} />
               </div>
             </div>
 
-            {/* Stream Info */}
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -146,7 +143,6 @@ export default function LiveStream() {
                 </div>
               </div>
 
-              {/* Artist Info */}
               <Link
                 to={`/artist/${stream.artist_id}`}
                 className="flex items-center gap-3 p-4 bg-card/50 border border-border/50 rounded-lg hover:border-primary/30 transition-colors"
@@ -184,6 +180,14 @@ export default function LiveStream() {
                   </>
                 )}
               </div>
+
+              {/* Live OS V2 Features */}
+              {liveOsV2Enabled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <LiveViewerActivityWidget artistId={stream.artist_id} />
+                  <TopSupportersWidget artistId={stream.artist_id} />
+                </div>
+              )}
 
               {/* Spotlight Boost */}
               {!isArtist && (
