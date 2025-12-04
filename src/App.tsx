@@ -56,6 +56,7 @@ import FanAchievements from "./pages/FanAchievements";
 import Search from "./pages/Search";
 import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
+import VideoCollectionDetail from "./pages/VideoCollectionDetail";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -184,6 +185,7 @@ const App = () => (
             <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
             <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
             <Route path="/live/:streamId" element={<LiveStream />} />
+            <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/spotlight" element={<AdminSpotlight />} />
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />

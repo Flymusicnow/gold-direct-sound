@@ -2309,6 +2309,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_play_count: { Args: { track_id: string }; Returns: undefined }
       increment_promo_click: { Args: { _promo_id: string }; Returns: undefined }
       increment_video_view_safe: {
         Args: { _user_id?: string; _video_id: string }
