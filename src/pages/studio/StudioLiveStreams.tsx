@@ -177,25 +177,27 @@ export default function StudioLiveStreams() {
           <div className="p-6 md:p-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Radio className="h-8 w-8 text-red-500 shrink-0" />
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Live Streams</h1>
-              <p className="text-muted-foreground text-sm md:text-base">
-                Stream live performances to your fans
-              </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Radio className="h-8 w-8 text-red-500 shrink-0" />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Live Streams</h1>
+                <p className="text-muted-foreground text-sm md:text-base">
+                  Stream live performances to your fans
+                </p>
+              </div>
             </div>
+            
+            {artistId && (
+              <div className="shrink-0">
+                <GoLiveDialog
+                  artistId={artistId}
+                  onSuccess={() => artistId && fetchStreams(artistId)}
+                />
+              </div>
+            )}
           </div>
-          
-          {artistId && (
-            <div className="shrink-0">
-              <GoLiveDialog
-                artistId={artistId}
-                onSuccess={() => artistId && fetchStreams(artistId)}
-              />
-            </div>
-          )}
         </div>
 
         {/* Live Now */}
