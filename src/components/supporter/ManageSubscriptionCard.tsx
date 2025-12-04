@@ -1,22 +1,28 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Crown, Star, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaidSupporterBadge } from './PaidSupporterBadge';
 
 interface Subscription {
   id: string;
   tier: string;
+  tier_id: string | null;
   status: string;
   current_period_end: string;
   total_paid: number;
   artist: {
     id: string;
+    user_id: string;
     artist_name: string;
     avatar_url: string;
   };
+  tierInfo?: {
+    name: string;
+    price_cents: number;
+  } | null;
 }
 
 export function ManageSubscriptionCard() {
@@ -35,6 +41,7 @@ export function ManageSubscriptionCard() {
             *,
             artist:artist_profiles!supporter_subscriptions_artist_id_fkey(
               id,
+              user_id,
               artist_name,
               avatar_url
             )
@@ -43,7 +50,26 @@ export function ManageSubscriptionCard() {
           .eq('status', 'active');
 
         if (error) throw error;
-        setSubscriptions(data || []);
+        
+        // Fetch tier info for subscriptions with tier_id
+        const tierIds = data?.filter(s => s.tier_id).map(s => s.tier_id) || [];
+        let tierMap = new Map<string, { name: string; price_cents: number }>();
+        
+        if (tierIds.length > 0) {
+          const { data: tiers } = await supabase
+            .from('supporter_tiers')
+            .select('id, name, price_cents')
+            .in('id', tierIds);
+          
+          tiers?.forEach(t => tierMap.set(t.id, { name: t.name, price_cents: t.price_cents }));
+        }
+
+        const subsWithTiers = (data || []).map(sub => ({
+          ...sub,
+          tierInfo: sub.tier_id ? tierMap.get(sub.tier_id) : null
+        }));
+
+        setSubscriptions(subsWithTiers);
       } catch (error) {
         console.error('Error fetching subscriptions:', error);
       } finally {
@@ -102,14 +128,10 @@ export function ManageSubscriptionCard() {
               <div>
                 <h4 className="font-semibold">{sub.artist.artist_name}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  {sub.tier === 'gold' ? (
-                    <Crown className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Star className="h-4 w-4 text-primary" />
-                  )}
-                  <Badge variant={sub.tier === 'gold' ? 'default' : 'secondary'}>
-                    {sub.tier === 'gold' ? 'Gold' : 'Basic'} Supporter
-                  </Badge>
+                  <PaidSupporterBadge 
+                    tier={sub.tier as 'basic' | 'gold'} 
+                    tierName={sub.tierInfo?.name}
+                  />
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Renews {new Date(sub.current_period_end).toLocaleDateString()}
@@ -137,7 +159,7 @@ export function ManageSubscriptionCard() {
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  window.open(`/artist/${sub.artist.id}`, '_blank');
+                  window.open(`/artist/${sub.artist.user_id}`, '_blank');
                 }}
               >
                 <ExternalLink className="h-4 w-4" />
@@ -151,7 +173,9 @@ export function ManageSubscriptionCard() {
             <span className="text-muted-foreground">Total monthly support:</span>
             <span className="font-semibold">
               {subscriptions.reduce((sum, sub) => {
-                const amount = sub.tier === 'gold' ? 99 : 49;
+                const amount = sub.tierInfo?.price_cents 
+                  ? sub.tierInfo.price_cents / 100 
+                  : (sub.tier === 'gold' ? 99 : 49);
                 return sum + amount;
               }, 0)} kr
             </span>

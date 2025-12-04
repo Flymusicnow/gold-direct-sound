@@ -6,6 +6,7 @@ import { Heart, Reply, Trash2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
+import { PaidSupporterBadge } from "@/components/supporter/PaidSupporterBadge";
 import { z } from "zod";
 
 const commentSchema = z.object({
@@ -30,9 +31,10 @@ interface CommentItemProps {
   artistId: string;
   isArtistComment?: boolean;
   supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
+  paidTier?: 'basic' | 'gold' | null;
 }
 
-export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none' }: CommentItemProps) => {
+export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState<any[]>([]);
@@ -148,7 +150,10 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />
             )}
-            {!isArtistComment && supporterLevel && supporterLevel !== 'none' && (
+            {!isArtistComment && paidTier && (
+              <PaidSupporterBadge tier={paidTier} variant="mini" />
+            )}
+            {!isArtistComment && !paidTier && supporterLevel && supporterLevel !== 'none' && (
               <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-sm text-muted-foreground">
