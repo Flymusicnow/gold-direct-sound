@@ -16,7 +16,7 @@ interface VideoCollectionCardProps {
 
 export function VideoCollectionCard({ collection, artistUserId }: VideoCollectionCardProps) {
   return (
-    <Link to={`/artist/${artistUserId}?collection=${collection.id}`}>
+    <Link to={`/collection/${collection.id}`}>
       <Card className="group hover:border-primary/50 transition-all cursor-pointer overflow-hidden">
         <div className="relative aspect-video bg-gradient-to-br from-primary/5 to-primary/10">
           {collection.cover_url ? (

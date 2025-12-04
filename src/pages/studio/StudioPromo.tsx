@@ -128,21 +128,25 @@ export default function StudioPromo() {
         <StudioSidebar />
         <main className="flex-1 p-4 md:p-8 pb-32 md:pb-28">
           <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-                  <Link2 className="h-7 w-7 text-primary" />
-                  Promo Links
-                  <InfoTooltip 
-                    title="Promo Links" 
-                    description="Create trackable links to promote your music on social media. See which platforms drive the most engagement." 
-                  />
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  Track and optimize your promotional campaigns
-                </p>
+            <div className="flex flex-col gap-4 mb-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                    <Link2 className="h-7 w-7 text-primary" />
+                    Promo Links
+                    <InfoTooltip 
+                      title="Promo Links" 
+                      description="Create trackable links to promote your music on social media. See which platforms drive the most engagement." 
+                    />
+                  </h1>
+                  <p className="text-muted-foreground mt-1">
+                    Track and optimize your promotional campaigns
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <CreatePromoLinkDialog onCreated={fetchData} />
+                </div>
               </div>
-              <CreatePromoLinkDialog onCreated={fetchData} />
             </div>
 
             {/* Stats Overview */}

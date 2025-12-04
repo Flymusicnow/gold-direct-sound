@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useSupportScore } from '@/hooks/useSupportScore';
 import { useVideoPlayback } from './VideoPlaybackContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface FlightdeckItem {
   id: string;
@@ -54,13 +55,20 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
 
   const currentItem = currentIndex >= 0 && currentIndex < queue.length ? queue[currentIndex] : null;
 
-  // Track plays for support score
+  // Track plays for support score and increment play count
   useEffect(() => {
     if (currentItem && isPlaying && currentItem.id !== lastPlayedRef.current) {
       lastPlayedRef.current = currentItem.id;
       // Update support score for play
       if (currentItem.artistId) {
         updateSupportScore(currentItem.artistId, 'play_track');
+      }
+      // Increment play count for tracks
+      if (currentItem.type === 'track') {
+        supabase.rpc('increment_play_count', { track_id: currentItem.id })
+          .then(({ error }) => {
+            if (error) console.error('Error incrementing play count:', error);
+          });
       }
     }
   }, [currentItem, isPlaying, updateSupportScore]);
