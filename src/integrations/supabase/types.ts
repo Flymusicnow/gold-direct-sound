@@ -536,6 +536,41 @@ export type Database = {
           },
         ]
       }
+      artist_shoutouts: {
+        Row: {
+          artist_id: string
+          created_at: string
+          id: string
+          message: string | null
+          shoutout_type: string
+          supporter_ids: string[] | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          shoutout_type?: string
+          supporter_ids?: string[] | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          shoutout_type?: string
+          supporter_ids?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_shoutouts_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_stripe_accounts: {
         Row: {
           artist_id: string
@@ -708,6 +743,68 @@ export type Database = {
         }
         Relationships: []
       }
+      boost_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          last_reset_at: string
+          tokens_available: number
+          tokens_used_this_week: number
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          tokens_available?: number
+          tokens_used_this_week?: number
+          user_id: string
+          week_start?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          tokens_available?: number
+          tokens_used_this_week?: number
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      boost_usage: {
+        Row: {
+          artist_id: string
+          boost_type: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          artist_id: string
+          boost_type?: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          artist_id?: string
+          boost_type?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boost_usage_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comment_likes: {
         Row: {
           comment_id: string
@@ -782,6 +879,76 @@ export type Database = {
           },
         ]
       }
+      crowd_push_participants: {
+        Row: {
+          crowd_push_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          crowd_push_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          crowd_push_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crowd_push_participants_crowd_push_id_fkey"
+            columns: ["crowd_push_id"]
+            isOneToOne: false
+            referencedRelation: "crowd_pushes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crowd_pushes: {
+        Row: {
+          activated_at: string | null
+          artist_id: string
+          created_at: string
+          current_supporters: number
+          expires_at: string
+          id: string
+          status: string
+          target_supporters: number
+        }
+        Insert: {
+          activated_at?: string | null
+          artist_id: string
+          created_at?: string
+          current_supporters?: number
+          expires_at?: string
+          id?: string
+          status?: string
+          target_supporters?: number
+        }
+        Update: {
+          activated_at?: string | null
+          artist_id?: string
+          created_at?: string
+          current_supporters?: number
+          expires_at?: string
+          id?: string
+          status?: string
+          target_supporters?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crowd_pushes_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fan_achievements: {
         Row: {
           achievement_key: string
@@ -803,6 +970,48 @@ export type Database = {
           id?: string
           meta?: Json | null
           unlocked_at?: string
+        }
+        Relationships: []
+      }
+      fan_monthly_wraps: {
+        Row: {
+          artists_discovered: number | null
+          generated_at: string
+          id: string
+          month: number
+          spotlight_votes_cast: number | null
+          top_artists: Json | null
+          top_tracks: Json | null
+          total_plays: number | null
+          total_xp_earned: number | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          artists_discovered?: number | null
+          generated_at?: string
+          id?: string
+          month: number
+          spotlight_votes_cast?: number | null
+          top_artists?: Json | null
+          top_tracks?: Json | null
+          total_plays?: number | null
+          total_xp_earned?: number | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          artists_discovered?: number | null
+          generated_at?: string
+          id?: string
+          month?: number
+          spotlight_votes_cast?: number | null
+          top_artists?: Json | null
+          top_tracks?: Json | null
+          total_plays?: number | null
+          total_xp_earned?: number | null
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
@@ -1250,6 +1459,83 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      mission_completions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          mission_id: string
+          period_start: string
+          progress: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_id: string
+          period_start?: string
+          progress?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          mission_id?: string
+          period_start?: string
+          progress?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_completions_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean
+          mission_key: string
+          mission_type: string
+          target_count: number
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          mission_key: string
+          mission_type?: string
+          target_count?: number
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          mission_key?: string
+          mission_type?: string
+          target_count?: number
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
       }
       notifications: {
         Row: {
