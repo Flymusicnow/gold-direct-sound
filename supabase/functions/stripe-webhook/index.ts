@@ -11,6 +11,11 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
+};
+
 serve(async (req) => {
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
@@ -23,24 +28,68 @@ serve(async (req) => {
     
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret!);
 
-    console.log(`Webhook received: ${event.type}`);
+    logStep("Webhook received", { type: event.type });
 
     switch (event.type) {
+      // Handle Stripe Connect account updates
+      case "account.updated": {
+        const account = event.data.object as Stripe.Account;
+        logStep("Account updated", { accountId: account.id });
+
+        // Find the artist with this Stripe account
+        const { data: stripeAccount } = await supabaseAdmin
+          .from('artist_stripe_accounts')
+          .select('id, artist_id')
+          .eq('stripe_account_id', account.id)
+          .maybeSingle();
+
+        if (stripeAccount) {
+          // Determine status
+          let status = 'pending';
+          if (account.details_submitted && account.payouts_enabled) {
+            status = 'active';
+          } else if (account.details_submitted) {
+            status = 'restricted';
+          } else {
+            status = 'onboarding';
+          }
+
+          await supabaseAdmin
+            .from('artist_stripe_accounts')
+            .update({
+              status,
+              payouts_enabled: account.payouts_enabled,
+              details_submitted: account.details_submitted,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', stripeAccount.id);
+
+          logStep("Artist Stripe account updated", { 
+            artistId: stripeAccount.artist_id, 
+            status,
+            payoutsEnabled: account.payouts_enabled 
+          });
+        }
+        break;
+      }
+
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { fan_user_id, artist_id, tier } = session.metadata || {};
+        const { fan_user_id, artist_id, tier, tier_id } = session.metadata || {};
 
         if (!fan_user_id || !artist_id || !tier) {
           console.error("Missing metadata in checkout session");
           break;
         }
 
+        logStep("Processing checkout", { fan_user_id, artist_id, tier, tier_id });
+
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string
         );
 
-        // Create subscription record
-        await supabaseAdmin.from("supporter_subscriptions").insert({
+        // Create subscription record with tier_id if present
+        const subscriptionData: any = {
           fan_user_id,
           artist_id,
           tier,
@@ -50,33 +99,71 @@ serve(async (req) => {
           current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
           current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
           total_paid: session.amount_total ? session.amount_total / 100 : 0,
-        });
+        };
 
-        // Calculate artist payout (70%)
-        const amount = session.amount_total ? (session.amount_total / 100) * 0.7 : 0;
-        
-        // Get artist user_id
-        const { data: artist } = await supabaseAdmin
-          .from('artist_profiles')
-          .select('user_id')
-          .eq('id', artist_id)
+        if (tier_id) {
+          subscriptionData.tier_id = tier_id;
+        }
+
+        const { data: newSubscription, error: subError } = await supabaseAdmin
+          .from("supporter_subscriptions")
+          .insert(subscriptionData)
+          .select()
           .single();
 
-        if (artist) {
-          const { data: existingPayout } = await supabaseAdmin
-            .from("artist_payouts")
-            .select("amount_due")
-            .eq("artist_user_id", artist.user_id)
-            .maybeSingle();
+        if (subError) {
+          console.error("Error creating subscription:", subError);
+        }
 
-          await supabaseAdmin
-            .from("artist_payouts")
-            .upsert({
-              artist_user_id: artist.user_id,
-              amount_due: (existingPayout?.amount_due || 0) + amount,
-            }, {
-              onConflict: 'artist_user_id'
-            });
+        // Log initial payment to supporter_payments
+        if (newSubscription && session.amount_total) {
+          await supabaseAdmin.from("supporter_payments").insert({
+            subscription_id: newSubscription.id,
+            amount: session.amount_total / 100,
+            currency: session.currency?.toUpperCase() || 'SEK',
+            paid_at: new Date().toISOString(),
+            stripe_event_id: event.id,
+            type: 'subscription',
+          });
+        }
+
+        // Calculate artist payout (70% - only if no Connect, otherwise Stripe handles it)
+        const { data: stripeAccount } = await supabaseAdmin
+          .from('artist_stripe_accounts')
+          .select('payouts_enabled')
+          .eq('artist_id', artist_id)
+          .maybeSingle();
+
+        // Only track manual payout if artist doesn't have active Connect
+        if (!stripeAccount?.payouts_enabled) {
+          const amount = session.amount_total ? (session.amount_total / 100) * 0.7 : 0;
+          
+          const { data: artist } = await supabaseAdmin
+            .from('artist_profiles')
+            .select('user_id')
+            .eq('id', artist_id)
+            .single();
+
+          if (artist) {
+            const { data: existingPayout } = await supabaseAdmin
+              .from("artist_payouts")
+              .select("amount_due")
+              .eq("artist_user_id", artist.user_id)
+              .maybeSingle();
+
+            await supabaseAdmin
+              .from("artist_payouts")
+              .upsert({
+                artist_user_id: artist.user_id,
+                amount_due: (existingPayout?.amount_due || 0) + amount,
+              }, {
+                onConflict: 'artist_user_id'
+              });
+
+            logStep("Manual payout tracked", { artistUserId: artist.user_id, amount });
+          }
+        } else {
+          logStep("Stripe Connect handles payout automatically");
         }
 
         // Award XP bonus to fan_support_scores
@@ -99,7 +186,7 @@ serve(async (req) => {
             onConflict: 'fan_user_id,artist_id'
           });
 
-        console.log(`Subscription created for ${fan_user_id} supporting ${artist_id}`);
+        logStep("Subscription created", { fan_user_id, artist_id, xpBonus });
         break;
       }
 
@@ -117,7 +204,9 @@ serve(async (req) => {
 
         if (!subscription) break;
 
-        // Log payment
+        logStep("Processing invoice", { subscriptionId, amount: invoice.amount_paid });
+
+        // Log payment with full details
         await supabaseAdmin.from("supporter_payments").insert({
           subscription_id: subscription.id,
           amount: invoice.amount_paid / 100,
@@ -125,6 +214,7 @@ serve(async (req) => {
           paid_at: new Date(invoice.status_transitions.paid_at! * 1000).toISOString(),
           stripe_event_id: event.id,
           stripe_invoice_id: invoice.id,
+          type: 'subscription',
           raw: invoice,
         });
 
@@ -156,33 +246,41 @@ serve(async (req) => {
             onConflict: 'fan_user_id,artist_id'
           });
 
-        // Update artist earnings (70%)
-        const artistEarning = (invoice.amount_paid / 100) * 0.7;
-        
-        const { data: artist } = await supabaseAdmin
-          .from('artist_profiles')
-          .select('user_id')
-          .eq('id', subscription.artist_id)
-          .single();
+        // Update artist earnings (70%) - only if no Connect
+        const { data: stripeAccount } = await supabaseAdmin
+          .from('artist_stripe_accounts')
+          .select('payouts_enabled')
+          .eq('artist_id', subscription.artist_id)
+          .maybeSingle();
 
-        if (artist) {
-          const { data: existingPayout } = await supabaseAdmin
-            .from("artist_payouts")
-            .select("amount_due")
-            .eq("artist_user_id", artist.user_id)
-            .maybeSingle();
+        if (!stripeAccount?.payouts_enabled) {
+          const artistEarning = (invoice.amount_paid / 100) * 0.7;
+          
+          const { data: artist } = await supabaseAdmin
+            .from('artist_profiles')
+            .select('user_id')
+            .eq('id', subscription.artist_id)
+            .single();
 
-          await supabaseAdmin
-            .from("artist_payouts")
-            .upsert({
-              artist_user_id: artist.user_id,
-              amount_due: (existingPayout?.amount_due || 0) + artistEarning,
-            }, {
-              onConflict: 'artist_user_id'
-            });
+          if (artist) {
+            const { data: existingPayout } = await supabaseAdmin
+              .from("artist_payouts")
+              .select("amount_due")
+              .eq("artist_user_id", artist.user_id)
+              .maybeSingle();
+
+            await supabaseAdmin
+              .from("artist_payouts")
+              .upsert({
+                artist_user_id: artist.user_id,
+                amount_due: (existingPayout?.amount_due || 0) + artistEarning,
+              }, {
+                onConflict: 'artist_user_id'
+              });
+          }
         }
 
-        console.log(`Invoice paid for subscription ${subscriptionId}`);
+        logStep("Invoice processed", { subscriptionId });
         break;
       }
 
@@ -199,7 +297,7 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscriptionId);
 
-        console.log(`Payment failed for subscription ${subscriptionId}`);
+        logStep("Payment failed", { subscriptionId });
         break;
       }
 
@@ -215,7 +313,7 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscription.id);
 
-        console.log(`Subscription updated: ${subscription.id}`);
+        logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
         break;
       }
 
@@ -229,7 +327,7 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscription.id);
 
-        console.log(`Subscription canceled: ${subscription.id}`);
+        logStep("Subscription canceled", { subscriptionId: subscription.id });
         break;
       }
     }
