@@ -60,6 +60,8 @@ import FanPlaylists from "./pages/FanPlaylists";
 import PlaylistDetail from "./pages/PlaylistDetail";
 import FanSupporter from "./pages/FanSupporter";
 import FanAchievements from "./pages/FanAchievements";
+import FanMissions from "./pages/fan/FanMissions";
+import FanWrapped from "./pages/fan/FanWrapped";
 import Search from "./pages/Search";
 import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
@@ -248,6 +250,16 @@ const App = () => (
             <Route path="/fan/achievements" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanAchievements />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/missions" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanMissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/wrapped" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanWrapped />
               </ProtectedRoute>
             } />
             <Route path="/search" element={<Search />} />
