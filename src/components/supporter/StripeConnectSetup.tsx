@@ -80,8 +80,24 @@ export function StripeConnectSetup() {
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-            {error}
+          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 space-y-2">
+            <p className="text-destructive text-sm font-medium">
+              {error.includes('permission') || error.includes('API key') || error.includes('restricted') 
+                ? 'Stripe API-nyckel saknar behörigheter'
+                : 'Ett fel uppstod'}
+            </p>
+            <p className="text-destructive/80 text-xs">
+              {error}
+            </p>
+            {(error.includes('permission') || error.includes('API key') || error.includes('restricted') || error.includes('rak_')) && (
+              <div className="mt-2 p-3 rounded bg-muted/50 text-xs text-muted-foreground space-y-1">
+                <p className="font-medium">Möjliga lösningar:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Använd en full secret key (sk_live_...) istället för restricted key</li>
+                  <li>Eller lägg till "Connected Accounts" (Write) behörighet i Stripe Dashboard</li>
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
