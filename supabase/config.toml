@@ -5,3 +5,15 @@ verify_jwt = true
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.customer-portal]
+verify_jwt = true
+
+[functions.check-spotlight-ranks]
+verify_jwt = false
+
+[functions.stripe-connect-onboard]
+verify_jwt = true
+
+[functions.stripe-connect-refresh]
+verify_jwt = true
