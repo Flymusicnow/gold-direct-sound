@@ -3,9 +3,11 @@ import { Music, User, LogOut, Menu, Mic2, Heart, Search } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +17,7 @@ import {
 
 export const Navigation = () => {
   const { user, profile, signOut, refreshProfile, hasRole } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -49,36 +52,37 @@ export const Navigation = () => {
 
         <div className="hidden md:flex items-center gap-6">
           <Link to="/explore" className="text-foreground/80 hover:text-primary transition-colors">
-            Explore Artists
+            {t('nav.explore')}
           </Link>
           <Link to="/search" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
             <Search className="h-4 w-4" />
-            Search
+            {t('nav.search')}
           </Link>
           
           {user ? (
             <>
               {hasRole('artist') && (
                 <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
-                  My Studio
+                  {t('nav.myStudio')}
                 </Link>
               )}
               {hasRole('fan') && (
                 <>
                   <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
-                    Fan Portal
+                    {t('nav.fanPortal')}
                   </Link>
                   <Link to="/fan/feed" className="text-foreground/80 hover:text-primary transition-colors">
-                    Feed
+                    {t('nav.feed')}
                   </Link>
                 </>
               )}
               {hasRole('admin') && (
                 <Link to="/admin" className="text-foreground/80 hover:text-primary transition-colors">
-                  Admin
+                  {t('nav.admin')}
                 </Link>
               )}
               
+              <LanguageSwitcher />
               <NotificationBell />
               
               <DropdownMenu>
@@ -90,15 +94,16 @@ export const Navigation = () => {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    {t('nav.signOut')}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
           ) : (
             <div className="flex items-center gap-3">
+              <LanguageSwitcher />
               <Button variant="ghost" onClick={() => navigate('/auth')}>
-                Sign In
+                {t('nav.signIn')}
               </Button>
               <Button 
                 variant="ghost" 
@@ -106,14 +111,14 @@ export const Navigation = () => {
                 onClick={() => navigate('/auth?mode=fan')}
               >
                 <Heart className="h-4 w-4 mr-1" />
-                Fan
+                {t('nav.joinFan')}
               </Button>
               <Button 
                 className="bg-gradient-gold" 
                 onClick={() => navigate('/auth?mode=artist')}
               >
                 <Mic2 className="h-4 w-4 mr-1" />
-                Artist
+                {t('nav.joinArtist')}
               </Button>
             </div>
           )}
