@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 
 export default function FanSettings() {
   const { user, profile, refreshProfile } = useAuth();
@@ -112,6 +113,11 @@ export default function FanSettings() {
             </Button>
           </form>
         </Card>
+
+        {/* Legal Documents Section */}
+        <div className="mt-8">
+          <LegalSettingsSection isArtist={false} isBrand={false} />
+        </div>
         </div>
       </div>
       {isMobile && <BottomNavBarFan />}
