@@ -11,7 +11,7 @@ interface SwipeBackOptions {
 
 export function useSwipeBack({
   threshold = 100,
-  edgeWidth = 30,
+  edgeWidth = 50,
   enabled = true,
   onSwipeProgress,
 }: SwipeBackOptions = {}) {

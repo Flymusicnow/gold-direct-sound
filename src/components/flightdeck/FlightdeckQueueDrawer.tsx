@@ -1,4 +1,5 @@
-import { GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1, Trash2 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
@@ -23,16 +24,24 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface QueueItemProps {
   item: FlightdeckItem;
   isCurrent: boolean;
+  isLiked: boolean;
+  onToggleLike: () => void;
+  onRemove: () => void;
 }
 
-function QueueItem({ item, isCurrent }: QueueItemProps) {
+function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: item.id,
   });
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const startX = useRef(0);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -46,50 +55,100 @@ function QueueItem({ item, isCurrent }: QueueItemProps) {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "flex items-center gap-3 p-3 rounded-lg transition-all",
-        isCurrent 
-          ? "bg-primary/10 border border-primary/50" 
-          : "bg-card"
-      )}
-    >
-      <button 
-        {...attributes}
-        {...listeners} 
-        className="cursor-grab active:cursor-grabbing touch-none"
-      >
-        <GripVertical className="h-5 w-5 text-muted-foreground" />
-      </button>
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isCurrent) return; // Don't allow removing current item
+    startX.current = e.touches[0].clientX;
+  };
 
-      {item.coverUrl ? (
-        <img
-          src={item.coverUrl}
-          alt={item.title}
-          className="w-12 h-12 rounded object-cover border border-border"
-        />
-      ) : (
-        <div className="w-12 h-12 rounded bg-muted flex items-center justify-center border border-border">
-          <Music className="h-5 w-5 text-muted-foreground" />
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isCurrent) return;
+    const diff = startX.current - e.touches[0].clientX;
+    if (diff > 0) {
+      setSwipeOffset(Math.min(diff, 80));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeOffset > 60) {
+      onRemove();
+    }
+    setSwipeOffset(0);
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-lg">
+      {/* Delete button behind */}
+      {!isCurrent && (
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-destructive flex items-center justify-center rounded-r-lg">
+          <Trash2 className="h-5 w-5 text-destructive-foreground" />
         </div>
       )}
+      
+      <div
+        ref={setNodeRef}
+        style={{ 
+          ...style, 
+          transform: `translateX(-${swipeOffset}px) ${style.transform || ''}`,
+        }}
+        className={cn(
+          "flex items-center gap-3 p-3 transition-all bg-card",
+          isCurrent 
+            ? "bg-primary/10 border border-primary/50" 
+            : ""
+        )}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <button 
+          {...attributes}
+          {...listeners} 
+          className="cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical className="h-5 w-5 text-muted-foreground" />
+        </button>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{item.title}</p>
-        <p className="text-sm text-muted-foreground truncate">{item.artistName}</p>
-        {formatDuration(item.duration) && (
-          <p className="text-xs text-muted-foreground mt-0.5">{formatDuration(item.duration)}</p>
+        {item.coverUrl ? (
+          <img
+            src={item.coverUrl}
+            alt={item.title}
+            className="w-12 h-12 rounded object-cover border border-border"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center border border-border">
+            <Music className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">{item.title}</p>
+          <p className="text-sm text-muted-foreground truncate">{item.artistName}</p>
+          {formatDuration(item.duration) && (
+            <p className="text-xs text-muted-foreground mt-0.5">{formatDuration(item.duration)}</p>
+          )}
+        </div>
+
+        {/* Like button */}
+        {item.type === 'track' && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleLike();
+            }}
+            className={cn("h-8 w-8", isLiked && "text-red-500")}
+          >
+            <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+          </Button>
+        )}
+
+        {isCurrent && (
+          <div className="text-xs font-medium text-primary uppercase tracking-wide shrink-0">
+            Playing
+          </div>
         )}
       </div>
-
-      {isCurrent && (
-        <div className="text-xs font-medium text-primary uppercase tracking-wide shrink-0">
-          Playing
-        </div>
-      )}
     </div>
   );
 }
@@ -122,12 +181,58 @@ export function FlightdeckQueueDrawer({
     currentItem, 
     currentIndex,
     isPlaying,
+    shuffleEnabled,
+    repeatMode,
     setQueue, 
     clearQueue,
     togglePlay,
     playNext,
     playPrev,
+    toggleShuffle,
+    cycleRepeat,
+    removeFromQueue,
   } = useFlightdeck();
+
+  const { user } = useAuth();
+  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
+
+  // Fetch likes for all tracks in queue
+  useEffect(() => {
+    if (!user || queue.length === 0) return;
+    
+    const trackIds = queue.filter(i => i.type === 'track').map(i => i.id);
+    if (trackIds.length === 0) return;
+    
+    supabase
+      .from('likes')
+      .select('track_id')
+      .eq('user_id', user.id)
+      .in('track_id', trackIds)
+      .then(({ data }) => {
+        const map: Record<string, boolean> = {};
+        data?.forEach(like => { map[like.track_id] = true; });
+        setLikedTracks(map);
+      });
+  }, [user, queue]);
+
+  const handleToggleLike = async (trackId: string, artistId: string) => {
+    if (!user) {
+      toast.error("Please sign in to like tracks");
+      return;
+    }
+
+    const isCurrentlyLiked = likedTracks[trackId];
+    
+    if (isCurrentlyLiked) {
+      await supabase.from('likes').delete().eq('user_id', user.id).eq('track_id', trackId);
+      setLikedTracks(prev => ({ ...prev, [trackId]: false }));
+      toast.success("Removed from likes");
+    } else {
+      await supabase.from('likes').insert({ user_id: user.id, track_id: trackId });
+      setLikedTracks(prev => ({ ...prev, [trackId]: true }));
+      toast.success("Added to likes");
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -195,7 +300,7 @@ export function FlightdeckQueueDrawer({
                   )}
                 </Link>
 
-                {/* Track Info */}
+                {/* Track Info with Like */}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-base truncate">{currentItem.title}</h3>
                   <Link 
@@ -205,6 +310,18 @@ export function FlightdeckQueueDrawer({
                     {currentItem.artistName}
                   </Link>
                 </div>
+
+                {/* Like button for current item */}
+                {currentItem.type === 'track' && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleToggleLike(currentItem.id, currentItem.artistId)}
+                    className={cn("h-10 w-10", likedTracks[currentItem.id] && "text-red-500")}
+                  >
+                    <Heart className={cn("h-5 w-5", likedTracks[currentItem.id] && "fill-current")} />
+                  </Button>
+                )}
               </div>
 
               {/* Progress Bar */}
@@ -222,8 +339,18 @@ export function FlightdeckQueueDrawer({
                 </div>
               </div>
 
-              {/* Playback Controls */}
-              <div className="flex items-center justify-center gap-3">
+              {/* Playback Controls with Shuffle & Repeat */}
+              <div className="flex items-center justify-center gap-2">
+                {/* Shuffle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleShuffle}
+                  className={cn("h-10 w-10", shuffleEnabled && "text-primary")}
+                >
+                  <Shuffle className="h-5 w-5" />
+                </Button>
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -244,25 +371,35 @@ export function FlightdeckQueueDrawer({
                   variant="ghost"
                   size="icon"
                   onClick={playNext}
-                  disabled={currentIndex === queue.length - 1}
+                  disabled={currentIndex === queue.length - 1 && repeatMode === 'off'}
                   className="h-10 w-10"
                 >
                   <SkipForward className="h-5 w-5" />
                 </Button>
 
-                {/* Volume inline */}
-                <div className="flex items-center gap-2 ml-2">
-                  <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-10 w-10">
-                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                  </Button>
-                  <Slider
-                    value={[isMuted ? 0 : volume]}
-                    max={1}
-                    step={0.01}
-                    onValueChange={onVolumeChange}
-                    className="w-20"
-                  />
-                </div>
+                {/* Repeat */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={cycleRepeat}
+                  className={cn("h-10 w-10", repeatMode !== 'off' && "text-primary")}
+                >
+                  {repeatMode === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
+                </Button>
+              </div>
+
+              {/* Volume inline */}
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-10 w-10">
+                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                </Button>
+                <Slider
+                  value={[isMuted ? 0 : volume]}
+                  max={1}
+                  step={0.01}
+                  onValueChange={onVolumeChange}
+                  className="w-24"
+                />
               </div>
             </div>
           )}
@@ -274,7 +411,7 @@ export function FlightdeckQueueDrawer({
               <div>
                 <h3 className="font-semibold text-sm">Up Next</h3>
                 <p className="text-xs text-muted-foreground">
-                  {queue.length} {queue.length === 1 ? "item" : "items"}
+                  {queue.length} {queue.length === 1 ? "item" : "items"} • Swipe left to remove
                 </p>
               </div>
             </div>
@@ -302,6 +439,9 @@ export function FlightdeckQueueDrawer({
                           key={item.id}
                           item={item}
                           isCurrent={currentItem?.id === item.id}
+                          isLiked={likedTracks[item.id] || false}
+                          onToggleLike={() => handleToggleLike(item.id, item.artistId)}
+                          onRemove={() => removeFromQueue(item.id)}
                         />
                       ))}
                     </SortableContext>
