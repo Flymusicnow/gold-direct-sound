@@ -47,6 +47,9 @@ import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
 import AdminBetaCodes from "./pages/admin/AdminBetaCodes";
 import AdminPayouts from "./pages/admin/AdminPayouts";
 import AdminFeatures from "./pages/admin/AdminFeatures";
+import AdminCollabEntities from "./pages/admin/AdminCollabEntities";
+import AdminCollabEntityEdit from "./pages/admin/AdminCollabEntityEdit";
+import AdminMatching from "./pages/admin/AdminMatching";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -221,6 +224,9 @@ const App = () => (
             <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
             <Route path="/admin/payouts" element={<AdminPayouts />} />
             <Route path="/admin/features" element={<AdminFeatures />} />
+            <Route path="/admin/collab-entities" element={<AdminCollabEntities />} />
+            <Route path="/admin/collab-entities/:id" element={<AdminCollabEntityEdit />} />
+            <Route path="/admin/matching" element={<AdminMatching />} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
