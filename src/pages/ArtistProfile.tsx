@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useFlightdeck } from "@/contexts/FlightdeckContext";
-import { Award, Music, ShoppingBag, Crown } from "lucide-react";
+import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
+import { Award, Music, ShoppingBag, Crown, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,8 +57,38 @@ interface Track {
 export default function ArtistProfile() {
   const { userId } = useParams();
   const { user } = useAuth();
-  const { playNow } = useFlightdeck();
+  const { playNow, addToQueue, setQueue } = useFlightdeck();
   const isMobile = useIsMobile();
+
+  // Helper to convert track to FlightdeckItem
+  const trackToFlightdeckItem = (track: Track): FlightdeckItem => ({
+    id: track.id,
+    type: 'track',
+    title: track.title,
+    artistId: artist?.id || '',
+    artistName: artist?.artist_name || '',
+    artistUserId: artist?.user_id || '',
+    mediaUrl: track.audio_url,
+    coverUrl: track.cover_url || undefined,
+  });
+
+  const handlePlayAll = () => {
+    if (tracks.length === 0 || !artist) return;
+    const allItems = tracks.map(trackToFlightdeckItem);
+    setQueue(allItems, 0);
+    toast.success(`Playing ${tracks.length} tracks`);
+  };
+
+  const handlePlayTrack = (track: Track) => {
+    if (!artist) return;
+    const item = trackToFlightdeckItem(track);
+    const context = tracks.map(trackToFlightdeckItem);
+    playNow(item, context);
+  };
+
+  const handleAddToQueue = (track: Track) => {
+    addToQueue(trackToFlightdeckItem(track));
+  };
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -404,27 +434,32 @@ export default function ArtistProfile() {
                     variant="gold"
                   />
                 ) : (
-                  <div className="space-y-3">
-                    {tracks.map((track) => (
-                      <PremiumTrackCard
-                        key={track.id}
-                        track={track}
-                        artistName={artist.artist_name}
-                        isLiked={likedTracks[track.id]}
-                        onPlay={() => playNow({
-                          id: track.id,
-                          type: 'track',
-                          title: track.title,
-                          artistId: artist.id,
-                          artistName: artist.artist_name,
-                          artistUserId: artist.user_id,
-                          mediaUrl: track.audio_url,
-                          coverUrl: track.cover_url || undefined,
-                        })}
-                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                        showCollaborators={true}
-                      />
-                    ))}
+                  <div className="space-y-4">
+                    {/* Play All Button */}
+                    <div className="flex items-center gap-3">
+                      <Button 
+                        onClick={handlePlayAll}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Play All ({tracks.length})
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {tracks.map((track) => (
+                        <PremiumTrackCard
+                          key={track.id}
+                          track={track}
+                          artistName={artist.artist_name}
+                          isLiked={likedTracks[track.id]}
+                          onPlay={() => handlePlayTrack(track)}
+                          onAddToQueue={() => handleAddToQueue(track)}
+                          onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                          showCollaborators={true}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </TabsContent>

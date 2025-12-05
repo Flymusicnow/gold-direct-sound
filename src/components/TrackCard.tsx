@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Heart, Play, Music, ListMusic } from "lucide-react";
+import { Heart, Play, Music, ListMusic, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ interface TrackCardProps {
   artistName: string;
   isLiked?: boolean;
   onPlay: () => void;
+  onAddToQueue?: () => void;
   onLikeChange?: (isLiked: boolean) => void;
   showLikeButton?: boolean;
 }
@@ -25,7 +26,8 @@ export function TrackCard({
   track, 
   artistName, 
   isLiked = false, 
-  onPlay, 
+  onPlay,
+  onAddToQueue,
   onLikeChange,
   showLikeButton = true 
 }: TrackCardProps) {
@@ -120,15 +122,31 @@ export function TrackCard({
               }
               setPlaylistDialogOpen(true);
             }}
+            title="Add to playlist"
           >
             <ListMusic className="h-5 w-5" />
           </Button>
+          {onAddToQueue && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToQueue();
+              }}
+              title="Add to queue"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
             className="opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={handleLike}
             disabled={isUpdating}
+            title={liked ? "Unlike" : "Like"}
           >
             <Heart className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`} />
           </Button>
