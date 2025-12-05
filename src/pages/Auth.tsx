@@ -39,15 +39,16 @@ export default function Auth() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?reset=true`,
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 
-      if (error) throw error;
-
-      toast.success("Password reset email sent! Check your inbox.");
+      // Always show success message for security (don't reveal if email exists)
+      toast.success("Om ett konto finns med den här adressen har vi skickat ett mail med en länk.");
       setIsForgotPassword(false);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send reset email");
+      
+      if (error) {
+        console.error("Password reset error:", error);
+      }
     } finally {
       setLoading(false);
     }
@@ -146,24 +147,24 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">
-          <Button
-            variant="ghost"
+          <button
+            type="button"
             onClick={() => setIsForgotPassword(false)}
-            className="mb-6 gap-2"
+            className="mb-6 gap-2 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Sign In
-          </Button>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Tillbaka till inloggning
+          </button>
 
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Music className="h-8 w-8 text-primary" />
-              <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-                Reset Password
+            <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
+                Återställ lösenord
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Enter your email to receive a password reset link
+              Skriv in din e-postadress så skickar vi en länk om ett konto finns registrerat.
             </p>
           </div>
 
@@ -181,7 +182,7 @@ export default function Auth() {
             </div>
 
             <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-              {loading ? "Sending..." : "Send Reset Link"}
+              {loading ? "Skickar..." : "Skicka återställningslänk"}
             </Button>
           </form>
         </div>
