@@ -9,9 +9,10 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
+import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
 
 export default function FanSettings() {
   const { user, profile, refreshProfile } = useAuth();
@@ -112,6 +113,15 @@ export default function FanSettings() {
               {loading ? "Saving..." : "Save Changes"}
             </Button>
           </form>
+        </Card>
+
+        {/* Subscription & Billing Section */}
+        <Card className="p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            Subscription & Billing
+          </h3>
+          <BillingManagementCard userType="fan" />
         </Card>
 
         {/* Legal Documents Section */}

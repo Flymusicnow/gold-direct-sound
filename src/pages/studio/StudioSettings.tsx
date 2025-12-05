@@ -2,8 +2,9 @@ import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
+import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, User } from "lucide-react";
+import { Settings, User, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function StudioSettings() {
@@ -47,6 +48,19 @@ export default function StudioSettings() {
                 <label className="text-sm text-muted-foreground">Role</label>
                 <p className="font-medium capitalize">{profile?.role || "—"}</p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Billing & Subscription */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                Billing & Subscription
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BillingManagementCard userType="artist" />
             </CardContent>
           </Card>
 

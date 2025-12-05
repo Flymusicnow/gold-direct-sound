@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Music, User, Building2, Check, Sparkles } from "lucide-react";
+import { Music, User, Building2, Check, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const artistPlans = [
   {
@@ -176,12 +179,53 @@ const faqs = [
 
 const Pricing = () => {
   const [isYearly, setIsYearly] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const formatPrice = (price: number | null, yearly: boolean) => {
     if (price === null) return "Custom";
     if (price === 0) return "Free";
     return `${yearly ? Math.round(price / 12) : price} SEK`;
+  };
+
+  const handleSubscribe = async (planKey: string, cta: string) => {
+    // Free plans or contact sales - just navigate
+    if (planKey.includes('free') || planKey === 'brand_enterprise') {
+      if (planKey === 'brand_enterprise') {
+        window.location.href = 'mailto:partnerships@flymusic.se?subject=Brand%20Enterprise%20Inquiry';
+      } else {
+        navigate('/auth');
+      }
+      return;
+    }
+
+    // Not logged in - redirect to auth
+    if (!user) {
+      navigate(`/auth?redirect=/pricing`);
+      return;
+    }
+
+    setLoadingPlan(planKey);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
+        body: {
+          plan_key: planKey,
+          billing_interval: isYearly ? 'year' : 'month'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (err: any) {
+      console.error("Checkout error:", err);
+      toast.error(err.message || "Failed to start checkout. Please try again.");
+    } finally {
+      setLoadingPlan(null);
+    }
   };
 
   const renderPlanCard = (plan: typeof artistPlans[0], icon: React.ReactNode, userType: string) => (
@@ -229,9 +273,17 @@ const Pricing = () => {
         <Button 
           className={`w-full mt-6 ${plan.popular ? '' : 'variant-outline'}`}
           variant={plan.popular ? "default" : "outline"}
-          onClick={() => navigate("/auth")}
+          onClick={() => handleSubscribe(plan.key, plan.cta)}
+          disabled={loadingPlan === plan.key}
         >
-          {plan.cta}
+          {loadingPlan === plan.key ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            plan.cta
+          )}
         </Button>
       </CardContent>
     </Card>
