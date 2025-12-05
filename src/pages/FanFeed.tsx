@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
-import { useFlightdeck } from "@/contexts/FlightdeckContext";
+import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Video } from "lucide-react";
+import { Music, TrendingUp, Sparkles, Video, Play } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
@@ -20,6 +20,7 @@ import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
 import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMilestoneCard";
 import { VideoPostCard } from "@/components/feed/VideoPostCard";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { toast } from "sonner";
 
 interface NewTrack {
   id: string;
@@ -50,7 +51,7 @@ interface VideoPost {
 export default function FanFeed() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { playNow } = useFlightdeck();
+  const { playNow, addToQueue, setQueue } = useFlightdeck();
   const [newTracks, setNewTracks] = useState<NewTrack[]>([]);
   const [videoPosts, setVideoPosts] = useState<VideoPost[]>([]);
   const [followedGenres, setFollowedGenres] = useState<string[]>([]);
@@ -58,6 +59,36 @@ export default function FanFeed() {
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
+
+  // Helper to convert track to FlightdeckItem
+  const trackToFlightdeckItem = (track: NewTrack): FlightdeckItem => ({
+    id: track.id,
+    type: 'track',
+    title: track.title,
+    artistId: track.id,
+    artistName: track.artist_profiles.artist_name,
+    artistUserId: track.artist_profiles.user_id,
+    mediaUrl: track.audio_url,
+    coverUrl: track.cover_url || undefined,
+  });
+
+  const handlePlayAll = () => {
+    if (newTracks.length === 0) return;
+    const allItems = newTracks.map(trackToFlightdeckItem);
+    setQueue(allItems, 0);
+    toast.success(`Playing ${newTracks.length} tracks`);
+  };
+
+  const handlePlayTrack = (track: NewTrack) => {
+    const item = trackToFlightdeckItem(track);
+    const context = newTracks.map(trackToFlightdeckItem);
+    playNow(item, context);
+  };
+
+  const handleAddToQueue = (track: NewTrack) => {
+    addToQueue(trackToFlightdeckItem(track));
+    toast.success(`"${track.title}" added to queue`);
+  };
 
   useEffect(() => {
     if (!user) {
@@ -204,26 +235,31 @@ export default function FanFeed() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {newTracks.map((track) => (
-                    <TrackCard
-                      key={track.id}
-                      track={track}
-                      artistName={track.artist_profiles.artist_name}
-                      isLiked={likedTrackIds.has(track.id)}
-                      onPlay={() => playNow({
-                        id: track.id,
-                        type: 'track',
-                        title: track.title,
-                        artistId: track.id,
-                        artistName: track.artist_profiles.artist_name,
-                        artistUserId: track.artist_profiles.user_id,
-                        mediaUrl: track.audio_url,
-                        coverUrl: track.cover_url || undefined,
-                      })}
-                      onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                    />
-                  ))}
+                <div className="space-y-4">
+                  {/* Play All Button */}
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      onClick={handlePlayAll}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Play All ({newTracks.length})
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {newTracks.map((track) => (
+                      <TrackCard
+                        key={track.id}
+                        track={track}
+                        artistName={track.artist_profiles.artist_name}
+                        isLiked={likedTrackIds.has(track.id)}
+                        onPlay={() => handlePlayTrack(track)}
+                        onAddToQueue={() => handleAddToQueue(track)}
+                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
             </Card>

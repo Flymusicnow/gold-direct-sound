@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Play, Music, ListMusic, Lock } from "lucide-react";
+import { Heart, Play, Music, ListMusic, Lock, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ interface PremiumTrackCardProps {
   artistName: string;
   isLiked?: boolean;
   onPlay: () => void;
+  onAddToQueue?: () => void;
   onLikeChange?: (isLiked: boolean) => void;
   showCollaborators?: boolean;
 }
@@ -36,6 +37,7 @@ export function PremiumTrackCard({
   artistName,
   isLiked = false,
   onPlay,
+  onAddToQueue,
   onLikeChange,
   showCollaborators = false,
 }: PremiumTrackCardProps) {
@@ -240,9 +242,30 @@ export function PremiumTrackCard({
                   size="icon"
                   onClick={handlePlay}
                   disabled={accessLoading}
+                  title="Play now"
                 >
                   <Play className="h-5 w-5 text-primary fill-primary" />
                 </Button>
+                {onAddToQueue && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (track.is_supporter_only && !hasAccess) {
+                        setShowSupporterModal(true);
+                        return;
+                      }
+                      onAddToQueue();
+                      toast.success(`"${track.title}" added to queue`);
+                    }}
+                    disabled={accessLoading}
+                    title="Add to queue"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                )}
               </>
             )}
           </div>
