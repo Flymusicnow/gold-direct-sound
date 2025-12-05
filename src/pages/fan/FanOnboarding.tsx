@@ -82,7 +82,7 @@ export default function FanOnboarding() {
           onAccept={handleUserAgreementAccept}
           documentType="user_agreement"
           title="User Agreement"
-          documentPath="/src/legal/user-agreement.md"
+          documentPath="/legal/user-agreement.md"
         />
 
         <LegalAcceptanceModal
@@ -90,7 +90,7 @@ export default function FanOnboarding() {
           onAccept={handlePrivacyPolicyAccept}
           documentType="privacy_policy"
           title="Privacy Policy"
-          documentPath="/src/legal/privacy-policy.md"
+          documentPath="/legal/privacy-policy.md"
         />
       </div>
     );

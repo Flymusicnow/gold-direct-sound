@@ -19,7 +19,7 @@ export default function FanTerms() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/fan-terms.md"
+          documentPath="/legal/fan-terms.md"
           title="Fan Terms"
           lastUpdated="December 5, 2024"
         />
