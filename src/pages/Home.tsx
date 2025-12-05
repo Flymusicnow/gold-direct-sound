@@ -5,6 +5,7 @@ import heroImage from "@/assets/hero-music.jpg";
 import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -181,6 +182,8 @@ export default function Home() {
           </Button>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 }

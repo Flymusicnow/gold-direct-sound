@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2 } from "lucide-react";
+import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
@@ -21,6 +21,7 @@ const navItems = [
   { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
   { icon: Crown, label: "Membership", path: "/studio/subscription" },
   { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
+  { icon: Settings, label: "Settings", path: "/studio/settings" },
 ];
 
 export function StudioSidebar() {
