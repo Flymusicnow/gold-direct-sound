@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Save, X, Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Save, X, Plus, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { PresskitMediaManager } from "./PresskitMediaManager";
 
@@ -35,6 +36,12 @@ export function PresskitEditor({ artistId, presskit, onClose, onSave }: Presskit
     tech_info: presskit?.tech_info || '',
     brand_tags: presskit?.brand_tags || [],
     is_default: presskit?.is_default || false,
+    // V2 Fields
+    available_for: presskit?.available_for || [],
+    availability_notes: presskit?.availability_notes || '',
+    experience_level: presskit?.experience_level || 'emerging',
+    previous_collabs: presskit?.previous_collabs || '',
+    achievements_highlights: presskit?.achievements_highlights || '',
   });
 
   const [newTag, setNewTag] = useState('');
@@ -90,6 +97,12 @@ export function PresskitEditor({ artistId, presskit, onClose, onSave }: Presskit
         tech_info: formData.tech_info || null,
         brand_tags: formData.brand_tags,
         is_default: formData.is_default,
+        // V2 Fields
+        available_for: formData.available_for,
+        availability_notes: formData.availability_notes || null,
+        experience_level: formData.experience_level || 'emerging',
+        previous_collabs: formData.previous_collabs || null,
+        achievements_highlights: formData.achievements_highlights || null,
       };
 
       if (isEditing) {
@@ -119,6 +132,31 @@ export function PresskitEditor({ artistId, presskit, onClose, onSave }: Presskit
   });
 
   const popularTags = ['Electronic', 'Hip-Hop', 'Pop', 'R&B', 'Rock', 'Indie', 'DJ', 'Producer', 'Singer', 'Rapper'];
+  
+  const availableForOptions = [
+    { value: 'live_event', label: 'Live Events' },
+    { value: 'festival_slot', label: 'Festival Slots' },
+    { value: 'brand_campaign', label: 'Brand Campaigns' },
+    { value: 'sponsored_content', label: 'Sponsored Content' },
+    { value: 'ugc_content', label: 'UGC Content' },
+    { value: 'residency', label: 'Residencies' },
+    { value: 'any', label: 'Open to All Opportunities' },
+  ];
+
+  const experienceLevels = [
+    { value: 'emerging', label: 'Emerging Artist' },
+    { value: 'established', label: 'Established Artist' },
+    { value: 'professional', label: 'Professional / Touring' },
+  ];
+
+  const toggleAvailableFor = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      available_for: prev.available_for.includes(value)
+        ? prev.available_for.filter((v: string) => v !== value)
+        : [...prev.available_for, value],
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -275,6 +313,95 @@ export function PresskitEditor({ artistId, presskit, onClose, onSave }: Presskit
                     value={formData.tech_info}
                     onChange={(e) => setFormData(prev => ({ ...prev, tech_info: e.target.value }))}
                     placeholder="Equipment, stage requirements, hospitality needs..."
+                    rows={4}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* V2: Availability & Booking */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Availability & Booking</CardTitle>
+                <CardDescription>Let brands know what you're open to</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Available For</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {availableForOptions.map((option) => (
+                      <Badge
+                        key={option.value}
+                        variant={formData.available_for.includes(option.value) ? "default" : "outline"}
+                        className="cursor-pointer transition-colors"
+                        onClick={() => toggleAvailableFor(option.value)}
+                      >
+                        {formData.available_for.includes(option.value) && (
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                        )}
+                        {option.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="availability_notes">Availability Notes</Label>
+                  <Textarea
+                    id="availability_notes"
+                    value={formData.availability_notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, availability_notes: e.target.value }))}
+                    placeholder="Touring schedule, availability windows, restrictions..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* V2: Professional Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Professional Details</CardTitle>
+                <CardDescription>Showcase your experience and achievements</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="experience_level">Experience Level</Label>
+                  <Select 
+                    value={formData.experience_level} 
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, experience_level: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select experience level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {experienceLevels.map((level) => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="previous_collabs">Previous Collaborations</Label>
+                  <Textarea
+                    id="previous_collabs"
+                    value={formData.previous_collabs}
+                    onChange={(e) => setFormData(prev => ({ ...prev, previous_collabs: e.target.value }))}
+                    placeholder="Past brand partnerships, festival appearances, notable collaborations..."
+                    rows={4}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="achievements_highlights">Notable Achievements</Label>
+                  <Textarea
+                    id="achievements_highlights"
+                    value={formData.achievements_highlights}
+                    onChange={(e) => setFormData(prev => ({ ...prev, achievements_highlights: e.target.value }))}
+                    placeholder="Awards, chart positions, streaming milestones, press features..."
                     rows={4}
                   />
                 </div>

@@ -449,15 +449,20 @@ export type Database = {
       }
       artist_presskits: {
         Row: {
+          achievements_highlights: string | null
           artist_id: string
+          availability_notes: string | null
+          available_for: string[] | null
           bio_long: string | null
           bio_short: string | null
           brand_tags: string[] | null
           contact_email: string | null
           created_at: string | null
+          experience_level: string | null
           id: string
           is_default: boolean | null
           location: string | null
+          previous_collabs: string | null
           slug: string
           tagline: string | null
           tech_info: string | null
@@ -465,15 +470,20 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          achievements_highlights?: string | null
           artist_id: string
+          availability_notes?: string | null
+          available_for?: string[] | null
           bio_long?: string | null
           bio_short?: string | null
           brand_tags?: string[] | null
           contact_email?: string | null
           created_at?: string | null
+          experience_level?: string | null
           id?: string
           is_default?: boolean | null
           location?: string | null
+          previous_collabs?: string | null
           slug: string
           tagline?: string | null
           tech_info?: string | null
@@ -481,15 +491,20 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          achievements_highlights?: string | null
           artist_id?: string
+          availability_notes?: string | null
+          available_for?: string[] | null
           bio_long?: string | null
           bio_short?: string | null
           brand_tags?: string[] | null
           contact_email?: string | null
           created_at?: string | null
+          experience_level?: string | null
           id?: string
           is_default?: boolean | null
           location?: string | null
+          previous_collabs?: string | null
           slug?: string
           tagline?: string | null
           tech_info?: string | null
@@ -3027,6 +3042,10 @@ export type Database = {
     Functions: {
       calculate_artist_match_score: {
         Args: { _artist_id: string; _collab_entity_id: string }
+        Returns: Json
+      }
+      calculate_opportunity_match_score: {
+        Args: { _artist_id: string; _opportunity_id: string }
         Returns: Json
       }
       calculate_taste_score: {

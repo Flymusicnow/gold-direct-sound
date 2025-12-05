@@ -19,7 +19,11 @@ import {
   Video,
   FileImage,
   Loader2,
-  ArrowLeft
+  ArrowLeft,
+  Calendar,
+  Briefcase,
+  Star,
+  Award
 } from "lucide-react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
@@ -247,6 +251,58 @@ export default function PublicPresskit() {
               </section>
             )}
 
+            {/* V2: Availability & Booking */}
+            {(presskit.available_for?.length > 0 || presskit.availability_notes) && (
+              <section>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Availability
+                </h2>
+                {presskit.available_for?.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {presskit.available_for.map((item: string) => (
+                      <Badge key={item} variant="outline" className="capitalize">
+                        {item.replace('_', ' ')}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                {presskit.availability_notes && (
+                  <p className="text-muted-foreground">{presskit.availability_notes}</p>
+                )}
+              </section>
+            )}
+
+            {/* V2: Previous Collaborations */}
+            {presskit.previous_collabs && (
+              <section>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5 text-primary" />
+                  Previous Collaborations
+                </h2>
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="whitespace-pre-wrap text-muted-foreground">{presskit.previous_collabs}</p>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
+            {/* V2: Achievements */}
+            {presskit.achievements_highlights && (
+              <section>
+                <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" />
+                  Notable Achievements
+                </h2>
+                <Card>
+                  <CardContent className="pt-6">
+                    <p className="whitespace-pre-wrap text-muted-foreground">{presskit.achievements_highlights}</p>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
             {/* Photos */}
             {photoMedia.length > 0 && (
               <section>
@@ -337,6 +393,23 @@ export default function PublicPresskit() {
                 </Link>
               </CardContent>
             </Card>
+
+            {/* Experience Level */}
+            {presskit.experience_level && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Star className="h-4 w-4 text-primary" />
+                    Experience
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Badge variant="secondary" className="capitalize">
+                    {presskit.experience_level} Artist
+                  </Badge>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Recent Tracks */}
             {tracks.length > 0 && (
