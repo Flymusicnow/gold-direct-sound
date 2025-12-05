@@ -13,6 +13,7 @@ import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/auth/ResetPassword";
 import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
 import StudioDashboard from "./pages/studio/StudioDashboard";
@@ -112,6 +113,7 @@ const App = () => (
                 <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
