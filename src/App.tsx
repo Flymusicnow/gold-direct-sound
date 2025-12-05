@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import BrandPortal from "./pages/BrandPortal";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -98,6 +99,7 @@ const App = () => (
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
+            <Route path="/brands" element={<BrandPortal />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
