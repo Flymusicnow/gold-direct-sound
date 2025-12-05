@@ -9,7 +9,7 @@ import { StatCard } from "@/components/StatCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic, Trophy } from "lucide-react";
+import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic, Trophy, FileText } from "lucide-react";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
@@ -600,8 +600,8 @@ export default function FanPortal() {
           />
         </Card>
 
-        {/* Settings Link */}
-        <div className="text-center">
+        {/* Settings & Legal Links */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Button
             variant="outline"
             onClick={() => navigate('/fan/settings')}
@@ -609,6 +609,14 @@ export default function FanPortal() {
           >
             <Settings className="h-4 w-4" />
             Account Settings
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/legal/user-agreement')}
+            className="gap-2 text-muted-foreground"
+          >
+            <FileText className="h-4 w-4" />
+            Legal & Privacy
           </Button>
         </div>
         </div>

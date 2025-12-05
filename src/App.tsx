@@ -31,6 +31,7 @@ import StudioEarnings from "./pages/studio/StudioEarnings";
 import StudioMerch from "./pages/studio/StudioMerch";
 import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import StudioPromo from "./pages/studio/StudioPromo";
+import StudioSettings from "./pages/studio/StudioSettings";
 import PromoPreview from "./pages/PromoPreview";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
@@ -200,6 +201,11 @@ const App = () => (
             <Route path="/studio/promo" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioPromo />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/settings" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioSettings />
               </ProtectedRoute>
             } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />

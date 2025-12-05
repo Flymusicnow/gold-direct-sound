@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Video, Calendar, BarChart3, MessageSquare, Users, ShoppingBag, Radio, Star, Crown, Menu, Search, X, FolderOpen, Sparkles } from "lucide-react";
+import { LayoutDashboard, User, Music, Video, Calendar, BarChart3, MessageSquare, Users, ShoppingBag, Radio, Star, Crown, Menu, Search, X, FolderOpen, Sparkles, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ const navItems = [
   { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
   { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
   { icon: Crown, label: "Membership", path: "/studio/subscription" },
+  { icon: Settings, label: "Settings", path: "/studio/settings" },
 ];
 
 interface MobileStudioNavProps {
