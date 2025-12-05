@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +59,10 @@ export const Navigation = () => {
           </Link>
           <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
             For Brands
+          </Link>
+          <Link to="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+            <CreditCard className="h-4 w-4" />
+            Pricing
           </Link>
           
           {user ? (
@@ -153,6 +157,10 @@ export const Navigation = () => {
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/brands')}>
                 For Brands
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/pricing')}>
+                <CreditCard className="h-4 w-4 mr-2" />
+                Pricing
               </DropdownMenuItem>
               {user ? (
                 <>

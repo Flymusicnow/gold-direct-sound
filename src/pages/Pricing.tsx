@@ -1,19 +1,21 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Music, User, Building2, Check, Sparkles, Loader2 } from "lucide-react";
+import { Music, User, Building2, Check, X, Sparkles, Loader2, Shield, Zap, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { PricingCard } from "@/components/premium/PricingCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserSubscription } from "@/hooks/useUserSubscription";
+import { STRIPE_PLANS } from "@/config/stripePlans";
 import { toast } from "sonner";
 
 const artistPlans = [
   {
     key: "artist_free",
-    name: "Free",
+    name: STRIPE_PLANS.artist_free.name,
     price: 0,
     yearlyPrice: 0,
     description: "Get started with the essentials",
@@ -29,9 +31,9 @@ const artistPlans = [
   },
   {
     key: "artist_pro",
-    name: "Pro",
-    price: 99,
-    yearlyPrice: 990,
+    name: STRIPE_PLANS.artist_pro.name,
+    price: STRIPE_PLANS.artist_pro.monthly.amount / 100,
+    yearlyPrice: STRIPE_PLANS.artist_pro.yearly.amount / 100,
     description: "Everything you need to grow",
     features: [
       "Unlimited track uploads",
@@ -47,9 +49,9 @@ const artistPlans = [
   },
   {
     key: "artist_elite",
-    name: "Elite",
-    price: 249,
-    yearlyPrice: 2490,
+    name: STRIPE_PLANS.artist_elite.name,
+    price: STRIPE_PLANS.artist_elite.monthly.amount / 100,
+    yearlyPrice: STRIPE_PLANS.artist_elite.yearly.amount / 100,
     description: "For serious artists",
     features: [
       "Everything in Pro",
@@ -68,7 +70,7 @@ const artistPlans = [
 const fanPlans = [
   {
     key: "fan_free",
-    name: "Free",
+    name: STRIPE_PLANS.fan_free.name,
     price: 0,
     yearlyPrice: 0,
     description: "Discover and support artists",
@@ -84,9 +86,9 @@ const fanPlans = [
   },
   {
     key: "fan_supporter",
-    name: "Supporter Pass",
-    price: 49,
-    yearlyPrice: 490,
+    name: STRIPE_PLANS.fan_supporter.name,
+    price: STRIPE_PLANS.fan_supporter.monthly.amount / 100,
+    yearlyPrice: STRIPE_PLANS.fan_supporter.yearly.amount / 100,
     description: "Unlock the full fan experience",
     features: [
       "Everything in Free",
@@ -105,7 +107,7 @@ const fanPlans = [
 const brandPlans = [
   {
     key: "brand_lite",
-    name: "Lite",
+    name: STRIPE_PLANS.brand_lite.name,
     price: 0,
     yearlyPrice: 0,
     description: "Explore artist partnerships",
@@ -120,9 +122,9 @@ const brandPlans = [
   },
   {
     key: "brand_pro",
-    name: "Pro",
-    price: 999,
-    yearlyPrice: 9990,
+    name: STRIPE_PLANS.brand_pro.name,
+    price: STRIPE_PLANS.brand_pro.monthly.amount ? STRIPE_PLANS.brand_pro.monthly.amount / 100 : 999,
+    yearlyPrice: STRIPE_PLANS.brand_pro.yearly.amount ? STRIPE_PLANS.brand_pro.yearly.amount / 100 : 9990,
     description: "Scale your artist partnerships",
     features: [
       "Everything in Lite",
@@ -137,7 +139,7 @@ const brandPlans = [
   },
   {
     key: "brand_enterprise",
-    name: "Enterprise",
+    name: STRIPE_PLANS.brand_enterprise.name,
     price: null,
     yearlyPrice: null,
     description: "Custom solutions for large organizations",
@@ -152,6 +154,16 @@ const brandPlans = [
     cta: "Contact Sales",
     popular: false
   }
+];
+
+const artistFeatureComparison = [
+  { feature: "Track uploads", free: "5", pro: "Unlimited", elite: "Unlimited" },
+  { feature: "Analytics", free: "Basic", pro: "Advanced", elite: "AI-powered" },
+  { feature: "Spotlight placement", free: "1/month", pro: "Priority", elite: "Featured" },
+  { feature: "Promo OS smart links", free: false, pro: true, elite: true },
+  { feature: "Presskit / EPK", free: false, pro: true, elite: "White-label" },
+  { feature: "Brand matching", free: false, pro: false, elite: true },
+  { feature: "Dedicated support", free: false, pro: false, elite: true },
 ];
 
 const faqs = [
@@ -182,11 +194,19 @@ const Pricing = () => {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { subscription, isLoading: subLoading } = useUserSubscription();
 
-  const formatPrice = (price: number | null, yearly: boolean) => {
-    if (price === null) return "Custom";
-    if (price === 0) return "Free";
-    return `${yearly ? Math.round(price / 12) : price} SEK`;
+  const isCurrentPlan = (planKey: string) => {
+    if (!subscription || subscription.tier === 'free') {
+      return planKey.includes('free');
+    }
+    // Map subscription tier to plan key
+    const tierToPlanKey: Record<string, string> = {
+      'pro': 'artist_pro',
+      'elite': 'artist_elite',
+      'supporter': 'fan_supporter',
+    };
+    return tierToPlanKey[subscription.tier] === planKey;
   };
 
   const handleSubscribe = async (planKey: string, cta: string) => {
@@ -228,66 +248,11 @@ const Pricing = () => {
     }
   };
 
-  const renderPlanCard = (plan: typeof artistPlans[0], icon: React.ReactNode, userType: string) => (
-    <Card 
-      key={plan.key}
-      className={`relative flex flex-col ${plan.popular ? 'border-primary ring-2 ring-primary/20' : 'border-border'}`}
-    >
-      {plan.popular && (
-        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
-          <Sparkles className="h-3 w-3 mr-1" />
-          Most Popular
-        </Badge>
-      )}
-      <CardHeader className="text-center pb-2">
-        <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-          {icon}
-        </div>
-        <CardTitle className="text-xl">{plan.name}</CardTitle>
-        <CardDescription>{plan.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
-        <div className="text-center mb-6">
-          <div className="text-4xl font-bold text-primary">
-            {formatPrice(isYearly ? plan.yearlyPrice : plan.price, isYearly)}
-          </div>
-          {plan.price !== null && plan.price > 0 && (
-            <div className="text-sm text-muted-foreground">
-              {isYearly ? "/year" : "/month"}
-            </div>
-          )}
-          {isYearly && plan.yearlyPrice && plan.price && plan.price > 0 && (
-            <Badge variant="secondary" className="mt-2">
-              Save {Math.round((1 - plan.yearlyPrice / (plan.price * 12)) * 100)}%
-            </Badge>
-          )}
-        </div>
-        <ul className="space-y-3 flex-1">
-          {plan.features.map((feature, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-        <Button 
-          className={`w-full mt-6 ${plan.popular ? '' : 'variant-outline'}`}
-          variant={plan.popular ? "default" : "outline"}
-          onClick={() => handleSubscribe(plan.key, plan.cta)}
-          disabled={loadingPlan === plan.key}
-        >
-          {loadingPlan === plan.key ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            plan.cta
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
+  const renderFeatureValue = (value: boolean | string) => {
+    if (value === true) return <Check className="h-4 w-4 text-primary mx-auto" />;
+    if (value === false) return <X className="h-4 w-4 text-muted-foreground/50 mx-auto" />;
+    return <span className="text-sm">{value}</span>;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -302,7 +267,7 @@ const Pricing = () => {
           </p>
           
           {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 sticky top-20 z-10 bg-background/80 backdrop-blur-sm py-3 md:static md:bg-transparent md:backdrop-blur-none">
             <span className={`text-sm ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
             <Switch
               checked={isYearly}
@@ -324,7 +289,57 @@ const Pricing = () => {
             <h2 className="text-2xl font-bold">Build your audience, your way</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {artistPlans.map(plan => renderPlanCard(plan, <Music className="h-6 w-6 text-primary" />, "artist"))}
+            {artistPlans.map(plan => (
+              <PricingCard
+                key={plan.key}
+                name={plan.name}
+                description={plan.description}
+                price={isYearly ? plan.yearlyPrice : plan.price}
+                period={isYearly ? "year" : "month"}
+                features={plan.features}
+                ctaText={loadingPlan === plan.key ? "Processing..." : plan.cta}
+                onCtaClick={() => handleSubscribe(plan.key, plan.cta)}
+                popular={plan.popular}
+                currentPlan={isCurrentPlan(plan.key)}
+                icon={<Music className="h-6 w-6 text-primary" />}
+                disabled={loadingPlan === plan.key || subLoading}
+              />
+            ))}
+          </div>
+
+          {/* Artist Feature Comparison */}
+          <div className="mt-8 max-w-4xl mx-auto">
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="artist-comparison">
+                <AccordionTrigger className="text-sm text-muted-foreground hover:text-foreground">
+                  Compare Artist Plans
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 font-medium">Feature</th>
+                          <th className="text-center py-3 px-4 font-medium">Free</th>
+                          <th className="text-center py-3 px-4 font-medium text-primary">Pro</th>
+                          <th className="text-center py-3 px-4 font-medium">Elite</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {artistFeatureComparison.map((row, i) => (
+                          <tr key={i} className="border-b border-border/50">
+                            <td className="py-3 px-4 text-muted-foreground">{row.feature}</td>
+                            <td className="py-3 px-4 text-center">{renderFeatureValue(row.free)}</td>
+                            <td className="py-3 px-4 text-center bg-primary/5">{renderFeatureValue(row.pro)}</td>
+                            <td className="py-3 px-4 text-center">{renderFeatureValue(row.elite)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </section>
 
@@ -338,7 +353,22 @@ const Pricing = () => {
             <h2 className="text-2xl font-bold">Get closer to the music you love</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {fanPlans.map(plan => renderPlanCard(plan, <User className="h-6 w-6 text-primary" />, "fan"))}
+            {fanPlans.map(plan => (
+              <PricingCard
+                key={plan.key}
+                name={plan.name}
+                description={plan.description}
+                price={isYearly ? plan.yearlyPrice : plan.price}
+                period={isYearly ? "year" : "month"}
+                features={plan.features}
+                ctaText={loadingPlan === plan.key ? "Processing..." : plan.cta}
+                onCtaClick={() => handleSubscribe(plan.key, plan.cta)}
+                popular={plan.popular}
+                currentPlan={isCurrentPlan(plan.key)}
+                icon={<User className="h-6 w-6 text-primary" />}
+                disabled={loadingPlan === plan.key || subLoading}
+              />
+            ))}
           </div>
         </section>
 
@@ -352,7 +382,40 @@ const Pricing = () => {
             <h2 className="text-2xl font-bold">Connect with authentic artists</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {brandPlans.map(plan => renderPlanCard(plan, <Building2 className="h-6 w-6 text-primary" />, "brand"))}
+            {brandPlans.map(plan => (
+              <PricingCard
+                key={plan.key}
+                name={plan.name}
+                description={plan.description}
+                price={isYearly && plan.yearlyPrice !== null ? plan.yearlyPrice : plan.price}
+                period={isYearly ? "year" : "month"}
+                features={plan.features}
+                ctaText={loadingPlan === plan.key ? "Processing..." : plan.cta}
+                onCtaClick={() => handleSubscribe(plan.key, plan.cta)}
+                popular={plan.popular}
+                currentPlan={isCurrentPlan(plan.key)}
+                icon={<Building2 className="h-6 w-6 text-primary" />}
+                disabled={loadingPlan === plan.key || subLoading}
+              />
+            ))}
+          </div>
+        </section>
+
+        {/* Trust Signals */}
+        <section className="text-center py-12 border-t border-border mb-12">
+          <div className="flex flex-wrap justify-center gap-8 items-center text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              <span>Secure payments via Stripe</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              <span>Cancel anytime</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              <span>14-day free trial on Pro plans</span>
+            </div>
           </div>
         </section>
 
