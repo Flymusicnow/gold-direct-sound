@@ -86,6 +86,13 @@ import FanTerms from "./pages/legal/FanTerms";
 import BrandPortalTerms from "./pages/legal/BrandPortalTerms";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import RiskDisclaimer from "./pages/legal/RiskDisclaimer";
+import BrandDashboard from "./pages/brand/BrandDashboard";
+import BrandOnboarding from "./pages/brand/BrandOnboarding";
+import BrandDiscovery from "./pages/brand/BrandDiscovery";
+import BrandOpportunities from "./pages/brand/BrandOpportunities";
+import BrandApplications from "./pages/brand/BrandApplications";
+import BrandSettings from "./pages/brand/BrandSettings";
+import BrandAnalytics from "./pages/brand/BrandAnalytics";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
@@ -309,6 +316,41 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+            <Route path="/brand/onboarding" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandOnboarding />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/discovery" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandDiscovery />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/opportunities" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandOpportunities />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/applications" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/analytics" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/settings" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandSettings />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
               <FlightdeckPlayer />
