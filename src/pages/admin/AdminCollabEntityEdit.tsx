@@ -1,0 +1,517 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Save, X, Plus } from 'lucide-react';
+import { toast } from 'sonner';
+
+const COLLAB_TYPES = [
+  { value: 'festival_slot', label: 'Festival Slot' },
+  { value: 'brand_deal', label: 'Brand Deal' },
+  { value: 'ugc_content', label: 'UGC Content' },
+  { value: 'sponsorship', label: 'Sponsorship' },
+  { value: 'live_event', label: 'Live Event' },
+  { value: 'partnership', label: 'Partnership' },
+];
+
+const STYLE_SUGGESTIONS = [
+  'Electronic', 'Hip-Hop', 'Pop', 'Rock', 'R&B', 'Indie', 'Alternative', 
+  'Dance', 'House', 'Techno', 'Acoustic', 'Jazz', 'Soul', 'Latin', 'Afrobeat'
+];
+
+interface FormData {
+  type: string;
+  name: string;
+  slug: string;
+  logo_url: string;
+  description: string;
+  website: string;
+  location: string;
+  mission: string;
+  social_links: Record<string, string>;
+  style_tags: string[];
+  collab_types: string[];
+  budget_range: string;
+  brand_values: string;
+  avoid_categories: string;
+  is_active: boolean;
+}
+
+export default function AdminCollabEntityEdit() {
+  const { id } = useParams();
+  const isNew = id === 'new';
+  const { user, profile } = useAuth();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(!isNew);
+  const [saving, setSaving] = useState(false);
+  const [newTag, setNewTag] = useState('');
+
+  const [formData, setFormData] = useState<FormData>({
+    type: 'brand',
+    name: '',
+    slug: '',
+    logo_url: '',
+    description: '',
+    website: '',
+    location: '',
+    mission: '',
+    social_links: {},
+    style_tags: [],
+    collab_types: [],
+    budget_range: 'medium',
+    brand_values: '',
+    avoid_categories: '',
+    is_active: true,
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    if (profile?.role !== 'admin') {
+      navigate('/');
+      return;
+    }
+    if (!isNew) {
+      fetchEntity();
+    }
+  }, [user, profile, navigate, id, isNew]);
+
+  const fetchEntity = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('collab_entities')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        setFormData({
+          type: data.type,
+          name: data.name,
+          slug: data.slug,
+          logo_url: data.logo_url || '',
+          description: data.description || '',
+          website: data.website || '',
+          location: data.location || '',
+          mission: data.mission || '',
+          social_links: (data.social_links as Record<string, string>) || {},
+          style_tags: data.style_tags || [],
+          collab_types: data.collab_types || [],
+          budget_range: data.budget_range || 'medium',
+          brand_values: data.brand_values || '',
+          avoid_categories: data.avoid_categories || '',
+          is_active: data.is_active ?? true,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching entity:', error);
+      toast.error('Failed to load entity');
+      navigate('/admin/collab-entities');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateSlug = (name: string) => {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  };
+
+  const handleNameChange = (name: string) => {
+    setFormData(prev => ({
+      ...prev,
+      name,
+      slug: isNew ? generateSlug(name) : prev.slug,
+    }));
+  };
+
+  const addStyleTag = (tag: string) => {
+    if (tag && !formData.style_tags.includes(tag)) {
+      setFormData(prev => ({
+        ...prev,
+        style_tags: [...prev.style_tags, tag],
+      }));
+    }
+    setNewTag('');
+  };
+
+  const removeStyleTag = (tag: string) => {
+    setFormData(prev => ({
+      ...prev,
+      style_tags: prev.style_tags.filter(t => t !== tag),
+    }));
+  };
+
+  const toggleCollabType = (type: string) => {
+    setFormData(prev => ({
+      ...prev,
+      collab_types: prev.collab_types.includes(type)
+        ? prev.collab_types.filter(t => t !== type)
+        : [...prev.collab_types, type],
+    }));
+  };
+
+  const handleSocialLinkChange = (platform: string, url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      social_links: { ...prev.social_links, [platform]: url },
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.slug || !formData.type) {
+      toast.error('Please fill in required fields');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        type: formData.type,
+        name: formData.name,
+        slug: formData.slug,
+        logo_url: formData.logo_url || null,
+        description: formData.description || null,
+        website: formData.website || null,
+        location: formData.location || null,
+        mission: formData.mission || null,
+        social_links: formData.social_links,
+        style_tags: formData.style_tags,
+        collab_types: formData.collab_types,
+        budget_range: formData.budget_range || null,
+        brand_values: formData.brand_values || null,
+        avoid_categories: formData.avoid_categories || null,
+        is_active: formData.is_active,
+      };
+
+      if (isNew) {
+        const { error } = await supabase
+          .from('collab_entities')
+          .insert(payload);
+        if (error) throw error;
+        toast.success('Entity created successfully');
+      } else {
+        const { error } = await supabase
+          .from('collab_entities')
+          .update(payload)
+          .eq('id', id);
+        if (error) throw error;
+        toast.success('Entity updated successfully');
+      }
+
+      navigate('/admin/collab-entities');
+    } catch (error: any) {
+      console.error('Error saving entity:', error);
+      if (error.code === '23505') {
+        toast.error('Slug already exists. Please choose a different one.');
+      } else {
+        toast.error('Failed to save entity');
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background pb-8">
+      <div className="container mx-auto px-4 py-6 max-w-3xl">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/admin/collab-entities')}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold text-foreground">
+              {isNew ? 'Create Entity' : 'Edit Entity'}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {isNew ? 'Add a new brand, festival, sponsor or agency' : formData.name}
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Basic Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Basic Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="type">Type *</Label>
+                  <Select value={formData.type} onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="brand">Brand</SelectItem>
+                      <SelectItem value="festival">Festival</SelectItem>
+                      <SelectItem value="sponsor">Sponsor</SelectItem>
+                      <SelectItem value="event_agency">Event Agency</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="budget_range">Budget Range</Label>
+                  <Select value={formData.budget_range} onValueChange={(v) => setFormData(prev => ({ ...prev, budget_range: v }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="Enter entity name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="slug">Slug *</Label>
+                <Input
+                  id="slug"
+                  value={formData.slug}
+                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+                  placeholder="url-friendly-slug"
+                />
+                <p className="text-xs text-muted-foreground">URL: /partners/{formData.slug || 'slug'}</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="logo_url">Logo URL</Label>
+                <Input
+                  id="logo_url"
+                  value={formData.logo_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="is_active">Active</Label>
+                <Switch
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, is_active: v }))}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+                    placeholder="https://..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    value={formData.location}
+                    onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="Stockholm, Sweden"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="mission">Mission</Label>
+                <Textarea
+                  id="mission"
+                  value={formData.mission}
+                  onChange={(e) => setFormData(prev => ({ ...prev, mission: e.target.value }))}
+                  placeholder="What is the core mission or purpose?"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Detailed description..."
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="brand_values">Brand Values</Label>
+                <Textarea
+                  id="brand_values"
+                  value={formData.brand_values}
+                  onChange={(e) => setFormData(prev => ({ ...prev, brand_values: e.target.value }))}
+                  placeholder="Core values and principles..."
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="avoid_categories">Avoid Categories</Label>
+                <Input
+                  id="avoid_categories"
+                  value={formData.avoid_categories}
+                  onChange={(e) => setFormData(prev => ({ ...prev, avoid_categories: e.target.value }))}
+                  placeholder="Categories to avoid (e.g., politics, controversial topics)"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Style Tags */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Style Tags</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                {formData.style_tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="gap-1">
+                    {tag}
+                    <button type="button" onClick={() => removeStyleTag(tag)}>
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <Input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  placeholder="Add custom tag"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addStyleTag(newTag);
+                    }
+                  }}
+                />
+                <Button type="button" variant="outline" onClick={() => addStyleTag(newTag)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {STYLE_SUGGESTIONS.filter(s => !formData.style_tags.includes(s)).map((tag) => (
+                  <Badge
+                    key={tag}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10"
+                    onClick={() => addStyleTag(tag)}
+                  >
+                    + {tag}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Collab Types */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Collaboration Types</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {COLLAB_TYPES.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => toggleCollabType(type.value)}
+                    className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
+                      formData.collab_types.includes(type.value)
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Links */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Social Links</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {['instagram', 'tiktok', 'twitter', 'youtube', 'linkedin'].map((platform) => (
+                <div key={platform} className="space-y-2">
+                  <Label htmlFor={platform} className="capitalize">{platform}</Label>
+                  <Input
+                    id={platform}
+                    value={formData.social_links[platform] || ''}
+                    onChange={(e) => handleSocialLinkChange(platform, e.target.value)}
+                    placeholder={`https://${platform}.com/...`}
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Submit */}
+          <div className="flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate('/admin/collab-entities')}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={saving} className="flex-1 gap-2">
+              <Save className="h-4 w-4" />
+              {saving ? 'Saving...' : (isNew ? 'Create Entity' : 'Save Changes')}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
