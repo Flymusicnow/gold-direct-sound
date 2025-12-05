@@ -57,6 +57,9 @@ export const Navigation = () => {
             <Search className="h-4 w-4" />
             {t('nav.search')}
           </Link>
+          <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
+            For Brands
+          </Link>
           
           {user ? (
             <>
@@ -147,6 +150,9 @@ export const Navigation = () => {
               <DropdownMenuItem onClick={() => navigate('/search')}>
                 <Search className="h-4 w-4 mr-2" />
                 Search
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/brands')}>
+                For Brands
               </DropdownMenuItem>
               {user ? (
                 <>
