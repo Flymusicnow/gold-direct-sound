@@ -159,8 +159,8 @@ export function FlightdeckQueueDrawer({
   return (
     <div className="lg:hidden">
       <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="max-h-[90vh] z-[70]">
-          <DrawerHeader className="border-b border-border pb-2">
+        <DrawerContent className="h-[85vh] flex flex-col z-[70]">
+          <DrawerHeader className="flex-shrink-0 border-b border-border pb-2">
             <div className="flex items-center justify-between">
               <DrawerTitle>Now Playing</DrawerTitle>
               {queue.length > 0 && (
@@ -176,37 +176,39 @@ export function FlightdeckQueueDrawer({
             </div>
           </DrawerHeader>
 
-          {/* Now Playing Section */}
+          {/* Now Playing Section - flex-shrink-0 to prevent compression */}
           {currentItem && (
-            <div className="px-6 py-4 bg-gradient-to-b from-primary/5 to-transparent">
-              {/* Album Art */}
-              <Link to={`/artist/${currentItem.artistUserId}`} className="block mb-4">
-                {currentItem.coverUrl ? (
-                  <img
-                    src={currentItem.coverUrl}
-                    alt={currentItem.title}
-                    className="w-32 h-32 mx-auto rounded-lg object-cover shadow-lg border border-primary/20"
-                  />
-                ) : (
-                  <div className="w-32 h-32 mx-auto rounded-lg bg-muted flex items-center justify-center border border-border">
-                    <Music className="h-12 w-12 text-muted-foreground" />
-                  </div>
-                )}
-              </Link>
-
-              {/* Track Info */}
-              <div className="text-center mb-4">
-                <h3 className="font-bold text-lg truncate">{currentItem.title}</h3>
-                <Link 
-                  to={`/artist/${currentItem.artistUserId}`}
-                  className="text-muted-foreground hover:text-primary transition-colors text-sm"
-                >
-                  {currentItem.artistName}
+            <div className="flex-shrink-0 px-4 py-3 bg-gradient-to-b from-primary/5 to-transparent">
+              <div className="flex items-center gap-4 mb-3">
+                {/* Smaller Album Art */}
+                <Link to={`/artist/${currentItem.artistUserId}`} className="flex-shrink-0">
+                  {currentItem.coverUrl ? (
+                    <img
+                      src={currentItem.coverUrl}
+                      alt={currentItem.title}
+                      className="w-24 h-24 rounded-lg object-cover shadow-lg border border-primary/20"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border border-border">
+                      <Music className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                  )}
                 </Link>
+
+                {/* Track Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-base truncate">{currentItem.title}</h3>
+                  <Link 
+                    to={`/artist/${currentItem.artistUserId}`}
+                    className="text-muted-foreground hover:text-primary transition-colors text-sm truncate block"
+                  >
+                    {currentItem.artistName}
+                  </Link>
+                </div>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-4">
+              <div className="mb-3">
                 <Slider
                   value={[currentTime]}
                   max={duration || 100}
@@ -221,90 +223,93 @@ export function FlightdeckQueueDrawer({
               </div>
 
               {/* Playback Controls */}
-              <div className="flex items-center justify-center gap-4 mb-4">
+              <div className="flex items-center justify-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={playPrev}
                   disabled={currentIndex === 0}
-                  className="h-12 w-12"
+                  className="h-10 w-10"
                 >
-                  <SkipBack className="h-6 w-6" />
+                  <SkipBack className="h-5 w-5" />
                 </Button>
                 <Button
                   onClick={togglePlay}
                   size="icon"
-                  className="h-16 w-16 rounded-full bg-primary hover:bg-primary/90"
+                  className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90"
                 >
-                  {isPlaying ? <Pause className="h-8 w-8" /> : <Play className="h-8 w-8 ml-1" />}
+                  {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 ml-0.5" />}
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={playNext}
                   disabled={currentIndex === queue.length - 1}
-                  className="h-12 w-12"
+                  className="h-10 w-10"
                 >
-                  <SkipForward className="h-6 w-6" />
+                  <SkipForward className="h-5 w-5" />
                 </Button>
-              </div>
 
-              {/* Volume Control */}
-              <div className="flex items-center justify-center gap-3">
-                <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-10 w-10">
-                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-                <Slider
-                  value={[isMuted ? 0 : volume]}
-                  max={1}
-                  step={0.01}
-                  onValueChange={onVolumeChange}
-                  className="w-40"
-                />
+                {/* Volume inline */}
+                <div className="flex items-center gap-2 ml-2">
+                  <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-10 w-10">
+                    {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                  </Button>
+                  <Slider
+                    value={[isMuted ? 0 : volume]}
+                    max={1}
+                    step={0.01}
+                    onValueChange={onVolumeChange}
+                    className="w-20"
+                  />
+                </div>
               </div>
             </div>
           )}
 
-          {/* Queue Header */}
-          <div className="flex items-center justify-between px-4 py-2 border-t border-b border-border bg-muted/30">
-            <div>
-              <h3 className="font-semibold text-sm">Up Next</h3>
-              <p className="text-xs text-muted-foreground">
-                {queue.length} {queue.length === 1 ? "item" : "items"}
-              </p>
+          {/* Queue Section - flex-1 to take remaining space */}
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+            {/* Queue Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-t border-b border-border bg-muted/30">
+              <div>
+                <h3 className="font-semibold text-sm">Up Next</h3>
+                <p className="text-xs text-muted-foreground">
+                  {queue.length} {queue.length === 1 ? "item" : "items"}
+                </p>
+              </div>
             </div>
-          </div>
 
-          {/* Queue List */}
-          <ScrollArea className="max-h-[30vh]">
-            <div className="p-4 space-y-2 pb-8">
-              {queue.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <Music className="h-10 w-10 text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground text-sm">Queue is empty</p>
-                  <p className="text-muted-foreground/70 text-xs mt-1">
-                    Add tracks to start building your queue
-                  </p>
-                </div>
-              ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext items={queue.map((item) => item.id)} strategy={verticalListSortingStrategy}>
-                    {queue.map((item) => (
-                      <QueueItem
-                        key={item.id}
-                        item={item}
-                        isCurrent={currentItem?.id === item.id}
-                      />
-                    ))}
-                  </SortableContext>
-                </DndContext>
-              )}
-            </div>
-          </ScrollArea>
+            {/* Queue List - flex-1 fills remaining space */}
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-2 pb-8">
+                {queue.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Music className="h-10 w-10 text-muted-foreground/50 mb-3" />
+                    <p className="text-muted-foreground text-sm">Queue is empty</p>
+                    <p className="text-muted-foreground/70 text-xs mt-1">
+                      Add tracks to start building your queue
+                    </p>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext items={queue.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+                      {queue.map((item) => (
+                        <QueueItem
+                          key={item.id}
+                          item={item}
+                          isCurrent={currentItem?.id === item.id}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
+                )}
+              </div>
+            </ScrollArea>
+          </div>
         </DrawerContent>
       </Drawer>
     </div>
