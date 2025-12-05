@@ -58,6 +58,18 @@ export const Footer = () => {
             </ul>
           </div>
 
+          {/* Partners */}
+          <div>
+            <h4 className="font-semibold mb-4">Partners</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link to="/brands" className="text-muted-foreground hover:text-primary transition-colors">
+                  Brand Portal
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
