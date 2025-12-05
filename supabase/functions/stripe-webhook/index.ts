@@ -75,7 +75,58 @@ serve(async (req) => {
 
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const { fan_user_id, artist_id, tier, tier_id } = session.metadata || {};
+        const metadata = session.metadata || {};
+        
+        // Check if this is a platform subscription (Artist Pro/Elite, Fan Supporter)
+        if (metadata.type === 'platform_subscription') {
+          const { user_id, plan_key, billing_interval } = metadata;
+          
+          if (!user_id || !plan_key) {
+            console.error("Missing metadata in platform subscription checkout");
+            break;
+          }
+          
+          logStep("Processing platform subscription", { user_id, plan_key, billing_interval });
+          
+          const subscription = await stripe.subscriptions.retrieve(
+            session.subscription as string
+          );
+          
+          // Upsert to user_subscriptions table
+          await supabaseAdmin
+            .from('user_subscriptions')
+            .upsert({
+              user_id,
+              plan_key,
+              status: 'active',
+              stripe_subscription_id: subscription.id,
+              stripe_customer_id: session.customer as string,
+              expires_at: new Date(subscription.current_period_end * 1000).toISOString()
+            }, { 
+              onConflict: 'user_id' 
+            });
+          
+          // Create notification for user
+          const planNames: Record<string, string> = {
+            artist_pro: 'Artist Pro',
+            artist_elite: 'Artist Elite',
+            fan_supporter: 'Supporter Pass'
+          };
+          
+          await supabaseAdmin.from('notifications').insert({
+            user_id,
+            type: 'subscription_activated',
+            title: '🎉 Welcome to ' + (planNames[plan_key] || 'Premium') + '!',
+            message: 'Your premium features are now unlocked. Thank you for supporting FlyMusic!',
+            link: plan_key.startsWith('fan') ? '/fan/settings' : '/studio/settings'
+          });
+          
+          logStep("Platform subscription created", { user_id, plan_key });
+          break;
+        }
+        
+        // Existing fan→artist supporter subscription logic
+        const { fan_user_id, artist_id, tier, tier_id } = metadata;
 
         if (!fan_user_id || !artist_id || !tier) {
           console.error("Missing metadata in checkout session");

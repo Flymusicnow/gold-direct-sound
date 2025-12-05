@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Crown, Check, ExternalLink } from "lucide-react";
+import { Zap, Crown, Check, ExternalLink, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -102,6 +104,7 @@ export const UpgradeModal = ({
   userType = "artist"
 }: UpgradeModalProps) => {
   const [isYearly, setIsYearly] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const getTargetPlan = () => {
@@ -118,15 +121,49 @@ export const UpgradeModal = ({
       : planDetails.artist.pro;
   };
 
+  const getPlanKey = () => {
+    if (userType === "fan") return "fan_supporter";
+    if (userType === "brand") return requiredTier === "enterprise" ? "brand_enterprise" : "brand_pro";
+    return requiredTier === "elite" ? "artist_elite" : "artist_pro";
+  };
+
   const plan = getTargetPlan();
   const price = isYearly ? plan.yearlyPrice : plan.price;
   const savings = plan.price && plan.yearlyPrice 
     ? Math.round((1 - plan.yearlyPrice / (plan.price * 12)) * 100) 
     : 0;
 
-  const handleUpgrade = () => {
-    onOpenChange(false);
-    navigate("/pricing");
+  const handleUpgrade = async () => {
+    const planKey = getPlanKey();
+    
+    // For enterprise or plans without price, go to pricing page
+    if (planKey === "brand_enterprise" || !price) {
+      onOpenChange(false);
+      navigate("/pricing");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-subscription-checkout', {
+        body: {
+          plan_key: planKey,
+          billing_interval: isYearly ? 'year' : 'month'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+        onOpenChange(false);
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      toast.error("Failed to start checkout. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -190,11 +227,23 @@ export const UpgradeModal = ({
 
           {/* CTA */}
           <div className="flex flex-col gap-2">
-            <Button onClick={handleUpgrade} className="w-full">
-              View All Plans
-              <ExternalLink className="ml-2 h-4 w-4" />
+            <Button onClick={handleUpgrade} className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Upgrade Now
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
-            <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full">
+            <Button variant="ghost" onClick={() => navigate("/pricing")} className="w-full">
+              View All Plans
+            </Button>
+            <Button variant="ghost" onClick={() => onOpenChange(false)} className="w-full text-muted-foreground">
               Maybe Later
             </Button>
           </div>

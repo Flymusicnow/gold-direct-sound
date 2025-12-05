@@ -77,6 +77,8 @@ import Learn from "./pages/Learn";
 import VideoCollectionDetail from "./pages/VideoCollectionDetail";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
+import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import UserAgreement from "./pages/legal/UserAgreement";
 import ArtistAgreement from "./pages/legal/ArtistAgreement";
@@ -305,6 +307,8 @@ const App = () => (
             <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/cancel" element={<CheckoutCancel />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
               <FlightdeckPlayer />
