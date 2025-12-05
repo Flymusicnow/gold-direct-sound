@@ -6,12 +6,13 @@ import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { useFlightdeck } from "@/contexts/FlightdeckContext";
+import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { Card } from "@/components/ui/card";
 import { StackSettingsDialog } from "@/components/playlists/StackSettingsDialog";
 import {
   ArrowLeft,
   Play,
+  Plus,
   Trash2,
   Share2,
   Lock,
@@ -46,7 +47,37 @@ interface Playlist {
 export default function PlaylistDetail() {
   const { playlistId } = useParams<{ playlistId: string }>();
   const { user } = useAuth();
-  const { playNow } = useFlightdeck();
+  const { playNow, addToQueue, setQueue } = useFlightdeck();
+
+  // Helper to convert track to FlightdeckItem
+  const trackToFlightdeckItem = (track: Track): FlightdeckItem => ({
+    id: track.tracks.id,
+    type: 'track',
+    title: track.tracks.title,
+    artistId: '',
+    artistName: track.tracks.artist_profiles.artist_name,
+    artistUserId: track.tracks.artist_profiles.user_id,
+    mediaUrl: track.tracks.audio_url,
+    coverUrl: track.tracks.cover_url || undefined,
+  });
+
+  const handlePlayAll = () => {
+    if (tracks.length === 0) return;
+    const allItems = tracks.map(trackToFlightdeckItem);
+    setQueue(allItems, 0);
+    toast.success(`Playing ${tracks.length} tracks`);
+  };
+
+  const handleAddToQueue = (track: Track) => {
+    addToQueue(trackToFlightdeckItem(track));
+    toast.success(`"${track.tracks.title}" added to queue`);
+  };
+
+  const handlePlayTrack = (track: Track) => {
+    const item = trackToFlightdeckItem(track);
+    const context = tracks.map(trackToFlightdeckItem);
+    playNow(item, context);
+  };
   const navigate = useNavigate();
   const [playlist, setPlaylist] = useState<Playlist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -195,9 +226,20 @@ export default function PlaylistDetail() {
             </div>
           </div>
 
-          <p className="text-sm text-muted-foreground">
-            {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
-          </p>
+          <div className="flex items-center gap-3 mt-4">
+            <p className="text-sm text-muted-foreground">
+              {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
+            </p>
+            {tracks.length > 0 && (
+              <Button 
+                onClick={handlePlayAll}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Play All
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tracks List */}
@@ -239,28 +281,29 @@ export default function PlaylistDetail() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={() => playNow({
-                        id: track.tracks.id,
-                        type: 'track',
-                        title: track.tracks.title,
-                        artistId: '',
-                        artistName: track.tracks.artist_profiles.artist_name,
-                        artistUserId: track.tracks.artist_profiles.user_id,
-                        mediaUrl: track.tracks.audio_url,
-                        coverUrl: track.tracks.cover_url || undefined,
-                      })}
+                      onClick={() => handlePlayTrack(track)}
+                      title="Play now"
                     >
                       <Play className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleAddToQueue(track)}
+                      title="Add to queue"
+                    >
+                      <Plus className="h-4 w-4" />
                     </Button>
                     {isOwner && (
                       <Button
                         size="icon"
                         variant="ghost"
                         onClick={() => handleRemoveTrack(track.id)}
+                        title="Remove from playlist"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
