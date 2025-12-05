@@ -75,6 +75,7 @@ import Search from "./pages/Search";
 import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
 import VideoCollectionDetail from "./pages/VideoCollectionDetail";
+import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
 import UserAgreement from "./pages/legal/UserAgreement";
@@ -303,6 +304,7 @@ const App = () => (
             <Route path="/legal/brand-portal-terms" element={<BrandPortalTerms />} />
             <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
               <FlightdeckPlayer />
