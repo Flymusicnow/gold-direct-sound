@@ -7,7 +7,7 @@ interface Profile {
   id: string;
   email: string;
   full_name: string | null;
-  role: 'admin' | 'artist' | 'fan';
+  role: 'admin' | 'artist' | 'fan' | 'brand';
 }
 
 interface AuthContextType {

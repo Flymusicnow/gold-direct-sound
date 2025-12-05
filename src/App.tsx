@@ -35,6 +35,7 @@ import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import StudioPromo from "./pages/studio/StudioPromo";
 import StudioSettings from "./pages/studio/StudioSettings";
 import StudioPresskit from "./pages/studio/StudioPresskit";
+import StudioOpportunities from "./pages/studio/StudioOpportunities";
 import PromoPreview from "./pages/PromoPreview";
 import PublicPresskit from "./pages/PublicPresskit";
 import LiveStream from "./pages/LiveStream";
@@ -231,6 +232,11 @@ const App = () => (
             <Route path="/studio/presskit" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioPresskit />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/opportunities" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioOpportunities />
               </ProtectedRoute>
             } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
