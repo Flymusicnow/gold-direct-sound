@@ -185,14 +185,54 @@ export function FlightdeckPlayer() {
 
   return (
     <>
-      {/* Desktop Queue Sidebar */}
-      <FlightdeckQueueSidebar isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
+      {/* Desktop Queue Sidebar - with integrated player controls */}
+      <FlightdeckQueueSidebar 
+        isOpen={queueOpen} 
+        onClose={() => setQueueOpen(false)}
+        currentTime={currentTime}
+        duration={duration}
+        volume={volume}
+        isMuted={isMuted}
+        onSeek={handleSeek}
+        onVolumeChange={handleVolumeChange}
+        onToggleMute={toggleMute}
+      />
       
-      {/* Mobile Queue Drawer */}
-      <FlightdeckQueueDrawer isOpen={queueOpen} onClose={() => setQueueOpen(false)} />
+      {/* Mobile Queue Drawer - with integrated player controls */}
+      <FlightdeckQueueDrawer 
+        isOpen={queueOpen} 
+        onClose={() => setQueueOpen(false)}
+        currentTime={currentTime}
+        duration={duration}
+        volume={volume}
+        isMuted={isMuted}
+        onSeek={handleSeek}
+        onVolumeChange={handleVolumeChange}
+        onToggleMute={toggleMute}
+      />
 
+      {/* Hidden media elements - always present */}
+      <audio
+        ref={audioRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+        style={{ display: 'none' }}
+      />
+      <video
+        ref={videoRef}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+        style={{ display: 'none' }}
+      />
+
+      {/* Main Player Bar - Hidden when queue is open */}
       <div 
-        className="fixed bottom-14 md:bottom-0 left-0 right-0 z-[60]"
+        className={cn(
+          "fixed bottom-14 md:bottom-0 left-0 right-0 z-[60] transition-all duration-300",
+          queueOpen && "opacity-0 pointer-events-none translate-y-full"
+        )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -211,21 +251,6 @@ export function FlightdeckPlayer() {
         <div className={`bg-card border-t border-border shadow-lg transition-transform duration-300 ease-in-out ${
           isMinimized ? 'translate-y-full' : ''
         }`}>
-      {/* Hidden media elements */}
-      <audio
-        ref={audioRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-        style={{ display: 'none' }}
-      />
-      <video
-        ref={videoRef}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-        style={{ display: 'none' }}
-      />
 
       <div className="container mx-auto px-4 py-3">
         {/* Progress Bar */}
@@ -323,7 +348,7 @@ export function FlightdeckPlayer() {
       </div>
 
       {/* Compact Mini-Player when minimized */}
-      {isMinimized && currentItem && (
+      {isMinimized && currentItem && !queueOpen && (
         <div className={cn(
           "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
           positionClasses[miniPlayerPosition]

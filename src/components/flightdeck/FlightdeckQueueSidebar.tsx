@@ -1,9 +1,11 @@
-import { X, GripVertical, Music } from "lucide-react";
+import { X, GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { cn } from "@/lib/utils";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { Link } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
@@ -96,10 +98,37 @@ function QueueItem({ item, isCurrent, onRemove }: QueueItemProps) {
 interface FlightdeckQueueSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  currentTime: number;
+  duration: number;
+  volume: number;
+  isMuted: boolean;
+  onSeek: (value: number[]) => void;
+  onVolumeChange: (value: number[]) => void;
+  onToggleMute: () => void;
 }
 
-export function FlightdeckQueueSidebar({ isOpen, onClose }: FlightdeckQueueSidebarProps) {
-  const { queue, currentItem, setQueue, clearQueue } = useFlightdeck();
+export function FlightdeckQueueSidebar({ 
+  isOpen, 
+  onClose,
+  currentTime,
+  duration,
+  volume,
+  isMuted,
+  onSeek,
+  onVolumeChange,
+  onToggleMute,
+}: FlightdeckQueueSidebarProps) {
+  const { 
+    queue, 
+    currentItem, 
+    currentIndex,
+    isPlaying,
+    setQueue, 
+    clearQueue,
+    togglePlay,
+    playNext,
+    playPrev,
+  } = useFlightdeck();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -121,47 +150,148 @@ export function FlightdeckQueueSidebar({ isOpen, onClose }: FlightdeckQueueSideb
     }
   };
 
+  const formatTime = (time: number) => {
+    if (!isFinite(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="hidden lg:flex fixed right-0 top-0 bottom-0 w-80 bg-card border-l border-border shadow-2xl z-50 flex-col animate-fade-in">
+    <div className="hidden lg:flex fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border shadow-2xl z-[70] flex-col animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-lg">Queue</h2>
+            <h2 className="font-semibold text-lg">Now Playing</h2>
             <InfoTooltip
               title="Queue vs Play Now"
               description="'Add to Queue' adds tracks to your playback list without interrupting current track. 'Play Now' starts playing immediately."
             />
           </div>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose}>
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Now Playing Section */}
+      {currentItem && (
+        <div className="p-6 border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
+          {/* Album Art */}
+          <Link to={`/artist/${currentItem.artistUserId}`} className="block mb-4">
+            {currentItem.coverUrl ? (
+              <img
+                src={currentItem.coverUrl}
+                alt={currentItem.title}
+                className="w-40 h-40 mx-auto rounded-lg object-cover shadow-lg border border-primary/20 hover:opacity-90 transition-opacity"
+              />
+            ) : (
+              <div className="w-40 h-40 mx-auto rounded-lg bg-muted flex items-center justify-center border border-border">
+                <Music className="h-16 w-16 text-muted-foreground" />
+              </div>
+            )}
+          </Link>
+
+          {/* Track Info */}
+          <div className="text-center mb-4">
+            <h3 className="font-bold text-lg truncate">{currentItem.title}</h3>
+            <Link 
+              to={`/artist/${currentItem.artistUserId}`}
+              className="text-muted-foreground hover:text-primary transition-colors"
+            >
+              {currentItem.artistName}
+            </Link>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mb-4">
+            <Slider
+              value={[currentTime]}
+              max={duration || 100}
+              step={0.1}
+              onValueChange={onSeek}
+              className="cursor-pointer"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <span>{formatTime(currentTime)}</span>
+              <span>{formatTime(duration)}</span>
+            </div>
+          </div>
+
+          {/* Playback Controls */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={playPrev}
+              disabled={currentIndex === 0}
+              className="h-10 w-10"
+            >
+              <SkipBack className="h-5 w-5" />
+            </Button>
+            <Button
+              onClick={togglePlay}
+              size="icon"
+              className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90"
+            >
+              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={playNext}
+              disabled={currentIndex === queue.length - 1}
+              className="h-10 w-10"
+            >
+              <SkipForward className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Volume Control */}
+          <div className="flex items-center justify-center gap-3">
+            <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-8 w-8">
+              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </Button>
+            <Slider
+              value={[isMuted ? 0 : volume]}
+              max={1}
+              step={0.01}
+              onValueChange={onVolumeChange}
+              className="w-32"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Queue Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div>
+          <h3 className="font-semibold text-sm">Up Next</h3>
           <p className="text-xs text-muted-foreground">
             {queue.length} {queue.length === 1 ? "item" : "items"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {queue.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearQueue}
-              className="text-xs"
-            >
-              Clear All
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
+        {queue.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearQueue}
+            className="text-xs"
+          >
+            Clear All
           </Button>
-        </div>
+        )}
       </div>
 
       {/* Queue List */}
       <ScrollArea className="flex-1">
         <div className="p-3 space-y-2">
           {queue.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Music className="h-12 w-12 text-muted-foreground/50 mb-4" />
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Music className="h-10 w-10 text-muted-foreground/50 mb-3" />
               <p className="text-muted-foreground text-sm">Queue is empty</p>
               <p className="text-muted-foreground/70 text-xs mt-1">
                 Add tracks to start building your queue
