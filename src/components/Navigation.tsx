@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu, Mic2, Heart, Search, FileText, Settings } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -102,10 +102,6 @@ export const Navigation = () => {
                       Settings
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => navigate('/legal/user-agreement')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Legal & Privacy
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t('nav.signOut')}
@@ -186,10 +182,6 @@ export const Navigation = () => {
                       Settings
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => navigate('/legal/user-agreement')}>
-                    <FileText className="mr-2 h-4 w-4" />
-                    Legal & Privacy
-                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out

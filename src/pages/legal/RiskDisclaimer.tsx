@@ -19,7 +19,7 @@ export default function RiskDisclaimer() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/risk-disclaimer.md"
+          documentPath="/legal/risk-disclaimer.md"
           title="Risk Disclaimer"
           lastUpdated="December 5, 2024"
         />

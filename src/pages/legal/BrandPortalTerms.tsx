@@ -19,7 +19,7 @@ export default function BrandPortalTerms() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/brand-portal-terms.md"
+          documentPath="/legal/brand-portal-terms.md"
           title="Brand Portal Terms"
           lastUpdated="December 5, 2024"
         />

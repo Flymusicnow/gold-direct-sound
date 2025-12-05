@@ -19,7 +19,7 @@ export default function UserAgreement() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/user-agreement.md"
+          documentPath="/legal/user-agreement.md"
           title="User Agreement"
           lastUpdated="December 5, 2024"
         />

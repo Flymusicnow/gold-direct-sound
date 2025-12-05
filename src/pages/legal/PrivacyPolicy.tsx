@@ -19,7 +19,7 @@ export default function PrivacyPolicy() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/privacy-policy.md"
+          documentPath="/legal/privacy-policy.md"
           title="Privacy Policy"
           lastUpdated="December 5, 2024"
         />

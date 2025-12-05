@@ -19,7 +19,7 @@ export default function ArtistAgreement() {
         </Button>
         
         <LegalDocumentViewer
-          documentPath="/src/legal/artist-agreement.md"
+          documentPath="/legal/artist-agreement.md"
           title="Artist Agreement"
           lastUpdated="December 5, 2024"
         />
