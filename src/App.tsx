@@ -34,7 +34,9 @@ import StudioMerch from "./pages/studio/StudioMerch";
 import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import StudioPromo from "./pages/studio/StudioPromo";
 import StudioSettings from "./pages/studio/StudioSettings";
+import StudioPresskit from "./pages/studio/StudioPresskit";
 import PromoPreview from "./pages/PromoPreview";
+import PublicPresskit from "./pages/PublicPresskit";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
 import FanOnboarding from "./pages/fan/FanOnboarding";
@@ -99,6 +101,7 @@ const App = () => (
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
+            <Route path="/epk/:slug" element={<PublicPresskit />} />
             <Route path="/brands" element={<BrandPortal />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/principles" element={<PrinciplesPage />} />
@@ -213,6 +216,11 @@ const App = () => (
             <Route path="/studio/settings" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/presskit" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioPresskit />
               </ProtectedRoute>
             } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
