@@ -1569,28 +1569,43 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          enabled_for_brands: boolean | null
+          enabled_for_elite: boolean | null
+          enabled_for_free: boolean | null
+          enabled_for_pro: boolean | null
           flag_key: string
           flag_name: string
           id: string
           is_enabled: boolean
+          requires_subscription: boolean | null
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
+          enabled_for_brands?: boolean | null
+          enabled_for_elite?: boolean | null
+          enabled_for_free?: boolean | null
+          enabled_for_pro?: boolean | null
           flag_key: string
           flag_name: string
           id?: string
           is_enabled?: boolean
+          requires_subscription?: boolean | null
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          enabled_for_brands?: boolean | null
+          enabled_for_elite?: boolean | null
+          enabled_for_free?: boolean | null
+          enabled_for_pro?: boolean | null
           flag_key?: string
           flag_name?: string
           id?: string
           is_enabled?: boolean
+          requires_subscription?: boolean | null
           updated_at?: string
         }
         Relationships: []
@@ -2075,6 +2090,60 @@ export type Database = {
           name?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      premium_plans: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          plan_key: string
+          plan_name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          sort_order: number | null
+          stripe_price_id_monthly: string | null
+          stripe_price_id_yearly: string | null
+          updated_at: string | null
+          user_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          plan_key: string
+          plan_name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          sort_order?: number | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_yearly?: string | null
+          updated_at?: string | null
+          user_type: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          plan_key?: string
+          plan_name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          sort_order?: number | null
+          stripe_price_id_monthly?: string | null
+          stripe_price_id_yearly?: string | null
+          updated_at?: string | null
+          user_type?: string
         }
         Relationships: []
       }
@@ -2700,6 +2769,59 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_recurring: boolean | null
+          metadata: Json | null
+          plan_key: string
+          started_at: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          metadata?: Json | null
+          plan_key: string
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          metadata?: Json | null
+          plan_key?: string
+          started_at?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_key_fkey"
+            columns: ["plan_key"]
+            isOneToOne: false
+            referencedRelation: "premium_plans"
+            referencedColumns: ["plan_key"]
+          },
+        ]
+      }
       video_collection_items: {
         Row: {
           added_at: string | null
@@ -2920,6 +3042,10 @@ export type Database = {
         Args: { _fan_user_id: string }
         Returns: Json
       }
+      check_feature_access: {
+        Args: { _feature_key: string; _user_id: string }
+        Returns: Json
+      }
       generate_artist_referral_code: {
         Args: { _user_id: string }
         Returns: string
@@ -3037,6 +3163,10 @@ export type Database = {
           title: string
           trending_score: number
         }[]
+      }
+      get_user_plan: {
+        Args: { _user_id: string; _user_type?: string }
+        Returns: string
       }
       get_video_engagement_heatmap: {
         Args: { segment_duration?: number; video_id_param: string }
