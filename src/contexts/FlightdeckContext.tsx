@@ -20,6 +20,8 @@ export interface FlightdeckItem {
   spotlightCampaignId?: string;
 }
 
+export type RepeatMode = 'off' | 'all' | 'one';
+
 interface FlightdeckContextType {
   queue: FlightdeckItem[];
   currentItem: FlightdeckItem | null;
@@ -27,6 +29,8 @@ interface FlightdeckContextType {
   isPlaying: boolean;
   currentTime: number;
   duration: number;
+  shuffleEnabled: boolean;
+  repeatMode: RepeatMode;
   // Actions
   playNow: (item: FlightdeckItem, context?: FlightdeckItem[]) => void;
   addToQueue: (item: FlightdeckItem) => void;
@@ -39,16 +43,21 @@ interface FlightdeckContextType {
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
   setDuration: (duration: number) => void;
+  toggleShuffle: () => void;
+  cycleRepeat: () => void;
+  removeFromQueue: (itemId: string) => void;
 }
 
 const FlightdeckContext = createContext<FlightdeckContextType | undefined>(undefined);
 
 export function FlightdeckProvider({ children }: { children: ReactNode }) {
-  const [queue, setQueue] = useState<FlightdeckItem[]>([]);
+  const [queue, setQueueState] = useState<FlightdeckItem[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [shuffleEnabled, setShuffleEnabled] = useState(false);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
   const { updateSupportScore } = useSupportScore();
   const lastPlayedRef = useRef<string | null>(null);
   const { pauseAllVideos } = useVideoPlayback();
@@ -80,26 +89,36 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     if (context && context.length > 0) {
       // Set entire queue from context
       const itemIndex = context.findIndex(i => i.id === item.id);
-      setQueue(context);
+      setQueueState(context);
       setCurrentIndex(itemIndex >= 0 ? itemIndex : 0);
     } else {
       // Play single item, clear queue
-      setQueue([item]);
+      setQueueState([item]);
       setCurrentIndex(0);
     }
     setIsPlaying(true);
   }, [pauseAllVideos]);
 
   const addToQueue = useCallback((item: FlightdeckItem) => {
-    setQueue(prev => [...prev, item]);
+    setQueueState(prev => [...prev, item]);
   }, []);
 
   const playNext = useCallback(() => {
+    if (repeatMode === 'one') {
+      // Restart current track
+      setCurrentTime(0);
+      return;
+    }
+    
     if (currentIndex < queue.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setIsPlaying(true);
+    } else if (repeatMode === 'all' && queue.length > 0) {
+      // Loop back to start
+      setCurrentIndex(0);
+      setIsPlaying(true);
     }
-  }, [currentIndex, queue.length]);
+  }, [currentIndex, queue.length, repeatMode]);
 
   const playPrev = useCallback(() => {
     if (currentIndex > 0) {
@@ -123,17 +142,50 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     setCurrentTime(time);
   }, []);
 
-  const setQueueFn = useCallback((items: FlightdeckItem[], startIndex: number = 0) => {
-    setQueue(items);
+  const setQueue = useCallback((items: FlightdeckItem[], startIndex: number = 0) => {
+    setQueueState(items);
     setCurrentIndex(startIndex);
     setIsPlaying(true);
   }, []);
 
   const clearQueue = useCallback(() => {
-    setQueue([]);
+    setQueueState([]);
     setCurrentIndex(-1);
     setIsPlaying(false);
   }, []);
+
+  const toggleShuffle = useCallback(() => {
+    setShuffleEnabled(prev => {
+      const newState = !prev;
+      if (newState && queue.length > 1) {
+        // Shuffle remaining queue (keep current song in place)
+        const before = queue.slice(0, currentIndex + 1);
+        const remaining = queue.slice(currentIndex + 1);
+        const shuffled = [...remaining].sort(() => Math.random() - 0.5);
+        setQueueState([...before, ...shuffled]);
+      }
+      return newState;
+    });
+  }, [queue, currentIndex]);
+
+  const cycleRepeat = useCallback(() => {
+    setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off');
+  }, []);
+
+  const removeFromQueue = useCallback((itemId: string) => {
+    const index = queue.findIndex(item => item.id === itemId);
+    if (index === -1) return;
+    
+    // Don't allow removing current playing item
+    if (index === currentIndex) return;
+    
+    // Adjust current index if needed
+    if (index < currentIndex) {
+      setCurrentIndex(prev => prev - 1);
+    }
+    
+    setQueueState(prev => prev.filter(item => item.id !== itemId));
+  }, [queue, currentIndex]);
 
   return (
     <FlightdeckContext.Provider
@@ -144,17 +196,22 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
         isPlaying,
         currentTime,
         duration,
+        shuffleEnabled,
+        repeatMode,
         playNow,
         addToQueue,
         playNext,
         playPrev,
         togglePlay,
         seek,
-        setQueue: setQueueFn,
+        setQueue,
         clearQueue,
         setIsPlaying,
         setCurrentTime,
         setDuration,
+        toggleShuffle,
+        cycleRepeat,
+        removeFromQueue,
       }}
     >
       {children}

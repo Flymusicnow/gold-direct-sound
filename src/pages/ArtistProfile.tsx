@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
-import { Award, Music, ShoppingBag, Crown, Play } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,6 +57,7 @@ interface Track {
 export default function ArtistProfile() {
   const { userId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { playNow, addToQueue, setQueue } = useFlightdeck();
   const isMobile = useIsMobile();
 
@@ -375,6 +376,19 @@ export default function ArtistProfile() {
   return (
     <>
       <div className="min-h-screen pt-16 pb-32 md:pb-28">
+      {/* Back Button */}
+      <div className="container mx-auto px-4 pt-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      </div>
+
       {/* Premium Hero Section */}
       <ArtistHeroSection
         artist={artist}

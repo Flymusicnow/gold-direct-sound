@@ -1,4 +1,5 @@
-import { X, GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
@@ -23,14 +24,19 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface QueueItemProps {
   item: FlightdeckItem;
   isCurrent: boolean;
-  onRemove?: () => void;
+  isLiked: boolean;
+  onToggleLike: () => void;
+  onRemove: () => void;
 }
 
-function QueueItem({ item, isCurrent, onRemove }: QueueItemProps) {
+function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: item.id,
   });
@@ -86,6 +92,36 @@ function QueueItem({ item, isCurrent, onRemove }: QueueItemProps) {
         )}
       </div>
 
+      {/* Like button */}
+      {item.type === 'track' && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleLike();
+          }}
+          className={cn("h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity", isLiked && "opacity-100 text-red-500")}
+        >
+          <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+        </Button>
+      )}
+
+      {/* Remove button - only show for non-current items */}
+      {!isCurrent && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+
       {isCurrent && (
         <div className="text-xs font-medium text-primary uppercase tracking-wide">
           Playing
@@ -123,12 +159,58 @@ export function FlightdeckQueueSidebar({
     currentItem, 
     currentIndex,
     isPlaying,
+    shuffleEnabled,
+    repeatMode,
     setQueue, 
     clearQueue,
     togglePlay,
     playNext,
     playPrev,
+    toggleShuffle,
+    cycleRepeat,
+    removeFromQueue,
   } = useFlightdeck();
+
+  const { user } = useAuth();
+  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
+
+  // Fetch likes for all tracks in queue
+  useEffect(() => {
+    if (!user || queue.length === 0) return;
+    
+    const trackIds = queue.filter(i => i.type === 'track').map(i => i.id);
+    if (trackIds.length === 0) return;
+    
+    supabase
+      .from('likes')
+      .select('track_id')
+      .eq('user_id', user.id)
+      .in('track_id', trackIds)
+      .then(({ data }) => {
+        const map: Record<string, boolean> = {};
+        data?.forEach(like => { map[like.track_id] = true; });
+        setLikedTracks(map);
+      });
+  }, [user, queue]);
+
+  const handleToggleLike = async (trackId: string, artistId: string) => {
+    if (!user) {
+      toast.error("Please sign in to like tracks");
+      return;
+    }
+
+    const isCurrentlyLiked = likedTracks[trackId];
+    
+    if (isCurrentlyLiked) {
+      await supabase.from('likes').delete().eq('user_id', user.id).eq('track_id', trackId);
+      setLikedTracks(prev => ({ ...prev, [trackId]: false }));
+      toast.success("Removed from likes");
+    } else {
+      await supabase.from('likes').insert({ user_id: user.id, track_id: trackId });
+      setLikedTracks(prev => ({ ...prev, [trackId]: true }));
+      toast.success("Added to likes");
+    }
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -195,9 +277,21 @@ export function FlightdeckQueueSidebar({
             )}
           </Link>
 
-          {/* Track Info */}
+          {/* Track Info with Like */}
           <div className="text-center mb-4">
-            <h3 className="font-bold text-lg truncate">{currentItem.title}</h3>
+            <div className="flex items-center justify-center gap-2">
+              <h3 className="font-bold text-lg truncate">{currentItem.title}</h3>
+              {currentItem.type === 'track' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleToggleLike(currentItem.id, currentItem.artistId)}
+                  className={cn("h-8 w-8", likedTracks[currentItem.id] && "text-red-500")}
+                >
+                  <Heart className={cn("h-5 w-5", likedTracks[currentItem.id] && "fill-current")} />
+                </Button>
+              )}
+            </div>
             <Link 
               to={`/artist/${currentItem.artistUserId}`}
               className="text-muted-foreground hover:text-primary transition-colors"
@@ -221,8 +315,18 @@ export function FlightdeckQueueSidebar({
             </div>
           </div>
 
-          {/* Playback Controls */}
-          <div className="flex items-center justify-center gap-3 mb-4">
+          {/* Playback Controls with Shuffle & Repeat */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {/* Shuffle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleShuffle}
+              className={cn("h-10 w-10", shuffleEnabled && "text-primary")}
+            >
+              <Shuffle className="h-5 w-5" />
+            </Button>
+
             <Button
               variant="ghost"
               size="icon"
@@ -243,10 +347,20 @@ export function FlightdeckQueueSidebar({
               variant="ghost"
               size="icon"
               onClick={playNext}
-              disabled={currentIndex === queue.length - 1}
+              disabled={currentIndex === queue.length - 1 && repeatMode === 'off'}
               className="h-10 w-10"
             >
               <SkipForward className="h-5 w-5" />
+            </Button>
+
+            {/* Repeat */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={cycleRepeat}
+              className={cn("h-10 w-10", repeatMode !== 'off' && "text-primary")}
+            >
+              {repeatMode === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
             </Button>
           </div>
 
@@ -309,6 +423,9 @@ export function FlightdeckQueueSidebar({
                     key={item.id}
                     item={item}
                     isCurrent={currentItem?.id === item.id}
+                    isLiked={likedTracks[item.id] || false}
+                    onToggleLike={() => handleToggleLike(item.id, item.artistId)}
+                    onRemove={() => removeFromQueue(item.id)}
                   />
                 ))}
               </SortableContext>
