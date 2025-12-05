@@ -7,18 +7,27 @@ export type FeatureFlagKey =
   | 'REACH_ECONOMY_ENABLED'
   | 'LIVE_OS_V2_ENABLED';
 
+export type UserTier = 'free' | 'pro' | 'elite' | 'supporter' | 'enterprise';
+
 interface FeatureFlag {
   id: string;
   flag_key: string;
   flag_name: string;
   description: string | null;
   is_enabled: boolean;
+  requires_subscription: boolean;
+  enabled_for_free: boolean;
+  enabled_for_pro: boolean;
+  enabled_for_elite: boolean;
+  enabled_for_brands: boolean;
 }
 
 interface FeatureFlagContextType {
   flags: Record<string, boolean>;
+  fullFlags: Record<string, FeatureFlag>;
   isLoading: boolean;
   isEnabled: (key: FeatureFlagKey) => boolean;
+  checkTierAccess: (key: string, tier: UserTier) => boolean;
   refetch: () => Promise<void>;
 }
 
@@ -26,21 +35,38 @@ const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(und
 
 export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [flags, setFlags] = useState<Record<string, boolean>>({});
+  const [fullFlags, setFullFlags] = useState<Record<string, FeatureFlag>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchFlags = async () => {
     try {
       const { data, error } = await supabase
         .from('feature_flags')
-        .select('flag_key, is_enabled');
+        .select('*');
 
       if (error) throw error;
 
       const flagMap: Record<string, boolean> = {};
-      data?.forEach((flag: { flag_key: string; is_enabled: boolean }) => {
+      const fullFlagMap: Record<string, FeatureFlag> = {};
+      
+      data?.forEach((flag: any) => {
         flagMap[flag.flag_key] = flag.is_enabled;
+        fullFlagMap[flag.flag_key] = {
+          id: flag.id,
+          flag_key: flag.flag_key,
+          flag_name: flag.flag_name,
+          description: flag.description,
+          is_enabled: flag.is_enabled,
+          requires_subscription: flag.requires_subscription ?? false,
+          enabled_for_free: flag.enabled_for_free ?? true,
+          enabled_for_pro: flag.enabled_for_pro ?? true,
+          enabled_for_elite: flag.enabled_for_elite ?? true,
+          enabled_for_brands: flag.enabled_for_brands ?? false
+        };
       });
+      
       setFlags(flagMap);
+      setFullFlags(fullFlagMap);
     } catch (error) {
       console.error('Error fetching feature flags:', error);
     } finally {
@@ -56,8 +82,27 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
     return flags[key] ?? false;
   };
 
+  const checkTierAccess = (key: string, tier: UserTier): boolean => {
+    const flag = fullFlags[key];
+    if (!flag) return true; // Feature not configured, allow by default
+    if (!flag.is_enabled) return false; // Feature disabled globally
+    if (!flag.requires_subscription) return true; // No subscription required
+    
+    switch (tier) {
+      case 'enterprise':
+      case 'elite':
+        return flag.enabled_for_elite;
+      case 'pro':
+      case 'supporter':
+        return flag.enabled_for_pro;
+      case 'free':
+      default:
+        return flag.enabled_for_free;
+    }
+  };
+
   return (
-    <FeatureFlagContext.Provider value={{ flags, isLoading, isEnabled, refetch: fetchFlags }}>
+    <FeatureFlagContext.Provider value={{ flags, fullFlags, isLoading, isEnabled, checkTierAccess, refetch: fetchFlags }}>
       {children}
     </FeatureFlagContext.Provider>
   );
