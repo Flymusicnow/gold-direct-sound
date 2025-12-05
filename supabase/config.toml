@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.stripe-connect-refresh]
 verify_jwt = true
+
+[functions.generate-monthly-wraps]
+verify_jwt = false

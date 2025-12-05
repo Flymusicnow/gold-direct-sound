@@ -175,7 +175,7 @@ export default function LiveStream() {
               <div className="flex flex-wrap gap-3">
                 {!isArtist && (
                   <>
-                    <LiveGiftButton streamId={stream.id} />
+                    {liveOsV2Enabled && <LiveGiftButton streamId={stream.id} />}
                     <LiveClipButton streamId={stream.id} streamUrl={stream.stream_url} />
                   </>
                 )}
@@ -209,7 +209,7 @@ export default function LiveStream() {
       </div>
 
       {/* Gift Animations Overlay */}
-      <LiveGiftAnimation streamId={stream.id} />
+      {liveOsV2Enabled && <LiveGiftAnimation streamId={stream.id} />}
     </div>
   );
 }

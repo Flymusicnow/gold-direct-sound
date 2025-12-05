@@ -6,14 +6,16 @@ import { DiscoverRisingArtistsRail } from '@/components/discover/DiscoverRisingA
 import { DiscoverGenreSection } from '@/components/discover/DiscoverGenreSection';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { TasteDebugPanel } from '@/components/discover/TasteDebugPanel';
-import { Sparkles } from 'lucide-react';
+import TransparencyWidget from '@/components/trust/TransparencyWidget';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 export default function Discover() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('for-you');
+  const trustLayerEnabled = useFeatureFlag('TRUST_LAYER_ENABLED');
 
   // Track onboarding progress on first visit
   useEffect(() => {
@@ -37,13 +39,21 @@ export default function Discover() {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-2 mb-4">
-            <h1 className="text-3xl font-bold">Discover</h1>
-            <InfoTooltip
-              title="How Discover Works"
-              description="Explore music tailored to your taste. 'For You' is personalized, 'Trending' shows what's hot now, and 'Rising' highlights new talent."
-              learnLink="/learn?tab=fan#discover"
-            />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">Discover</h1>
+              <InfoTooltip
+                title="How Discover Works"
+                description="Explore music tailored to your taste. 'For You' is personalized, 'Trending' shows what's hot now, and 'Rising' highlights new talent."
+                learnLink="/learn?tab=fan#discover"
+              />
+            </div>
+            {trustLayerEnabled && (
+              <TransparencyWidget 
+                reasons={{ genreMatch: true, trending: true }}
+                genre="your taste"
+              />
+            )}
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
