@@ -69,6 +69,12 @@ import Learn from "./pages/Learn";
 import VideoCollectionDetail from "./pages/VideoCollectionDetail";
 import NotFound from "./pages/NotFound";
 import ArtistAchievements from "./pages/ArtistAchievements";
+import UserAgreement from "./pages/legal/UserAgreement";
+import ArtistAgreement from "./pages/legal/ArtistAgreement";
+import FanTerms from "./pages/legal/FanTerms";
+import BrandPortalTerms from "./pages/legal/BrandPortalTerms";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import RiskDisclaimer from "./pages/legal/RiskDisclaimer";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
@@ -267,6 +273,12 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/learn" element={<Learn />} />
+            <Route path="/legal/user-agreement" element={<UserAgreement />} />
+            <Route path="/legal/artist-agreement" element={<ArtistAgreement />} />
+            <Route path="/legal/fan-terms" element={<FanTerms />} />
+            <Route path="/legal/brand-portal-terms" element={<BrandPortalTerms />} />
+            <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
               <FlightdeckPlayer />
