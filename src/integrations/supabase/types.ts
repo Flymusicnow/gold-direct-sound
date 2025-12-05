@@ -409,6 +409,103 @@ export type Database = {
           },
         ]
       }
+      artist_presskit_media: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          presskit_id: string
+          sort_order: number | null
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          presskit_id: string
+          sort_order?: number | null
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          presskit_id?: string
+          sort_order?: number | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_presskit_media_presskit_id_fkey"
+            columns: ["presskit_id"]
+            isOneToOne: false
+            referencedRelation: "artist_presskits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      artist_presskits: {
+        Row: {
+          artist_id: string
+          bio_long: string | null
+          bio_short: string | null
+          brand_tags: string[] | null
+          contact_email: string | null
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          location: string | null
+          slug: string
+          tagline: string | null
+          tech_info: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          bio_long?: string | null
+          bio_short?: string | null
+          brand_tags?: string[] | null
+          contact_email?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          slug: string
+          tagline?: string | null
+          tech_info?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          bio_long?: string | null
+          bio_short?: string | null
+          brand_tags?: string[] | null
+          contact_email?: string | null
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          location?: string | null
+          slug?: string
+          tagline?: string | null
+          tech_info?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_presskits_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_profiles: {
         Row: {
           artist_name: string
@@ -801,6 +898,266 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_applications: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          id: string
+          match_score: number | null
+          message: string | null
+          opportunity_id: string
+          presskit_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          id?: string
+          match_score?: number | null
+          message?: string | null
+          opportunity_id: string
+          presskit_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          id?: string
+          match_score?: number | null
+          message?: string | null
+          opportunity_id?: string
+          presskit_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_applications_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collab_applications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "collab_opportunities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collab_applications_presskit_id_fkey"
+            columns: ["presskit_id"]
+            isOneToOne: false
+            referencedRelation: "artist_presskits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_entities: {
+        Row: {
+          avoid_categories: string | null
+          brand_values: string | null
+          budget_range: string | null
+          collab_types: string[] | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          logo_url: string | null
+          mission: string | null
+          name: string
+          slug: string
+          social_links: Json | null
+          style_tags: string[] | null
+          type: string
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          avoid_categories?: string | null
+          brand_values?: string | null
+          budget_range?: string | null
+          collab_types?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          name: string
+          slug: string
+          social_links?: Json | null
+          style_tags?: string[] | null
+          type: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          avoid_categories?: string | null
+          brand_values?: string | null
+          budget_range?: string | null
+          collab_types?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          logo_url?: string | null
+          mission?: string | null
+          name?: string
+          slug?: string
+          social_links?: Json | null
+          style_tags?: string[] | null
+          type?: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
+      collab_entity_admins: {
+        Row: {
+          collab_entity_id: string
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          collab_entity_id: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          collab_entity_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_entity_admins_collab_entity_id_fkey"
+            columns: ["collab_entity_id"]
+            isOneToOne: false
+            referencedRelation: "collab_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_interest: {
+        Row: {
+          artist_id: string
+          collab_entity_id: string
+          created_at: string | null
+          id: string
+          note: string | null
+          source: string
+          status: string
+        }
+        Insert: {
+          artist_id: string
+          collab_entity_id: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          status?: string
+        }
+        Update: {
+          artist_id?: string
+          collab_entity_id?: string
+          created_at?: string | null
+          id?: string
+          note?: string | null
+          source?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_interest_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collab_interest_collab_entity_id_fkey"
+            columns: ["collab_entity_id"]
+            isOneToOne: false
+            referencedRelation: "collab_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collab_opportunities: {
+        Row: {
+          application_deadline: string | null
+          budget_range: string | null
+          collab_entity_id: string
+          created_at: string | null
+          description: string | null
+          genres: string[] | null
+          id: string
+          is_active: boolean | null
+          location: string | null
+          min_supporters: number | null
+          min_xp_level: string | null
+          remote_ok: boolean | null
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          application_deadline?: string | null
+          budget_range?: string | null
+          collab_entity_id: string
+          created_at?: string | null
+          description?: string | null
+          genres?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          min_supporters?: number | null
+          min_xp_level?: string | null
+          remote_ok?: boolean | null
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          application_deadline?: string | null
+          budget_range?: string | null
+          collab_entity_id?: string
+          created_at?: string | null
+          description?: string | null
+          genres?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          location?: string | null
+          min_supporters?: number | null
+          min_xp_level?: string | null
+          remote_ok?: boolean | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collab_opportunities_collab_entity_id_fkey"
+            columns: ["collab_entity_id"]
+            isOneToOne: false
+            referencedRelation: "collab_entities"
             referencedColumns: ["id"]
           },
         ]
@@ -2546,6 +2903,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_artist_match_score: {
+        Args: { _artist_id: string; _collab_entity_id: string }
+        Returns: Json
+      }
       calculate_taste_score: {
         Args: {
           _artist_id: string
@@ -2625,6 +2986,39 @@ export type Database = {
           supporter_xp: number
         }[]
       }
+      get_top_artists_for_entity: {
+        Args: { _collab_entity_id: string; _limit?: number }
+        Returns: {
+          artist_id: string
+          artist_name: string
+          avatar_url: string
+          city: string
+          collab_type_score: number
+          country: string
+          genre: string
+          genre_score: number
+          location_score: number
+          supporters_score: number
+          total_score: number
+          xp_score: number
+        }[]
+      }
+      get_top_partners_for_artist: {
+        Args: { _artist_id: string; _limit?: number }
+        Returns: {
+          collab_type_score: number
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          genre_score: number
+          location: string
+          location_score: number
+          logo_url: string
+          supporters_score: number
+          total_score: number
+          xp_score: number
+        }[]
+      }
       get_trending_content: {
         Args: { _hours?: number; _limit?: number }
         Returns: {
@@ -2662,6 +3056,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_collab_entity_admin: {
+        Args: { _entity_id: string; _user_id: string }
+        Returns: boolean
+      }
       redeem_beta_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
