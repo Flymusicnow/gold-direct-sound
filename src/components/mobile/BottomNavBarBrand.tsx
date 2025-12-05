@@ -1,0 +1,76 @@
+import { Link, useLocation } from "react-router-dom";
+import { LayoutDashboard, Users, Briefcase, Inbox, Menu } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { BarChart3, Settings } from "lucide-react";
+import { useState } from "react";
+
+const mainNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
+  { icon: Users, label: "Artists", path: "/brand/discovery" },
+  { icon: Briefcase, label: "Jobs", path: "/brand/opportunities" },
+  { icon: Inbox, label: "Apps", path: "/brand/applications" },
+];
+
+const moreNavItems = [
+  { icon: BarChart3, label: "Analytics", path: "/brand/analytics" },
+  { icon: Settings, label: "Settings", path: "/brand/settings" },
+];
+
+export function BottomNavBarBrand() {
+  const location = useLocation();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden">
+      <div className="flex items-center justify-around py-2">
+        {mainNavItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="text-xs">{item.label}</span>
+            </Link>
+          );
+        })}
+
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
+            <button className="flex flex-col items-center gap-1 px-3 py-2 text-muted-foreground">
+              <Menu className="h-5 w-5" />
+              <span className="text-xs">More</span>
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="h-auto">
+            <div className="py-4 space-y-2">
+              {moreNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSheetOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <Icon className="h-5 w-5 text-primary" />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </nav>
+  );
+}
