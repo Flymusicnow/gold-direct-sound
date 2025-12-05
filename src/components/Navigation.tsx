@@ -7,7 +7,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useEffect } from "react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,7 +81,6 @@ export const Navigation = () => {
                 </Link>
               )}
               
-              <LanguageSwitcher />
               <NotificationBell />
               
               <DropdownMenu>
@@ -101,7 +99,6 @@ export const Navigation = () => {
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <LanguageSwitcher />
               <Button variant="ghost" onClick={() => navigate('/auth')}>
                 {t('nav.signIn')}
               </Button>
