@@ -29,6 +29,7 @@ export function PremiumVideoPlayer({
   const [duration, setDuration] = useState(0);
   const [showControls, setShowControls] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   
@@ -40,7 +41,13 @@ export function PremiumVideoPlayer({
     if (!video) return;
 
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleLoadedMetadata = () => setDuration(video.duration);
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+      // Detect portrait orientation
+      if (video.videoWidth && video.videoHeight) {
+        setIsPortrait(video.videoHeight > video.videoWidth);
+      }
+    };
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleError = () => {
@@ -183,7 +190,10 @@ export function PremiumVideoPlayer({
             loop={loop}
             muted={isMuted}
             playsInline
-            className="w-full aspect-video object-cover bg-black"
+            className={cn(
+              "w-full bg-black",
+              isPortrait ? "max-h-[80vh] object-contain aspect-[9/16]" : "aspect-video object-cover"
+            )}
             onClick={togglePlayPause}
           />
 
@@ -276,7 +286,10 @@ export function PremiumVideoPlayer({
         loop={loop}
         muted={isMuted}
         playsInline
-        className="w-full aspect-video object-cover bg-black"
+        className={cn(
+          "w-full bg-black",
+          isPortrait ? "max-h-[80vh] object-contain aspect-[9/16]" : "aspect-video object-cover"
+        )}
         onClick={togglePlayPause}
       />
 
