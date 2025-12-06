@@ -116,8 +116,8 @@ export default function StudioMerch() {
       <div className="flex min-h-screen w-full">
         <StudioSidebar />
         <MobileStudioNav />
-        <div className="flex-1 pt-16 md:pt-0">
-          <div className="p-6 md:p-8 pb-20 md:pb-8">
+        <div className="flex-1 pt-20 md:pt-0 lg:ml-64">
+          <div className="p-4 md:p-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col gap-4">

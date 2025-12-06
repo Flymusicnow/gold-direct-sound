@@ -34,9 +34,13 @@ export default function RoleSelection() {
         rolesToInsert = [{ user_id: user.id, role: selectedRole }];
       }
 
+      // Use upsert to handle duplicate key errors
       const { error } = await supabase
         .from('user_roles')
-        .insert(rolesToInsert);
+        .upsert(rolesToInsert, { 
+          onConflict: 'user_id,role',
+          ignoreDuplicates: true 
+        });
 
       if (error) throw error;
 
