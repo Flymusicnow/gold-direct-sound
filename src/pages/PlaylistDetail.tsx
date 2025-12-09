@@ -18,6 +18,7 @@ import {
   Lock,
   Globe,
   Settings,
+  Music,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,12 +43,19 @@ interface Playlist {
   description: string | null;
   is_public: boolean;
   user_id: string;
+  cover_url?: string | null;
 }
 
 export default function PlaylistDetail() {
   const { playlistId } = useParams<{ playlistId: string }>();
   const { user } = useAuth();
   const { playNow, addToQueue, setQueue } = useFlightdeck();
+  const navigate = useNavigate();
+  const [playlist, setPlaylist] = useState<Playlist | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Helper to convert track to FlightdeckItem
   const trackToFlightdeckItem = (track: Track): FlightdeckItem => ({
@@ -78,12 +86,6 @@ export default function PlaylistDetail() {
     const context = tracks.map(trackToFlightdeckItem);
     playNow(item, context);
   };
-  const navigate = useNavigate();
-  const [playlist, setPlaylist] = useState<Playlist | null>(null);
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!playlistId) return;
@@ -108,7 +110,7 @@ export default function PlaylistDetail() {
         return;
       }
 
-      setPlaylist(playlistData);
+      setPlaylist(playlistData as Playlist);
 
       // Fetch tracks
       const { data: tracksData, error: tracksError } = await supabase
@@ -182,138 +184,158 @@ export default function PlaylistDetail() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
+      <div className="min-h-screen pt-20 md:pt-8 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-4xl">
-        {/* Header */}
-        <Button
-          variant="ghost"
-          className="mb-6"
-          onClick={() => navigate("/fan/playlists")}
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Playlists
-        </Button>
-
-        <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h1 className="text-4xl font-bold mb-2">{playlist.name}</h1>
-              {playlist.description && (
-                <p className="text-muted-foreground">{playlist.description}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {playlist.is_public ? (
-                <Globe className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <Lock className="h-5 w-5 text-muted-foreground" />
-              )}
-              {playlist.is_public && (
-                <Button variant="outline" size="sm" onClick={handleShare}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              )}
-              {isOwner && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 mt-4">
-            <p className="text-sm text-muted-foreground">
-              {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
-            </p>
-            {tracks.length > 0 && (
-              <Button 
-                onClick={handlePlayAll}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Play className="h-4 w-4 mr-2" />
-                Play All
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Tracks List */}
-        {tracks.length === 0 ? (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              This playlist is empty
-            </p>
-            <Button onClick={() => navigate("/explore")}>
-              Explore Music
+          {/* Back Button - Fixed position on mobile */}
+          <div className="sticky top-16 md:top-0 z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-2 mb-4 md:relative md:bg-transparent md:backdrop-blur-none">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/fan/playlists")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Playlists
             </Button>
-          </Card>
-        ) : (
-          <div className="space-y-2">
-            {tracks.map((track) => (
-              <Card
-                key={track.id}
-                className="p-4 hover:bg-accent transition-colors"
-              >
-                <div className="flex items-center gap-4">
-                  {track.tracks.cover_url ? (
-                    <img
-                      src={track.tracks.cover_url}
-                      alt={track.tracks.title}
-                      className="w-12 h-12 rounded object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center">
-                      <Play className="h-5 w-5 text-primary" />
-                    </div>
-                  )}
+          </div>
 
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">
-                      {track.tracks.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {track.tracks.artist_profiles.artist_name}
-                    </p>
+          {/* Header with Cover */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row items-start gap-6 mb-4">
+              {/* Cover Image */}
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden border border-border">
+                {playlist.cover_url ? (
+                  <img
+                    src={playlist.cover_url}
+                    alt={playlist.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Music className="h-16 w-16 text-primary" />
+                )}
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <h1 className="text-3xl sm:text-4xl font-bold mb-2">{playlist.name}</h1>
+                    {playlist.description && (
+                      <p className="text-muted-foreground">{playlist.description}</p>
+                    )}
                   </div>
-
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handlePlayTrack(track)}
-                      title="Play now"
-                    >
-                      <Play className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleAddToQueue(track)}
-                      title="Add to queue"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    {isOwner && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleRemoveTrack(track.id)}
-                        title="Remove from playlist"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                  <div className="flex items-center gap-2">
+                    {playlist.is_public ? (
+                      <Globe className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <Lock className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                 </div>
-              </Card>
-            ))}
+
+                <div className="flex flex-wrap items-center gap-3 mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    {tracks.length} {tracks.length === 1 ? "track" : "tracks"}
+                  </p>
+                  {tracks.length > 0 && (
+                    <Button 
+                      onClick={handlePlayAll}
+                      className="bg-primary hover:bg-primary/90"
+                    >
+                      <Play className="h-4 w-4 mr-2" />
+                      Play All
+                    </Button>
+                  )}
+                  {playlist.is_public && (
+                    <Button variant="outline" size="sm" onClick={handleShare}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Share
+                    </Button>
+                  )}
+                  {isOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Tracks List */}
+          {tracks.length === 0 ? (
+            <Card className="p-12 text-center">
+              <p className="text-muted-foreground mb-4">
+                This playlist is empty
+              </p>
+              <Button onClick={() => navigate("/explore")}>
+                Explore Music
+              </Button>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {tracks.map((track) => (
+                <Card
+                  key={track.id}
+                  className="p-4 hover:bg-accent transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    {track.tracks.cover_url ? (
+                      <img
+                        src={track.tracks.cover_url}
+                        alt={track.tracks.title}
+                        className="w-12 h-12 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded bg-primary/10 flex items-center justify-center">
+                        <Play className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold truncate">
+                        {track.tracks.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {track.tracks.artist_profiles.artist_name}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handlePlayTrack(track)}
+                        title="Play now"
+                      >
+                        <Play className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => handleAddToQueue(track)}
+                        title="Add to queue"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                      {isOwner && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleRemoveTrack(track.id)}
+                          title="Remove from playlist"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {isMobile && <BottomNavBarFan />}
@@ -327,6 +349,7 @@ export default function PlaylistDetail() {
           initialName={playlist.name}
           initialDescription={playlist.description}
           initialIsPublic={playlist.is_public}
+          initialCoverUrl={playlist.cover_url}
           onUpdate={fetchPlaylistData}
           onDelete={() => navigate("/fan/playlists")}
         />

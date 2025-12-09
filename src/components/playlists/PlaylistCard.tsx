@@ -8,6 +8,7 @@ interface PlaylistCardProps {
   description: string | null;
   isPublic: boolean;
   trackCount: number;
+  coverUrl?: string | null;
 }
 
 export default function PlaylistCard({
@@ -16,6 +17,7 @@ export default function PlaylistCard({
   description,
   isPublic,
   trackCount,
+  coverUrl,
 }: PlaylistCardProps) {
   const navigate = useNavigate();
 
@@ -26,8 +28,16 @@ export default function PlaylistCard({
     >
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Music className="h-8 w-8 text-primary" />
+          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {coverUrl ? (
+              <img
+                src={coverUrl}
+                alt={name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Music className="h-8 w-8 text-primary" />
+            )}
           </div>
 
           <div className="flex-1 min-w-0">

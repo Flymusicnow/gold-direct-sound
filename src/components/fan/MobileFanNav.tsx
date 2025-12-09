@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -51,61 +52,65 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
 
   if (inSheet) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
-            <Home className="h-5 w-5 text-primary-foreground" />
+      <div className="flex flex-col h-full max-h-[65vh]">
+        <div className="flex-shrink-0 space-y-4 pb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
+              <Home className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Fan Portal
+            </h2>
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Fan Portal
-          </h2>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search menu..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9 bg-muted/30"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search menu..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 pr-9 bg-muted/30"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2"
-            >
-              <X className="h-4 w-4 text-muted-foreground" />
-            </button>
-          )}
-        </div>
+        <ScrollArea className="flex-1 -mx-2 px-2">
+          <nav className="space-y-1 pb-8">
+            {filteredItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
+            ) : (
+              filteredItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                const Icon = item.icon;
 
-        <nav className="space-y-1">
-          {filteredItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
-          ) : (
-            filteredItems.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={handleNavigate}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                    isActive
-                      ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                  )}
-                >
-                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })
-          )}
-        </nav>
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={handleNavigate}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })
+            )}
+          </nav>
+        </ScrollArea>
       </div>
     );
   }

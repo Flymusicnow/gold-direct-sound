@@ -18,6 +18,7 @@ interface Playlist {
   description: string | null;
   is_public: boolean;
   track_count: number;
+  cover_url?: string | null;
 }
 
 export default function FanPlaylists() {
@@ -42,7 +43,7 @@ export default function FanPlaylists() {
     try {
       const { data: playlistsData, error } = await supabase
         .from("playlists")
-        .select("id, name, description, is_public, created_at")
+        .select("id, name, description, is_public, created_at, cover_url")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -50,7 +51,7 @@ export default function FanPlaylists() {
 
       // Get track count for each playlist
       const playlistsWithCounts = await Promise.all(
-        (playlistsData || []).map(async (playlist) => {
+        (playlistsData || []).map(async (playlist: any) => {
           const { count } = await supabase
             .from("playlist_tracks")
             .select("*", { count: "exact", head: true })
@@ -131,6 +132,7 @@ export default function FanPlaylists() {
                 description={playlist.description}
                 isPublic={playlist.is_public}
                 trackCount={playlist.track_count}
+                coverUrl={playlist.cover_url}
               />
             ))}
           </div>

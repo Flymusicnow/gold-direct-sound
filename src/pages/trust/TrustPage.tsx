@@ -9,26 +9,26 @@ const TrustPage: React.FC = () => {
   const trustPillars = [
     {
       icon: <Eye className="h-8 w-8" />,
-      title: 'Transparens',
-      description: 'Vi visar alltid varför du ser visst innehåll. Inga dolda algoritmer.',
+      title: 'Transparency',
+      description: 'We always show why you see certain content. No hidden algorithms.',
       link: '/principles',
     },
     {
       icon: <Heart className="h-8 w-8" />,
       title: 'Artist-First',
-      description: 'Artister äger sin publik och sina relationer. Vi tar aldrig kontroll.',
+      description: 'Artists own their audience and relationships. We never take control.',
       link: '/culture',
     },
     {
       icon: <Scale className="h-8 w-8" />,
-      title: 'Rättvisa',
-      description: 'Ingen kan köpa sig till synlighet. Organiskt stöd är allt som räknas.',
+      title: 'Fairness',
+      description: 'No one can buy visibility. Only organic support matters.',
       link: '/principles',
     },
     {
       icon: <Lock className="h-8 w-8" />,
-      title: 'Integritet',
-      description: 'Din data är din. Vi säljer aldrig information till tredje part.',
+      title: 'Privacy',
+      description: 'Your data is yours. We never sell information to third parties.',
       link: '/data',
     },
   ];
@@ -37,7 +37,7 @@ const TrustPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="container max-w-5xl mx-auto px-4 py-12">
+      <main className="container max-w-5xl mx-auto px-4 pt-20 md:pt-12 pb-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
@@ -47,8 +47,8 @@ const TrustPage: React.FC = () => {
             FlyMusic <span className="text-primary">Trust</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Vi bygger en musikplattform baserad på förtroende, transparens och respekt 
-            för både artister och fans.
+            We're building a music platform based on trust, transparency, and respect 
+            for both artists and fans.
           </p>
         </div>
 
@@ -64,7 +64,7 @@ const TrustPage: React.FC = () => {
               <CardContent>
                 <Link to={pillar.link}>
                   <Button variant="ghost" className="group-hover:text-primary">
-                    Läs mer <ArrowRight className="ml-2 h-4 w-4" />
+                    Read more <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </CardContent>
@@ -75,23 +75,23 @@ const TrustPage: React.FC = () => {
         {/* Our Commitment */}
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Vårt Löfte</CardTitle>
+            <CardTitle className="text-2xl">Our Promise</CardTitle>
           </CardHeader>
           <CardContent className="max-w-3xl mx-auto text-center">
             <p className="text-muted-foreground mb-6">
-              FlyMusic är byggt av och för musikälskare. Vi tror att den bästa musikupplevelsen 
-              skapas när artister och fans kan koppla samman direkt, utan mellanhänder eller 
-              dolda agendor. Vi lovar att aldrig kompromissa med dessa värderingar.
+              FlyMusic is built by and for music lovers. We believe the best music experience 
+              is created when artists and fans can connect directly, without intermediaries or 
+              hidden agendas. We promise to never compromise these values.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link to="/principles">
-                <Button variant="outline">Våra Principer</Button>
+                <Button variant="outline">Our Principles</Button>
               </Link>
               <Link to="/safety">
-                <Button variant="outline">Säkerhet</Button>
+                <Button variant="outline">Safety</Button>
               </Link>
               <Link to="/data">
-                <Button variant="outline">Dataanvändning</Button>
+                <Button variant="outline">Data Usage</Button>
               </Link>
             </div>
           </CardContent>

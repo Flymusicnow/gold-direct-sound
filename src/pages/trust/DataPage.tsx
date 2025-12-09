@@ -9,32 +9,32 @@ const DataPage: React.FC = () => {
   const dataPoints = [
     {
       icon: <Eye className="h-6 w-6" />,
-      title: 'Vad vi samlar in',
+      title: 'What We Collect',
       items: [
-        'Din lyssningshistorik (för personliga rekommendationer)',
-        'Interaktioner (likes, follows, kommentarer)',
-        'Grundläggande kontoinformation',
-        'Supporter-aktivitet',
+        'Your listening history (for personalized recommendations)',
+        'Interactions (likes, follows, comments)',
+        'Basic account information',
+        'Supporter activity',
       ],
     },
     {
       icon: <Lock className="h-6 w-6" />,
-      title: 'Vad vi ALDRIG gör',
+      title: 'What We NEVER Do',
       items: [
-        'Säljer din data till tredje part',
-        'Delar din lyssningshistorik med annonsörer',
-        'Använder din data för riktad reklam',
-        'Säljer kontaktlistor eller fan-data',
+        'Sell your data to third parties',
+        'Share your listening history with advertisers',
+        'Use your data for targeted advertising',
+        'Sell contact lists or fan data',
       ],
     },
     {
       icon: <Download className="h-6 w-6" />,
-      title: 'Dina rättigheter',
+      title: 'Your Rights',
       items: [
-        'Ladda ner all din data',
-        'Radera ditt konto permanent',
-        'Ändra dina integritetsinställningar',
-        'Se exakt vad vi lagrar om dig',
+        'Download all your data',
+        'Delete your account permanently',
+        'Change your privacy settings',
+        'See exactly what we store about you',
       ],
     },
   ];
@@ -43,11 +43,11 @@ const DataPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="container max-w-4xl mx-auto px-4 py-12">
+      <main className="container max-w-4xl mx-auto px-4 pt-20 md:pt-12 pb-12">
         <Link to="/trust">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka till Trust
+            Back to Trust
           </Button>
         </Link>
 
@@ -55,9 +55,9 @@ const DataPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
             <Database className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Dataanvändning</h1>
+          <h1 className="text-4xl font-bold mb-4">Data Usage</h1>
           <p className="text-xl text-muted-foreground">
-            Full transparens om hur vi hanterar din information.
+            Full transparency about how we handle your information.
           </p>
         </div>
 
@@ -65,10 +65,10 @@ const DataPage: React.FC = () => {
         <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent mb-8">
           <CardContent className="py-8 text-center">
             <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Din Data, Dina Regler</h2>
+            <h2 className="text-2xl font-bold mb-2">Your Data, Your Rules</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              FlyMusic samlar bara in data som behövs för att ge dig en bättre musikupplevelse. 
-              Vi säljer aldrig, och kommer aldrig sälja, din information.
+              FlyMusic only collects data needed to give you a better music experience. 
+              We never sell, and will never sell, your information.
             </p>
           </CardContent>
         </Card>
@@ -102,23 +102,23 @@ const DataPage: React.FC = () => {
         {/* Data Actions */}
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle>Hantera din data</CardTitle>
+            <CardTitle>Manage Your Data</CardTitle>
             <CardDescription>
-              Du har full kontroll över din information på FlyMusic.
+              You have full control over your information on FlyMusic.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-3">
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />
-              Ladda ner min data
+              Download My Data
             </Button>
             <Button variant="outline" size="sm">
               <Eye className="h-4 w-4 mr-2" />
-              Se min data
+              View My Data
             </Button>
             <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
-              Radera mitt konto
+              Delete My Account
             </Button>
           </CardContent>
         </Card>
