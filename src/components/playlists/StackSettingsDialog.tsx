@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -24,7 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, Upload, Image, X } from "lucide-react";
 
 interface StackSettingsDialogProps {
   open: boolean;
@@ -33,6 +33,7 @@ interface StackSettingsDialogProps {
   initialName: string;
   initialDescription: string | null;
   initialIsPublic: boolean;
+  initialCoverUrl?: string | null;
   onUpdate: () => void;
   onDelete: () => void;
 }
@@ -44,14 +45,64 @@ export function StackSettingsDialog({
   initialName,
   initialDescription,
   initialIsPublic,
+  initialCoverUrl,
   onUpdate,
   onDelete,
 }: StackSettingsDialogProps) {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription || "");
   const [isPublic, setIsPublic] = useState(initialIsPublic);
+  const [coverUrl, setCoverUrl] = useState(initialCoverUrl || "");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${playlistId}-${Date.now()}.${fileExt}`;
+      const filePath = `playlist-covers/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setCoverUrl(publicUrl);
+      toast.success("Cover image uploaded");
+    } catch (error) {
+      console.error("Error uploading cover:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveCover = () => {
+    setCoverUrl("");
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -67,8 +118,9 @@ export function StackSettingsDialog({
           name: name.trim(),
           description: description.trim() || null,
           is_public: isPublic,
+          cover_url: coverUrl || null,
           updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq("id", playlistId);
 
       if (error) throw error;
@@ -125,6 +177,58 @@ export function StackSettingsDialog({
           </DialogHeader>
 
           <div className="space-y-4 py-4">
+            {/* Cover Image Upload */}
+            <div className="space-y-2">
+              <Label>Cover Image</Label>
+              <div className="flex items-start gap-4">
+                <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt="Stack cover"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    {uploading ? "Uploading..." : "Upload Image"}
+                  </Button>
+                  {coverUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveCover}
+                      className="text-muted-foreground"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    JPG, PNG. Max 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Stack Name</Label>
               <Input
@@ -178,7 +282,7 @@ export function StackSettingsDialog({
               >
                 Cancel
               </Button>
-              <Button onClick={handleSave} disabled={loading}>
+              <Button onClick={handleSave} disabled={loading || uploading}>
                 {loading ? "Saving..." : "Save Changes"}
               </Button>
             </div>

@@ -9,23 +9,23 @@ const SafetyPage: React.FC = () => {
   const safetyFeatures = [
     {
       icon: <Ban className="h-6 w-6" />,
-      title: 'Nolltolerans mot Trakasserier',
-      description: 'Hatiskt innehåll, trakasserier och mobbning tolereras inte. Vi agerar snabbt på anmälningar.',
+      title: 'Zero Tolerance for Harassment',
+      description: 'Hateful content, harassment, and bullying are not tolerated. We act quickly on reports.',
     },
     {
       icon: <Flag className="h-6 w-6" />,
-      title: 'Enkel Rapportering',
-      description: 'En tydlig rapportfunktion finns på allt innehåll. Varje anmälan granskas av vårt team.',
+      title: 'Easy Reporting',
+      description: 'A clear reporting function is available on all content. Every report is reviewed by our team.',
     },
     {
       icon: <Lock className="h-6 w-6" />,
-      title: 'Kontosäkerhet',
-      description: 'Säker autentisering och möjlighet att skydda ditt konto med extra verifiering.',
+      title: 'Account Security',
+      description: 'Secure authentication and the ability to protect your account with extra verification.',
     },
     {
       icon: <Users className="h-6 w-6" />,
       title: 'Community Guidelines',
-      description: 'Tydliga regler för vad som är acceptabelt. Alla användare förväntas följa dessa.',
+      description: 'Clear rules for what is acceptable. All users are expected to follow these guidelines.',
     },
   ];
 
@@ -33,11 +33,11 @@ const SafetyPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="container max-w-4xl mx-auto px-4 py-12">
+      <main className="container max-w-4xl mx-auto px-4 pt-20 md:pt-12 pb-12">
         <Link to="/trust">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka till Trust
+            Back to Trust
           </Button>
         </Link>
 
@@ -45,9 +45,9 @@ const SafetyPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold mb-4">Säkerhet på FlyMusic</h1>
+          <h1 className="text-4xl font-bold mb-4">Safety at FlyMusic</h1>
           <p className="text-xl text-muted-foreground">
-            En trygg plats för musik, kreativitet och community.
+            A safe place for music, creativity, and community.
           </p>
         </div>
 
@@ -56,13 +56,13 @@ const SafetyPage: React.FC = () => {
           <CardContent className="flex items-start gap-4 py-6">
             <AlertTriangle className="h-6 w-6 text-yellow-500 shrink-0 mt-0.5" />
             <div>
-              <h3 className="font-semibold mb-1">Behöver du hjälp?</h3>
+              <h3 className="font-semibold mb-1">Need Help?</h3>
               <p className="text-sm text-muted-foreground">
-                Om du upplever trakasserier, hot eller annat olämpligt beteende, kontakta oss 
-                omedelbart. Vi tar alla anmälningar på allvar.
+                If you experience harassment, threats, or other inappropriate behavior, contact us 
+                immediately. We take all reports seriously.
               </p>
               <Button variant="outline" size="sm" className="mt-3">
-                Rapportera ett Problem
+                Report a Problem
               </Button>
             </div>
           </CardContent>
@@ -92,32 +92,32 @@ const SafetyPage: React.FC = () => {
         {/* Community Guidelines Summary */}
         <Card className="border-primary/20">
           <CardHeader>
-            <CardTitle>Community Guidelines (Sammanfattning)</CardTitle>
+            <CardTitle>Community Guidelines (Summary)</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-2">
               <span className="text-primary">✓</span>
-              <span className="text-sm">Var respektfull mot andra användare</span>
+              <span className="text-sm">Be respectful to other users</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">✓</span>
-              <span className="text-sm">Dela bara innehåll du har rätt att dela</span>
+              <span className="text-sm">Only share content you have the right to share</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">✓</span>
-              <span className="text-sm">Ge konstruktiv feedback, inte hatiska kommentarer</span>
+              <span className="text-sm">Give constructive feedback, not hateful comments</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-primary">✓</span>
-              <span className="text-sm">Rapportera olämpligt innehåll när du ser det</span>
+              <span className="text-sm">Report inappropriate content when you see it</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-destructive">✗</span>
-              <span className="text-sm">Spam, fake engagement eller manipulation</span>
+              <span className="text-sm">Spam, fake engagement, or manipulation</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-destructive">✗</span>
-              <span className="text-sm">Hatiskt innehåll, diskriminering eller trakasserier</span>
+              <span className="text-sm">Hateful content, discrimination, or harassment</span>
             </div>
           </CardContent>
         </Card>

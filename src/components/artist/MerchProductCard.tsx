@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Edit, Trash2 } from "lucide-react";
+import { ExternalLink, Edit, Trash2, ShoppingCart } from "lucide-react";
 
 interface MerchProductCardProps {
   product: {
@@ -85,15 +85,23 @@ export function MerchProductCard({ product, isOwner, onEdit, onDelete }: MerchPr
             {product.currency} ${product.price.toFixed(2)}
           </span>
           
-          {product.external_url && (
-            <Button
-              onClick={handleBuyClick}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
-            >
-              Buy Now
-              <ExternalLink className="h-4 w-4 ml-2" />
-            </Button>
-          )}
+          <Button
+            onClick={handleBuyClick}
+            disabled={!product.external_url}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            {product.external_url ? (
+              <>
+                Buy Now
+                <ExternalLink className="h-4 w-4 ml-2" />
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Coming Soon
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </Card>

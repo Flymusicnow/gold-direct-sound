@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1, Trash2 } from "lucide-react";
+import { GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
@@ -37,11 +37,9 @@ interface QueueItemProps {
 }
 
 function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueItemProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const startX = useRef(0);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -55,100 +53,80 @@ function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueIt
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (isCurrent) return; // Don't allow removing current item
-    startX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (isCurrent) return;
-    const diff = startX.current - e.touches[0].clientX;
-    if (diff > 0) {
-      setSwipeOffset(Math.min(diff, 80));
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (swipeOffset > 60) {
-      onRemove();
-    }
-    setSwipeOffset(0);
-  };
-
   return (
-    <div className="relative overflow-hidden rounded-lg">
-      {/* Delete button behind */}
-      {!isCurrent && (
-        <div className="absolute right-0 top-0 bottom-0 w-20 bg-destructive flex items-center justify-center rounded-r-lg">
-          <Trash2 className="h-5 w-5 text-destructive-foreground" />
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-lg transition-all bg-card",
+        isCurrent && "bg-primary/10 border border-primary/50",
+        isDragging && "opacity-50 shadow-lg"
+      )}
+    >
+      {/* Drag Handle - More visible */}
+      <button 
+        {...attributes}
+        {...listeners} 
+        className="cursor-grab active:cursor-grabbing touch-none p-2 -m-2 rounded hover:bg-muted/50"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </button>
+
+      {item.coverUrl ? (
+        <img
+          src={item.coverUrl}
+          alt={item.title}
+          className="w-12 h-12 rounded object-cover border border-border"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded bg-muted flex items-center justify-center border border-border">
+          <Music className="h-5 w-5 text-muted-foreground" />
         </div>
       )}
-      
-      <div
-        ref={setNodeRef}
-        style={{ 
-          ...style, 
-          transform: `translateX(-${swipeOffset}px) ${style.transform || ''}`,
-        }}
-        className={cn(
-          "flex items-center gap-3 p-3 transition-all bg-card",
-          isCurrent 
-            ? "bg-primary/10 border border-primary/50" 
-            : ""
-        )}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <button 
-          {...attributes}
-          {...listeners} 
-          className="cursor-grab active:cursor-grabbing touch-none"
-        >
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
-        </button>
 
-        {item.coverUrl ? (
-          <img
-            src={item.coverUrl}
-            alt={item.title}
-            className="w-12 h-12 rounded object-cover border border-border"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded bg-muted flex items-center justify-center border border-border">
-            <Music className="h-5 w-5 text-muted-foreground" />
-          </div>
-        )}
-
-        <div className="flex-1 min-w-0">
-          <p className="font-medium truncate">{item.title}</p>
-          <p className="text-sm text-muted-foreground truncate">{item.artistName}</p>
-          {formatDuration(item.duration) && (
-            <p className="text-xs text-muted-foreground mt-0.5">{formatDuration(item.duration)}</p>
-          )}
-        </div>
-
-        {/* Like button */}
-        {item.type === 'track' && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleLike();
-            }}
-            className={cn("h-8 w-8", isLiked && "text-red-500")}
-          >
-            <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
-          </Button>
-        )}
-
-        {isCurrent && (
-          <div className="text-xs font-medium text-primary uppercase tracking-wide shrink-0">
-            Playing
-          </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate">{item.title}</p>
+        <p className="text-sm text-muted-foreground truncate">{item.artistName}</p>
+        {formatDuration(item.duration) && (
+          <p className="text-xs text-muted-foreground mt-0.5">{formatDuration(item.duration)}</p>
         )}
       </div>
+
+      {/* Like button */}
+      {item.type === 'track' && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleLike();
+          }}
+          className={cn("h-8 w-8", isLiked && "text-red-500")}
+        >
+          <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+        </Button>
+      )}
+
+      {/* Remove button - separate from drag */}
+      {!isCurrent && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
+
+      {isCurrent && (
+        <div className="text-xs font-medium text-primary uppercase tracking-wide shrink-0">
+          Playing
+        </div>
+      )}
     </div>
   );
 }
@@ -235,7 +213,11 @@ export function FlightdeckQueueDrawer({
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Require 8px movement before drag starts
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -411,7 +393,7 @@ export function FlightdeckQueueDrawer({
               <div>
                 <h3 className="font-semibold text-sm">Up Next</h3>
                 <p className="text-xs text-muted-foreground">
-                  {queue.length} {queue.length === 1 ? "item" : "items"} • Swipe left to remove
+                  {queue.length} {queue.length === 1 ? "item" : "items"} • Drag to reorder
                 </p>
               </div>
             </div>

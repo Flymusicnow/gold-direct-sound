@@ -9,39 +9,39 @@ const PrinciplesPage: React.FC = () => {
   const principles = [
     {
       icon: <Scale className="h-6 w-6" />,
-      title: 'Ingen Köpt Synlighet',
-      description: 'Artister kan inte köpa sig till topplistor eller rekommendationer. Organiskt stöd från fans är det enda som räknas.',
-      details: 'Spotlight-ranking, Trending och For You baseras på genuint engagemang – inte betalningar.',
+      title: 'No Paid Visibility',
+      description: 'Artists cannot buy their way to the top of charts or recommendations. Only organic support from fans counts.',
+      details: 'Spotlight ranking, Trending, and For You are all based on genuine engagement – not payments.',
     },
     {
       icon: <Eye className="h-6 w-6" />,
-      title: 'Transparent Algoritm',
-      description: 'Vi visar alltid varför du ser visst innehåll. "Varför ser jag detta?" finns på varje rekommendation.',
-      details: 'Våra rankingfaktorer är publika: taste match, supporter activity, momentum och recency.',
+      title: 'Transparent Algorithm',
+      description: 'We always show why you see certain content. "Why am I seeing this?" is available on every recommendation.',
+      details: 'Our ranking factors are public: taste match, supporter activity, momentum, and recency.',
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: 'Artist Äger Publiken',
-      description: 'Artister äger sina fan-relationer. Vi säljer aldrig kontaktinformation eller skapar barriärer.',
-      details: 'Fans som följer en artist tillhör den artisten – inte plattformen.',
+      title: 'Artists Own Their Audience',
+      description: 'Artists own their fan relationships. We never sell contact information or create barriers.',
+      details: 'Fans who follow an artist belong to that artist – not the platform.',
     },
     {
       icon: <Ban className="h-6 w-6" />,
-      title: 'Inga Annonser',
-      description: 'FlyMusic har inga annonser och kommer aldrig ha det. Vi finansieras av direktstöd mellan fans och artister.',
-      details: 'Din upplevelse avbryts aldrig av reklam. Punkt.',
+      title: 'No Ads',
+      description: 'FlyMusic has no ads and never will. We are funded by direct support between fans and artists.',
+      details: 'Your experience is never interrupted by advertisements. Period.',
     },
     {
       icon: <Heart className="h-6 w-6" />,
       title: 'Fan-First Design',
-      description: 'Varje funktion designas för att förbättra musikupplevelsen, inte för att maximera "engagement metrics".',
-      details: 'Vi mäter framgång i meningsfulla kopplingar, inte i tid spenderad på plattformen.',
+      description: 'Every feature is designed to improve the music experience, not to maximize "engagement metrics."',
+      details: 'We measure success in meaningful connections, not time spent on the platform.',
     },
     {
       icon: <Sparkles className="h-6 w-6" />,
-      title: 'Rättvis Tävlan',
-      description: 'I Spotlight och rankings har alla artister samma förutsättningar oavsett storlek eller resurser.',
-      details: 'En ny artist med engagerade fans kan nå toppen lika lätt som en etablerad artist.',
+      title: 'Fair Competition',
+      description: 'In Spotlight and rankings, all artists have the same opportunities regardless of size or resources.',
+      details: 'A new artist with engaged fans can reach the top just as easily as an established artist.',
     },
   ];
 
@@ -49,18 +49,18 @@ const PrinciplesPage: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       
-      <main className="container max-w-4xl mx-auto px-4 py-12">
+      <main className="container max-w-4xl mx-auto px-4 pt-20 md:pt-12 pb-12">
         <Link to="/trust">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka till Trust
+            Back to Trust
           </Button>
         </Link>
 
         <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4">Våra Principer</h1>
+          <h1 className="text-4xl font-bold mb-4">Our Principles</h1>
           <p className="text-xl text-muted-foreground">
-            De grundläggande värderingar som styr allt vi bygger på FlyMusic.
+            The fundamental values that guide everything we build at FlyMusic.
           </p>
         </div>
 
