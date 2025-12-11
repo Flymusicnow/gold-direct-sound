@@ -38,12 +38,21 @@ export function SupportTierModal({
   const handleSubscribe = async (tier: SupporterTier) => {
     try {
       setSubscribing(tier.slug);
+      console.log('[SupportTierModal] Starting subscription for tier:', tier.slug, 'artistId:', artistId);
 
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      console.log('[SupportTierModal] Session check:', { hasSession: !!sessionData.session, error: sessionError });
+      
       if (!sessionData.session) {
         toast.error('Please sign in to subscribe');
         return;
       }
+
+      console.log('[SupportTierModal] Invoking create-supporter-checkout with:', {
+        artistId,
+        tier: tier.slug,
+        tierId: tier.id.startsWith('default-') ? null : tier.id,
+      });
 
       const { data, error } = await supabase.functions.invoke('create-supporter-checkout', {
         body: { 
@@ -56,15 +65,30 @@ export function SupportTierModal({
         },
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      console.log('[SupportTierModal] Edge function response:', { data, error });
 
-      if (data.url) {
-        window.location.href = data.url;
+      if (error) {
+        console.error('[SupportTierModal] Edge function error:', error);
+        throw error;
+      }
+      if (data?.error) {
+        console.error('[SupportTierModal] Data error:', data.error);
+        throw new Error(data.error);
+      }
+
+      if (data?.url) {
+        console.log('[SupportTierModal] Redirecting to Stripe checkout:', data.url);
+        // Open in new tab for better mobile experience
+        window.open(data.url, '_blank');
+        toast.success('Opening Stripe checkout...');
+      } else {
+        console.error('[SupportTierModal] No URL in response:', data);
+        toast.error('Failed to get checkout URL');
       }
     } catch (err) {
-      console.error('Subscription error:', err);
-      toast.error(err instanceof Error ? err.message : 'Failed to start subscription');
+      console.error('[SupportTierModal] Subscription error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start subscription';
+      toast.error(errorMessage);
     } finally {
       setSubscribing(null);
     }

@@ -6,10 +6,39 @@ import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { Footer } from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user, userRoles, loading: authLoading } = useAuth();
   const [stats, setStats] = useState({ artists: 0, tracks: 0, fans: 0 });
+
+  // Redirect logged-in users to their respective dashboards
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (user) {
+      console.log('[Home] User logged in, checking roles:', userRoles);
+      
+      // Determine where to redirect based on role
+      if (userRoles.length === 0) {
+        console.log('[Home] No roles found, redirecting to role selection');
+        navigate('/role-selection', { replace: true });
+      } else if (userRoles.includes('artist')) {
+        console.log('[Home] Artist role found, redirecting to /studio');
+        navigate('/studio', { replace: true });
+      } else if (userRoles.includes('brand')) {
+        console.log('[Home] Brand role found, redirecting to /brand');
+        navigate('/brand', { replace: true });
+      } else if (userRoles.includes('fan')) {
+        console.log('[Home] Fan role found, redirecting to /fan');
+        navigate('/fan', { replace: true });
+      } else {
+        console.log('[Home] Unknown roles, redirecting to role selection');
+        navigate('/role-selection', { replace: true });
+      }
+    }
+  }, [user, userRoles, authLoading, navigate]);
 
   useEffect(() => {
     async function fetchStats() {
