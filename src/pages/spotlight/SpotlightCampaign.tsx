@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, Sparkles, Trophy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
@@ -39,6 +40,7 @@ interface Entry {
 
 export default function SpotlightCampaign() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { campaignId } = useParams<{ campaignId: string }>();
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -152,6 +154,16 @@ export default function SpotlightCampaign() {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Sticky Back Button */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
+        <div className="container mx-auto px-4">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="relative bg-gradient-to-b from-[#E8BF1A]/10 to-background py-16 px-4">
         <div className="container mx-auto text-center">

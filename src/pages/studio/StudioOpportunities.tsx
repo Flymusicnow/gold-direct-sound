@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
+  ArrowLeft,
   Briefcase, 
   MapPin, 
   Calendar, 
@@ -32,6 +34,7 @@ import { useApplicationStatus } from "@/hooks/useApplicationStatus";
 
 export default function StudioOpportunities() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
@@ -162,7 +165,16 @@ export default function StudioOpportunities() {
     <div className="min-h-screen bg-background flex">
       <StudioSidebar />
       
-      <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+      <main className="flex-1 pb-24 md:pb-8">
+        {/* Sticky Back Button */}
+        <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-8">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+        
+        <div className="p-4 md:p-8">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
@@ -377,6 +389,7 @@ export default function StudioOpportunities() {
               )}
             </TabsContent>
           </Tabs>
+        </div>
         </div>
       </main>
 
