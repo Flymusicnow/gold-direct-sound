@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { PaidSupporterBadge } from "@/components/supporter/PaidSupporterBadge";
+import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { z } from "zod";
 
 const commentSchema = z.object({
@@ -37,10 +38,31 @@ interface CommentItemProps {
   paidTier?: 'basic' | 'gold' | null;
 }
 
-// Helper function to get display name - never show "Anonymous"
-const getDisplayName = (profiles: { full_name: string | null; avatar_url?: string | null } | null | undefined): string => {
-  if (!profiles) return "User";
-  if (profiles.full_name && profiles.full_name.trim()) return profiles.full_name;
+// Helper function to get display name with debug logging
+const getDisplayName = (
+  profiles: { full_name: string | null; avatar_url?: string | null; email?: string } | null | undefined,
+  userId?: string
+): string => {
+  console.log('[CommentItem] getDisplayName called for userId:', userId, 'profiles:', profiles);
+  
+  if (!profiles) {
+    console.log('[CommentItem] No profiles object found, returning "User"');
+    return "User";
+  }
+  
+  if (profiles.full_name && profiles.full_name.trim()) {
+    console.log('[CommentItem] Found full_name:', profiles.full_name);
+    return profiles.full_name;
+  }
+  
+  // Try email prefix as fallback
+  if ((profiles as any).email) {
+    const emailPrefix = (profiles as any).email.split('@')[0];
+    console.log('[CommentItem] Using email prefix as fallback:', emailPrefix);
+    return emailPrefix;
+  }
+  
+  console.log('[CommentItem] No display name found, returning "User"');
   return "User";
 };
 
@@ -60,7 +82,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
   const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
   const likeCount = comment.comment_likes?.length || 0;
 
-  const displayName = getDisplayName(comment.profiles);
+  const displayName = getDisplayName(comment.profiles, comment.user_id);
 
   // Auto-load replies on mount
   useEffect(() => {
@@ -139,17 +161,21 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       .order("created_at", { ascending: true });
 
     if (repliesData) {
-      // Fetch profiles for all reply authors (including avatar_url)
+      // Fetch profiles for all reply authors (including avatar_url and email)
       const userIds = repliesData.map((r) => r.user_id);
-      const { data: profilesData } = await supabase
+      console.log('[CommentItem] Fetching profiles for reply userIds:', userIds);
+      
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url" as any)
+        .select("id, full_name, avatar_url, email" as any)
         .in("id", userIds);
+      
+      console.log('[CommentItem] Reply profiles fetched:', profilesData, 'Error:', profilesError);
 
       // Merge profiles with replies
       const repliesWithProfiles = repliesData.map((reply) => ({
         ...reply,
-        profiles: (profilesData as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null },
+        profiles: (profilesData as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null, email: null },
       }));
 
       setReplies(repliesWithProfiles);
@@ -238,13 +264,19 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
                 className="min-h-[80px]"
                 maxLength={1000}
               />
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowReply(false)}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={handleReply} disabled={!replyText.trim()}>
-                  Reply
-                </Button>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <EmojiPicker onEmojiSelect={(emoji) => setReplyText(prev => prev + emoji)} />
+                  <span className="text-xs text-muted-foreground">{replyText.length}/1000</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setShowReply(false)}>
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleReply} disabled={!replyText.trim()}>
+                    Reply
+                  </Button>
+                </div>
               </div>
             </div>
           )}

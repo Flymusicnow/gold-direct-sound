@@ -24,9 +24,12 @@ export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareMo
   
   const getShareUrl = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    const baseUrl = `${window.location.origin}/artist/${artist.id}`;
-    return user ? `${baseUrl}?ref=${user.id}&video=${video.id}` : baseUrl;
+    const baseUrl = `${window.location.origin}/artist/${artist.id}?video=${video.id}`;
+    return user ? `${baseUrl}&ref=${user.id}` : baseUrl;
   };
+  
+  // Pre-compute the share URL for captions
+  const shareUrlSync = `${window.location.origin}/artist/${artist.id}?video=${video.id}`;
 
   const handleCopyLink = async () => {
     const url = await getShareUrl();
@@ -43,17 +46,17 @@ export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareMo
   const socialPlatforms = [
     {
       name: "TikTok/Reels",
-      caption: `🎥 Check out this video from ${artist.artist_name} on FlyMusic! 🔥\n\n${video.caption || ''}\n\n#FlyMusic #NewVideo`,
+      caption: `🎥 Check out this video from ${artist.artist_name} on FlyMusic! 🔥\n\n${video.caption || ''}\n\n${shareUrlSync}\n\n#FlyMusic #NewVideo`,
       icon: "🎬",
     },
     {
       name: "Instagram Story",
-      caption: `New video from ${artist.artist_name}! 🎬 Tap to watch\n\n${video.caption || ''}`,
+      caption: `New video from ${artist.artist_name}! 🎬\n\n${video.caption || ''}\n\nWatch here: ${shareUrlSync}`,
       icon: "📸",
     },
     {
       name: "Twitter/X",
-      caption: `Just watched ${artist.artist_name}'s new video on @FlyMusic! ${video.caption || ''} Check it out:`,
+      caption: `Just watched ${artist.artist_name}'s new video on @FlyMusic! ${video.caption || ''}\n\n${shareUrlSync}`,
       icon: "🐦",
     },
   ];
@@ -71,7 +74,7 @@ export function VideoShareModal({ isOpen, onClose, video, artist }: VideoShareMo
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="w-5 h-5 text-primary" />

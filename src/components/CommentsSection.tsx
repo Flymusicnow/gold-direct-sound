@@ -36,10 +36,31 @@ interface CommentsSectionProps {
   currentUserId?: string;
 }
 
-// Helper function to get display name - never show "Anonymous"
-const getDisplayName = (profiles: { full_name: string | null; avatar_url?: string | null } | null | undefined): string => {
-  if (!profiles) return "User";
-  if (profiles.full_name && profiles.full_name.trim()) return profiles.full_name;
+// Helper function to get display name with debug logging
+const getDisplayName = (
+  profiles: { full_name: string | null; avatar_url?: string | null; email?: string } | null | undefined,
+  userId?: string
+): string => {
+  console.log('[CommentsSection] getDisplayName called for userId:', userId, 'profiles:', profiles);
+  
+  if (!profiles) {
+    console.log('[CommentsSection] No profiles object found, returning "User"');
+    return "User";
+  }
+  
+  if (profiles.full_name && profiles.full_name.trim()) {
+    console.log('[CommentsSection] Found full_name:', profiles.full_name);
+    return profiles.full_name;
+  }
+  
+  // Try email prefix as fallback
+  if ((profiles as any).email) {
+    const emailPrefix = (profiles as any).email.split('@')[0];
+    console.log('[CommentsSection] Using email prefix as fallback:', emailPrefix);
+    return emailPrefix;
+  }
+  
+  console.log('[CommentsSection] No display name found, returning "User"');
   return "User";
 };
 
@@ -91,12 +112,16 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       return;
     }
 
-    // Fetch profiles for all comment authors (including avatar_url)
+    // Fetch profiles for all comment authors (including avatar_url and email)
     const userIds = commentsData.map((c) => c.user_id);
-    const { data: profilesData } = await supabase
+    console.log('[CommentsSection] Fetching profiles for userIds:', userIds);
+    
+    const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, full_name, avatar_url" as any)
+      .select("id, full_name, avatar_url, email" as any)
       .in("id", userIds);
+    
+    console.log('[CommentsSection] Profiles fetched:', profilesData, 'Error:', profilesError);
 
     // Fetch supporter levels (XP-based)
     const { data: supportScores } = await supabase
