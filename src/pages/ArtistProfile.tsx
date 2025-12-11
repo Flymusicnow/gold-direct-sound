@@ -524,8 +524,8 @@ export default function ArtistProfile() {
               </Button>
             )}
 
-            {/* Achievements Link */}
-            <Link to={`/artist/${userId}/achievements`}>
+            {/* Achievements Link - with spacing */}
+            <Link to={`/artist/${userId}/achievements`} className="mt-4 block">
               <Button
                 variant="outline"
                 className="w-full border-primary/50 hover:border-primary hover:bg-primary/10"

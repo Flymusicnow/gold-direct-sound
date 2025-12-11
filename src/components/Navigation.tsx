@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard, Briefcase } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,6 +39,13 @@ export const Navigation = () => {
     return "/";
   };
 
+  // Get role-specific pricing link
+  const getPricingRoute = () => {
+    if (!user) return "/pricing";
+    // Pricing page shows role-filtered content, same route works
+    return "/pricing";
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -57,22 +64,25 @@ export const Navigation = () => {
             <Search className="h-4 w-4" />
             {t('nav.search')}
           </Link>
-          <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
-            For Brands
-          </Link>
-          <Link to="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
-            <CreditCard className="h-4 w-4" />
-            Pricing
-          </Link>
           
+          {/* Role-based navigation items */}
           {user ? (
             <>
+              {/* Artist sees Brand Opportunities */}
               {hasRole('artist') && (
-                <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
-                  {t('nav.myStudio')}
-                </Link>
+                <>
+                  <Link to="/studio/opportunities" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+                    <Briefcase className="h-4 w-4" />
+                    Brand Opportunities
+                  </Link>
+                  <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
+                    {t('nav.myStudio')}
+                  </Link>
+                </>
               )}
-              {hasRole('fan') && (
+              
+              {/* Fan sees Fan Portal and Feed */}
+              {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                 <>
                   <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
                     {t('nav.fanPortal')}
@@ -82,6 +92,14 @@ export const Navigation = () => {
                   </Link>
                 </>
               )}
+              
+              {/* Brand sees Brand Dashboard */}
+              {hasRole('brand') && (
+                <Link to="/brand" className="text-foreground/80 hover:text-primary transition-colors">
+                  Brand Dashboard
+                </Link>
+              )}
+              
               {hasRole('admin') && (
                 <Link to="/admin" className="text-foreground/80 hover:text-primary transition-colors">
                   {t('nav.admin')}
@@ -108,6 +126,11 @@ export const Navigation = () => {
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
+                  ) : hasRole('brand') ? (
+                    <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
                   ) : null}
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -117,29 +140,40 @@ export const Navigation = () => {
               </DropdownMenu>
             </>
           ) : (
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" onClick={() => navigate('/auth')}>
-                {t('nav.signIn')}
-              </Button>
-              <Button 
-                variant="ghost" 
-                className="text-foreground/80"
-                onClick={() => navigate('/auth?mode=fan')}
-              >
-                <Heart className="h-4 w-4 mr-1" />
-                {t('nav.joinFan')}
-              </Button>
-              <Button 
-                className="bg-gradient-gold" 
-                onClick={() => navigate('/auth?mode=artist')}
-              >
-                <Mic2 className="h-4 w-4 mr-1" />
-                {t('nav.joinArtist')}
-              </Button>
-            </div>
+            <>
+              {/* Unauthenticated users see Brands link and Pricing */}
+              <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
+                For Brands
+              </Link>
+              <Link to="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+                <CreditCard className="h-4 w-4" />
+                Pricing
+              </Link>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={() => navigate('/auth')}>
+                  {t('nav.signIn')}
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="text-foreground/80"
+                  onClick={() => navigate('/auth?mode=fan')}
+                >
+                  <Heart className="h-4 w-4 mr-1" />
+                  {t('nav.joinFan')}
+                </Button>
+                <Button 
+                  className="bg-gradient-gold" 
+                  onClick={() => navigate('/auth?mode=artist')}
+                >
+                  <Mic2 className="h-4 w-4 mr-1" />
+                  {t('nav.joinArtist')}
+                </Button>
+              </div>
+            </>
           )}
         </div>
 
+        {/* Mobile Menu */}
         <div className="md:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -155,21 +189,24 @@ export const Navigation = () => {
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/brands')}>
-                For Brands
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/pricing')}>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Pricing
-              </DropdownMenuItem>
+              
               {user ? (
                 <>
+                  {/* Artist menu items */}
                   {hasRole('artist') && (
-                    <DropdownMenuItem onClick={() => navigate('/studio')}>
-                      My Studio
-                    </DropdownMenuItem>
+                    <>
+                      <DropdownMenuItem onClick={() => navigate('/studio/opportunities')}>
+                        <Briefcase className="h-4 w-4 mr-2" />
+                        Brand Opportunities
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/studio')}>
+                        My Studio
+                      </DropdownMenuItem>
+                    </>
                   )}
-                  {hasRole('fan') && (
+                  
+                  {/* Fan menu items (only if not artist or brand) */}
+                  {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                     <>
                       <DropdownMenuItem onClick={() => navigate('/fan')}>
                         Fan Portal
@@ -179,12 +216,21 @@ export const Navigation = () => {
                       </DropdownMenuItem>
                     </>
                   )}
+                  
+                  {/* Brand menu items */}
+                  {hasRole('brand') && (
+                    <DropdownMenuItem onClick={() => navigate('/brand')}>
+                      Brand Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  
                   {hasRole('admin') && (
                     <DropdownMenuItem onClick={() => navigate('/admin')}>
                       Admin
                     </DropdownMenuItem>
                   )}
-                  {/* Show only one Settings option - prefer artist settings if has both roles */}
+                  
+                  {/* Settings based on role */}
                   {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
@@ -195,7 +241,13 @@ export const Navigation = () => {
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
+                  ) : hasRole('brand') ? (
+                    <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
                   ) : null}
+                  
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
@@ -203,6 +255,13 @@ export const Navigation = () => {
                 </>
               ) : (
                 <>
+                  <DropdownMenuItem onClick={() => navigate('/brands')}>
+                    For Brands
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/pricing')}>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Pricing
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
                     Sign In
                   </DropdownMenuItem>

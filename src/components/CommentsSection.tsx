@@ -26,6 +26,7 @@ interface Comment {
   created_at: string;
   profiles: {
     full_name: string | null;
+    avatar_url?: string | null;
   };
   comment_likes: { id: string; user_id: string }[];
 }
@@ -34,6 +35,13 @@ interface CommentsSectionProps {
   artistId: string;
   currentUserId?: string;
 }
+
+// Helper function to get display name - never show "Anonymous"
+const getDisplayName = (profiles: { full_name: string | null; avatar_url?: string | null } | null | undefined): string => {
+  if (!profiles) return "User";
+  if (profiles.full_name && profiles.full_name.trim()) return profiles.full_name;
+  return "User";
+};
 
 export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProps) => {
   const { user } = useAuth();
@@ -113,13 +121,16 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       paidSubscriptions?.map(s => [s.fan_user_id, s.tier as 'basic' | 'gold']) || []
     );
 
-    // Merge profiles with comments
-    const commentsWithProfiles = commentsData.map((comment) => ({
-      ...comment,
-      profiles: (profilesData as any)?.find((p: any) => p.id === comment.user_id) || { full_name: null, avatar_url: null },
-      supporterLevel: supporterLevels.get(comment.user_id) || 'none',
-      paidTier: paidTiers.get(comment.user_id) || null,
-    }));
+    // Merge profiles with comments - ensure we have proper fallback for display name
+    const commentsWithProfiles = commentsData.map((comment) => {
+      const profile = (profilesData as any)?.find((p: any) => p.id === comment.user_id);
+      return {
+        ...comment,
+        profiles: profile || { full_name: null, avatar_url: null },
+        supporterLevel: supporterLevels.get(comment.user_id) || 'none',
+        paidTier: paidTiers.get(comment.user_id) || null,
+      };
+    });
 
     let sortedData = commentsWithProfiles;
     if (sortBy === "top") {
