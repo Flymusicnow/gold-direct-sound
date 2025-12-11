@@ -37,6 +37,19 @@ interface CommentItemProps {
   paidTier?: 'basic' | 'gold' | null;
 }
 
+// Helper function to get display name - never show "Anonymous"
+const getDisplayName = (profiles: { full_name: string | null; avatar_url?: string | null } | null | undefined): string => {
+  if (!profiles) return "User";
+  if (profiles.full_name && profiles.full_name.trim()) return profiles.full_name;
+  return "User";
+};
+
+// Helper function to get avatar fallback
+const getAvatarFallback = (profiles: { full_name: string | null } | null | undefined): string => {
+  if (!profiles?.full_name) return "U";
+  return profiles.full_name[0]?.toUpperCase() || "U";
+};
+
 export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -46,6 +59,8 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
 
   const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
   const likeCount = comment.comment_likes?.length || 0;
+
+  const displayName = getDisplayName(comment.profiles);
 
   // Auto-load replies on mount
   useEffect(() => {
@@ -148,9 +163,9 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       <div className="flex items-start gap-3">
         {/* Avatar */}
         <Avatar className="w-10 h-10 flex-shrink-0">
-          <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={comment.profiles?.full_name || "User"} />
+          <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={displayName} />
           <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-            {comment.profiles?.full_name?.[0]?.toUpperCase() || "U"}
+            {getAvatarFallback(comment.profiles)}
           </AvatarFallback>
         </Avatar>
 
@@ -161,7 +176,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
               to={`/artist/${comment.user_id}`}
               className="font-semibold text-foreground hover:text-primary transition-colors"
             >
-              {comment.profiles?.full_name || "Anonymous"}
+              {displayName}
             </Link>
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />

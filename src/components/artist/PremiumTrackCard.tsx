@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Play, Music, ListMusic, Lock, Plus } from "lucide-react";
+import { Heart, Play, Pause, Music, ListMusic, Lock, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { CollaboratorBadge } from "./CollaboratorBadge";
 import { useSupporterAccess } from "@/hooks/useSupporterAccess";
 import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 
 interface PremiumTrackCardProps {
   track: {
@@ -42,6 +43,7 @@ export function PremiumTrackCard({
   showCollaborators = false,
 }: PremiumTrackCardProps) {
   const { user } = useAuth();
+  const { currentItem, isPlaying } = useFlightdeck();
   const [liked, setLiked] = useState(isLiked);
   const [isUpdating, setIsUpdating] = useState(false);
   const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
@@ -52,6 +54,9 @@ export function PremiumTrackCard({
     track.artist_id,
     track.is_supporter_only ? track.required_tier : null
   );
+
+  // Check if this track is currently playing
+  const isCurrentlyPlaying = currentItem?.id === track.id && isPlaying;
 
   useEffect(() => {
     if (showCollaborators) {
@@ -137,9 +142,10 @@ export function PremiumTrackCard({
     <>
       <div
         className="group p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/50 hover:bg-card/80 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 cursor-pointer"
+        onClick={handlePlay}
       >
         <div className="flex items-center gap-4">
-          {/* Cover Art */}
+          {/* Cover Art with clickable play overlay */}
           <div className="relative w-20 h-20 flex-shrink-0">
             {track.cover_url ? (
               <img
@@ -160,10 +166,17 @@ export function PremiumTrackCard({
               </div>
             )}
             
-            {/* Play Overlay */}
+            {/* Play Overlay - Clickable */}
             {(!track.is_supporter_only || hasAccess) && (
-              <div className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <Play className="h-10 w-10 text-primary fill-primary" />
+              <div 
+                className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                onClick={handlePlay}
+              >
+                {isCurrentlyPlaying ? (
+                  <Pause className="h-10 w-10 text-background fill-background" />
+                ) : (
+                  <Play className="h-10 w-10 text-background fill-background" />
+                )}
               </div>
             )}
           </div>
@@ -242,9 +255,14 @@ export function PremiumTrackCard({
                   size="icon"
                   onClick={handlePlay}
                   disabled={accessLoading}
-                  title="Play now"
+                  title={isCurrentlyPlaying ? "Pause" : "Play now"}
+                  className={isCurrentlyPlaying ? "bg-primary/20" : ""}
                 >
-                  <Play className="h-5 w-5 text-primary fill-primary" />
+                  {isCurrentlyPlaying ? (
+                    <Pause className="h-5 w-5 text-primary fill-primary" />
+                  ) : (
+                    <Play className="h-5 w-5 text-primary fill-primary" />
+                  )}
                 </Button>
                 {onAddToQueue && (
                   <Button
