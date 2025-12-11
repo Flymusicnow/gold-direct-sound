@@ -18,12 +18,12 @@ export default function ResetPassword() {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast.error("Lösenorden matchar inte");
+      toast.error("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      toast.error("Lösenordet måste vara minst 6 tecken");
+      toast.error("Password must be at least 6 characters");
       return;
     }
 
@@ -37,10 +37,10 @@ export default function ResetPassword() {
       if (error) throw error;
 
       setSuccess(true);
-      toast.success("Ditt lösenord är uppdaterat!");
+      toast.success("Your password has been updated!");
     } catch (error: any) {
       console.error("Password update error:", error);
-      toast.error("Kunde inte uppdatera lösenordet. Försök igen.");
+      toast.error("Could not update password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -59,9 +59,9 @@ export default function ResetPassword() {
           
           <div className="mb-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Lösenord uppdaterat!</h2>
+            <h2 className="text-2xl font-semibold mb-2">Password Updated!</h2>
             <p className="text-muted-foreground">
-              Ditt lösenord är uppdaterat. Du kan nu logga in med ditt nya lösenord.
+              Your password has been updated. You can now sign in with your new password.
             </p>
           </div>
 
@@ -69,7 +69,7 @@ export default function ResetPassword() {
             onClick={() => navigate('/auth')} 
             className="w-full bg-gradient-gold"
           >
-            Gå till inloggning
+            Go to Sign In
           </Button>
         </div>
       </div>
@@ -85,50 +85,50 @@ export default function ResetPassword() {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Tillbaka till inloggning
+          Back to Sign In
         </Button>
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Music className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-              Skapa nytt lösenord
+              Create New Password
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Ange ditt nya lösenord nedan.
+            Enter your new password below.
           </p>
         </div>
 
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>
-            <Label htmlFor="password">Nytt lösenord</Label>
+            <Label htmlFor="password">New Password</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Minst 6 tecken"
+              placeholder="At least 6 characters"
               minLength={6}
             />
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">Bekräfta lösenord</Label>
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              placeholder="Skriv lösenordet igen"
+              placeholder="Enter password again"
               minLength={6}
             />
           </div>
 
           <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-            {loading ? "Sparar..." : "Spara nytt lösenord"}
+            {loading ? "Saving..." : "Save New Password"}
           </Button>
         </form>
       </div>

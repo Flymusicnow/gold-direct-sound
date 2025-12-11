@@ -19,6 +19,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -31,6 +32,7 @@ export default function Auth() {
     if (user && !promoContext) {
       navigate('/');
     }
+    setAuthChecked(true);
   }, [user, navigate]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -43,7 +45,7 @@ export default function Auth() {
       });
 
       // Always show success message for security (don't reveal if email exists)
-      toast.success("Om ett konto finns med den här adressen har vi skickat ett mail med en länk.");
+      toast.success("If an account exists with this email, we've sent a password reset link.");
       setIsForgotPassword(false);
       
       if (error) {
@@ -81,10 +83,10 @@ export default function Auth() {
           // If user has no roles BUT came with a mode parameter,
           // automatically set their role instead of redirecting to role-selection
           if (mode === 'fan' || mode === 'artist') {
-            await supabase.from('user_roles').insert({
+            await supabase.from('user_roles').upsert({
               user_id: data.user.id,
               role: mode,
-            });
+            }, { onConflict: 'user_id,role', ignoreDuplicates: true });
             
             navigate(mode === 'fan' ? '/fan' : '/studio');
           } else {
@@ -117,15 +119,15 @@ export default function Auth() {
 
         if (error) throw error;
 
-        // Insert role into user_roles table
+        // Insert role into user_roles table (use upsert to prevent duplicates)
         if (data.user) {
           const mode = searchParams.get('mode');
           const roleToSet = mode === 'fan' ? 'fan' : isArtistSignup ? 'artist' : 'fan';
           
-          await supabase.from('user_roles').insert({
+          await supabase.from('user_roles').upsert({
             user_id: data.user.id,
             role: roleToSet,
-          });
+          }, { onConflict: 'user_id,role', ignoreDuplicates: true });
         }
 
         toast.success(isArtistSignup ? "Artist account created! Complete your profile to get started." : "Account created!");
@@ -143,6 +145,15 @@ export default function Auth() {
     }
   };
 
+  // Show loading while checking auth to prevent flash
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   if (isForgotPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
@@ -153,18 +164,18 @@ export default function Auth() {
             className="mb-6 gap-2 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Tillbaka till inloggning
+            Back to Sign In
           </button>
 
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Music className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-                Återställ lösenord
+              <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
+                Reset Password
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Skriv in din e-postadress så skickar vi en länk om ett konto finns registrerat.
+              Enter your email and we'll send a reset link if an account exists.
             </p>
           </div>
 
@@ -182,7 +193,7 @@ export default function Auth() {
             </div>
 
             <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-              {loading ? "Skickar..." : "Skicka återställningslänk"}
+              {loading ? "Sending..." : "Send Reset Link"}
             </Button>
           </form>
         </div>

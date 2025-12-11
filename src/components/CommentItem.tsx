@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Reply, Trash2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -24,6 +26,7 @@ interface CommentItemProps {
     created_at: string;
     profiles: {
       full_name: string | null;
+      avatar_url?: string | null;
     };
     comment_likes: { id: string; user_id: string }[];
   };
@@ -39,9 +42,17 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState<any[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
+  const [repliesLoaded, setRepliesLoaded] = useState(false);
 
   const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
   const likeCount = comment.comment_likes?.length || 0;
+
+  // Auto-load replies on mount
+  useEffect(() => {
+    if (!repliesLoaded) {
+      loadReplies();
+    }
+  }, []);
 
   const handleLike = async () => {
     if (!currentUserId) {
@@ -113,40 +124,45 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       .order("created_at", { ascending: true });
 
     if (repliesData) {
-      // Fetch profiles for all reply authors
+      // Fetch profiles for all reply authors (including avatar_url)
       const userIds = repliesData.map((r) => r.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .in("id", userIds);
 
       // Merge profiles with replies
       const repliesWithProfiles = repliesData.map((reply) => ({
         ...reply,
-        profiles: profilesData?.find((p) => p.id === reply.user_id) || { full_name: null },
+        profiles: profilesData?.find((p) => p.id === reply.user_id) || { full_name: null, avatar_url: null },
       }));
 
       setReplies(repliesWithProfiles);
     }
     setLoadingReplies(false);
+    setRepliesLoaded(true);
   };
 
   return (
     <div className="bg-card border border-border rounded-lg p-4">
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-          <span className="text-primary font-semibold">
+        <Avatar className="w-10 h-10 flex-shrink-0">
+          <AvatarImage src={comment.profiles?.avatar_url || undefined} alt={comment.profiles?.full_name || "User"} />
+          <AvatarFallback className="bg-primary/20 text-primary font-semibold">
             {comment.profiles?.full_name?.[0]?.toUpperCase() || "U"}
-          </span>
-        </div>
+          </AvatarFallback>
+        </Avatar>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="font-semibold text-foreground">
+            <Link 
+              to={`/artist/${comment.user_id}`}
+              className="font-semibold text-foreground hover:text-primary transition-colors"
+            >
               {comment.profiles?.full_name || "Anonymous"}
-            </span>
+            </Link>
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />
             )}
