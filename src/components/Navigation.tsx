@@ -97,18 +97,18 @@ export const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {hasRole('fan') && (
-                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                  )}
-                  {hasRole('artist') && (
+                  {/* Show only one Settings option - prefer artist settings if has both roles */}
+                  {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
-                  )}
+                  ) : hasRole('fan') ? (
+                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t('nav.signOut')}
@@ -184,18 +184,18 @@ export const Navigation = () => {
                       Admin
                     </DropdownMenuItem>
                   )}
-                  {hasRole('fan') && (
-                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                  )}
-                  {hasRole('artist') && (
+                  {/* Show only one Settings option - prefer artist settings if has both roles */}
+                  {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
-                  )}
+                  ) : hasRole('fan') ? (
+                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                  ) : null}
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
