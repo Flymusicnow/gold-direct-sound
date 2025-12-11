@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Music, User, Building2, Check, X, Sparkles, Loader2, Shield, Zap, RefreshCw } from "lucide-react";
+import { Music, User, Building2, Check, X, Sparkles, Loader2, Shield, Zap, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -274,6 +274,16 @@ const Pricing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Sticky Back Button */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
+        <div className="container mx-auto px-4">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-16">
         {/* Hero */}
         <div className="text-center mb-12">

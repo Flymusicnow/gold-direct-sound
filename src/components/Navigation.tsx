@@ -181,7 +181,7 @@ export const Navigation = () => {
                 <Menu className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 bg-[hsl(0,0%,6%)] border-border">
+            <DropdownMenuContent align="end" className="w-56 bg-[hsl(0,0%,6%)] border-border">
               <DropdownMenuItem onClick={() => navigate('/explore')}>
                 Explore Artists
               </DropdownMenuItem>
