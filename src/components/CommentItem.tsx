@@ -128,13 +128,13 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       const userIds = repliesData.map((r) => r.user_id);
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("id, full_name, avatar_url")
+        .select("id, full_name, avatar_url" as any)
         .in("id", userIds);
 
       // Merge profiles with replies
       const repliesWithProfiles = repliesData.map((reply) => ({
         ...reply,
-        profiles: profilesData?.find((p) => p.id === reply.user_id) || { full_name: null, avatar_url: null },
+        profiles: (profilesData as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null },
       }));
 
       setReplies(repliesWithProfiles);

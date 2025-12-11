@@ -83,11 +83,11 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       return;
     }
 
-    // Fetch profiles for all comment authors
+    // Fetch profiles for all comment authors (including avatar_url)
     const userIds = commentsData.map((c) => c.user_id);
     const { data: profilesData } = await supabase
       .from("profiles")
-      .select("id, full_name")
+      .select("id, full_name, avatar_url" as any)
       .in("id", userIds);
 
     // Fetch supporter levels (XP-based)
@@ -116,7 +116,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     // Merge profiles with comments
     const commentsWithProfiles = commentsData.map((comment) => ({
       ...comment,
-      profiles: profilesData?.find((p) => p.id === comment.user_id) || { full_name: null },
+      profiles: (profilesData as any)?.find((p: any) => p.id === comment.user_id) || { full_name: null, avatar_url: null },
       supporterLevel: supporterLevels.get(comment.user_id) || 'none',
       paidTier: paidTiers.get(comment.user_id) || null,
     }));
