@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area support for mobile devices (notch, dynamic island) */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.pt-safe {
+  padding-top: max(1rem, var(--safe-area-top));
+}
+
+.pb-safe {
+  padding-bottom: max(1rem, var(--safe-area-bottom));
+}
+
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
 All colors MUST be HSL.
 */
