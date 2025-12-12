@@ -3,9 +3,13 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Activity, User, Settings, Shield, Database } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Activity, User, Settings, Shield, Database, Download, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
 
 interface ActivityLog {
   id: string;
@@ -22,10 +26,12 @@ export default function AdminActivityLog() {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   useEffect(() => {
     fetchLogs();
-  }, [filter]);
+  }, [filter, startDate, endDate]);
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -33,10 +39,20 @@ export default function AdminActivityLog() {
       let query = (supabase.from("admin_activity_logs") as any)
         .select("*")
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(500);
 
       if (filter !== "all") {
         query = query.eq("target_type", filter);
+      }
+
+      if (startDate) {
+        query = query.gte("created_at", startDate.toISOString());
+      }
+
+      if (endDate) {
+        const endOfDay = new Date(endDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", endOfDay.toISOString());
       }
 
       const { data, error } = await query;
@@ -48,6 +64,31 @@ export default function AdminActivityLog() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    const headers = ["Timestamp", "Action", "Target Type", "Target ID", "Details"];
+    const rows = logs.map((log) => [
+      new Date(log.created_at).toISOString(),
+      log.action,
+      log.target_type || "",
+      log.target_id || "",
+      log.details ? JSON.stringify(log.details) : "",
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `admin_activity_log_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const getActionIcon = (action: string) => {
@@ -70,7 +111,7 @@ export default function AdminActivityLog() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Filter by:</span>
                 <Select value={filter} onValueChange={setFilter}>
@@ -81,10 +122,49 @@ export default function AdminActivityLog() {
                     <SelectItem value="all">All actions</SelectItem>
                     <SelectItem value="user">Users</SelectItem>
                     <SelectItem value="artist">Artists</SelectItem>
+                    <SelectItem value="brand_application">Brand Applications</SelectItem>
+                    <SelectItem value="spotlight_campaign">Campaigns</SelectItem>
                     <SelectItem value="feature_flag">Feature Flags</SelectItem>
                     <SelectItem value="beta_code">Beta Codes</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {startDate ? format(startDate, "MMM d, yyyy") : "Start Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <CalendarIcon className="h-4 w-4 mr-2" />
+                    {endDate ? format(endDate, "MMM d, yyyy") : "End Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar mode="single" selected={endDate} onSelect={setEndDate} />
+                </PopoverContent>
+              </Popover>
+
+              {(startDate || endDate) && (
+                <Button variant="ghost" size="sm" onClick={() => { setStartDate(undefined); setEndDate(undefined); }}>
+                  Clear Dates
+                </Button>
+              )}
+
+              <div className="ml-auto">
+                <Button onClick={exportToCSV} variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export CSV
+                </Button>
               </div>
             </div>
           </CardContent>

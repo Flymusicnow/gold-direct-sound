@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/toaster";
 import BrandPortal from "./pages/BrandPortal";
+import BrandApply from "./pages/brand/BrandApply";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -57,6 +58,9 @@ import AdminCollabEntityEdit from "./pages/admin/AdminCollabEntityEdit";
 import AdminMatching from "./pages/admin/AdminMatching";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminActivityLog from "./pages/admin/AdminActivityLog";
+import AdminBrandApplications from "./pages/admin/AdminBrandApplications";
+import AdminCampaigns from "./pages/admin/AdminCampaigns";
+import AdminRoleManagement from "./pages/admin/AdminRoleManagement";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -115,7 +119,7 @@ const App = () => (
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
             <Route path="/epk/:slug" element={<PublicPresskit />} />
-            <Route path="/brands" element={<BrandPortal />} />
+            <Route path="/brands/apply" element={<BrandApply />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
@@ -248,17 +252,20 @@ const App = () => (
             <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
             <Route path="/live/:streamId" element={<LiveStream />} />
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/activity" element={<AdminActivityLog />} />
-            <Route path="/admin/spotlight" element={<AdminSpotlight />} />
-            <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
-            <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
-            <Route path="/admin/payouts" element={<AdminPayouts />} />
-            <Route path="/admin/features" element={<AdminFeatures />} />
-            <Route path="/admin/collab-entities" element={<AdminCollabEntities />} />
-            <Route path="/admin/collab-entities/:id" element={<AdminCollabEntityEdit />} />
-            <Route path="/admin/matching" element={<AdminMatching />} />
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/activity" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminActivityLog /></ProtectedRoute>} />
+            <Route path="/admin/spotlight" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlight /></ProtectedRoute>} />
+            <Route path="/admin/spotlight/:campaignId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlightEntries /></ProtectedRoute>} />
+            <Route path="/admin/beta-codes" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBetaCodes /></ProtectedRoute>} />
+            <Route path="/admin/payouts" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminPayouts /></ProtectedRoute>} />
+            <Route path="/admin/features" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFeatures /></ProtectedRoute>} />
+            <Route path="/admin/collab-entities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntities /></ProtectedRoute>} />
+            <Route path="/admin/collab-entities/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntityEdit /></ProtectedRoute>} />
+            <Route path="/admin/matching" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminMatching /></ProtectedRoute>} />
+            <Route path="/admin/brand-applications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBrandApplications /></ProtectedRoute>} />
+            <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
+            <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
