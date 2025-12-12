@@ -33,10 +33,10 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles
+      // Fetch profiles - use type assertion since is_suspended was just added
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
-        .select("id, full_name, email, avatar_url, is_suspended, created_at")
+        .select("id, full_name, email, avatar_url, created_at")
         .order("created_at", { ascending: false });
 
       if (profilesError) throw profilesError;
@@ -48,9 +48,14 @@ export default function AdminUsers() {
 
       if (rolesError) throw rolesError;
 
-      // Combine data
-      const usersWithRoles = (profiles || []).map((profile) => ({
-        ...profile,
+      // Combine data - cast to handle new column
+      const usersWithRoles = (profiles || []).map((profile: any) => ({
+        id: profile.id,
+        full_name: profile.full_name,
+        email: profile.email,
+        avatar_url: profile.avatar_url,
+        is_suspended: profile.is_suspended || false,
+        created_at: profile.created_at,
         roles: (roles || [])
           .filter((r) => r.user_id === profile.id)
           .map((r) => r.role),
@@ -89,8 +94,9 @@ export default function AdminUsers() {
 
   const handleToggleSuspend = async (userId: string, currentStatus: boolean | null) => {
     try {
-      const { error } = await supabase
-        .from("profiles")
+      // Use type assertion since is_suspended column was just added
+      const { error } = await (supabase
+        .from("profiles") as any)
         .update({ is_suspended: !currentStatus })
         .eq("id", userId);
 

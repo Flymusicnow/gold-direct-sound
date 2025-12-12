@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string | null
+          details: Json | null
+          id: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       artist_achievements: {
         Row: {
           achievement_type: string
@@ -2172,6 +2202,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_suspended: boolean | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
         }
@@ -2181,6 +2212,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_suspended?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }
@@ -2190,6 +2222,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_suspended?: boolean | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }
