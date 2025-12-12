@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Target, Users, Building2, RefreshCw } from 'lucide-react';
+import { Target, Users, Building2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { BottomNavBarAdmin } from '@/components/mobile/BottomNavBarAdmin';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CollabEntity {
   id: string;
@@ -36,7 +35,6 @@ interface MatchedArtist {
 export default function AdminMatching() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const [entities, setEntities] = useState<CollabEntity[]>([]);
   const [selectedEntityId, setSelectedEntityId] = useState<string>('');
   const [matchedArtists, setMatchedArtists] = useState<MatchedArtist[]>([]);
@@ -117,195 +115,182 @@ export default function AdminMatching() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-      </div>
+      <AdminLayout title="Matching Engine" description="Test artist-to-partner matching algorithm">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/admin')}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold text-foreground">Matching Engine</h1>
-            <p className="text-sm text-muted-foreground">Test artist-to-partner matching algorithm</p>
+    <AdminLayout title="Matching Engine" description="Test artist-to-partner matching algorithm">
+      {/* Entity Selector */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            Select Partner
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Choose a brand, festival or sponsor..." />
+              </SelectTrigger>
+              <SelectContent>
+                {entities.map((entity) => (
+                  <SelectItem key={entity.id} value={entity.id}>
+                    <span className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4" />
+                      {entity.name}
+                      <Badge variant="outline" className="ml-2 text-xs capitalize">
+                        {entity.type.replace('_', ' ')}
+                      </Badge>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button onClick={runMatching} disabled={!selectedEntityId || matching} className="gap-2">
+              <RefreshCw className={`h-4 w-4 ${matching ? 'animate-spin' : ''}`} />
+              {matching ? 'Matching...' : 'Run Matching'}
+            </Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* Entity Selector */}
-        <Card className="mb-6">
+      {/* Results */}
+      {matchedArtists.length > 0 && (
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-primary" />
-              Select Partner
+              <Users className="h-5 w-5 text-primary" />
+              Top Matching Artists
+              <Badge variant="secondary" className="ml-2">{matchedArtists.length} results</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue placeholder="Choose a brand, festival or sponsor..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {entities.map((entity) => (
-                    <SelectItem key={entity.id} value={entity.id}>
-                      <span className="flex items-center gap-2">
-                        <Building2 className="h-4 w-4" />
-                        {entity.name}
-                        <Badge variant="outline" className="ml-2 text-xs capitalize">
-                          {entity.type.replace('_', ' ')}
-                        </Badge>
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button onClick={runMatching} disabled={!selectedEntityId || matching} className="gap-2">
-                <RefreshCw className={`h-4 w-4 ${matching ? 'animate-spin' : ''}`} />
-                {matching ? 'Matching...' : 'Run Matching'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Results */}
-        {matchedArtists.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Top Matching Artists
-                <Badge variant="secondary" className="ml-2">{matchedArtists.length} results</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>Artist</TableHead>
-                      <TableHead>Genre</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead className="text-center">Total</TableHead>
-                      <TableHead className="text-center">Genre</TableHead>
-                      <TableHead className="text-center">Location</TableHead>
-                      <TableHead className="text-center">XP</TableHead>
-                      <TableHead className="text-center">Supporters</TableHead>
-                      <TableHead className="text-center">Collab</TableHead>
-                      <TableHead>Match</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {matchedArtists.map((artist, index) => (
-                      <TableRow key={artist.artist_id}>
-                        <TableCell className="font-medium">{index + 1}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
-                              {artist.avatar_url ? (
-                                <img src={artist.avatar_url} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
-                                  {artist.artist_name?.[0]}
-                                </div>
-                              )}
-                            </div>
-                            <span className="font-medium">{artist.artist_name}</span>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Artist</TableHead>
+                    <TableHead>Genre</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead className="text-center">Total</TableHead>
+                    <TableHead className="text-center">Genre</TableHead>
+                    <TableHead className="text-center">Location</TableHead>
+                    <TableHead className="text-center">XP</TableHead>
+                    <TableHead className="text-center">Supporters</TableHead>
+                    <TableHead className="text-center">Collab</TableHead>
+                    <TableHead>Match</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {matchedArtists.map((artist, index) => (
+                    <TableRow key={artist.artist_id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-muted overflow-hidden">
+                            {artist.avatar_url ? (
+                              <img src={artist.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                                {artist.artist_name?.[0]}
+                              </div>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {artist.genre && (
-                            <Badge variant="outline" className="text-xs">{artist.genre}</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {[artist.city, artist.country].filter(Boolean).join(', ') || '-'}
-                        </TableCell>
-                        <TableCell className={`text-center font-bold ${getScoreColor(artist.total_score)}`}>
-                          {artist.total_score}
-                        </TableCell>
-                        <TableCell className="text-center text-sm">{artist.genre_score}</TableCell>
-                        <TableCell className="text-center text-sm">{artist.location_score}</TableCell>
-                        <TableCell className="text-center text-sm">{artist.xp_score}</TableCell>
-                        <TableCell className="text-center text-sm">{artist.supporters_score}</TableCell>
-                        <TableCell className="text-center text-sm">{artist.collab_type_score}</TableCell>
-                        <TableCell>{getScoreBadge(artist.total_score)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {!selectedEntityId && entities.length > 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Select a Partner to Start</h3>
-              <p className="text-muted-foreground">
-                Choose a brand, festival or sponsor from the dropdown to see matching artists
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {entities.length === 0 && (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">No Partners Available</h3>
-              <p className="text-muted-foreground mb-4">
-                Create collab entities first to test the matching engine
-              </p>
-              <Button onClick={() => navigate('/admin/collab-entities/new')}>
-                Create Entity
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Score Legend */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-sm">Score Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-              <div>
-                <p className="font-medium text-primary">Genre/Style</p>
-                <p className="text-muted-foreground">Max 40 pts</p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">Location</p>
-                <p className="text-muted-foreground">Max 15 pts</p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">XP Level</p>
-                <p className="text-muted-foreground">Max 15 pts</p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">Supporters</p>
-                <p className="text-muted-foreground">Max 15 pts</p>
-              </div>
-              <div>
-                <p className="font-medium text-primary">Collab Type</p>
-                <p className="text-muted-foreground">Max 15 pts</p>
-              </div>
+                          <span className="font-medium">{artist.artist_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {artist.genre && (
+                          <Badge variant="outline" className="text-xs">{artist.genre}</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {[artist.city, artist.country].filter(Boolean).join(', ') || '-'}
+                      </TableCell>
+                      <TableCell className={`text-center font-bold ${getScoreColor(artist.total_score)}`}>
+                        {artist.total_score}
+                      </TableCell>
+                      <TableCell className="text-center text-sm">{artist.genre_score}</TableCell>
+                      <TableCell className="text-center text-sm">{artist.location_score}</TableCell>
+                      <TableCell className="text-center text-sm">{artist.xp_score}</TableCell>
+                      <TableCell className="text-center text-sm">{artist.supporters_score}</TableCell>
+                      <TableCell className="text-center text-sm">{artist.collab_type_score}</TableCell>
+                      <TableCell>{getScoreBadge(artist.total_score)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
 
-      {isMobile && <BottomNavBarAdmin />}
-    </div>
+      {/* Empty State */}
+      {!selectedEntityId && entities.length > 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Select a Partner to Start</h3>
+            <p className="text-muted-foreground">
+              Choose a brand, festival or sponsor from the dropdown to see matching artists
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {entities.length === 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Partners Available</h3>
+            <p className="text-muted-foreground mb-4">
+              Create collab entities first to test the matching engine
+            </p>
+            <Button onClick={() => navigate('/admin/collab-entities/new')}>
+              Create Entity
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Score Legend */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-sm">Score Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+            <div>
+              <p className="font-medium text-primary">Genre/Style</p>
+              <p className="text-muted-foreground">Max 40 pts</p>
+            </div>
+            <div>
+              <p className="font-medium text-primary">Location</p>
+              <p className="text-muted-foreground">Max 15 pts</p>
+            </div>
+            <div>
+              <p className="font-medium text-primary">XP Level</p>
+              <p className="text-muted-foreground">Max 15 pts</p>
+            </div>
+            <div>
+              <p className="font-medium text-primary">Supporters</p>
+              <p className="text-muted-foreground">Max 15 pts</p>
+            </div>
+            <div>
+              <p className="font-medium text-primary">Collab Type</p>
+              <p className="text-muted-foreground">Max 15 pts</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </AdminLayout>
   );
 }

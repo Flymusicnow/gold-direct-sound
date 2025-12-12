@@ -299,10 +299,9 @@ export function FlightdeckPlayer() {
               <SkipBack className="h-5 w-5" />
             </Button>
             <Button
-              variant="default"
               size="icon"
               onClick={togglePlay}
-              className="h-10 w-10"
+              className="h-10 w-10 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
             </Button>

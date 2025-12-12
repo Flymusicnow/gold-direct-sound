@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
-import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +42,6 @@ export default function AdminSpotlightEntries() {
   const [entries, setEntries] = useState<SpotlightEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!hasRole('admin')) {
@@ -128,95 +125,91 @@ export default function AdminSpotlightEntries() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading entries...</p>
-      </div>
+      <AdminLayout title={campaign?.name || 'Spotlight Entries'} description="Review and approve entries">
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading entries...</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <MobileAdminNav />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8 pb-20 md:pb-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/admin/spotlight')}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Campaigns
-        </Button>
+    <AdminLayout title={campaign?.name || 'Spotlight Entries'} description="Review and approve entries">
+      <Button
+        variant="ghost"
+        onClick={() => navigate('/admin/spotlight')}
+        className="mb-6"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Campaigns
+      </Button>
 
-        {campaign && (
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">{campaign.name}</h1>
-            <p className="text-muted-foreground">{campaign.description}</p>
-          </div>
-        )}
+      {campaign && (
+        <div className="mb-8">
+          <p className="text-muted-foreground">{campaign.description}</p>
+        </div>
+      )}
 
-        <Tabs value={filter} onValueChange={setFilter} className="mb-6">
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="approved">Approved</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <Tabs value={filter} onValueChange={setFilter} className="mb-6">
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="approved">Approved</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-        <div className="grid gap-4">
-          {filteredEntries.map((entry) => (
-            <Card key={entry.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle>{entry.title || entry.tracks.title}</CardTitle>
-                    <CardDescription>
-                      by {entry.artist_profiles.artist_name}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(entry.status)}
-                    <Badge variant="outline">{entry.total_votes} votes</Badge>
-                  </div>
+      <div className="grid gap-4">
+        {filteredEntries.map((entry) => (
+          <Card key={entry.id}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>{entry.title || entry.tracks.title}</CardTitle>
+                  <CardDescription>
+                    by {entry.artist_profiles.artist_name}
+                  </CardDescription>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {entry.description && (
-                  <p className="text-sm text-muted-foreground mb-4">{entry.description}</p>
-                )}
-                {entry.status === 'pending' && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleStatusChange(entry.id, 'approved')}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Check className="mr-2 h-4 w-4" />
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => handleStatusChange(entry.id, 'rejected')}
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Reject
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {filteredEntries.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No entries found</p>
-          </div>
-        )}
-        </div>
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(entry.status)}
+                  <Badge variant="outline">{entry.total_votes} votes</Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {entry.description && (
+                <p className="text-sm text-muted-foreground mb-4">{entry.description}</p>
+              )}
+              {entry.status === 'pending' && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => handleStatusChange(entry.id, 'approved')}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Check className="mr-2 h-4 w-4" />
+                    Approve
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => handleStatusChange(entry.id, 'rejected')}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Reject
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
       </div>
-    </>
+
+      {filteredEntries.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No entries found</p>
+        </div>
+      )}
+    </AdminLayout>
   );
 }
