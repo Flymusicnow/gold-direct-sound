@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Check, X, Users, Music, Star, Activity } from "lucide-react";
+import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 
 interface PendingArtist {
   id: string;
@@ -20,6 +21,8 @@ interface PendingArtist {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { logActivity } = useAdminActivityLog();
+  const hasLoggedPageView = useRef(false);
   const [pendingArtists, setPendingArtists] = useState<PendingArtist[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -31,6 +34,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    // Log page view only once per mount
+    if (!hasLoggedPageView.current) {
+      hasLoggedPageView.current = true;
+      logActivity("page_view", "admin_dashboard", undefined, { page: "dashboard" });
+    }
   }, []);
 
   const fetchData = async () => {

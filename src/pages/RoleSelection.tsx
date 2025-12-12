@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,11 +9,18 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RoleSelection() {
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, hasRole } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<'artist' | 'fan' | 'brand' | null>(null);
   const [bothRoles, setBothRoles] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // P0 FIX: Redirect admins directly to /admin - they should NEVER see role selection
+  useEffect(() => {
+    if (hasRole('admin') || hasRole('super_admin')) {
+      navigate('/admin', { replace: true });
+    }
+  }, [hasRole, navigate]);
 
   const handleContinue = async () => {
     if (!user || (!selectedRole && !bothRoles)) {
