@@ -1,5 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sparkles, Key, Menu, Search, X, DollarSign, Building2, Target, ToggleRight } from "lucide-react";
+import { 
+  LayoutDashboard, 
+  Sparkles, 
+  Key, 
+  Menu, 
+  Search, 
+  X, 
+  DollarSign, 
+  Building2, 
+  Target, 
+  ToggleRight, 
+  Users, 
+  Music, 
+  Shield, 
+  Activity,
+  Mic2
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,12 +31,19 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+  { icon: Shield, label: "Approvals", path: "/admin/approvals" },
+  { icon: Users, label: "Users", path: "/admin/users" },
+  { icon: Mic2, label: "Artists", path: "/admin/artists" },
+  { icon: Music, label: "Tracks", path: "/admin/tracks" },
   { icon: Sparkles, label: "Spotlight", path: "/admin/spotlight" },
   { icon: Key, label: "Beta Codes", path: "/admin/beta-codes" },
   { icon: DollarSign, label: "Payouts", path: "/admin/payouts" },
   { icon: ToggleRight, label: "Features", path: "/admin/features" },
   { icon: Building2, label: "Collab Entities", path: "/admin/collab-entities" },
   { icon: Target, label: "Matching", path: "/admin/matching" },
+  { icon: Activity, label: "Activity", path: "/admin/activity" },
+  { icon: Building2, label: "Brand Apps", path: "/admin/brand-applications" },
+  { icon: Shield, label: "Roles", path: "/admin/roles" },
 ];
 
 interface MobileAdminNavProps {
