@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProtectedRouteProps {
-  allowedRoles: ('fan' | 'artist' | 'admin' | 'brand')[];
+  allowedRoles: ('fan' | 'artist' | 'admin' | 'brand' | 'super_admin')[];
   children: React.ReactNode;
 }
 
