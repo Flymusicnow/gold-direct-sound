@@ -26,3 +26,6 @@ verify_jwt = true
 
 [functions.generate-monthly-wraps]
 verify_jwt = false
+
+[functions.send-brand-status-email]
+verify_jwt = true

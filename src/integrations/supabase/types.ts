@@ -947,6 +947,63 @@ export type Database = {
           },
         ]
       }
+      brand_applications: {
+        Row: {
+          admin_notes: string | null
+          budget_range: string | null
+          campaign_goals: string | null
+          company_name: string
+          company_type: string
+          contact_person: string
+          created_at: string
+          email: string
+          id: string
+          intended_use: string | null
+          phone: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          target_genres: string[] | null
+          website: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          campaign_goals?: string | null
+          company_name: string
+          company_type: string
+          contact_person: string
+          created_at?: string
+          email: string
+          id?: string
+          intended_use?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_genres?: string[] | null
+          website?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          budget_range?: string | null
+          campaign_goals?: string | null
+          company_name?: string
+          company_type?: string
+          contact_person?: string
+          created_at?: string
+          email?: string
+          id?: string
+          intended_use?: string | null
+          phone?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_genres?: string[] | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       collab_applications: {
         Row: {
           artist_id: string
@@ -2341,33 +2398,39 @@ export type Database = {
       }
       spotlight_campaigns: {
         Row: {
+          admin_notes: string | null
           banner_image_url: string | null
           created_at: string | null
           description: string | null
           end_date: string
           id: string
+          is_paused: boolean | null
           name: string
           start_date: string
           status: string
           updated_at: string | null
         }
         Insert: {
+          admin_notes?: string | null
           banner_image_url?: string | null
           created_at?: string | null
           description?: string | null
           end_date: string
           id?: string
+          is_paused?: boolean | null
           name: string
           start_date: string
           status?: string
           updated_at?: string | null
         }
         Update: {
+          admin_notes?: string | null
           banner_image_url?: string | null
           created_at?: string | null
           description?: string | null
           end_date?: string
           id?: string
+          is_paused?: boolean | null
           name?: string
           start_date?: string
           status?: string
@@ -3277,7 +3340,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "artist" | "fan" | "brand"
+      app_role: "admin" | "artist" | "fan" | "brand" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3405,7 +3468,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "artist", "fan", "brand"],
+      app_role: ["admin", "artist", "fan", "brand", "super_admin"],
     },
   },
 } as const
