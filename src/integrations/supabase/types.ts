@@ -3046,6 +3046,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_delete_user_data: {
+        Args: { target_user_id: string }
+        Returns: undefined
+      }
+      admin_export_user_data: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
       calculate_artist_match_score: {
         Args: { _artist_id: string; _collab_entity_id: string }
         Returns: Json
@@ -3215,6 +3223,7 @@ export type Database = {
         Args: { _entity_id: string; _user_id: string }
         Returns: boolean
       }
+      is_super_admin: { Args: never; Returns: boolean }
       redeem_beta_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
