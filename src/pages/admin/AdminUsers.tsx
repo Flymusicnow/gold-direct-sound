@@ -1,0 +1,269 @@
+import { useState, useEffect } from "react";
+import { AdminLayout } from "@/components/admin/AdminLayout";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, Eye, Download, Trash2, UserX, UserCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
+interface UserWithRoles {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  is_suspended: boolean | null;
+  created_at: string;
+  roles: string[];
+}
+
+export default function AdminUsers() {
+  const [users, setUsers] = useState<UserWithRoles[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      // Fetch profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, avatar_url, is_suspended, created_at")
+        .order("created_at", { ascending: false });
+
+      if (profilesError) throw profilesError;
+
+      // Fetch all roles
+      const { data: roles, error: rolesError } = await supabase
+        .from("user_roles")
+        .select("user_id, role");
+
+      if (rolesError) throw rolesError;
+
+      // Combine data
+      const usersWithRoles = (profiles || []).map((profile) => ({
+        ...profile,
+        roles: (roles || [])
+          .filter((r) => r.user_id === profile.id)
+          .map((r) => r.role),
+      }));
+
+      setUsers(usersWithRoles);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to fetch users");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportUserData = async (userId: string) => {
+    try {
+      const { data, error } = await supabase.rpc("admin_export_user_data", {
+        target_user_id: userId,
+      });
+
+      if (error) throw error;
+
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `user_data_${userId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("User data exported");
+    } catch (error) {
+      console.error("Error exporting user data:", error);
+      toast.error("Failed to export user data");
+    }
+  };
+
+  const handleToggleSuspend = async (userId: string, currentStatus: boolean | null) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ is_suspended: !currentStatus })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      toast.success(currentStatus ? "User unsuspended" : "User suspended");
+      fetchUsers();
+    } catch (error) {
+      console.error("Error toggling suspension:", error);
+      toast.error("Failed to update user status");
+    }
+  };
+
+  const filteredUsers = users.filter((user) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      user.full_name?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.id.toLowerCase().includes(searchLower)
+    );
+  });
+
+  return (
+    <AdminLayout title="User Management" description="View and manage platform users">
+      <div className="space-y-6">
+        {/* Search */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, email, or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-2xl font-bold">{users.length}</p>
+              <p className="text-sm text-muted-foreground">Total Users</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-2xl font-bold">
+                {users.filter((u) => u.roles.includes("artist")).length}
+              </p>
+              <p className="text-sm text-muted-foreground">Artists</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-2xl font-bold">
+                {users.filter((u) => u.roles.includes("fan")).length}
+              </p>
+              <p className="text-sm text-muted-foreground">Fans</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-2xl font-bold">
+                {users.filter((u) => u.is_suspended).length}
+              </p>
+              <p className="text-sm text-muted-foreground">Suspended</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Users Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <p className="text-muted-foreground">Loading users...</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Roles</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Joined</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {user.avatar_url ? (
+                            <img
+                              src={user.avatar_url}
+                              alt=""
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                              <span className="text-xs font-medium">
+                                {user.full_name?.[0]?.toUpperCase() || "?"}
+                              </span>
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium">{user.full_name || "No name"}</p>
+                            <p className="text-xs text-muted-foreground">{user.email}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 flex-wrap">
+                          {user.roles.map((role) => (
+                            <Badge key={role} variant="secondary" className="text-xs">
+                              {role}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {user.is_suspended ? (
+                          <Badge variant="destructive">Suspended</Badge>
+                        ) : (
+                          <Badge variant="outline">Active</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/admin/users/${user.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleExportUserData(user.id)}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleToggleSuspend(user.id, user.is_suspended)}
+                          >
+                            {user.is_suspended ? (
+                              <UserCheck className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <UserX className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </AdminLayout>
+  );
+}
