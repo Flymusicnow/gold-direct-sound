@@ -14,7 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, UserPlus, Lock, Crown } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp } from "lucide-react";
+import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { useAchievements } from "@/hooks/useAchievements";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
@@ -47,6 +48,7 @@ export default function StudioTracks() {
   const [showLockedModal, setShowLockedModal] = useState(false);
   const [showCollaboratorSelector, setShowCollaboratorSelector] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
+  const [showMultiUpload, setShowMultiUpload] = useState(false);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
 
@@ -208,9 +210,24 @@ export default function StudioTracks() {
             </div>
           </div>
 
-          {/* Upload Track */}
+          {/* Upload Options */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => setShowMultiUpload(true)}
+              className="flex-1 gap-2 h-auto py-4"
+              variant="outline"
+            >
+              <FolderUp className="h-5 w-5" />
+              <div className="text-left">
+                <p className="font-semibold">Upload Multiple Songs</p>
+                <p className="text-xs text-muted-foreground">Batch upload with bulk metadata</p>
+              </div>
+            </Button>
+          </div>
+
+          {/* Single Upload Track */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Upload New Track</h2>
+            <h2 className="text-xl font-semibold mb-4">Upload Single Track</h2>
             <form onSubmit={handleTrackUpload} className="space-y-4">
               <div>
                 <Label htmlFor="title">Track Title *</Label>
@@ -379,6 +396,17 @@ export default function StudioTracks() {
           open={showCollaboratorSelector}
           onOpenChange={setShowCollaboratorSelector}
           trackId={selectedTrackId}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {/* Multi Upload Dialog */}
+      {artistProfile && (
+        <MultiUploadDialog
+          open={showMultiUpload}
+          onOpenChange={setShowMultiUpload}
+          type="songs"
+          artistId={artistProfile.id}
           onSuccess={fetchData}
         />
       )}
