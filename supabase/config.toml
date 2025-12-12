@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.send-brand-status-email]
 verify_jwt = true
+
+[functions.process-scheduled-releases]
+verify_jwt = false

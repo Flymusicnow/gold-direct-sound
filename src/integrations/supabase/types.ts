@@ -765,6 +765,7 @@ export type Database = {
           mood: string | null
           release_date: string | null
           required_tier: string | null
+          status: string | null
           supporter_early_access: boolean | null
           tags: string[] | null
           thumbnail_url: string | null
@@ -783,6 +784,7 @@ export type Database = {
           mood?: string | null
           release_date?: string | null
           required_tier?: string | null
+          status?: string | null
           supporter_early_access?: boolean | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -801,6 +803,7 @@ export type Database = {
           mood?: string | null
           release_date?: string | null
           required_tier?: string | null
+          status?: string | null
           supporter_early_access?: boolean | null
           tags?: string[] | null
           thumbnail_url?: string | null
@@ -2135,6 +2138,68 @@ export type Database = {
           },
         ]
       }
+      platform_updates: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_text: string | null
+          link_url: string | null
+          priority: string | null
+          published_at: string | null
+          target_roles: string[]
+          title: string
+          updated_at: string | null
+          visibility: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          priority?: string | null
+          published_at?: string | null
+          target_roles?: string[]
+          title: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_text?: string | null
+          link_url?: string | null
+          priority?: string | null
+          published_at?: string | null
+          target_roles?: string[]
+          title?: string
+          updated_at?: string | null
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_updates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       playlist_tracks: {
         Row: {
           added_at: string | null
@@ -2401,6 +2466,41 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      release_notifications: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          notified: boolean | null
+          user_id: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          notified?: boolean | null
+          user_id: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          notified?: boolean | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2827,6 +2927,7 @@ export type Database = {
           play_count: number | null
           release_date: string | null
           required_tier: string | null
+          status: string | null
           supporter_early_access: boolean | null
           tags: string[] | null
           title: string
@@ -2848,6 +2949,7 @@ export type Database = {
           play_count?: number | null
           release_date?: string | null
           required_tier?: string | null
+          status?: string | null
           supporter_early_access?: boolean | null
           tags?: string[] | null
           title: string
@@ -2869,6 +2971,7 @@ export type Database = {
           play_count?: number | null
           release_date?: string | null
           required_tier?: string | null
+          status?: string | null
           supporter_early_access?: boolean | null
           tags?: string[] | null
           title?: string
@@ -3385,6 +3488,7 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      process_scheduled_releases: { Args: never; Returns: Json }
       redeem_beta_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
