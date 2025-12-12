@@ -55,6 +55,8 @@ import AdminFeatures from "./pages/admin/AdminFeatures";
 import AdminCollabEntities from "./pages/admin/AdminCollabEntities";
 import AdminCollabEntityEdit from "./pages/admin/AdminCollabEntityEdit";
 import AdminMatching from "./pages/admin/AdminMatching";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -247,6 +249,8 @@ const App = () => (
             <Route path="/live/:streamId" element={<LiveStream />} />
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/activity" element={<AdminActivityLog />} />
             <Route path="/admin/spotlight" element={<AdminSpotlight />} />
             <Route path="/admin/spotlight/:campaignId" element={<AdminSpotlightEntries />} />
             <Route path="/admin/beta-codes" element={<AdminBetaCodes />} />
