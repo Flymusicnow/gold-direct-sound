@@ -57,10 +57,14 @@ import AdminCollabEntities from "./pages/admin/AdminCollabEntities";
 import AdminCollabEntityEdit from "./pages/admin/AdminCollabEntityEdit";
 import AdminMatching from "./pages/admin/AdminMatching";
 import AdminUsers from "./pages/admin/AdminUsers";
+import AdminUserDetail from "./pages/admin/AdminUserDetail";
 import AdminActivityLog from "./pages/admin/AdminActivityLog";
 import AdminBrandApplications from "./pages/admin/AdminBrandApplications";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminRoleManagement from "./pages/admin/AdminRoleManagement";
+import AdminApprovals from "./pages/admin/AdminApprovals";
+import AdminArtists from "./pages/admin/AdminArtists";
+import AdminTracks from "./pages/admin/AdminTracks";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -254,6 +258,10 @@ const App = () => (
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUserDetail /></ProtectedRoute>} />
+            <Route path="/admin/artists" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtists /></ProtectedRoute>} />
+            <Route path="/admin/tracks" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminTracks /></ProtectedRoute>} />
+            <Route path="/admin/approvals" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminApprovals /></ProtectedRoute>} />
             <Route path="/admin/activity" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminActivityLog /></ProtectedRoute>} />
             <Route path="/admin/spotlight" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlight /></ProtectedRoute>} />
             <Route path="/admin/spotlight/:campaignId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlightEntries /></ProtectedRoute>} />
