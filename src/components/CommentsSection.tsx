@@ -5,10 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CommentItem } from "@/components/CommentItem";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { useSupportScore } from "@/hooks/useSupportScore";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { z } from "zod";
+
+const INITIAL_COMMENTS = 5;
+const LOAD_MORE_COUNT = 10;
 
 const commentSchema = z.object({
   text: z.string()
@@ -71,6 +76,8 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COMMENTS);
 
   useEffect(() => {
     fetchComments();
@@ -200,71 +207,108 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     setLoading(false);
   };
 
+  const visibleComments = comments.slice(0, visibleCount);
+  const hasMoreComments = comments.length > visibleCount;
+  const remainingCount = Math.min(LOAD_MORE_COUNT, comments.length - visibleCount);
+
   return (
     <div className="container mx-auto px-4 py-10 max-w-6xl">
-      <div className="flex items-center gap-4 mb-6">
-        <h2 className="text-2xl font-bold text-primary">Comments</h2>
-        <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
-      </div>
-
-      {/* Comment Input */}
-      {user ? (
-        <div className="mb-8 space-y-3">
-          <Textarea
-            placeholder="Share your thoughts..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[100px] bg-card border-border focus:border-primary"
-            maxLength={1000}
-          />
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
-              <span className="text-sm text-muted-foreground">{newComment.length}/1000</span>
-            </div>
-            <Button onClick={handleSubmit} disabled={loading || !newComment.trim()}>
-              Post Comment
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <div className="flex items-center gap-4 mb-6">
+          <h2 className="text-2xl font-bold text-primary">Comments</h2>
+          <span className="text-sm text-muted-foreground">({comments.length})</span>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1">
+              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {isExpanded ? "Hide" : "Show"}
             </Button>
-          </div>
+          </CollapsibleTrigger>
+          <div className="flex-1 h-px bg-gradient-to-r from-primary/50 to-transparent"></div>
         </div>
-      ) : (
-        <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg text-center">
-          <p className="text-muted-foreground">Sign in to leave a comment</p>
-        </div>
-      )}
 
-      {/* Sort Tabs */}
-      <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as "newest" | "top")} className="mb-6">
-        <TabsList className="bg-card border border-border">
-          <TabsTrigger value="newest" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Newest
-          </TabsTrigger>
-          <TabsTrigger value="top" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Top
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
+        <CollapsibleContent>
+          {/* Comment Input */}
+          {user ? (
+            <div className="mb-8 space-y-3">
+              <Textarea
+                placeholder="Share your thoughts..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[100px] bg-card border-border focus:border-primary"
+                maxLength={1000}
+              />
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
+                  <span className="text-sm text-muted-foreground">{newComment.length}/1000</span>
+                </div>
+                <Button onClick={handleSubmit} disabled={loading || !newComment.trim()}>
+                  Post Comment
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg text-center">
+              <p className="text-muted-foreground">Sign in to leave a comment</p>
+            </div>
+          )}
 
-      {/* Comments List */}
-      <div className="space-y-4">
-        {comments.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No comments yet. Be the first to comment!</p>
+          {/* Sort Tabs */}
+          <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as "newest" | "top")} className="mb-6">
+            <TabsList className="bg-card border border-border">
+              <TabsTrigger value="newest" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Newest
+              </TabsTrigger>
+              <TabsTrigger value="top" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                Top
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {/* Comments List */}
+          <div className="space-y-4">
+            {comments.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No comments yet. Be the first to comment!</p>
+              </div>
+            ) : (
+              <>
+                {visibleComments.map((comment) => (
+                  <CommentItem
+                    key={comment.id}
+                    comment={comment}
+                    currentUserId={user?.id}
+                    artistId={artistId}
+                    isArtistComment={comment.user_id === currentUserId}
+                    supporterLevel={(comment as any).supporterLevel || 'none'}
+                    paidTier={(comment as any).paidTier || null}
+                  />
+                ))}
+                
+                {/* Show more/less buttons */}
+                <div className="flex gap-2 justify-center pt-4">
+                  {hasMoreComments && (
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setVisibleCount(prev => prev + LOAD_MORE_COUNT)}
+                    >
+                      Show {remainingCount} more comments
+                    </Button>
+                  )}
+                  {visibleCount > INITIAL_COMMENTS && (
+                    <Button 
+                      variant="ghost" 
+                      onClick={() => setVisibleCount(INITIAL_COMMENTS)}
+                    >
+                      Show less
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        ) : (
-          comments.map((comment) => (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              currentUserId={user?.id}
-              artistId={artistId}
-              isArtistComment={comment.user_id === currentUserId}
-              supporterLevel={(comment as any).supporterLevel || 'none'}
-              paidTier={(comment as any).paidTier || null}
-            />
-          ))
-        )}
-      </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };

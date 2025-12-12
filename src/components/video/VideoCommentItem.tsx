@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, Reply, Trash2, CheckCircle2 } from "lucide-react";
+import { Heart, Reply, Trash2, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 
@@ -68,6 +68,7 @@ export function VideoCommentItem({
   const [likes, setLikes] = useState<string[]>([]);
   const [hasLiked, setHasLiked] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
   const { toast } = useToast();
 
   const replies = allComments.filter(c => c.parent_comment_id === comment.id);
@@ -273,18 +274,32 @@ export function VideoCommentItem({
         </form>
       )}
 
-      {replies.map((reply) => (
-        <VideoCommentItem
-          key={reply.id}
-          comment={reply}
-          allComments={allComments}
-          artistId={artistId}
-          videoId={videoId}
-          onReply={onReply}
-          depth={depth + 1}
-          supporterLevel="none"
-        />
-      ))}
+      {replies.length > 0 && (
+        <div className="mt-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setShowReplies(!showReplies)}
+            className="gap-1 text-muted-foreground hover:text-primary mb-2"
+          >
+            {showReplies ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+          </Button>
+          
+          {showReplies && replies.map((reply) => (
+            <VideoCommentItem
+              key={reply.id}
+              comment={reply}
+              allComments={allComments}
+              artistId={artistId}
+              videoId={videoId}
+              onReply={onReply}
+              depth={depth + 1}
+              supporterLevel="none"
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
