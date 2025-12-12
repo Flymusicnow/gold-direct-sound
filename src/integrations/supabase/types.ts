@@ -762,11 +762,14 @@ export type Database = {
           duration_seconds: number | null
           id: string
           is_supporter_only: boolean | null
+          mood: string | null
           release_date: string | null
           required_tier: string | null
           supporter_early_access: boolean | null
+          tags: string[] | null
           thumbnail_url: string | null
           updated_at: string | null
+          upload_batch_id: string | null
           video_url: string
           view_count: number | null
         }
@@ -777,11 +780,14 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          mood?: string | null
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           updated_at?: string | null
+          upload_batch_id?: string | null
           video_url: string
           view_count?: number | null
         }
@@ -792,11 +798,14 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          mood?: string | null
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          tags?: string[] | null
           thumbnail_url?: string | null
           updated_at?: string | null
+          upload_batch_id?: string | null
           video_url?: string
           view_count?: number | null
         }
@@ -2814,12 +2823,16 @@ export type Database = {
           genre: string | null
           id: string
           is_supporter_only: boolean | null
+          mood: string | null
           play_count: number | null
           release_date: string | null
           required_tier: string | null
           supporter_early_access: boolean | null
+          tags: string[] | null
           title: string
           updated_at: string | null
+          upload_batch_id: string | null
+          visibility: string | null
         }
         Insert: {
           artist_id: string
@@ -2831,12 +2844,16 @@ export type Database = {
           genre?: string | null
           id?: string
           is_supporter_only?: boolean | null
+          mood?: string | null
           play_count?: number | null
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          tags?: string[] | null
           title: string
           updated_at?: string | null
+          upload_batch_id?: string | null
+          visibility?: string | null
         }
         Update: {
           artist_id?: string
@@ -2848,16 +2865,64 @@ export type Database = {
           genre?: string | null
           id?: string
           is_supporter_only?: boolean | null
+          mood?: string | null
           play_count?: number | null
           release_date?: string | null
           required_tier?: string | null
           supporter_early_access?: boolean | null
+          tags?: string[] | null
           title?: string
           updated_at?: string | null
+          upload_batch_id?: string | null
+          visibility?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "tracks_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      upload_sessions: {
+        Row: {
+          artist_id: string
+          completed_files: number | null
+          created_at: string | null
+          failed_files: number | null
+          file_type: string | null
+          id: string
+          status: string | null
+          total_files: number
+          user_id: string
+        }
+        Insert: {
+          artist_id: string
+          completed_files?: number | null
+          created_at?: string | null
+          failed_files?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string | null
+          total_files?: number
+          user_id: string
+        }
+        Update: {
+          artist_id?: string
+          completed_files?: number | null
+          created_at?: string | null
+          failed_files?: number | null
+          file_type?: string | null
+          id?: string
+          status?: string | null
+          total_files?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "upload_sessions_artist_id_fkey"
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artist_profiles"

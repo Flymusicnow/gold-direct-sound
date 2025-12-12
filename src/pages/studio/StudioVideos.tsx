@@ -34,8 +34,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle } from "lucide-react";
+import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle, FolderUp } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 
 interface VideoPost {
   id: string;
@@ -85,7 +86,7 @@ export default function StudioVideos() {
   const [isSupporterOnly, setIsSupporterOnly] = useState(false);
   const [requiredTier, setRequiredTier] = useState<string>("basic");
   const [pulsingVideoIds, setPulsingVideoIds] = useState<Set<string>>(new Set());
-  
+  const [showMultiUpload, setShowMultiUpload] = useState(false);
   // Track milestone achievements
   useVideoMilestones(videoPosts);
 
@@ -475,6 +476,19 @@ export default function StudioVideos() {
             </div>
           </div>
 
+          {/* Multi Upload Button */}
+          <Button
+            onClick={() => setShowMultiUpload(true)}
+            className="w-full gap-2 h-auto py-4"
+            variant="outline"
+          >
+            <FolderUp className="h-5 w-5" />
+            <div className="text-left">
+              <p className="font-semibold">Upload Multiple Videos</p>
+              <p className="text-xs text-muted-foreground">Batch upload with bulk metadata</p>
+            </div>
+          </Button>
+
           {/* Upload Section */}
           <Card className="p-6 border-primary/20">
             <h2 className="text-xl font-semibold mb-4">Upload New Video</h2>
@@ -847,6 +861,17 @@ export default function StudioVideos() {
         tierRequired="gold"
         onSuccess={fetchData}
       />
+
+      {/* Multi Upload Dialog */}
+      {artistProfile && (
+        <MultiUploadDialog
+          open={showMultiUpload}
+          onOpenChange={setShowMultiUpload}
+          type="videos"
+          artistId={artistProfile.id}
+          onSuccess={fetchData}
+        />
+      )}
       </div>
       {isMobile && <BottomNavBarStudio />}
     </>
