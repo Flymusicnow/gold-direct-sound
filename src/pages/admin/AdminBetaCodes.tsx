@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
-import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -112,7 +110,7 @@ export default function AdminBetaCodes() {
   const [extensionType, setExtensionType] = useState<'add_days' | 'set_date' | 'remove'>('add_days');
   const [extensionDays, setExtensionDays] = useState<string>("30");
   const [extensionDate, setExtensionDate] = useState<string>("");
-  const isMobile = useIsMobile();
+  
 
   useEffect(() => {
     fetchBetaCodes();
@@ -449,25 +447,17 @@ export default function AdminBetaCodes() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
+      <AdminLayout title="Beta Code Management" description="Create and manage beta access codes">
         <p className="text-muted-foreground">Loading beta codes...</p>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <MobileAdminNav />
-      <div className="min-h-screen pt-24 pb-8 px-4 pb-20 md:pb-8">
-        <div className="flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Beta Code Management</h1>
-            <p className="text-muted-foreground mt-2">
-              Create and manage beta access codes for artists and fans
-            </p>
-          </div>
+    <AdminLayout title="Beta Code Management" description="Create and manage beta access codes">
+      <div className="flex flex-col gap-6">
+        {/* Header Actions */}
+        <div className="flex items-center justify-end gap-2">
           <div className="flex gap-2">
             <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
               <DialogTrigger asChild>
@@ -1101,11 +1091,9 @@ export default function AdminBetaCodes() {
                 </TableBody>
               </Table>
             </div>
-          )}
-        </Card>
-        </div>
+        )}
+      </Card>
       </div>
-      {isMobile && <BottomNavBarAdmin />}
-    </>
+    </AdminLayout>
   );
 }

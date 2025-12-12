@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DollarSign, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { toast } from "sonner";
-import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
-import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface PendingPayout {
   artist_id: string;
@@ -19,7 +17,6 @@ interface PendingPayout {
 }
 
 export default function AdminPayouts() {
-  const isMobile = useIsMobile();
   const [pendingPayouts, setPendingPayouts] = useState<PendingPayout[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -122,89 +119,80 @@ export default function AdminPayouts() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading payouts...</p>
-      </div>
+      <AdminLayout title="Artist Payouts" description="Process pending artist earnings">
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading payouts...</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <div className="min-h-screen p-4 md:p-8 pt-20 pb-32 md:pb-28">
-        <MobileAdminNav />
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">Artist Payouts</h1>
-            <p className="text-muted-foreground">Process pending artist earnings</p>
-          </div>
-
-          {pendingPayouts.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground text-center">No pending payouts</p>
+    <AdminLayout title="Artist Payouts" description="Process pending artist earnings">
+      {pendingPayouts.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-muted-foreground text-center">No pending payouts</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-4">
+          {pendingPayouts.map((payout) => (
+            <Card key={payout.artist_id} className="border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{payout.artist_name}</span>
+                  <span className="text-primary">{payout.amount_due.toFixed(2)} kr</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Payout Amount</label>
+                    <Input
+                      type="number"
+                      placeholder="Amount in SEK"
+                      value={payoutAmount}
+                      onChange={(e) => setPayoutAmount(e.target.value)}
+                      max={payout.amount_due}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Method</label>
+                    <Select value={payoutMethod} onValueChange={setPayoutMethod}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="manual">Manual Transfer</SelectItem>
+                        <SelectItem value="swish">Swish</SelectItem>
+                        <SelectItem value="stripe_transfer">Stripe Connect</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Notes (optional)</label>
+                  <Textarea
+                    placeholder="Add notes about this payout..."
+                    value={payoutNotes}
+                    onChange={(e) => setPayoutNotes(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+                <Button
+                  onClick={() => processPayout(payout)}
+                  disabled={processingId === payout.artist_id || !payoutAmount}
+                  className="w-full"
+                >
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  {processingId === payout.artist_id ? "Processing..." : "Mark as Paid"}
+                </Button>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-4">
-              {pendingPayouts.map((payout) => (
-                <Card key={payout.artist_id} className="border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{payout.artist_name}</span>
-                      <span className="text-primary">{payout.amount_due.toFixed(2)} kr</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Payout Amount</label>
-                        <Input
-                          type="number"
-                          placeholder="Amount in SEK"
-                          value={payoutAmount}
-                          onChange={(e) => setPayoutAmount(e.target.value)}
-                          max={payout.amount_due}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Method</label>
-                        <Select value={payoutMethod} onValueChange={setPayoutMethod}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="manual">Manual Transfer</SelectItem>
-                            <SelectItem value="swish">Swish</SelectItem>
-                            <SelectItem value="stripe_transfer">Stripe Connect</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Notes (optional)</label>
-                      <Textarea
-                        placeholder="Add notes about this payout..."
-                        value={payoutNotes}
-                        onChange={(e) => setPayoutNotes(e.target.value)}
-                        rows={2}
-                      />
-                    </div>
-                    <Button
-                      onClick={() => processPayout(payout)}
-                      disabled={processingId === payout.artist_id || !payoutAmount}
-                      className="w-full"
-                    >
-                      <CheckCircle className="mr-2 h-4 w-4" />
-                      {processingId === payout.artist_id ? "Processing..." : "Mark as Paid"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          ))}
         </div>
-      </div>
-      {isMobile && <BottomNavBarAdmin />}
-    </>
+      )}
+    </AdminLayout>
   );
 }

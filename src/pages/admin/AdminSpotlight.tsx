@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
-import { BottomNavBarAdmin } from "@/components/mobile/BottomNavBarAdmin";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -40,7 +38,6 @@ export default function AdminSpotlight() {
     start_date: "",
     end_date: "",
   });
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!hasRole('admin')) {
@@ -114,129 +111,126 @@ export default function AdminSpotlight() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground">Loading campaigns...</p>
-      </div>
+      <AdminLayout title="FlyMusic Spotlight" description="Manage spotlight campaigns">
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading campaigns...</p>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <MobileAdminNav />
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 pt-24 pb-8 pb-20 md:pb-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-8 w-8 text-[#E8BF1A]" />
-            <h1 className="text-3xl font-bold text-foreground">FlyMusic Spotlight</h1>
-          </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]">
-                <Plus className="mr-2 h-4 w-4" />
-                Create Campaign
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>Create Spotlight Campaign</DialogTitle>
-                <DialogDescription>
-                  Set up a new campaign for artists to submit tracks and fans to vote.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Campaign Name</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="FlyMusic Spotlight - Spring 2026"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Campaign description..."
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) => setFormData({ ...formData, status: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="upcoming">Upcoming</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="ended">Ended</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="start_date">Start Date</Label>
-                  <Input
-                    id="start_date"
-                    type="datetime-local"
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="end_date">End Date</Label>
-                  <Input
-                    id="end_date"
-                    type="datetime-local"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  />
-                </div>
+    <AdminLayout title="FlyMusic Spotlight" description="Manage spotlight campaigns">
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-8 w-8 text-primary" />
+          <span className="text-xl font-semibold text-foreground">Campaigns</span>
+        </div>
+        
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-gradient-to-r from-primary to-primary/80">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Campaign
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[525px]">
+            <DialogHeader>
+              <DialogTitle>Create Spotlight Campaign</DialogTitle>
+              <DialogDescription>
+                Set up a new campaign for artists to submit tracks and fans to vote.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Campaign Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="FlyMusic Spotlight - Spring 2026"
+                />
               </div>
-              <DialogFooter>
-                <Button onClick={handleCreateCampaign}>Create Campaign</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {campaigns.map((campaign) => (
-            <Card
-              key={campaign.id}
-              className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => navigate(`/admin/spotlight/${campaign.id}`)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{campaign.name}</CardTitle>
-                  {getStatusBadge(campaign.status)}
-                </div>
-                <CardDescription>
-                  {new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{campaign.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {campaigns.length === 0 && (
-          <div className="text-center py-12">
-            <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No campaigns yet. Create your first one!</p>
-          </div>
-        )}
-        </div>
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Campaign description..."
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="upcoming">Upcoming</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="ended">Ended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="start_date">Start Date</Label>
+                <Input
+                  id="start_date"
+                  type="datetime-local"
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="end_date">End Date</Label>
+                <Input
+                  id="end_date"
+                  type="datetime-local"
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCreateCampaign}>Create Campaign</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-    </>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {campaigns.map((campaign) => (
+          <Card
+            key={campaign.id}
+            className="cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => navigate(`/admin/spotlight/${campaign.id}`)}
+          >
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">{campaign.name}</CardTitle>
+                {getStatusBadge(campaign.status)}
+              </div>
+              <CardDescription>
+                {new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">{campaign.description}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {campaigns.length === 0 && (
+        <div className="text-center py-12">
+          <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">No campaigns yet. Create your first one!</p>
+        </div>
+      )}
+    </AdminLayout>
   );
 }

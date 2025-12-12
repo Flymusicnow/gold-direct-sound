@@ -27,7 +27,7 @@ export function BottomNavBarAdmin() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-lg transition-colors min-w-[64px]",
+                "relative flex flex-col items-center justify-center gap-1 flex-1 py-2 rounded-lg transition-colors min-w-[64px]",
                 isActive
                   ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -36,7 +36,7 @@ export function BottomNavBarAdmin() {
               <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
               <span className="text-xs font-medium">{item.label}</span>
               {isActive && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-primary rounded-t-full" />
+                <div className="absolute bottom-0 w-12 h-0.5 bg-primary rounded-t-full" />
               )}
             </Link>
           );
