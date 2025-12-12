@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { VideoCommentItem } from "./VideoCommentItem";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Send } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MessageSquare, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useSupportScore } from "@/hooks/useSupportScore";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
+
+const INITIAL_COMMENTS = 5;
+const LOAD_MORE_COUNT = 10;
 
 interface VideoComment {
   id: string;
@@ -29,6 +33,8 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
   const [comments, setComments] = useState<VideoComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COMMENTS);
   const { toast } = useToast();
   const { updateSupportScore } = useSupportScore();
 
@@ -149,54 +155,89 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
   };
 
   const topLevelComments = comments.filter(c => !c.parent_comment_id);
+  const visibleComments = topLevelComments.slice(0, visibleCount);
+  const hasMoreComments = topLevelComments.length > visibleCount;
+  const remainingCount = Math.min(LOAD_MORE_COUNT, topLevelComments.length - visibleCount);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 text-lg font-semibold">
-        <MessageSquare className="w-5 h-5 text-primary" />
-        <span>Comments ({comments.length})</span>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <Textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          className="min-h-[80px] bg-background/50 border-border"
-          disabled={loading}
-        />
-        <div className="flex justify-between items-center">
-          <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
-          <Button 
-            type="submit" 
-            disabled={loading || !newComment.trim()}
-            className="gap-2"
-          >
-            <Send className="w-4 h-4" />
-            Post Comment
-          </Button>
+      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+        <div className="flex items-center gap-2 text-lg font-semibold">
+          <MessageSquare className="w-5 h-5 text-primary" />
+          <span>Comments ({comments.length})</span>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-1 ml-2">
+              {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {isExpanded ? "Hide" : "Show"}
+            </Button>
+          </CollapsibleTrigger>
         </div>
-      </form>
 
-      <div className="space-y-4">
-        {topLevelComments.map((comment) => (
-          <VideoCommentItem
-            key={comment.id}
-            comment={comment}
-            allComments={comments}
-            artistId={artistId}
-            videoId={videoId}
-            onReply={fetchComments}
-            supporterLevel={(comment as any).supporterLevel || 'none'}
-          />
-        ))}
+        <CollapsibleContent className="space-y-6 mt-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+              className="min-h-[80px] bg-background/50 border-border"
+              disabled={loading}
+            />
+            <div className="flex justify-between items-center">
+              <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
+              <Button 
+                type="submit" 
+                disabled={loading || !newComment.trim()}
+                className="gap-2"
+              >
+                <Send className="w-4 h-4" />
+                Post Comment
+              </Button>
+            </div>
+          </form>
 
-        {topLevelComments.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">
-            No comments yet. Be the first to comment!
-          </p>
-        )}
-      </div>
+          <div className="space-y-4">
+            {visibleComments.map((comment) => (
+              <VideoCommentItem
+                key={comment.id}
+                comment={comment}
+                allComments={comments}
+                artistId={artistId}
+                videoId={videoId}
+                onReply={fetchComments}
+                supporterLevel={(comment as any).supporterLevel || 'none'}
+              />
+            ))}
+
+            {topLevelComments.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">
+                No comments yet. Be the first to comment!
+              </p>
+            )}
+
+            {/* Show more/less buttons */}
+            {topLevelComments.length > 0 && (
+              <div className="flex gap-2 justify-center pt-4">
+                {hasMoreComments && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setVisibleCount(prev => prev + LOAD_MORE_COUNT)}
+                  >
+                    Show {remainingCount} more comments
+                  </Button>
+                )}
+                {visibleCount > INITIAL_COMMENTS && (
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setVisibleCount(INITIAL_COMMENTS)}
+                  >
+                    Show less
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 }

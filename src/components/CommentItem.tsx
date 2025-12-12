@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Heart, Reply, Trash2, BadgeCheck } from "lucide-react";
+import { Heart, Reply, Trash2, BadgeCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
@@ -78,6 +78,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
   const [replies, setReplies] = useState<any[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [repliesLoaded, setRepliesLoaded] = useState(false);
+  const [showReplies, setShowReplies] = useState(true);
 
   const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
   const likeCount = comment.comment_likes?.length || 0;
@@ -283,17 +284,31 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
 
           {/* Replies */}
           {replies.length > 0 && (
-            <div className="mt-4 pl-4 border-l-2 border-primary/20 space-y-3">
-        {replies.map((reply) => (
-          <CommentItem
-            key={reply.id}
-            comment={reply}
-            currentUserId={currentUserId}
-            artistId={artistId}
-            isArtistComment={reply.user_id === currentUserId}
-            supporterLevel="none"
-          />
-        ))}
+            <div className="mt-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowReplies(!showReplies)}
+                className="gap-1 text-muted-foreground hover:text-primary mb-2"
+              >
+                {showReplies ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+              </Button>
+              
+              {showReplies && (
+                <div className="pl-4 border-l-2 border-primary/20 space-y-3">
+                  {replies.map((reply) => (
+                    <CommentItem
+                      key={reply.id}
+                      comment={reply}
+                      currentUserId={currentUserId}
+                      artistId={artistId}
+                      isArtistComment={reply.user_id === currentUserId}
+                      supporterLevel="none"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
