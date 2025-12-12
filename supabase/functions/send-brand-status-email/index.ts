@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,16 +84,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { subject, html } = getEmailContent(status, companyName, contactPerson, adminNotes);
 
-    const emailResponse = await resend.emails.send({
-      from: "FlyMusic <noreply@resend.dev>",
-      to: [email],
-      subject,
-      html,
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "FlyMusic <noreply@resend.dev>",
+        to: [email],
+        subject,
+        html,
+      }),
     });
 
-    console.log("Email sent successfully:", emailResponse);
+    const data = await emailResponse.json();
 
-    return new Response(JSON.stringify({ success: true, ...emailResponse }), {
+    console.log("Email sent successfully:", data);
+
+    return new Response(JSON.stringify({ success: true, ...data }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
