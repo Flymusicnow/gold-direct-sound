@@ -63,6 +63,7 @@ import AdminBrandApplications from "./pages/admin/AdminBrandApplications";
 import AdminCampaigns from "./pages/admin/AdminCampaigns";
 import AdminRoleManagement from "./pages/admin/AdminRoleManagement";
 import AdminApprovals from "./pages/admin/AdminApprovals";
+import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminArtists from "./pages/admin/AdminArtists";
 import AdminTracks from "./pages/admin/AdminTracks";
 import TrustPage from "./pages/trust/TrustPage";
@@ -274,6 +275,7 @@ const App = () => (
             <Route path="/admin/brand-applications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBrandApplications /></ProtectedRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
+            <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUpdates /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
