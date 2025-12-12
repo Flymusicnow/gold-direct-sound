@@ -118,7 +118,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/artists")}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-primary/10">
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/tracks")}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-primary/10">
@@ -144,7 +144,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/activity")}>
+        <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/approvals")}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-orange-500/10">

@@ -20,15 +20,20 @@ import { useState } from "react";
 
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Approvals", url: "/admin/approvals", icon: Shield },
   { title: "Users", url: "/admin/users", icon: Users },
+  { title: "Artists", url: "/admin/artists", icon: Star },
+  { title: "Tracks", url: "/admin/tracks", icon: Activity },
   { title: "Spotlight", url: "/admin/spotlight", icon: Star },
   { title: "Beta Codes", url: "/admin/beta-codes", icon: KeyRound },
   { title: "Feature Flags", url: "/admin/features", icon: Flag },
   { title: "Collab Entities", url: "/admin/collab-entities", icon: Building2 },
   { title: "Matching", url: "/admin/matching", icon: Handshake },
   { title: "Activity Log", url: "/admin/activity", icon: Activity },
-  { title: "Brand Applications", url: "/admin/brand-applications", icon: Shield },
+  { title: "Brand Applications", url: "/admin/brand-applications", icon: Building2 },
+  { title: "Campaigns", url: "/admin/campaigns", icon: Activity },
   { title: "Payouts", url: "/admin/payouts", icon: CreditCard },
+  { title: "Roles", url: "/admin/roles", icon: Shield },
 ];
 
 export function AdminSidebar() {

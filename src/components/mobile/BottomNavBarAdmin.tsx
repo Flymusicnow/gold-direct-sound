@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Sparkles, Key, Menu, DollarSign } from "lucide-react";
+import { LayoutDashboard, Shield, Users, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -7,8 +7,8 @@ import { MobileAdminNav } from "@/components/admin/MobileAdminNav";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-  { icon: Sparkles, label: "Spotlight", path: "/admin/spotlight" },
-  { icon: DollarSign, label: "Payouts", path: "/admin/payouts" },
+  { icon: Shield, label: "Approvals", path: "/admin/approvals" },
+  { icon: Users, label: "Users", path: "/admin/users" },
 ];
 
 export function BottomNavBarAdmin() {
