@@ -174,16 +174,25 @@ export function PremiumTrackCard({
             
             {/* Play Overlay - Clickable */}
             {(!track.is_supporter_only || hasAccess) && (
-              <div 
-                className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-                onClick={handlePlay}
-              >
-                {isCurrentlyPlaying ? (
-                  <Pause className="h-10 w-10 text-background fill-background" />
-                ) : (
-                  <Play className="h-10 w-10 text-background fill-background" />
-                )}
-              </div>
+        <div 
+          className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+          onClick={handlePlay}
+        >
+          <div 
+            className="h-12 w-12 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
+            style={{
+              backgroundColor: 'hsl(45, 82%, 51%)',
+              border: '1px solid hsla(45, 82%, 51%, 0.4)',
+              boxShadow: '0 4px 12px hsla(45, 82%, 51%, 0.35)'
+            }}
+          >
+            {isCurrentlyPlaying ? (
+              <Pause className="h-6 w-6 fill-white text-white" />
+            ) : (
+              <Play className="h-6 w-6 fill-white text-white ml-0.5" />
+            )}
+          </div>
+        </div>
             )}
           </div>
 
