@@ -2511,6 +2511,78 @@ export type Database = {
           },
         ]
       }
+      qa_check_results: {
+        Row: {
+          check_name: string
+          check_type: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          passed: boolean
+          reason: string | null
+          response_time_ms: number | null
+        }
+        Insert: {
+          check_name: string
+          check_type: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          passed: boolean
+          reason?: string | null
+          response_time_ms?: number | null
+        }
+        Update: {
+          check_name?: string
+          check_type?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          passed?: boolean
+          reason?: string | null
+          response_time_ms?: number | null
+        }
+        Relationships: []
+      }
+      qa_report_runs: {
+        Row: {
+          created_at: string
+          db_checks_passed: number | null
+          db_checks_total: number | null
+          errors_24h: number | null
+          id: string
+          overall_passed: boolean
+          report_sent_to: string[] | null
+          route_checks_passed: number | null
+          route_checks_total: number | null
+          run_type: string
+        }
+        Insert: {
+          created_at?: string
+          db_checks_passed?: number | null
+          db_checks_total?: number | null
+          errors_24h?: number | null
+          id?: string
+          overall_passed: boolean
+          report_sent_to?: string[] | null
+          route_checks_passed?: number | null
+          route_checks_total?: number | null
+          run_type: string
+        }
+        Update: {
+          created_at?: string
+          db_checks_passed?: number | null
+          db_checks_total?: number | null
+          errors_24h?: number | null
+          id?: string
+          overall_passed?: boolean
+          report_sent_to?: string[] | null
+          route_checks_passed?: number | null
+          route_checks_total?: number | null
+          run_type?: string
+        }
+        Relationships: []
+      }
       release_notifications: {
         Row: {
           content_id: string
@@ -2545,6 +2617,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      runtime_errors: {
+        Row: {
+          component: string | null
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          id: string
+          route: string | null
+          sentry_event_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          component?: string | null
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          id?: string
+          route?: string | null
+          sentry_event_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          component?: string | null
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          id?: string
+          route?: string | null
+          sentry_event_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       spotlight_campaigns: {
         Row: {

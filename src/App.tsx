@@ -66,6 +66,7 @@ import AdminApprovals from "./pages/admin/AdminApprovals";
 import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminArtists from "./pages/admin/AdminArtists";
 import AdminTracks from "./pages/admin/AdminTracks";
+import AdminQA from "./pages/admin/AdminQA";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -258,6 +259,7 @@ const App = () => (
             <Route path="/live/:streamId" element={<LiveStream />} />
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/qa" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminQA /></ProtectedRoute>} />
             <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUsers /></ProtectedRoute>} />
             <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUserDetail /></ProtectedRoute>} />
             <Route path="/admin/artists" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtists /></ProtectedRoute>} />
