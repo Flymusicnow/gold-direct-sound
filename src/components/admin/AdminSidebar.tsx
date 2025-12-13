@@ -14,12 +14,14 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
+  FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "QA Mode", url: "/admin/qa", icon: FlaskConical },
   { title: "Approvals", url: "/admin/approvals", icon: Shield },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Artists", url: "/admin/artists", icon: Star },

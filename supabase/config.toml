@@ -32,3 +32,6 @@ verify_jwt = true
 
 [functions.process-scheduled-releases]
 verify_jwt = false
+
+[functions.send-qa-report]
+verify_jwt = false
