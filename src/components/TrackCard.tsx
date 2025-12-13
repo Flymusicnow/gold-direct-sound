@@ -95,8 +95,15 @@ export function TrackCard({
         )}
         {/* Play button overlay - always shows gold play button */}
         <div className="absolute inset-0 rounded bg-black/40 flex items-center justify-center">
-          <div className="h-8 w-8 rounded-full bg-primary border border-primary/40 shadow-lg shadow-primary/20 flex items-center justify-center">
-            <Play className="h-4 w-4 text-primary-foreground fill-current ml-0.5" />
+          <div 
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            style={{
+              backgroundColor: 'hsl(45, 82%, 51%)',
+              border: '1px solid hsla(45, 82%, 51%, 0.4)',
+              boxShadow: '0 4px 12px hsla(45, 82%, 51%, 0.35)'
+            }}
+          >
+            <Play className="h-4 w-4 fill-white text-white ml-0.5" />
           </div>
         </div>
       </div>

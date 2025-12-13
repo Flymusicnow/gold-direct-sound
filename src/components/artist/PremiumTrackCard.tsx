@@ -260,12 +260,17 @@ export function PremiumTrackCard({
                   onClick={handlePlay}
                   disabled={accessLoading}
                   title={isCurrentlyPlaying ? "Pause" : "Play now"}
-                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 shadow-md shadow-primary/25 flex items-center justify-center disabled:opacity-50"
+                  className="h-9 w-9 rounded-full flex items-center justify-center disabled:opacity-50 transition-all duration-200 hover:scale-105"
+                  style={{
+                    backgroundColor: 'hsl(45, 82%, 51%)',
+                    border: '1px solid hsla(45, 82%, 51%, 0.4)',
+                    boxShadow: '0 4px 12px hsla(45, 82%, 51%, 0.35)'
+                  }}
                 >
                   {isCurrentlyPlaying ? (
-                    <Pause className="h-5 w-5 fill-current" />
+                    <Pause className="h-5 w-5 fill-white text-white" />
                   ) : (
-                    <Play className="h-5 w-5 fill-current" />
+                    <Play className="h-5 w-5 fill-white text-white ml-0.5" />
                   )}
                 </button>
                 {onAddToQueue && (
