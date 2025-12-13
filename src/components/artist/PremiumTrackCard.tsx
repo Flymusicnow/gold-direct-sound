@@ -257,6 +257,7 @@ export function PremiumTrackCard({
                   />
                 </Button>
                 <Button
+                  variant="ghost"
                   size="icon"
                   onClick={handlePlay}
                   disabled={accessLoading}
