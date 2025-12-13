@@ -260,7 +260,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     pausedRef.current = false;
     
     // Create upload session
-    const newBatchId = generateId() + generateId();
+    const newBatchId = crypto.randomUUID();
     setBatchId(newBatchId);
 
     const { error: sessionError } = await supabase.from('upload_sessions').insert({
@@ -314,7 +314,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     setIsUploading(true);
     pausedRef.current = false;
 
-    const currentBatchId = batchId || generateId() + generateId();
+    const currentBatchId = batchId || crypto.randomUUID();
 
     for (let i = 0; i < failedFiles.length; i += BATCH_SIZE) {
       if (pausedRef.current) break;
