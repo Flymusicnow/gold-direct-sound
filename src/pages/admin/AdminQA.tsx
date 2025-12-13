@@ -71,6 +71,7 @@ export default function AdminQA() {
   const [selectedDevice, setSelectedDevice] = useState(DEVICE_PRESETS[0]);
   const [selectedPage, setSelectedPage] = useState(PREVIEW_PAGES[0]);
   const [isLoadingErrors, setIsLoadingErrors] = useState(false);
+  const [isSendingReport, setIsSendingReport] = useState(false);
   const [errorFilter, setErrorFilter] = useState<'1h' | '24h' | '7d'>('24h');
 
   // Fetch runtime errors
@@ -131,13 +132,23 @@ export default function AdminQA() {
   };
 
   const handleSendReport = async () => {
+    setIsSendingReport(true);
     try {
-      const { error } = await supabase.functions.invoke('send-qa-report', {});
+      const { data, error } = await supabase.functions.invoke('send-qa-report', {});
       if (error) throw error;
-      toast({ title: 'QA Report sent!', description: 'Check admin emails for the report.' });
+      toast({ 
+        title: '✅ QA Report Sent!', 
+        description: `Report sent to admin emails. Status: ${data?.status || 'OK'}` 
+      });
       await fetchReportHistory();
     } catch (error) {
-      toast({ title: 'Failed to send report', description: String(error), variant: 'destructive' });
+      toast({ 
+        title: '❌ Failed to send report', 
+        description: String(error), 
+        variant: 'destructive' 
+      });
+    } finally {
+      setIsSendingReport(false);
     }
   };
 
@@ -209,9 +220,13 @@ ${results.overallPassed ? '✅ ALL SYSTEMS OPERATIONAL' : '❌ ISSUES DETECTED'}
                 )}
                 Run All Checks
               </Button>
-              <Button variant="outline" onClick={handleSendReport} disabled={!results}>
-                <Send className="h-4 w-4 mr-2" />
-                Send Report
+              <Button variant="outline" onClick={handleSendReport} disabled={isSendingReport}>
+                {isSendingReport ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4 mr-2" />
+                )}
+                Send QA Report Now
               </Button>
               <Button variant="outline" onClick={handleCopyStatusBoard} disabled={!results}>
                 <Copy className="h-4 w-4 mr-2" />
