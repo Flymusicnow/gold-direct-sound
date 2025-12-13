@@ -51,7 +51,7 @@ export default function SmartLinkPage() {
         `)
         .eq('slug', slug)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error || !pageData) {
         setNotFound(true);
@@ -61,11 +61,12 @@ export default function SmartLinkPage() {
 
       setData(pageData as SmartLinkData);
 
-      // Fetch external links
+      // Fetch external links (only active ones)
       const { data: linksData } = await supabase
         .from('smart_link_external_links')
         .select('*')
         .eq('smart_link_page_id', pageData.id)
+        .eq('status', 'active')
         .order('sort_order', { ascending: true });
 
       setLinks(linksData || []);
@@ -78,8 +79,11 @@ export default function SmartLinkPage() {
   };
 
   const handleLinkClick = async (linkId: string, url: string) => {
-    // Track click
-    await supabase.rpc('increment_smart_link_click', { _link_id: linkId });
+    // Track click - increment click_count directly
+    await supabase
+      .from('smart_link_external_links')
+      .update({ click_count: links.find(l => l.id === linkId)?.click_count || 0 + 1 })
+      .eq('id', linkId);
     
     // Open link
     window.open(url, '_blank', 'noopener,noreferrer');
@@ -162,9 +166,9 @@ export default function SmartLinkPage() {
             <p className="text-sm text-primary font-medium mb-2">{artist.genre}</p>
           )}
           
-          {(data.bio || artist.bio) && (
+          {artist.bio && (
             <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-              {data.bio || artist.bio}
+              {artist.bio}
             </p>
           )}
         </div>
