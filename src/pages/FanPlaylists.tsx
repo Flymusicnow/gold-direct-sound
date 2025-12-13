@@ -6,7 +6,7 @@ import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Plus, ListMusic } from "lucide-react";
+import { Plus, ListMusic, ArrowLeft } from "lucide-react";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
@@ -86,6 +86,16 @@ export default function FanPlaylists() {
       <MobileFanNav />
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-6xl">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/fan")}
+          className="mb-6 gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
