@@ -96,12 +96,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id).then(setProfile);
+        const profileData = await fetchProfile(session.user.id);
+        setProfile(profileData);
       }
+      // Only set loading false AFTER roles are fetched
       setLoading(false);
     });
 
@@ -113,14 +115,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           // Defer Supabase calls with setTimeout to prevent deadlock
-          setTimeout(() => {
-            fetchProfile(session.user.id).then(setProfile);
+          setTimeout(async () => {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData);
           }, 0);
         } else {
           setProfile(null);
+          setUserRoles([]);
         }
-        
-        setLoading(false);
       }
     );
 
