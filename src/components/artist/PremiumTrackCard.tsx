@@ -256,20 +256,18 @@ export function PremiumTrackCard({
                     className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`}
                   />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <button
                   onClick={handlePlay}
                   disabled={accessLoading}
                   title={isCurrentlyPlaying ? "Pause" : "Play now"}
-                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 shadow-md shadow-primary/25"
+                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 shadow-md shadow-primary/25 flex items-center justify-center disabled:opacity-50"
                 >
                   {isCurrentlyPlaying ? (
                     <Pause className="h-5 w-5 fill-current" />
                   ) : (
                     <Play className="h-5 w-5 fill-current" />
                   )}
-                </Button>
+                </button>
                 {onAddToQueue && (
                   <Button
                     variant="ghost"
