@@ -95,7 +95,7 @@ export function TrackCard({
         )}
         {/* Play button overlay - always shows gold play button */}
         <div className="absolute inset-0 rounded bg-black/40 flex items-center justify-center">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/90 to-primary/70 border border-primary/40 shadow-lg shadow-primary/20 flex items-center justify-center">
             <Play className="h-4 w-4 text-primary-foreground fill-current ml-0.5" />
           </div>
         </div>
@@ -116,7 +116,7 @@ export function TrackCard({
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-primary"
+            className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
               if (!user) {
@@ -133,7 +133,7 @@ export function TrackCard({
             <Button
               variant="ghost"
               size="icon"
-              className="text-muted-foreground hover:text-primary"
+              className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToQueue();
@@ -146,7 +146,7 @@ export function TrackCard({
           <Button
             variant="ghost"
             size="icon"
-            className="text-muted-foreground hover:text-primary"
+            className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
             onClick={handleLike}
             disabled={isUpdating}
             title={liked ? "Unlike" : "Like"}

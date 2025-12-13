@@ -226,7 +226,7 @@ export function PremiumTrackCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-primary"
+                  className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (!user) {
@@ -242,12 +242,12 @@ export function PremiumTrackCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-primary"
+                  className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
                   onClick={handleLike}
                   disabled={isUpdating || accessLoading}
                 >
                   <Heart
-                    className={`h-5 w-5 ${liked ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`}
+                    className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`}
                   />
                 </Button>
                 <Button
@@ -255,7 +255,7 @@ export function PremiumTrackCard({
                   onClick={handlePlay}
                   disabled={accessLoading}
                   title={isCurrentlyPlaying ? "Pause" : "Play now"}
-                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/90 to-primary/70 text-primary-foreground hover:from-primary hover:to-primary/85 border border-primary/40 shadow-lg shadow-primary/20"
                 >
                   {isCurrentlyPlaying ? (
                     <Pause className="h-5 w-5 fill-current" />
@@ -267,7 +267,7 @@ export function PremiumTrackCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-primary"
+                    className="text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (track.is_supporter_only && !hasAccess) {
