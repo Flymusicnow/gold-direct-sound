@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Music, Video, CheckSquare, Square, Wand2 } from "lucide-react";
+import { Music, Video, CheckSquare, Square, Wand2, ImageIcon, X } from "lucide-react";
 import type { UploadFile } from "@/hooks/useMultiUpload";
 
 interface BulkMetadataEditorProps {
@@ -19,6 +19,8 @@ interface BulkMetadataEditorProps {
   onUpdateFile: (id: string, metadata: Partial<UploadFile>) => void;
   onUpdateAll: (metadata: Partial<UploadFile>) => void;
   onUpdateSelected: (ids: string[], metadata: Partial<UploadFile>) => void;
+  albumCover: File | null;
+  onAlbumCoverChange: (file: File | null) => void;
 }
 
 const GENRES = [
@@ -35,13 +37,18 @@ export function BulkMetadataEditor({
   files,
   onUpdateFile,
   onUpdateAll,
-  onUpdateSelected
+  onUpdateSelected,
+  albumCover,
+  onAlbumCoverChange
 }: BulkMetadataEditorProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkGenre, setBulkGenre] = useState<string>("");
   const [bulkMood, setBulkMood] = useState<string>("");
   const [bulkVisibility, setBulkVisibility] = useState<string>("");
   const [bulkTags, setBulkTags] = useState<string>("");
+  const coverInputRef = useRef<HTMLInputElement>(null);
+
+  const albumCoverPreview = albumCover ? URL.createObjectURL(albumCover) : null;
 
   const allSelected = selectedIds.size === files.length && files.length > 0;
   const someSelected = selectedIds.size > 0;
@@ -89,6 +96,61 @@ export function BulkMetadataEditor({
 
   return (
     <div className="space-y-6">
+      {/* Album Cover Upload */}
+      <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 space-y-3">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Album Cover</h3>
+          <span className="text-xs text-muted-foreground">(applies to all tracks)</span>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {/* Preview */}
+          <div 
+            className="w-24 h-24 rounded-lg bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
+            onClick={() => coverInputRef.current?.click()}
+          >
+            {albumCoverPreview ? (
+              <img src={albumCoverPreview} alt="Album cover" className="w-full h-full object-cover" />
+            ) : (
+              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+            )}
+          </div>
+
+          <div className="flex-1">
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => onAlbumCoverChange(e.target.files?.[0] || null)}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => coverInputRef.current?.click()}
+            >
+              {albumCover ? "Change Cover" : "Upload Cover"}
+            </Button>
+            {albumCover && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="ml-2 text-destructive hover:text-destructive"
+                onClick={() => onAlbumCoverChange(null)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+            <p className="text-xs text-muted-foreground mt-1">
+              This cover will be applied to all {files.length} tracks in this upload
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Bulk Edit Panel */}
       <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 space-y-4">
         <div className="flex items-center gap-2 mb-2">

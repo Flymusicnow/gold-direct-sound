@@ -49,7 +49,7 @@ export interface UseMultiUploadReturn {
   updateFileMetadata: (id: string, metadata: Partial<UploadFile>) => void;
   updateAllMetadata: (metadata: Partial<UploadFile>) => void;
   updateSelectedMetadata: (ids: string[], metadata: Partial<UploadFile>) => void;
-  startUpload: (artistId: string, userId: string) => Promise<void>;
+  startUpload: (artistId: string, userId: string, albumCoverUrl?: string | null) => Promise<void>;
   retryFailed: (artistId: string, userId: string) => Promise<void>;
   pauseUpload: () => void;
   resumeUpload: () => void;
@@ -164,7 +164,8 @@ export function useMultiUpload(): UseMultiUploadReturn {
     uploadFile: UploadFile,
     artistId: string,
     userId: string,
-    uploadBatchId: string
+    uploadBatchId: string,
+    albumCoverUrl?: string | null
   ): Promise<boolean> => {
     try {
       setFiles(prev => prev.map(f => 
@@ -191,11 +192,12 @@ export function useMultiUpload(): UseMultiUploadReturn {
           .from('tracks')
           .getPublicUrl(audioPath);
 
-        // Insert track record
+        // Insert track record with album cover
         const { error: insertError } = await supabase.from('tracks').insert({
           artist_id: artistId,
           title: uploadFile.title,
           audio_url: publicUrl,
+          cover_url: albumCoverUrl || null,
           visibility: uploadFile.visibility,
           mood: uploadFile.mood || null,
           tags: uploadFile.tags || null,
@@ -253,7 +255,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     }
   };
 
-  const startUpload = useCallback(async (artistId: string, userId: string) => {
+  const startUpload = useCallback(async (artistId: string, userId: string, albumCoverUrl?: string | null) => {
     if (files.length === 0) return;
 
     setIsUploading(true);
@@ -284,7 +286,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
 
       const batch = pendingFiles.slice(i, i + BATCH_SIZE);
       await Promise.allSettled(
-        batch.map(file => uploadSingleFile(file, artistId, userId, newBatchId))
+        batch.map(file => uploadSingleFile(file, artistId, userId, newBatchId, albumCoverUrl))
       );
     }
 

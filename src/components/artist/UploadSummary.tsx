@@ -11,6 +11,7 @@ interface UploadSummaryProps {
   failedFiles: Array<{ title: string; error?: string }>;
   onUploadMore: () => void;
   onRetryFailed: () => void;
+  onClose?: () => void;
 }
 
 export function UploadSummary({
@@ -18,7 +19,8 @@ export function UploadSummary({
   fileType,
   failedFiles,
   onUploadMore,
-  onRetryFailed
+  onRetryFailed,
+  onClose
 }: UploadSummaryProps) {
   const navigate = useNavigate();
   const isFullSuccess = progress.failed === 0 && progress.completed === progress.total;
@@ -65,11 +67,15 @@ export function UploadSummary({
   };
 
   const navigateToContent = () => {
-    if (fileType === 'videos') {
-      navigate('/studio/videos');
-    } else {
-      navigate('/studio/tracks');
-    }
+    // Close dialog first, then navigate
+    onClose?.();
+    setTimeout(() => {
+      if (fileType === 'videos') {
+        navigate('/studio/videos');
+      } else {
+        navigate('/studio/tracks');
+      }
+    }, 100);
   };
 
   return (

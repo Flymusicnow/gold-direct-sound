@@ -14,14 +14,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, ChevronRight, Camera, Disc } from "lucide-react";
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
+import { EditTrackCoverDialog } from "@/components/artist/EditTrackCoverDialog";
 import { useAchievements } from "@/hooks/useAchievements";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Track {
   id: string;
@@ -31,6 +33,15 @@ interface Track {
   cover_url: string | null;
   is_supporter_only: boolean;
   required_tier: string | null;
+  upload_batch_id: string | null;
+  created_at: string;
+}
+
+interface TrackBatch {
+  batchId: string | null;
+  coverUrl: string | null;
+  tracks: Track[];
+  createdAt: string;
 }
 
 export default function StudioTracks() {
@@ -38,6 +49,8 @@ export default function StudioTracks() {
   const navigate = useNavigate();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [batches, setBatches] = useState<TrackBatch[]>([]);
+  const [expandedBatches, setExpandedBatches] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackDescription, setTrackDescription] = useState("");
@@ -49,6 +62,7 @@ export default function StudioTracks() {
   const [showCollaboratorSelector, setShowCollaboratorSelector] = useState(false);
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [showMultiUpload, setShowMultiUpload] = useState(false);
+  const [editCoverTrack, setEditCoverTrack] = useState<Track | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
 
@@ -82,8 +96,61 @@ export default function StudioTracks() {
       .eq('artist_id', profile.id)
       .order('created_at', { ascending: false });
 
-    if (tracksData) setTracks(tracksData);
+    if (tracksData) {
+      setTracks(tracksData);
+      
+      // Group tracks by batch
+      const batchMap = new Map<string, Track[]>();
+      const singleTracks: Track[] = [];
+      
+      tracksData.forEach(track => {
+        if (track.upload_batch_id) {
+          const existing = batchMap.get(track.upload_batch_id) || [];
+          existing.push(track);
+          batchMap.set(track.upload_batch_id, existing);
+        } else {
+          singleTracks.push(track);
+        }
+      });
+      
+      // Convert to batch objects
+      const batchList: TrackBatch[] = [];
+      
+      batchMap.forEach((batchTracks, batchId) => {
+        batchList.push({
+          batchId,
+          coverUrl: batchTracks[0]?.cover_url || null,
+          tracks: batchTracks.sort((a, b) => a.title.localeCompare(b.title)),
+          createdAt: batchTracks[0]?.created_at || ''
+        });
+      });
+      
+      // Add single tracks as individual batches
+      singleTracks.forEach(track => {
+        batchList.push({
+          batchId: null,
+          coverUrl: track.cover_url,
+          tracks: [track],
+          createdAt: track.created_at
+        });
+      });
+      
+      // Sort by created date (newest first)
+      batchList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      setBatches(batchList);
+    }
     setLoading(false);
+  };
+
+  const toggleBatch = (batchId: string) => {
+    const newExpanded = new Set(expandedBatches);
+    if (newExpanded.has(batchId)) {
+      newExpanded.delete(batchId);
+    } else {
+      newExpanded.add(batchId);
+    }
+    setExpandedBatches(newExpanded);
   };
 
   const handleTrackUpload = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -314,10 +381,10 @@ export default function StudioTracks() {
             </form>
           </Card>
 
-          {/* Track List */}
+          {/* Track List - Grouped by Batch */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Your Tracks</h2>
-            {tracks.length === 0 ? (
+            {batches.length === 0 ? (
               <div className="py-8">
                 <EmptyStateCard
                   icon={Music}
@@ -329,51 +396,83 @@ export default function StudioTracks() {
                 />
               </div>
             ) : (
-              <div className="space-y-3">
-                {tracks.map((track) => (
-                  <div key={track.id} className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden">
-                      {track.cover_url ? (
-                        <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
-                      ) : (
-                        <Music className="h-6 w-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{track.title}</p>
-                        {track.is_supporter_only && track.required_tier && (
-                          <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
-                        )}
-                      </div>
-                      {track.description && (
-                        <p className="text-sm text-muted-foreground truncate">{track.description}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
+              <div className="space-y-4">
+                {batches.map((batch, index) => {
+                  const isAlbum = batch.batchId && batch.tracks.length > 1;
+                  const batchKey = batch.batchId || `single-${index}`;
+                  const isExpanded = expandedBatches.has(batchKey);
+                  
+                  if (isAlbum) {
+                    // Album/Batch with multiple tracks
+                    return (
+                      <Collapsible key={batchKey} open={isExpanded} onOpenChange={() => toggleBatch(batchKey)}>
+                        <CollapsibleTrigger asChild>
+                          <div className="flex items-center gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
+                            {/* Album Cover */}
+                            <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden relative group">
+                              {batch.coverUrl ? (
+                                <img src={batch.coverUrl} alt="Album cover" className="w-full h-full object-cover" />
+                              ) : (
+                                <Disc className="h-8 w-8 text-primary" />
+                              )}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Disc className="h-4 w-4 text-primary" />
+                                <p className="font-semibold">Album Upload</p>
+                                <span className="text-sm text-muted-foreground">({batch.tracks.length} tracks)</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(batch.createdAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? (
+                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                              ) : (
+                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                          </div>
+                        </CollapsibleTrigger>
+                        
+                        <CollapsibleContent>
+                          <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/20 space-y-2">
+                            {batch.tracks.map((track) => (
+                              <TrackRow 
+                                key={track.id} 
+                                track={track}
+                                onEditCover={() => setEditCoverTrack(track)}
+                                onAddCollaborator={() => {
+                                  setSelectedTrackId(track.id);
+                                  setShowCollaboratorSelector(true);
+                                }}
+                                onDelete={() => handleDeleteTrack(track.id)}
+                              />
+                            ))}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    );
+                  } else {
+                    // Single track
+                    const track = batch.tracks[0];
+                    return (
+                      <TrackRow 
+                        key={track.id} 
+                        track={track}
+                        onEditCover={() => setEditCoverTrack(track)}
+                        onAddCollaborator={() => {
                           setSelectedTrackId(track.id);
                           setShowCollaboratorSelector(true);
                         }}
-                        className="flex-shrink-0 gap-2"
-                      >
-                        <UserPlus className="h-4 w-4" />
-                        Add Collaborator
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => handleDeleteTrack(track.id)}
-                        className="flex-shrink-0 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                        onDelete={() => handleDeleteTrack(track.id)}
+                      />
+                    );
+                  }
+                })}
               </div>
             )}
           </Card>
@@ -410,8 +509,84 @@ export default function StudioTracks() {
           onSuccess={fetchData}
         />
       )}
+
+      {/* Edit Cover Dialog */}
+      {editCoverTrack && (
+        <EditTrackCoverDialog
+          open={!!editCoverTrack}
+          onOpenChange={(open) => !open && setEditCoverTrack(null)}
+          trackId={editCoverTrack.id}
+          currentCoverUrl={editCoverTrack.cover_url}
+          onSuccess={fetchData}
+        />
+      )}
       </div>
       {isMobile && <BottomNavBarStudio />}
     </>
+  );
+}
+
+// Extracted TrackRow component for reuse
+function TrackRow({ 
+  track, 
+  onEditCover, 
+  onAddCollaborator, 
+  onDelete 
+}: { 
+  track: Track; 
+  onEditCover: () => void;
+  onAddCollaborator: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors">
+      {/* Cover with edit button */}
+      <div 
+        className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden relative group cursor-pointer"
+        onClick={onEditCover}
+      >
+        {track.cover_url ? (
+          <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
+        ) : (
+          <Music className="h-6 w-6 text-muted-foreground" />
+        )}
+        {/* Edit overlay */}
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <Camera className="h-4 w-4 text-white" />
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium truncate">{track.title}</p>
+          {track.is_supporter_only && track.required_tier && (
+            <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
+          )}
+        </div>
+        {track.description && (
+          <p className="text-sm text-muted-foreground truncate">{track.description}</p>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAddCollaborator}
+          className="flex-shrink-0 gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Collaborator</span>
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onDelete}
+          className="flex-shrink-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
   );
 }
