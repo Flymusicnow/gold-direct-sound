@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -52,6 +52,15 @@ interface Track {
   is_supporter_only: boolean;
   required_tier: string | null;
   play_count: number;
+  album_id: string | null;
+  track_order: number | null;
+}
+
+interface Album {
+  id: string;
+  title: string;
+  cover_url: string | null;
+  description: string | null;
 }
 
 export default function ArtistProfile() {
@@ -92,6 +101,7 @@ export default function ArtistProfile() {
   };
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -161,6 +171,18 @@ export default function ArtistProfile() {
       .single();
 
     if (artistData) {
+      // Fetch albums first
+      const { data: albumsData } = await supabase
+        .from('albums')
+        .select('id, title, cover_url, description')
+        .eq('artist_id', artistData.id)
+        .order('created_at', { ascending: false });
+
+      if (albumsData) {
+        setAlbums(albumsData);
+      }
+
+      // Fetch tracks
       const { data, error } = await supabase
         .from('tracks')
         .select('*')
@@ -448,7 +470,7 @@ export default function ArtistProfile() {
                     variant="gold"
                   />
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {/* Play All Button */}
                     <div className="flex items-center gap-3">
                       <Button 
@@ -460,20 +482,109 @@ export default function ArtistProfile() {
                       </Button>
                     </div>
                     
-                    <div className="space-y-3">
-                      {tracks.map((track) => (
-                        <PremiumTrackCard
-                          key={track.id}
-                          track={track}
-                          artistName={artist.artist_name}
-                          isLiked={likedTracks[track.id]}
-                          onPlay={() => handlePlayTrack(track)}
-                          onAddToQueue={() => handleAddToQueue(track)}
-                          onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                          showCollaborators={true}
-                        />
-                      ))}
-                    </div>
+                    {/* Group tracks by album */}
+                    {(() => {
+                      // Group tracks by album_id
+                      const albumTracks: Record<string, Track[]> = {};
+                      const singleTracks: Track[] = [];
+                      
+                      tracks.forEach(track => {
+                        if (track.album_id) {
+                          if (!albumTracks[track.album_id]) {
+                            albumTracks[track.album_id] = [];
+                          }
+                          albumTracks[track.album_id].push(track);
+                        } else {
+                          singleTracks.push(track);
+                        }
+                      });
+
+                      // Sort tracks within albums by track_order
+                      Object.keys(albumTracks).forEach(albumId => {
+                        albumTracks[albumId].sort((a, b) => (a.track_order || 0) - (b.track_order || 0));
+                      });
+
+                      return (
+                        <div className="space-y-6">
+                          {/* Albums with their tracks */}
+                          {albums.filter(album => albumTracks[album.id]?.length > 0).map(album => (
+                            <div key={album.id} className="border-l-2 border-primary/50 pl-4 space-y-3">
+                              {/* Album Header */}
+                              <div className="flex items-center gap-3 pb-2">
+                                {album.cover_url ? (
+                                  <img 
+                                    src={album.cover_url} 
+                                    alt={album.title}
+                                    className="w-12 h-12 rounded-lg object-cover border border-border/50"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-border/50">
+                                    <Disc className="h-6 w-6 text-primary" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-lg text-foreground truncate">{album.title}</h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    {albumTracks[album.id].length} {albumTracks[album.id].length === 1 ? 'track' : 'tracks'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Album Tracks with numbers */}
+                              <div className="space-y-2">
+                                {albumTracks[album.id].map((track, index) => (
+                                  <div key={track.id} className="flex items-center gap-3">
+                                    <span className="text-sm text-muted-foreground/70 w-6 text-right flex-shrink-0">
+                                      {index + 1}.
+                                    </span>
+                                    <div className="flex-1 min-w-0">
+                                      <PremiumTrackCard
+                                        track={track}
+                                        artistName={artist.artist_name}
+                                        isLiked={likedTracks[track.id]}
+                                        onPlay={() => handlePlayTrack(track)}
+                                        onAddToQueue={() => handleAddToQueue(track)}
+                                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                                        showCollaborators={true}
+                                      />
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Singles Section */}
+                          {singleTracks.length > 0 && (
+                            <div className="space-y-3">
+                              {albums.some(album => albumTracks[album.id]?.length > 0) && (
+                                <div className="flex items-center gap-2 pb-2">
+                                  <Music className="h-5 w-5 text-muted-foreground" />
+                                  <h3 className="font-semibold text-lg text-foreground">Singles</h3>
+                                  <span className="text-sm text-muted-foreground">
+                                    ({singleTracks.length})
+                                  </span>
+                                </div>
+                              )}
+                              <div className="space-y-3">
+                                {singleTracks.map((track) => (
+                                  <PremiumTrackCard
+                                    key={track.id}
+                                    track={track}
+                                    artistName={artist.artist_name}
+                                    isLiked={likedTracks[track.id]}
+                                    onPlay={() => handlePlayTrack(track)}
+                                    onAddToQueue={() => handleAddToQueue(track)}
+                                    onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                                    showCollaborators={true}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
               </TabsContent>
