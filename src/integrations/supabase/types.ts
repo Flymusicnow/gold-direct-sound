@@ -2654,6 +2654,276 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_link_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string
+          performed_by_role: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by: string
+          performed_by_role: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string
+          performed_by_role?: string
+        }
+        Relationships: []
+      }
+      smart_link_clicks: {
+        Row: {
+          artist_id: string
+          created_at: string
+          external_link_id: string
+          id: string
+          ip_hash: string | null
+          referrer: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          external_link_id: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          external_link_id?: string
+          id?: string
+          ip_hash?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_clicks_external_link_id_fkey"
+            columns: ["external_link_id"]
+            isOneToOne: false
+            referencedRelation: "smart_link_external_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_link_external_links: {
+        Row: {
+          artist_id: string
+          click_count: number
+          created_at: string
+          flag_reason: string | null
+          flagged_at: string | null
+          flagged_by: string | null
+          id: string
+          is_permanently_blocked: boolean | null
+          platform: string
+          removal_reason: string | null
+          removed_at: string | null
+          removed_by: string | null
+          smart_link_page_id: string
+          sort_order: number
+          status: string
+          updated_at: string
+          url: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          artist_id: string
+          click_count?: number
+          created_at?: string
+          flag_reason?: string | null
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          is_permanently_blocked?: boolean | null
+          platform: string
+          removal_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          smart_link_page_id: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          url: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          artist_id?: string
+          click_count?: number
+          created_at?: string
+          flag_reason?: string | null
+          flagged_at?: string | null
+          flagged_by?: string | null
+          id?: string
+          is_permanently_blocked?: boolean | null
+          platform?: string
+          removal_reason?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          smart_link_page_id?: string
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          url?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_external_links_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_external_links_removed_by_fkey"
+            columns: ["removed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_external_links_smart_link_page_id_fkey"
+            columns: ["smart_link_page_id"]
+            isOneToOne: false
+            referencedRelation: "smart_link_pages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_external_links_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_link_page_visits: {
+        Row: {
+          artist_id: string
+          clicked_external: boolean
+          created_at: string
+          external_platform: string | null
+          id: string
+          ip_hash: string | null
+          played_on_flymusic: boolean
+          smart_link_page_id: string
+          user_id: string | null
+        }
+        Insert: {
+          artist_id: string
+          clicked_external?: boolean
+          created_at?: string
+          external_platform?: string | null
+          id?: string
+          ip_hash?: string | null
+          played_on_flymusic?: boolean
+          smart_link_page_id: string
+          user_id?: string | null
+        }
+        Update: {
+          artist_id?: string
+          clicked_external?: boolean
+          created_at?: string
+          external_platform?: string | null
+          id?: string
+          ip_hash?: string | null
+          played_on_flymusic?: boolean
+          smart_link_page_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_page_visits_smart_link_page_id_fkey"
+            columns: ["smart_link_page_id"]
+            isOneToOne: false
+            referencedRelation: "smart_link_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_link_pages: {
+        Row: {
+          artist_id: string
+          created_at: string
+          id: string
+          slug: string
+          status: string
+          suspended_at: string | null
+          suspended_by: string | null
+          suspended_until: string | null
+          suspension_reason: string | null
+          suspension_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string
+          id?: string
+          slug: string
+          status?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_until?: string | null
+          suspension_reason?: string | null
+          suspension_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          status?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspended_until?: string | null
+          suspension_reason?: string | null
+          suspension_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_pages_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_pages_suspended_by_fkey"
+            columns: ["suspended_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spotlight_campaigns: {
         Row: {
           admin_notes: string | null
@@ -3640,6 +3910,10 @@ export type Database = {
       }
       increment_play_count: { Args: { track_id: string }; Returns: undefined }
       increment_promo_click: { Args: { _promo_id: string }; Returns: undefined }
+      increment_smart_link_click: {
+        Args: { _link_id: string }
+        Returns: undefined
+      }
       increment_video_view_safe: {
         Args: { _user_id?: string; _video_id: string }
         Returns: boolean

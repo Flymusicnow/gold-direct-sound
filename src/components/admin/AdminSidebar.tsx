@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FlaskConical,
+  Link2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -26,6 +27,7 @@ const adminNavItems = [
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Artists", url: "/admin/artists", icon: Star },
   { title: "Tracks", url: "/admin/tracks", icon: Activity },
+  { title: "Smart Links", url: "/admin/smart-links", icon: Link2 },
   { title: "Spotlight", url: "/admin/spotlight", icon: Star },
   { title: "Beta Codes", url: "/admin/beta-codes", icon: KeyRound },
   { title: "Feature Flags", url: "/admin/features", icon: Flag },
