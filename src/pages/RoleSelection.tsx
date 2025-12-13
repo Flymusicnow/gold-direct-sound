@@ -9,18 +9,33 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export default function RoleSelection() {
-  const { user, refreshProfile, hasRole } = useAuth();
+  const { user, refreshProfile, hasRole, userRoles } = useAuth();
   const navigate = useNavigate();
   const [selectedRole, setSelectedRole] = useState<'artist' | 'fan' | 'brand' | null>(null);
   const [bothRoles, setBothRoles] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // P0 FIX: Redirect admins directly to /admin - they should NEVER see role selection
+  // Redirect users who already have roles to their appropriate dashboard
   useEffect(() => {
+    // P0 FIX: Redirect admins directly to /admin - they should NEVER see role selection
     if (hasRole('admin') || hasRole('super_admin')) {
       navigate('/admin', { replace: true });
+      return;
     }
-  }, [hasRole, navigate]);
+    
+    // Skip role selection for users who already have roles
+    if (userRoles.length > 0) {
+      if (hasRole('brand')) {
+        navigate('/brand', { replace: true });
+      } else if (hasRole('fan')) {
+        // Fans (or users with both roles) go to fan portal
+        navigate('/fan', { replace: true });
+      } else if (hasRole('artist')) {
+        // Artist-only users go to studio
+        navigate('/studio', { replace: true });
+      }
+    }
+  }, [hasRole, userRoles, navigate]);
 
   const handleContinue = async () => {
     if (!user || (!selectedRole && !bothRoles)) {
