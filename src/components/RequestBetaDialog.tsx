@@ -100,7 +100,7 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">Request Beta Code</DialogTitle>
           <DialogDescription>
-            Join the waitlist to get early access to FlyMusic Gold
+            Join the waitlist to get early access to FlyMusic
           </DialogDescription>
         </DialogHeader>
 

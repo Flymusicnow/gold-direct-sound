@@ -49,7 +49,7 @@ const tiers = [
     icon: Sparkles,
   },
   {
-    name: "FlyMusic Gold",
+    name: "FlyMusic Pro",
     subtitle: "Most Popular",
     price: "$9.99",
     period: "/month",

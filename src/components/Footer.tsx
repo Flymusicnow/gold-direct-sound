@@ -104,7 +104,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} FlyMusic Gold. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} FlyMusic. All rights reserved.</p>
         </div>
       </div>
     </footer>

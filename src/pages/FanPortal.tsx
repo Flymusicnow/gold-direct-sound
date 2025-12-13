@@ -241,7 +241,7 @@ export default function FanPortal() {
               Hi, {profile?.full_name || 'Fan'}!
             </h1>
             <p className="text-muted-foreground">
-              Welcome to your FlyMusic Gold dashboard · {" "}
+              Welcome to your FlyMusic dashboard · {" "}
               <Link to="/learn?tab=fan" className="text-primary hover:underline text-sm">
                 Learn how to use FlyMusic →
               </Link>

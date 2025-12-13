@@ -151,7 +151,7 @@ export function FanOnboardingTour() {
       });
 
       setOpen(false);
-      toast.success('🎉 Welcome to FlyMusic Gold!');
+      toast.success('🎉 Welcome to FlyMusic!');
     } catch (error) {
       console.error('Error completing onboarding:', error);
     }
@@ -176,7 +176,7 @@ export function FanOnboardingTour() {
 
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            Welcome to FlyMusic Gold
+            Welcome to FlyMusic
           </DialogTitle>
           <p className="text-center text-muted-foreground">
             Your journey to becoming a legendary fan starts here

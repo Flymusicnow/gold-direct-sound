@@ -595,7 +595,7 @@ export default function StudioTracks() {
         open={showLockedModal}
         onOpenChange={setShowLockedModal}
         featureName="Unlimited Tracks"
-        featureDescription="You've reached the 5 track limit for Early Access. Upgrade to FlyMusic Gold for unlimited uploads."
+        featureDescription="You've reached the 5 track limit for Early Access. Upgrade to FlyMusic Pro for unlimited uploads."
         tierRequired="gold"
         onSuccess={fetchData}
       />

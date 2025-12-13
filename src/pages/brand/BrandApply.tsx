@@ -102,7 +102,7 @@ export default function BrandApply() {
             </div>
             <h2 className="text-2xl font-bold mb-2">Application Submitted!</h2>
             <p className="text-muted-foreground mb-6">
-              Thank you for your interest in partnering with FlyMusic Gold. We'll review your application and get back to you within 3-5 business days.
+              Thank you for your interest in partnering with FlyMusic. We'll review your application and get back to you within 3-5 business days.
             </p>
             <Link to="/">
               <Button>
@@ -123,7 +123,7 @@ export default function BrandApply() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <FlyMusicLogo size="sm" />
-            <span className="font-bold text-lg">FlyMusic Gold</span>
+            <span className="font-bold text-lg">FlyMusic</span>
           </Link>
           <Link to="/brands">
             <Button variant="ghost" size="sm">

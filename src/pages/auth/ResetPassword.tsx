@@ -53,7 +53,7 @@ export default function ResetPassword() {
           <div className="flex items-center justify-center gap-2 mb-6">
             <Music className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-              FlyMusic Gold
+              FlyMusic
             </h1>
           </div>
           

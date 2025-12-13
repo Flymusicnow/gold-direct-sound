@@ -20,7 +20,7 @@ export default function FanAchievements() {
   const isMobile = useIsMobile();
 
   const handleShare = () => {
-    const shareText = `I've unlocked ${achievements.filter(a => a.unlocked).length} achievements on FlyMusic Gold! 🏆`;
+    const shareText = `I've unlocked ${achievements.filter(a => a.unlocked).length} achievements on FlyMusic! 🏆`;
     if (navigator.share) {
       navigator.share({
         title: "My FlyMusic Achievements",

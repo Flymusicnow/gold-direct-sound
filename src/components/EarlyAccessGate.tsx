@@ -48,8 +48,12 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   }
 
   // If user doesn't have beta access, show the wall
+  // Determine primary role for role-specific messaging
+  const { userRoles } = useAuth();
+  const primaryRole = userRoles.includes('artist') ? 'artist' : userRoles.includes('fan') ? 'fan' : null;
+  
   if (hasBetaAccess === false) {
-    return <EarlyAccessWall onCodeRedeemed={refetch} />;
+    return <EarlyAccessWall onCodeRedeemed={refetch} userRole={primaryRole} />;
   }
 
   // User has beta access, render the app
