@@ -11,6 +11,8 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { sanitizeFileName } from "@/lib/utils";
 import { UploadQueue } from "./UploadQueue";
 import { BulkMetadataEditor } from "./BulkMetadataEditor";
 import { UploadSummary } from "./UploadSummary";
@@ -44,6 +46,7 @@ export function MultiUploadDialog({
   const { user } = useAuth();
   const [step, setStep] = useState<Step>('select');
   const [isDragging, setIsDragging] = useState(false);
+  const [albumCover, setAlbumCover] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -128,7 +131,28 @@ export function MultiUploadDialog({
   const handleStartUpload = async () => {
     if (!user) return;
     setStep('queue');
-    await startUpload(artistId, user.id);
+    
+    // Upload album cover first if provided
+    let albumCoverUrl: string | null = null;
+    if (albumCover) {
+      try {
+        const coverPath = `${user.id}/${Date.now()}_${sanitizeFileName(albumCover.name)}`;
+        const { error: coverError } = await supabase.storage
+          .from('covers')
+          .upload(coverPath, albumCover);
+        
+        if (!coverError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('covers')
+            .getPublicUrl(coverPath);
+          albumCoverUrl = publicUrl;
+        }
+      } catch (e) {
+        console.error('Failed to upload album cover:', e);
+      }
+    }
+    
+    await startUpload(artistId, user.id, albumCoverUrl);
     setStep('summary');
     onSuccess?.();
   };
@@ -142,6 +166,7 @@ export function MultiUploadDialog({
 
   const handleUploadMore = () => {
     resetUpload();
+    setAlbumCover(null);
     setStep('select');
   };
 
@@ -152,6 +177,7 @@ export function MultiUploadDialog({
       }
     }
     resetUpload();
+    setAlbumCover(null);
     setStep('select');
     onOpenChange(false);
   };
@@ -273,6 +299,8 @@ export function MultiUploadDialog({
               onUpdateFile={updateFileMetadata}
               onUpdateAll={updateAllMetadata}
               onUpdateSelected={updateSelectedMetadata}
+              albumCover={albumCover}
+              onAlbumCoverChange={setAlbumCover}
             />
 
             <div className="flex justify-end gap-2 pt-4 border-t">
@@ -297,6 +325,7 @@ export function MultiUploadDialog({
               .map(f => ({ title: f.title, error: f.error }))}
             onUploadMore={handleUploadMore}
             onRetryFailed={handleRetryFailed}
+            onClose={handleClose}
           />
         )}
       </DialogContent>
