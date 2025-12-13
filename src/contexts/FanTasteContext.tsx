@@ -117,8 +117,16 @@ export function FanTasteProvider({ children }: { children: ReactNode }) {
 
 export function useFanTaste() {
   const context = useContext(FanTasteContext);
+  
+  // Return safe defaults when used outside provider (e.g., public promo pages)
   if (context === undefined) {
-    throw new Error('useFanTaste must be used within a FanTasteProvider');
+    return {
+      tasteProfile: null,
+      loading: false,
+      refreshTasteProfile: async () => {},
+      updateTasteFromAction: async () => {},
+    };
   }
+  
   return context;
 }

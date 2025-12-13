@@ -466,7 +466,7 @@ export default function PromoPreview() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="text-xs text-muted-foreground">
-            Powered by <span className="text-primary font-semibold">FlyMusic Gold</span>
+            Powered by <span className="text-primary font-semibold">FlyMusic</span>
           </p>
         </div>
       </main>
