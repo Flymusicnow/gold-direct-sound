@@ -139,7 +139,7 @@ export function ArtistOnboardingDialog() {
         colors: ["#E8BF1A", "#F4D67A", "#C89F0A"],
       });
 
-      toast.success("Welcome to FlyMusic Gold!");
+      toast.success("Welcome to FlyMusic!");
       setShowDialog(false);
     } catch (error) {
       console.error("Error completing onboarding:", error);
@@ -183,7 +183,7 @@ export function ArtistOnboardingDialog() {
               <Sparkles className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <DialogTitle className="text-2xl">Welcome to FlyMusic Gold</DialogTitle>
+              <DialogTitle className="text-2xl">Welcome to FlyMusic</DialogTitle>
               <DialogDescription className="text-base">Your Creative Control Room</DialogDescription>
             </div>
           </div>

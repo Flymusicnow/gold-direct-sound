@@ -20,7 +20,7 @@ export const ShareModal = ({ isOpen, onClose, artistName, shareUrl, artistId }: 
   
   const shareUrlWithRef = user ? `${shareUrl}?ref=${user.id}` : shareUrl;
   const encodedUrl = encodeURIComponent(shareUrlWithRef);
-  const encodedText = encodeURIComponent(`Check out ${artistName} on FlyMusic Gold!`);
+  const encodedText = encodeURIComponent(`Check out ${artistName} on FlyMusic!`);
 
   const handleCopyLink = async () => {
     navigator.clipboard.writeText(shareUrlWithRef);

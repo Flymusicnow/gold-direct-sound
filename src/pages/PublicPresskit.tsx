@@ -451,7 +451,7 @@ export default function PublicPresskit() {
             <FlyMusicLogo size="sm" />
           </div>
           <p className="text-sm text-muted-foreground">
-            Powered by FlyMusic Gold
+            Powered by FlyMusic
           </p>
         </div>
       </footer>

@@ -78,7 +78,7 @@ export default function RoleSelection() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Music className="h-10 w-10 text-primary" />
             <h1 className="text-4xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-              FlyMusic Gold
+              FlyMusic
             </h1>
           </div>
           <p className="text-xl text-foreground/80 mb-2">Welcome! Choose your experience</p>

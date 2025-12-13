@@ -32,10 +32,10 @@ export function BetaLandingPage() {
             <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
               The New Era of Music
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              FlyMusic Gold connects artists directly with fans. No intermediaries. 
-              Just real connection, community, and ownership.
-            </p>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            FlyMusic connects artists directly with fans. No intermediaries. 
+            Just real connection, community, and ownership.
+          </p>
           </div>
 
           {/* CTAs */}

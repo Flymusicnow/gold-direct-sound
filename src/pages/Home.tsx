@@ -156,7 +156,7 @@ export default function Home() {
       <section className="py-24 px-4">
         <div className="container mx-auto max-w-6xl">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-16">
-            Why <span className="text-primary">FlyMusic Gold</span>?
+            Why <span className="text-primary">FlyMusic</span>?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-8">
@@ -200,7 +200,7 @@ export default function Home() {
             Ready to Join the Movement?
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Whether you're an artist or a superfan, FlyMusic Gold is your platform.
+            Whether you're an artist or a superfan, FlyMusic is your platform.
           </p>
           <Button 
             size="lg" 
