@@ -17,14 +17,10 @@ interface SmartLinkPage extends SmartLinkPageRow {
     artist_name: string;
     avatar_url: string | null;
   };
+  _clickCount?: number;
 }
 
 interface FlaggedLink extends ExternalLinkRow {
-  id: string;
-  platform: string;
-  url: string;
-  is_flagged: boolean;
-  flag_reason: string | null;
   smart_link_pages?: {
     slug: string;
     artist_profiles?: {
@@ -42,7 +38,7 @@ export default function AdminSmartLinks() {
   const [stats, setStats] = useState({
     totalPages: 0,
     activePages: 0,
-    totalVisits: 0,
+    totalClicks: 0,
     flaggedCount: 0,
   });
 
@@ -65,9 +61,19 @@ export default function AdminSmartLinks() {
         `)
         .order('created_at', { ascending: false });
 
-      setSmartLinkPages(pages || []);
+      // Get click counts for each page
+      const pagesWithClicks = await Promise.all((pages || []).map(async (page) => {
+        const { count } = await supabase
+          .from('smart_link_external_links')
+          .select('click_count', { count: 'exact', head: true })
+          .eq('smart_link_page_id', page.id);
+        
+        return { ...page, _clickCount: count || 0 };
+      }));
 
-      // Fetch flagged links
+      setSmartLinkPages(pagesWithClicks);
+
+      // Fetch flagged links (status = 'flagged' or has flag_reason)
       const { data: flagged } = await supabase
         .from('smart_link_external_links')
         .select(`
@@ -79,18 +85,18 @@ export default function AdminSmartLinks() {
             )
           )
         `)
-        .eq('is_flagged', true)
+        .eq('status', 'flagged')
         .order('created_at', { ascending: false });
 
-      setFlaggedLinks(flagged || []);
+      setFlaggedLinks((flagged || []) as FlaggedLink[]);
 
       // Calculate stats
       const totalPages = pages?.length || 0;
       const activePages = pages?.filter(p => p.status === 'active').length || 0;
-      const totalVisits = pages?.reduce((sum, p) => sum + (p.visit_count || 0), 0) || 0;
+      const totalClicks = pagesWithClicks.reduce((sum, p) => sum + (p._clickCount || 0), 0);
       const flaggedCount = flagged?.length || 0;
 
-      setStats({ totalPages, activePages, totalVisits, flaggedCount });
+      setStats({ totalPages, activePages, totalClicks, flaggedCount });
     } catch (error) {
       console.error('Error fetching smart links:', error);
     } finally {
@@ -102,7 +108,7 @@ export default function AdminSmartLinks() {
     try {
       await supabase
         .from('smart_link_external_links')
-        .update({ is_flagged: false, flag_reason: null })
+        .update({ status: 'active', flag_reason: null })
         .eq('id', linkId);
       
       setFlaggedLinks(prev => prev.filter(l => l.id !== linkId));
@@ -116,7 +122,7 @@ export default function AdminSmartLinks() {
     try {
       await supabase
         .from('smart_link_external_links')
-        .update({ is_active: false })
+        .update({ status: 'removed' })
         .eq('id', linkId);
       
       setFlaggedLinks(prev => prev.filter(l => l.id !== linkId));
@@ -170,8 +176,8 @@ export default function AdminSmartLinks() {
                 <Eye className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{stats.totalVisits.toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Total Visits</p>
+                <p className="text-2xl font-bold">{stats.totalClicks.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">Total Clicks</p>
               </div>
             </div>
           </CardContent>
@@ -235,8 +241,8 @@ export default function AdminSmartLinks() {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium">{page.visit_count}</p>
-                          <p className="text-xs text-muted-foreground">visits</p>
+                          <p className="font-medium">{page._clickCount || 0}</p>
+                          <p className="text-xs text-muted-foreground">clicks</p>
                         </div>
                       </div>
                     ))}
@@ -319,8 +325,8 @@ export default function AdminSmartLinks() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <p className="font-medium">{page.visit_count}</p>
-                          <p className="text-xs text-muted-foreground">visits</p>
+                          <p className="font-medium">{page._clickCount || 0}</p>
+                          <p className="text-xs text-muted-foreground">clicks</p>
                         </div>
                         <Button variant="ghost" size="icon" asChild>
                           <a href={`/@${page.slug}`} target="_blank" rel="noopener noreferrer">

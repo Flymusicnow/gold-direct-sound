@@ -67,6 +67,9 @@ import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminArtists from "./pages/admin/AdminArtists";
 import AdminTracks from "./pages/admin/AdminTracks";
 import AdminQA from "./pages/admin/AdminQA";
+import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
+import StudioSmartLink from "./pages/studio/StudioSmartLink";
+import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
 import PrinciplesPage from "./pages/trust/PrinciplesPage";
 import CulturePage from "./pages/trust/CulturePage";
@@ -125,6 +128,7 @@ const App = () => (
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
             <Route path="/epk/:slug" element={<PublicPresskit />} />
+            <Route path="/@:slug" element={<SmartLinkPage />} />
             <Route path="/brands/apply" element={<BrandApply />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/principles" element={<PrinciplesPage />} />
@@ -251,6 +255,11 @@ const App = () => (
                 <StudioOpportunities />
               </ProtectedRoute>
             } />
+            <Route path="/studio/smart-link" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioSmartLink />
+              </ProtectedRoute>
+            } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
             <Route path="/spotlight/archive" element={<SpotlightArchive />} />
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
@@ -278,6 +287,7 @@ const App = () => (
             <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/smart-links" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSmartLinks /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />

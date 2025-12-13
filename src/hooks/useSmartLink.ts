@@ -49,7 +49,7 @@ export function useSmartLink() {
         .from('smart_link_pages')
         .select('*')
         .eq('artist_id', artistId)
-        .single();
+        .maybeSingle();
 
       if (pageData) {
         setSmartLinkPage(pageData);
@@ -59,7 +59,7 @@ export function useSmartLink() {
           .from('smart_link_external_links')
           .select('*')
           .eq('smart_link_page_id', pageData.id)
-          .order('display_order', { ascending: true });
+          .order('sort_order', { ascending: true });
 
         setExternalLinks(linksData || []);
       }
@@ -80,13 +80,13 @@ export function useSmartLink() {
       .from('smart_link_pages')
       .select('id')
       .eq('slug', slug.toLowerCase())
-      .single();
+      .maybeSingle();
     
     return !data;
   };
 
   // Create or update smart link page
-  const saveSmartLinkPage = async (data: { slug: string; title?: string; bio?: string }) => {
+  const saveSmartLinkPage = async (data: { slug: string }) => {
     if (!user) return null;
     
     setSaving(true);
@@ -105,8 +105,6 @@ export function useSmartLink() {
           .from('smart_link_pages')
           .update({
             slug,
-            title: data.title || null,
-            bio: data.bio || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', smartLinkPage.id)
@@ -124,8 +122,6 @@ export function useSmartLink() {
           .insert({
             artist_id: artistId,
             slug,
-            title: data.title || null,
-            bio: data.bio || null,
           })
           .select()
           .single();
@@ -155,6 +151,12 @@ export function useSmartLink() {
       return null;
     }
 
+    const artistId = await getArtistId();
+    if (!artistId) {
+      toast({ title: 'Error', description: 'Artist profile not found', variant: 'destructive' });
+      return null;
+    }
+
     setSaving(true);
     try {
       // Validate the link
@@ -165,19 +167,22 @@ export function useSmartLink() {
         return null;
       }
 
-      // Get next display order
-      const maxOrder = externalLinks.reduce((max, link) => Math.max(max, link.display_order), 0);
+      // Get next sort order
+      const maxOrder = externalLinks.reduce((max, link) => Math.max(max, link.sort_order), 0);
+
+      const insertData: Database['public']['Tables']['smart_link_external_links']['Insert'] = {
+        smart_link_page_id: smartLinkPage.id,
+        artist_id: artistId,
+        platform,
+        url: url.startsWith('http') ? url : `https://${url}`,
+        sort_order: maxOrder + 1,
+        status: validation.shouldFlag ? 'flagged' : 'active',
+        flag_reason: validation.flagReason,
+      };
 
       const { data: created, error } = await supabase
         .from('smart_link_external_links')
-        .insert({
-          smart_link_page_id: smartLinkPage.id,
-          platform,
-          url: url.startsWith('http') ? url : `https://${url}`,
-          display_order: maxOrder + 1,
-          is_flagged: validation.shouldFlag,
-          flag_reason: validation.flagReason,
-        })
+        .insert(insertData)
         .select()
         .single();
 
@@ -206,7 +211,7 @@ export function useSmartLink() {
   };
 
   // Update external link
-  const updateExternalLink = async (linkId: string, updates: { platform?: string; url?: string; is_active?: boolean }) => {
+  const updateExternalLink = async (linkId: string, updates: { platform?: string; url?: string; status?: string }) => {
     setSaving(true);
     try {
       // Validate if URL changed
@@ -216,11 +221,9 @@ export function useSmartLink() {
           toast({ title: 'Invalid URL', description: validation.flagReason || 'Please enter a valid URL', variant: 'destructive' });
           return null;
         }
-        updates = {
-          ...updates,
-          is_flagged: validation.shouldFlag,
-          flag_reason: validation.flagReason,
-        } as any;
+        if (validation.shouldFlag) {
+          updates.status = 'flagged';
+        }
       }
 
       const { data: updated, error } = await supabase
@@ -271,16 +274,11 @@ export function useSmartLink() {
   const reorderLinks = async (linkIds: string[]) => {
     setSaving(true);
     try {
-      const updates = linkIds.map((id, index) => ({
-        id,
-        display_order: index + 1,
-      }));
-
-      for (const update of updates) {
+      for (let i = 0; i < linkIds.length; i++) {
         await supabase
           .from('smart_link_external_links')
-          .update({ display_order: update.display_order })
-          .eq('id', update.id);
+          .update({ sort_order: i + 1 })
+          .eq('id', linkIds[i]);
       }
 
       // Re-sort local state

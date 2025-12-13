@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSmartLink } from "@/hooks/useSmartLink";
@@ -31,8 +30,6 @@ export default function StudioSmartLink() {
   } = useSmartLink();
 
   const [slug, setSlug] = useState("");
-  const [title, setTitle] = useState("");
-  const [bio, setBio] = useState("");
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
 
@@ -45,8 +42,6 @@ export default function StudioSmartLink() {
   useEffect(() => {
     if (smartLinkPage) {
       setSlug(smartLinkPage.slug);
-      setTitle(smartLinkPage.title || "");
-      setBio(smartLinkPage.bio || "");
     }
   }, [smartLinkPage]);
 
@@ -86,7 +81,7 @@ export default function StudioSmartLink() {
       toast.error("Please enter a slug for your smart link");
       return;
     }
-    await saveSmartLinkPage({ slug, title, bio });
+    await saveSmartLinkPage({ slug });
   };
 
   const handleAddLink = async () => {
@@ -172,7 +167,7 @@ export default function StudioSmartLink() {
             <CardHeader>
               <CardTitle className="text-lg">Page Settings</CardTitle>
               <CardDescription>
-                Claim your unique URL and customize your page
+                Claim your unique URL
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -205,31 +200,6 @@ export default function StudioSmartLink() {
                 {slugAvailable === false && (
                   <p className="text-sm text-amber-500">This slug is already taken</p>
                 )}
-              </div>
-
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title">Page Title (Optional)</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="My Music Links"
-                  maxLength={100}
-                />
-              </div>
-
-              {/* Bio */}
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio (Optional)</Label>
-                <Textarea
-                  id="bio"
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  placeholder="A short description about you and your music..."
-                  rows={3}
-                  maxLength={300}
-                />
               </div>
 
               <Button onClick={handleSavePage} disabled={saving || !slug || slugAvailable === false}>
@@ -323,7 +293,7 @@ export default function StudioSmartLink() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium capitalize">{link.platform.replace('_', ' ')}</span>
-                            {link.is_flagged && (
+                            {link.status === 'flagged' && (
                               <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-xs">
                                 Under Review
                               </Badge>
@@ -362,16 +332,12 @@ export default function StudioSmartLink() {
                 <CardTitle className="text-lg">Analytics</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="p-4 rounded-lg bg-muted/30">
-                    <p className="text-2xl font-bold text-primary">{smartLinkPage.visit_count}</p>
-                    <p className="text-sm text-muted-foreground">Page Visits</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
                   <div className="p-4 rounded-lg bg-muted/30">
                     <p className="text-2xl font-bold text-primary">
                       {externalLinks.reduce((sum, l) => sum + l.click_count, 0)}
                     </p>
-                    <p className="text-sm text-muted-foreground">Link Clicks</p>
+                    <p className="text-sm text-muted-foreground">Total Clicks</p>
                   </div>
                   <div className="p-4 rounded-lg bg-muted/30">
                     <p className="text-2xl font-bold text-primary">{externalLinks.length}</p>
