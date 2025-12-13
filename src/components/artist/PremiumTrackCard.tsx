@@ -43,7 +43,6 @@ export function PremiumTrackCard({
   showCollaborators = false,
 }: PremiumTrackCardProps) {
   const { user } = useAuth();
-  const { currentItem, isPlaying } = useFlightdeck();
   const [liked, setLiked] = useState(isLiked);
   const [isUpdating, setIsUpdating] = useState(false);
   const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
@@ -54,9 +53,6 @@ export function PremiumTrackCard({
     track.artist_id,
     track.is_supporter_only ? track.required_tier : null
   );
-
-  // Check if this track is currently playing
-  const isCurrentlyPlaying = currentItem?.id === track.id && isPlaying;
 
   useEffect(() => {
     if (showCollaborators) {
@@ -92,13 +88,23 @@ export function PremiumTrackCard({
     }
   };
 
+  const { currentItem, isPlaying, togglePlay } = useFlightdeck();
+
+  // Check if this track is currently playing
+  const isCurrentlyPlaying = currentItem?.id === track.id && isPlaying;
+
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (track.is_supporter_only && !hasAccess) {
       setShowSupporterModal(true);
       return;
     }
-    onPlay();
+    // If this track is currently playing, toggle pause/play
+    if (isCurrentlyPlaying) {
+      togglePlay();
+    } else {
+      onPlay();
+    }
   };
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -255,7 +261,7 @@ export function PremiumTrackCard({
                   onClick={handlePlay}
                   disabled={accessLoading}
                   title={isCurrentlyPlaying ? "Pause" : "Play now"}
-                  className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/90 to-primary/70 text-primary-foreground hover:from-primary hover:to-primary/85 border border-primary/40 shadow-lg shadow-primary/20"
+                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 border border-primary/30 shadow-md shadow-primary/25"
                 >
                   {isCurrentlyPlaying ? (
                     <Pause className="h-5 w-5 fill-current" />
