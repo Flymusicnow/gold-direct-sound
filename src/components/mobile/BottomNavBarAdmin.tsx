@@ -19,7 +19,9 @@ export function BottomNavBarAdmin() {
     <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm pb-safe">
       <nav className="flex items-center justify-around h-14 px-2">
         {mainNavItems.map((item) => {
-          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+          const isActive = item.path === "/admin" 
+            ? location.pathname === "/admin"
+            : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
           const Icon = item.icon;
 
           return (
@@ -49,7 +51,11 @@ export function BottomNavBarAdmin() {
               <span className="text-xs font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
+          <SheetContent 
+            side="bottom" 
+            className="h-[70vh] rounded-t-2xl"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <MobileAdminNav inSheet onNavigate={() => setSheetOpen(false)} />
           </SheetContent>
         </Sheet>

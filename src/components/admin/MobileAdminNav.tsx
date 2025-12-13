@@ -109,7 +109,9 @@ export function MobileAdminNav({ inSheet = false, onNavigate }: MobileAdminNavPr
               <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
             ) : (
               filteredItems.map((item) => {
-                const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+              const isActive = item.path === "/admin"
+                ? location.pathname === "/admin"
+                : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
                 const Icon = item.icon;
 
                 return (
