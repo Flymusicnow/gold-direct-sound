@@ -26,6 +26,9 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Track {
   id: string;
@@ -76,9 +79,15 @@ export default function StudioTracks() {
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [editCoverTrack, setEditCoverTrack] = useState<Track | null>(null);
   const [editAlbumBatch, setEditAlbumBatch] = useState<TrackBatch | null>(null);
-  const [editAlbumInfo, setEditAlbumInfo] = useState<Album | null>(null);
+  const [editAlbumInfo, setEditAlbumInfo] = useState<{ album: Album | null; batch: TrackBatch } | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
+
+  // Drag & drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor)
+  );
 
   useEffect(() => {
     if (!user) {
@@ -293,7 +302,35 @@ export default function StudioTracks() {
     }
   };
 
-  if (loading) {
+  // Handle drag & drop reordering
+  const handleDragEnd = async (event: DragEndEvent, batch: TrackBatch) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = batch.tracks.findIndex(t => t.id === active.id);
+    const newIndex = batch.tracks.findIndex(t => t.id === over.id);
+    
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(batch.tracks, oldIndex, newIndex);
+    
+    // Update local state immediately for responsiveness
+    setBatches(prev => prev.map(b => 
+      b.batchId === batch.batchId ? { ...b, tracks: reordered } : b
+    ));
+
+    // Update track_order in database
+    try {
+      const updates = reordered.map((track, index) => 
+        supabase.from('tracks').update({ track_order: index }).eq('id', track.id)
+      );
+      await Promise.all(updates);
+      toast.success("Track order updated");
+    } catch (error) {
+      toast.error("Failed to save track order");
+      fetchData(); // Revert on error
+    }
+  };
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
@@ -477,19 +514,17 @@ export default function StudioTracks() {
                                   <Disc className="h-4 w-4 text-primary" />
                                   <p className="font-semibold">{batch.album?.title || 'Album'}</p>
                                   <span className="text-sm text-muted-foreground">({batch.tracks.length} tracks)</span>
-                                  {batch.album && (
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-6 w-6"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditAlbumInfo(batch.album);
-                                      }}
-                                    >
-                                      <Pencil className="h-3 w-3" />
-                                    </Button>
-                                  )}
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-6 w-6"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditAlbumInfo({ album: batch.album, batch });
+                                    }}
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                   {new Date(batch.createdAt).toLocaleDateString()}
@@ -508,20 +543,25 @@ export default function StudioTracks() {
                         </div>
                         
                         <CollapsibleContent>
-                          <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/20 space-y-2">
-                            {batch.tracks.map((track) => (
-                              <TrackRow 
-                                key={track.id} 
-                                track={track}
-                                onEditCover={() => setEditCoverTrack(track)}
-                                onAddCollaborator={() => {
-                                  setSelectedTrackId(track.id);
-                                  setShowCollaboratorSelector(true);
-                                }}
-                                onDelete={() => handleDeleteTrack(track.id)}
-                              />
-                            ))}
-                          </div>
+                          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => handleDragEnd(e, batch)}>
+                            <SortableContext items={batch.tracks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                              <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/20 space-y-2">
+                                {batch.tracks.map((track, trackIndex) => (
+                                  <SortableTrackRow 
+                                    key={track.id} 
+                                    track={track}
+                                    trackNumber={trackIndex + 1}
+                                    onEditCover={() => setEditCoverTrack(track)}
+                                    onAddCollaborator={() => {
+                                      setSelectedTrackId(track.id);
+                                      setShowCollaboratorSelector(true);
+                                    }}
+                                    onDelete={() => handleDeleteTrack(track.id)}
+                                  />
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
                         </CollapsibleContent>
                       </Collapsible>
                     );
@@ -603,13 +643,15 @@ export default function StudioTracks() {
       )}
 
       {/* Edit Album Info Dialog */}
-      {editAlbumInfo && (
+      {editAlbumInfo && artistProfile && (
         <EditAlbumDialog
           open={!!editAlbumInfo}
           onOpenChange={(open) => !open && setEditAlbumInfo(null)}
-          albumId={editAlbumInfo.id}
-          currentTitle={editAlbumInfo.title}
-          currentDescription={editAlbumInfo.description}
+          albumId={editAlbumInfo.album?.id || null}
+          currentTitle={editAlbumInfo.album?.title || ''}
+          currentDescription={editAlbumInfo.album?.description}
+          artistId={artistProfile.id}
+          trackIds={editAlbumInfo.batch.tracks.map(t => t.id)}
           onSuccess={fetchData}
         />
       )}
@@ -619,7 +661,97 @@ export default function StudioTracks() {
   );
 }
 
-// Extracted TrackRow component for reuse
+// Sortable TrackRow component with drag handle and track number
+function SortableTrackRow({ 
+  track,
+  trackNumber,
+  onEditCover, 
+  onAddCollaborator, 
+  onDelete 
+}: { 
+  track: Track;
+  trackNumber: number;
+  onEditCover: () => void;
+  onAddCollaborator: () => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: track.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style}
+      className="flex items-center gap-3 p-4 rounded-lg border border-border hover:bg-muted/50 transition-colors bg-background"
+    >
+      {/* Drag Handle */}
+      <div 
+        {...attributes} 
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical className="h-5 w-5 text-muted-foreground" />
+      </div>
+
+      {/* Track Number */}
+      <span className="w-6 text-center text-sm font-medium text-muted-foreground">{trackNumber}</span>
+      
+      {/* Cover with edit button */}
+      <div 
+        className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden relative group cursor-pointer"
+        onClick={onEditCover}
+      >
+        {track.cover_url ? (
+          <img src={track.cover_url} alt={track.title} className="w-full h-full object-cover" />
+        ) : (
+          <Music className="h-5 w-5 text-muted-foreground" />
+        )}
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <Camera className="h-4 w-4 text-white" />
+        </div>
+      </div>
+      
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="font-medium truncate">{track.title}</p>
+          {track.is_supporter_only && track.required_tier && (
+            <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
+          )}
+        </div>
+        {track.description && (
+          <p className="text-sm text-muted-foreground truncate">{track.description}</p>
+        )}
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onAddCollaborator}
+          className="flex-shrink-0 gap-2"
+        >
+          <UserPlus className="h-4 w-4" />
+          <span className="hidden sm:inline">Add Collaborator</span>
+        </Button>
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onDelete}
+          className="flex-shrink-0 text-destructive hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// Extracted TrackRow component for single tracks (no drag)
 function TrackRow({ 
   track, 
   onEditCover, 
