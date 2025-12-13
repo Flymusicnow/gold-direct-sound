@@ -14,11 +14,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, ChevronRight, Camera, Disc } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, ChevronRight, Camera, Disc, Pencil, GripVertical } from "lucide-react";
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { EditTrackCoverDialog } from "@/components/artist/EditTrackCoverDialog";
 import { EditAlbumCoverDialog } from "@/components/artist/EditAlbumCoverDialog";
+import { EditAlbumDialog } from "@/components/artist/EditAlbumDialog";
 import { useAchievements } from "@/hooks/useAchievements";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 import { Switch } from "@/components/ui/switch";
@@ -35,7 +36,16 @@ interface Track {
   is_supporter_only: boolean;
   required_tier: string | null;
   upload_batch_id: string | null;
+  album_id: string | null;
+  track_order: number;
   created_at: string;
+}
+
+interface Album {
+  id: string;
+  title: string;
+  description: string | null;
+  cover_url: string | null;
 }
 
 interface TrackBatch {
@@ -43,6 +53,7 @@ interface TrackBatch {
   coverUrl: string | null;
   tracks: Track[];
   createdAt: string;
+  album: Album | null;
 }
 
 export default function StudioTracks() {
@@ -65,6 +76,7 @@ export default function StudioTracks() {
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [editCoverTrack, setEditCoverTrack] = useState<Track | null>(null);
   const [editAlbumBatch, setEditAlbumBatch] = useState<TrackBatch | null>(null);
+  const [editAlbumInfo, setEditAlbumInfo] = useState<Album | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
 
@@ -96,17 +108,31 @@ export default function StudioTracks() {
       .from('tracks')
       .select('*')
       .eq('artist_id', profile.id)
-      .order('created_at', { ascending: false });
+      .order('track_order', { ascending: true });
+
+    // Fetch albums
+    const { data: albumsData } = await supabase
+      .from('albums')
+      .select('*')
+      .eq('artist_id', profile.id);
+
+    const albumMap = new Map<string, Album>();
+    albumsData?.forEach(album => albumMap.set(album.id, album));
 
     if (tracksData) {
       setTracks(tracksData);
       
-      // Group tracks by batch
+      // Group tracks by album_id first, then by batch
+      const albumGroupMap = new Map<string, Track[]>();
       const batchMap = new Map<string, Track[]>();
       const singleTracks: Track[] = [];
       
       tracksData.forEach(track => {
-        if (track.upload_batch_id) {
+        if (track.album_id) {
+          const existing = albumGroupMap.get(track.album_id) || [];
+          existing.push(track);
+          albumGroupMap.set(track.album_id, existing);
+        } else if (track.upload_batch_id) {
           const existing = batchMap.get(track.upload_batch_id) || [];
           existing.push(track);
           batchMap.set(track.upload_batch_id, existing);
@@ -118,12 +144,26 @@ export default function StudioTracks() {
       // Convert to batch objects
       const batchList: TrackBatch[] = [];
       
+      // Albums first
+      albumGroupMap.forEach((albumTracks, albumId) => {
+        const album = albumMap.get(albumId) || null;
+        batchList.push({
+          batchId: albumTracks[0]?.upload_batch_id || albumId,
+          coverUrl: album?.cover_url || albumTracks[0]?.cover_url || null,
+          tracks: albumTracks.sort((a, b) => (a.track_order || 0) - (b.track_order || 0)),
+          createdAt: albumTracks[0]?.created_at || '',
+          album
+        });
+      });
+      
+      // Batches without albums
       batchMap.forEach((batchTracks, batchId) => {
         batchList.push({
           batchId,
           coverUrl: batchTracks[0]?.cover_url || null,
-          tracks: batchTracks.sort((a, b) => a.title.localeCompare(b.title)),
-          createdAt: batchTracks[0]?.created_at || ''
+          tracks: batchTracks.sort((a, b) => (a.track_order || 0) - (b.track_order || 0)),
+          createdAt: batchTracks[0]?.created_at || '',
+          album: null
         });
       });
       
@@ -133,7 +173,8 @@ export default function StudioTracks() {
           batchId: null,
           coverUrl: track.cover_url,
           tracks: [track],
-          createdAt: track.created_at
+          createdAt: track.created_at,
+          album: null
         });
       });
       
@@ -434,8 +475,21 @@ export default function StudioTracks() {
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                   <Disc className="h-4 w-4 text-primary" />
-                                  <p className="font-semibold">Album Upload</p>
+                                  <p className="font-semibold">{batch.album?.title || 'Album'}</p>
                                   <span className="text-sm text-muted-foreground">({batch.tracks.length} tracks)</span>
+                                  {batch.album && (
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      className="h-6 w-6"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditAlbumInfo(batch.album);
+                                      }}
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                  )}
                                 </div>
                                 <p className="text-sm text-muted-foreground">
                                   {new Date(batch.createdAt).toLocaleDateString()}
@@ -544,6 +598,18 @@ export default function StudioTracks() {
           batchId={editAlbumBatch.batchId}
           trackIds={editAlbumBatch.tracks.map(t => t.id)}
           currentCoverUrl={editAlbumBatch.coverUrl}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {/* Edit Album Info Dialog */}
+      {editAlbumInfo && (
+        <EditAlbumDialog
+          open={!!editAlbumInfo}
+          onOpenChange={(open) => !open && setEditAlbumInfo(null)}
+          albumId={editAlbumInfo.id}
+          currentTitle={editAlbumInfo.title}
+          currentDescription={editAlbumInfo.description}
           onSuccess={fetchData}
         />
       )}

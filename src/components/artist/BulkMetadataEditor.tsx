@@ -21,6 +21,10 @@ interface BulkMetadataEditorProps {
   onUpdateSelected: (ids: string[], metadata: Partial<UploadFile>) => void;
   albumCover: File | null;
   onAlbumCoverChange: (file: File | null) => void;
+  albumTitle: string;
+  onAlbumTitleChange: (title: string) => void;
+  albumDescription: string;
+  onAlbumDescriptionChange: (description: string) => void;
 }
 
 const GENRES = [
@@ -39,7 +43,11 @@ export function BulkMetadataEditor({
   onUpdateAll,
   onUpdateSelected,
   albumCover,
-  onAlbumCoverChange
+  onAlbumCoverChange,
+  albumTitle,
+  onAlbumTitleChange,
+  albumDescription,
+  onAlbumDescriptionChange
 }: BulkMetadataEditorProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkGenre, setBulkGenre] = useState<string>("");
@@ -96,57 +104,82 @@ export function BulkMetadataEditor({
 
   return (
     <div className="space-y-6">
-      {/* Album Cover Upload */}
-      <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 space-y-3">
+      {/* Album Info Section */}
+      <div className="p-4 border border-primary/20 rounded-lg bg-primary/5 space-y-4">
         <div className="flex items-center gap-2">
           <ImageIcon className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Album Cover</h3>
-          <span className="text-xs text-muted-foreground">(applies to all tracks)</span>
+          <h3 className="font-semibold">Album Information</h3>
         </div>
         
-        <div className="flex items-center gap-4">
-          {/* Preview */}
-          <div 
-            className="w-24 h-24 rounded-lg bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
-            onClick={() => coverInputRef.current?.click()}
-          >
-            {albumCoverPreview ? (
-              <img src={albumCoverPreview} alt="Album cover" className="w-full h-full object-cover" />
-            ) : (
-              <ImageIcon className="h-8 w-8 text-muted-foreground" />
-            )}
-          </div>
-
-          <div className="flex-1">
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => onAlbumCoverChange(e.target.files?.[0] || null)}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+        {/* Album Title */}
+        <div>
+          <Label className="text-sm font-medium">Album Title *</Label>
+          <Input
+            value={albumTitle}
+            onChange={(e) => onAlbumTitleChange(e.target.value)}
+            placeholder="Enter album title (e.g., WATER)"
+            className="mt-1"
+          />
+        </div>
+        
+        {/* Album Description */}
+        <div>
+          <Label className="text-sm font-medium">Description (optional)</Label>
+          <Input
+            value={albumDescription}
+            onChange={(e) => onAlbumDescriptionChange(e.target.value)}
+            placeholder="Add album description..."
+            className="mt-1"
+          />
+        </div>
+        
+        {/* Album Cover */}
+        <div>
+          <Label className="text-sm font-medium">Album Cover</Label>
+          <div className="flex items-center gap-4 mt-2">
+            {/* Preview */}
+            <div 
+              className="w-20 h-20 rounded-lg bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => coverInputRef.current?.click()}
             >
-              {albumCover ? "Change Cover" : "Upload Cover"}
-            </Button>
-            {albumCover && (
+              {albumCoverPreview ? (
+                <img src={albumCoverPreview} alt="Album cover" className="w-full h-full object-cover" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+
+            <div className="flex-1">
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => onAlbumCoverChange(e.target.files?.[0] || null)}
+              />
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="ml-2 text-destructive hover:text-destructive"
-                onClick={() => onAlbumCoverChange(null)}
+                onClick={() => coverInputRef.current?.click()}
               >
-                <X className="h-4 w-4" />
+                {albumCover ? "Change Cover" : "Upload Cover"}
               </Button>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              This cover will be applied to all {files.length} tracks in this upload
-            </p>
+              {albumCover && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2 text-destructive hover:text-destructive"
+                  onClick={() => onAlbumCoverChange(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                Applies to all {files.length} tracks
+              </p>
+            </div>
           </div>
         </div>
       </div>
