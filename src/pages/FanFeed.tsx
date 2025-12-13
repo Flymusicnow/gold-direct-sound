@@ -12,7 +12,7 @@ import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Video, Play } from "lucide-react";
+import { Music, TrendingUp, Sparkles, Video, Play, ArrowLeft } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
@@ -204,6 +204,16 @@ export default function FanFeed() {
       <MobileFanNav />
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-7xl space-y-8">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/fan")}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Dashboard
+        </Button>
+
         {/* Header */}
         <div>
           <h1 className="text-4xl font-bold mb-2">Your Feed</h1>

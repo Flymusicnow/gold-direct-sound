@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { FlyWrappedCard } from '@/components/wrapped/FlyWrappedCard';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy } from 'lucide-react';
+import { Trophy, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
@@ -23,6 +25,7 @@ interface MonthlyWrap {
 
 export default function FanWrapped() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [wraps, setWraps] = useState<MonthlyWrap[]>([]);
   const [loading, setLoading] = useState(true);
   const socialRitualsEnabled = useFeatureFlag('SOCIAL_RITUALS_ENABLED');
@@ -70,6 +73,14 @@ export default function FanWrapped() {
       <div className="min-h-screen bg-background">
         <Navigation />
         <main className="container mx-auto px-4 py-8 pb-24">
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/fan")}
+            className="mb-6 gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
           <Card className="max-w-md mx-auto">
             <CardContent className="p-8 text-center">
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -90,6 +101,16 @@ export default function FanWrapped() {
       <Navigation />
       <main className="container mx-auto px-4 py-8 pb-24">
         <div className="max-w-2xl mx-auto space-y-6">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/fan")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+
           {/* Header */}
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">

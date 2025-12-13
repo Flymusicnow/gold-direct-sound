@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
-import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame, ArrowRight } from "lucide-react";
+import { Trophy, TrendingUp, Heart, MessageSquare, Play, Share2, Star, Flame, ArrowRight, ArrowLeft } from "lucide-react";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { ManageSubscriptionCard } from "@/components/supporter/ManageSubscriptionCard";
 import { useFanAchievements } from "@/hooks/useFanAchievements";
@@ -143,6 +143,16 @@ export default function FanSupporter() {
       <MobileFanNav />
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
         <div className="container mx-auto max-w-5xl space-y-8">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/fan")}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+
           {/* Hero Header */}
           <div className="text-center space-y-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
