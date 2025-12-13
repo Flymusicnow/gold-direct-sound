@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -506,53 +507,62 @@ export default function ArtistProfile() {
 
                       return (
                         <div className="space-y-6">
-                          {/* Albums with their tracks */}
-                          {albums.filter(album => albumTracks[album.id]?.length > 0).map(album => (
-                            <div key={album.id} className="border-l-2 border-primary/50 pl-4 space-y-3">
-                              {/* Album Header */}
-                              <div className="flex items-center gap-3 pb-2">
-                                {album.cover_url ? (
-                                  <img 
-                                    src={album.cover_url} 
-                                    alt={album.title}
-                                    className="w-12 h-12 rounded-lg object-cover border border-border/50"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-border/50">
-                                    <Disc className="h-6 w-6 text-primary" />
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <h3 className="font-semibold text-lg text-foreground truncate">{album.title}</h3>
-                                  <p className="text-sm text-muted-foreground">
-                                    {albumTracks[album.id].length} {albumTracks[album.id].length === 1 ? 'track' : 'tracks'}
-                                  </p>
-                                </div>
-                              </div>
-                              
-                              {/* Album Tracks with numbers */}
-                              <div className="space-y-2">
-                                {albumTracks[album.id].map((track, index) => (
-                                  <div key={track.id} className="flex items-center gap-3">
-                                    <span className="text-sm text-muted-foreground/70 w-6 text-right flex-shrink-0">
-                                      {index + 1}.
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                      <PremiumTrackCard
-                                        track={track}
-                                        artistName={artist.artist_name}
-                                        isLiked={likedTracks[track.id]}
-                                        onPlay={() => handlePlayTrack(track)}
-                                        onAddToQueue={() => handleAddToQueue(track)}
-                                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                                        showCollaborators={true}
+                          {/* Albums with their tracks - Collapsible */}
+                          {albums.filter(album => albumTracks[album.id]?.length > 0).map(album => {
+                            const albumCover = album.cover_url || albumTracks[album.id]?.[0]?.cover_url;
+                            return (
+                              <Collapsible key={album.id} defaultOpen={true} className="border-l-2 border-primary/50 pl-4">
+                                <CollapsibleTrigger className="w-full">
+                                  {/* Album Header - Clickable to toggle */}
+                                  <div className="flex items-center gap-3 pb-2 cursor-pointer hover:bg-muted/30 rounded-lg p-2 -ml-2 transition-colors group">
+                                    {albumCover ? (
+                                      <img 
+                                        src={albumCover} 
+                                        alt={album.title}
+                                        className="w-12 h-12 rounded-lg object-cover border border-border/50"
                                       />
+                                    ) : (
+                                      <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-border/50">
+                                        <Disc className="h-6 w-6 text-primary" />
+                                      </div>
+                                    )}
+                                    <div className="flex-1 min-w-0 text-left">
+                                      <h3 className="font-semibold text-lg text-foreground truncate">{album.title}</h3>
+                                      <p className="text-sm text-muted-foreground">
+                                        {albumTracks[album.id].length} {albumTracks[album.id].length === 1 ? 'track' : 'tracks'}
+                                      </p>
                                     </div>
+                                    <ChevronDown className="h-5 w-5 text-muted-foreground group-data-[state=open]:hidden" />
+                                    <ChevronUp className="h-5 w-5 text-muted-foreground hidden group-data-[state=open]:block" />
                                   </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))}
+                                </CollapsibleTrigger>
+                                
+                                <CollapsibleContent>
+                                  {/* Album Tracks with numbers */}
+                                  <div className="space-y-2 pt-2">
+                                    {albumTracks[album.id].map((track, index) => (
+                                      <div key={track.id} className="flex items-center gap-3">
+                                        <span className="text-sm text-muted-foreground/70 w-6 text-right flex-shrink-0">
+                                          {index + 1}.
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                          <PremiumTrackCard
+                                            track={track}
+                                            artistName={artist.artist_name}
+                                            isLiked={likedTracks[track.id]}
+                                            onPlay={() => handlePlayTrack(track)}
+                                            onAddToQueue={() => handleAddToQueue(track)}
+                                            onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                                            showCollaborators={true}
+                                          />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </CollapsibleContent>
+                              </Collapsible>
+                            );
+                          })}
 
                           {/* Singles Section */}
                           {singleTracks.length > 0 && (
