@@ -18,6 +18,7 @@ import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, Ch
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { EditTrackCoverDialog } from "@/components/artist/EditTrackCoverDialog";
+import { EditAlbumCoverDialog } from "@/components/artist/EditAlbumCoverDialog";
 import { useAchievements } from "@/hooks/useAchievements";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 import { Switch } from "@/components/ui/switch";
@@ -63,6 +64,7 @@ export default function StudioTracks() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [editCoverTrack, setEditCoverTrack] = useState<Track | null>(null);
+  const [editAlbumBatch, setEditAlbumBatch] = useState<TrackBatch | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
   const isMobile = useIsMobile();
 
@@ -406,37 +408,50 @@ export default function StudioTracks() {
                     // Album/Batch with multiple tracks
                     return (
                       <Collapsible key={batchKey} open={isExpanded} onOpenChange={() => toggleBatch(batchKey)}>
-                        <CollapsibleTrigger asChild>
-                          <div className="flex items-center gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer hover:bg-primary/10 transition-colors">
-                            {/* Album Cover */}
-                            <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden relative group">
-                              {batch.coverUrl ? (
-                                <img src={batch.coverUrl} alt="Album cover" className="w-full h-full object-cover" />
-                              ) : (
-                                <Disc className="h-8 w-8 text-primary" />
-                              )}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <Disc className="h-4 w-4 text-primary" />
-                                <p className="font-semibold">Album Upload</p>
-                                <span className="text-sm text-muted-foreground">({batch.tracks.length} tracks)</span>
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(batch.createdAt).toLocaleDateString()}
-                              </p>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              {isExpanded ? (
-                                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                              )}
+                        <div className="flex items-center gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+                          {/* Album Cover - Clickable separately */}
+                          <div 
+                            className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 overflow-hidden relative group cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditAlbumBatch(batch);
+                            }}
+                          >
+                            {batch.coverUrl ? (
+                              <img src={batch.coverUrl} alt="Album cover" className="w-full h-full object-cover" />
+                            ) : (
+                              <Disc className="h-8 w-8 text-primary" />
+                            )}
+                            {/* Camera overlay on hover */}
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Camera className="h-6 w-6 text-white" />
                             </div>
                           </div>
-                        </CollapsibleTrigger>
+                          
+                          {/* Rest of row - Expand/Collapse trigger */}
+                          <CollapsibleTrigger asChild>
+                            <div className="flex-1 min-w-0 flex items-center cursor-pointer hover:bg-primary/10 -m-2 p-2 rounded-lg transition-colors">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Disc className="h-4 w-4 text-primary" />
+                                  <p className="font-semibold">Album Upload</p>
+                                  <span className="text-sm text-muted-foreground">({batch.tracks.length} tracks)</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(batch.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {isExpanded ? (
+                                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                )}
+                              </div>
+                            </div>
+                          </CollapsibleTrigger>
+                        </div>
                         
                         <CollapsibleContent>
                           <div className="mt-2 ml-4 pl-4 border-l-2 border-primary/20 space-y-2">
@@ -517,6 +532,18 @@ export default function StudioTracks() {
           onOpenChange={(open) => !open && setEditCoverTrack(null)}
           trackId={editCoverTrack.id}
           currentCoverUrl={editCoverTrack.cover_url}
+          onSuccess={fetchData}
+        />
+      )}
+
+      {/* Edit Album Cover Dialog */}
+      {editAlbumBatch && editAlbumBatch.batchId && (
+        <EditAlbumCoverDialog
+          open={!!editAlbumBatch}
+          onOpenChange={(open) => !open && setEditAlbumBatch(null)}
+          batchId={editAlbumBatch.batchId}
+          trackIds={editAlbumBatch.tracks.map(t => t.id)}
+          currentCoverUrl={editAlbumBatch.coverUrl}
           onSuccess={fetchData}
         />
       )}
