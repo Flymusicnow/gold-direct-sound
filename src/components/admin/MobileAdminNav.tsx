@@ -27,6 +27,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 const navItems = [
@@ -89,6 +90,8 @@ export function MobileAdminNav({ inSheet = false, onNavigate }: MobileAdminNavPr
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-9 bg-muted/30"
+            autoFocus={false}
+            autoComplete="off"
           />
           {searchQuery && (
             <button
@@ -100,33 +103,35 @@ export function MobileAdminNav({ inSheet = false, onNavigate }: MobileAdminNavPr
           )}
         </div>
 
-        <nav className="space-y-1">
-          {filteredItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
-          ) : (
-            filteredItems.map((item) => {
-              const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-              const Icon = item.icon;
+        <ScrollArea className="h-[calc(70vh-140px)]">
+          <nav className="space-y-1 pb-8">
+            {filteredItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
+            ) : (
+              filteredItems.map((item) => {
+                const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={handleNavigate}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                    isActive
-                      ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                  )}
-                >
-                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })
-          )}
-        </nav>
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={handleNavigate}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                      isActive
+                        ? "border-primary bg-primary/10 text-primary font-semibold"
+                        : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })
+            )}
+          </nav>
+        </ScrollArea>
       </div>
     );
   }

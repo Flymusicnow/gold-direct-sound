@@ -49,7 +49,7 @@ export function BottomNavBarAdmin() {
               <span className="text-xs font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[50vh] rounded-t-2xl">
+          <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl">
             <MobileAdminNav inSheet onNavigate={() => setSheetOpen(false)} />
           </SheetContent>
         </Sheet>
