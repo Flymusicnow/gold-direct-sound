@@ -47,6 +47,8 @@ export function MultiUploadDialog({
   const [step, setStep] = useState<Step>('select');
   const [isDragging, setIsDragging] = useState(false);
   const [albumCover, setAlbumCover] = useState<File | null>(null);
+  const [albumTitle, setAlbumTitle] = useState<string>("");
+  const [albumDescription, setAlbumDescription] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -152,7 +154,30 @@ export function MultiUploadDialog({
       }
     }
     
-    await startUpload(artistId, user.id, albumCoverUrl);
+    // Create album record if multiple files and has title
+    let albumId: string | null = null;
+    if (files.length > 1 && albumTitle.trim()) {
+      try {
+        const { data: album, error: albumError } = await supabase
+          .from('albums')
+          .insert({
+            artist_id: artistId,
+            title: albumTitle.trim(),
+            description: albumDescription.trim() || null,
+            cover_url: albumCoverUrl
+          })
+          .select('id')
+          .single();
+        
+        if (!albumError && album) {
+          albumId = album.id;
+        }
+      } catch (e) {
+        console.error('Failed to create album:', e);
+      }
+    }
+    
+    await startUpload(artistId, user.id, albumCoverUrl, albumId);
     setStep('summary');
     onSuccess?.();
   };
@@ -301,6 +326,10 @@ export function MultiUploadDialog({
               onUpdateSelected={updateSelectedMetadata}
               albumCover={albumCover}
               onAlbumCoverChange={setAlbumCover}
+              albumTitle={albumTitle}
+              onAlbumTitleChange={setAlbumTitle}
+              albumDescription={albumDescription}
+              onAlbumDescriptionChange={setAlbumDescription}
             />
 
             <div className="flex justify-end gap-2 pt-4 border-t">

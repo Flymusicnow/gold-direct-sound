@@ -226,7 +226,7 @@ export function PremiumTrackCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                  className="text-muted-foreground hover:text-primary"
                   onClick={(e) => {
                     e.stopPropagation();
                     if (!user) {
@@ -242,33 +242,32 @@ export function PremiumTrackCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                  className="text-muted-foreground hover:text-primary"
                   onClick={handleLike}
                   disabled={isUpdating || accessLoading}
                 >
                   <Heart
-                    className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`}
+                    className={`h-5 w-5 ${liked ? "fill-primary text-primary" : "text-muted-foreground hover:text-primary"}`}
                   />
                 </Button>
                 <Button
-                  variant="ghost"
                   size="icon"
                   onClick={handlePlay}
                   disabled={accessLoading}
                   title={isCurrentlyPlaying ? "Pause" : "Play now"}
-                  className={isCurrentlyPlaying ? "bg-primary/20" : ""}
+                  className="h-9 w-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                 >
                   {isCurrentlyPlaying ? (
-                    <Pause className="h-5 w-5 text-primary fill-primary" />
+                    <Pause className="h-5 w-5 fill-current" />
                   ) : (
-                    <Play className="h-5 w-5 text-primary fill-primary" />
+                    <Play className="h-5 w-5 fill-current" />
                   )}
                 </Button>
                 {onAddToQueue && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+                    className="text-muted-foreground hover:text-primary"
                     onClick={(e) => {
                       e.stopPropagation();
                       if (track.is_supporter_only && !hasAccess) {

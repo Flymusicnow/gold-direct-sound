@@ -44,6 +44,47 @@ export type Database = {
         }
         Relationships: []
       }
+      albums: {
+        Row: {
+          artist_id: string
+          cover_url: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          release_date: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          release_date?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          cover_url?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          release_date?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "albums_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_achievements: {
         Row: {
           achievement_type: string
@@ -2914,6 +2955,7 @@ export type Database = {
       }
       tracks: {
         Row: {
+          album_id: string | null
           artist_id: string
           audio_url: string
           cover_url: string | null
@@ -2931,11 +2973,13 @@ export type Database = {
           supporter_early_access: boolean | null
           tags: string[] | null
           title: string
+          track_order: number | null
           updated_at: string | null
           upload_batch_id: string | null
           visibility: string | null
         }
         Insert: {
+          album_id?: string | null
           artist_id: string
           audio_url: string
           cover_url?: string | null
@@ -2953,11 +2997,13 @@ export type Database = {
           supporter_early_access?: boolean | null
           tags?: string[] | null
           title: string
+          track_order?: number | null
           updated_at?: string | null
           upload_batch_id?: string | null
           visibility?: string | null
         }
         Update: {
+          album_id?: string | null
           artist_id?: string
           audio_url?: string
           cover_url?: string | null
@@ -2975,11 +3021,19 @@ export type Database = {
           supporter_early_access?: boolean | null
           tags?: string[] | null
           title?: string
+          track_order?: number | null
           updated_at?: string | null
           upload_batch_id?: string | null
           visibility?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tracks_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tracks_artist_id_fkey"
             columns: ["artist_id"]

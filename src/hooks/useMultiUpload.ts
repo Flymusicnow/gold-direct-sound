@@ -49,8 +49,8 @@ export interface UseMultiUploadReturn {
   updateFileMetadata: (id: string, metadata: Partial<UploadFile>) => void;
   updateAllMetadata: (metadata: Partial<UploadFile>) => void;
   updateSelectedMetadata: (ids: string[], metadata: Partial<UploadFile>) => void;
-  startUpload: (artistId: string, userId: string, albumCoverUrl?: string | null) => Promise<void>;
-  retryFailed: (artistId: string, userId: string) => Promise<void>;
+  startUpload: (artistId: string, userId: string, albumCoverUrl?: string | null, albumId?: string | null) => Promise<void>;
+  retryFailed: (artistId: string, userId: string, albumId?: string | null) => Promise<void>;
   pauseUpload: () => void;
   resumeUpload: () => void;
   resetUpload: () => void;
@@ -165,7 +165,9 @@ export function useMultiUpload(): UseMultiUploadReturn {
     artistId: string,
     userId: string,
     uploadBatchId: string,
-    albumCoverUrl?: string | null
+    albumCoverUrl?: string | null,
+    albumId?: string | null,
+    trackOrder?: number
   ): Promise<boolean> => {
     try {
       setFiles(prev => prev.map(f => 
@@ -192,7 +194,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
           .from('tracks')
           .getPublicUrl(audioPath);
 
-        // Insert track record with album cover
+        // Insert track record with album cover and album_id
         const { error: insertError } = await supabase.from('tracks').insert({
           artist_id: artistId,
           title: uploadFile.title,
@@ -202,6 +204,8 @@ export function useMultiUpload(): UseMultiUploadReturn {
           mood: uploadFile.mood || null,
           tags: uploadFile.tags || null,
           upload_batch_id: uploadBatchId,
+          album_id: albumId || null,
+          track_order: trackOrder ?? 0,
         });
 
         if (insertError) throw insertError;
@@ -255,7 +259,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     }
   };
 
-  const startUpload = useCallback(async (artistId: string, userId: string, albumCoverUrl?: string | null) => {
+  const startUpload = useCallback(async (artistId: string, userId: string, albumCoverUrl?: string | null, albumId?: string | null) => {
     if (files.length === 0) return;
 
     setIsUploading(true);
@@ -280,13 +284,16 @@ export function useMultiUpload(): UseMultiUploadReturn {
 
     const pendingFiles = files.filter(f => f.status === 'pending');
     
-    // Process in batches of 3
+    // Process in batches of 3, with track order based on original array index
     for (let i = 0; i < pendingFiles.length; i += BATCH_SIZE) {
       if (pausedRef.current) break;
 
       const batch = pendingFiles.slice(i, i + BATCH_SIZE);
       await Promise.allSettled(
-        batch.map(file => uploadSingleFile(file, artistId, userId, newBatchId, albumCoverUrl))
+        batch.map((file, batchIndex) => {
+          const overallIndex = i + batchIndex;
+          return uploadSingleFile(file, artistId, userId, newBatchId, albumCoverUrl, albumId, overallIndex);
+        })
       );
     }
 
@@ -304,7 +311,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     setIsUploading(false);
   }, [files]);
 
-  const retryFailed = useCallback(async (artistId: string, userId: string) => {
+  const retryFailed = useCallback(async (artistId: string, userId: string, albumId?: string | null) => {
     const failedFiles = files.filter(f => f.status === 'failed');
     if (failedFiles.length === 0) return;
 
