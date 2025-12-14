@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -9,6 +9,7 @@ import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
 import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type MiniPlayerPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -31,9 +32,12 @@ export function FlightdeckPlayer() {
   } = useFlightdeck();
   
   const { pauseAllVideos } = useVideoPlayback();
+  const isMobile = useIsMobile();
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
+  const miniPlayerRef = useRef<HTMLDivElement>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -42,6 +46,52 @@ export function FlightdeckPlayer() {
   const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
     return (localStorage.getItem('miniPlayerPosition') as MiniPlayerPosition) || 'bottom-right';
   });
+
+  // Swipe gesture state for mobile
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
+
+  // Swipe handlers for main player (swipe down to minimize)
+  const handlePlayerTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handlePlayerTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null || touchStartX.current === null) return;
+    
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaX = Math.abs(e.changedTouches[0].clientX - touchStartX.current);
+    
+    // Swipe down to minimize (vertical swipe, not horizontal)
+    if (deltaY > 50 && deltaX < 50 && isMobile) {
+      setIsMinimized(true);
+    }
+    
+    touchStartY.current = null;
+    touchStartX.current = null;
+  }, [isMobile]);
+
+  // Swipe handlers for mini player (swipe up to expand)
+  const handleMiniTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchStartX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleMiniTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartY.current === null || touchStartX.current === null) return;
+    
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const deltaX = Math.abs(e.changedTouches[0].clientX - touchStartX.current);
+    
+    // Swipe up to expand (negative deltaY = upward swipe)
+    if (deltaY < -50 && deltaX < 50 && isMobile) {
+      setIsMinimized(false);
+    }
+    
+    touchStartY.current = null;
+    touchStartX.current = null;
+  }, [isMobile]);
 
   // Position classes map
   const positionClasses: Record<MiniPlayerPosition, string> = {
@@ -229,12 +279,15 @@ export function FlightdeckPlayer() {
 
       {/* Main Player Bar - Hidden when queue is open */}
       <div 
+        ref={playerRef}
         className={cn(
-          "fixed bottom-14 md:bottom-0 left-0 right-0 z-[60] transition-all duration-300",
+          "fixed bottom-16 md:bottom-0 left-0 right-0 z-[60] transition-all duration-300 pb-safe",
           queueOpen && "opacity-0 pointer-events-none translate-y-full"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handlePlayerTouchStart}
+        onTouchEnd={handlePlayerTouchEnd}
       >
         
         {/* Close button - appears on hover (desktop only) */}
@@ -348,10 +401,15 @@ export function FlightdeckPlayer() {
 
       {/* Compact Mini-Player when minimized */}
       {isMinimized && currentItem && !queueOpen && (
-        <div className={cn(
-          "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
-          positionClasses[miniPlayerPosition]
-        )}>
+        <div 
+          ref={miniPlayerRef}
+          className={cn(
+            "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
+            positionClasses[miniPlayerPosition]
+          )}
+          onTouchStart={handleMiniTouchStart}
+          onTouchEnd={handleMiniTouchEnd}
+        >
           {/* Album Art - Clickable */}
           <Link to={`/artist/${currentItem.artistUserId}`} className="hover:opacity-80 transition-opacity">
             {currentItem.coverUrl && (
