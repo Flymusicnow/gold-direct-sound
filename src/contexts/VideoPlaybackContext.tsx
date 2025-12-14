@@ -22,13 +22,21 @@ export function VideoPlaybackProvider({ children }: { children: ReactNode }) {
     videoRefs.delete(id);
   }, [videoRefs]);
 
-  const setCurrentVideo = useCallback((id: string | null) => {
-    setCurrentVideoId(id);
-  }, []);
-
   const pauseAllVideos = useCallback(() => {
     videoRefs.forEach((pauseFn) => pauseFn());
     setCurrentVideoId(null);
+  }, [videoRefs]);
+
+  const setCurrentVideo = useCallback((id: string | null) => {
+    // Pause all other videos before setting current (mutual exclusion)
+    if (id !== null) {
+      videoRefs.forEach((pauseFn, videoId) => {
+        if (videoId !== id) {
+          pauseFn();
+        }
+      });
+    }
+    setCurrentVideoId(id);
   }, [videoRefs]);
 
   return (
