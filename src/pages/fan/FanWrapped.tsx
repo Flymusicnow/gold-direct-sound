@@ -72,7 +72,7 @@ export default function FanWrapped() {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
-        <main className="container mx-auto px-4 py-8 pb-24">
+        <main className="container mx-auto px-4 py-8 pb-44 md:pb-24">
           <Button
             variant="ghost"
             onClick={() => navigate("/fan")}
@@ -99,7 +99,7 @@ export default function FanWrapped() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <main className="container mx-auto px-4 py-8 pb-24">
+      <main className="container mx-auto px-4 py-8 pb-44 md:pb-24">
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Back Button */}
           <Button

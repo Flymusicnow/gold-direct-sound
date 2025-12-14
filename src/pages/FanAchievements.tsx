@@ -52,7 +52,7 @@ export default function FanAchievements() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 flex items-center justify-center pb-32 md:pb-28">
+      <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 flex items-center justify-center pb-44 md:pb-28">
         <p className="text-muted-foreground">Loading your achievements...</p>
         {isMobile && <BottomNavBarFan />}
       </div>
@@ -60,8 +60,8 @@ export default function FanAchievements() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 pt-24 pb-32 md:pb-28">
-      <div className="container max-w-5xl mx-auto px-4 space-y-8">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90 pt-24 pb-44 md:pb-28">
+      <div className="container max-w-5xl mx-auto px-4 space-y-6 md:space-y-8">
         {/* Back Button */}
         <Button
           variant="ghost"
@@ -145,7 +145,7 @@ export default function FanAchievements() {
               learnLink="/learn?tab=fan#supporter-level"
             />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
             {achievements.map((achievement) => (
               <FanAchievementBadge key={achievement.type} achievement={achievement} />
             ))}

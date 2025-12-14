@@ -141,8 +141,8 @@ export default function FanSupporter() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
-        <div className="container mx-auto max-w-5xl space-y-8">
+      <div className="min-h-screen py-24 px-4 pb-44 md:pb-28">
+        <div className="container mx-auto max-w-5xl space-y-6 md:space-y-8">
           {/* Back Button */}
           <Button
             variant="ghost"

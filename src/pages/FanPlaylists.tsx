@@ -84,7 +84,7 @@ export default function FanPlaylists() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
+      <div className="min-h-screen py-24 px-4 pb-44 md:pb-28">
         <div className="container mx-auto max-w-6xl">
         {/* Back Button */}
         <Button
