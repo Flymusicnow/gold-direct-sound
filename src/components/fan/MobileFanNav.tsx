@@ -14,17 +14,35 @@ import {
 } from "@/components/ui/sheet";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
-const navItems = [
-  { icon: Home, label: "Dashboard", path: "/fan" },
-  { icon: Rss, label: "Feed", path: "/fan/feed" },
-  { icon: Target, label: "Missions", path: "/fan/missions" },
-  { icon: Users, label: "My Artists", path: "/fan/artists" },
-  { icon: ListMusic, label: "Playlists", path: "/fan/playlists" },
-  { icon: Trophy, label: "Supporter Pass", path: "/fan/supporter" },
-  { icon: Award, label: "Achievements", path: "/fan/achievements" },
-  { icon: Activity, label: "Activity", path: "/fan/activity" },
-  { icon: Settings, label: "Settings", path: "/fan/settings" },
+const navSections = [
+  {
+    title: "Browse",
+    items: [
+      { icon: Home, label: "Dashboard", path: "/fan" },
+      { icon: Rss, label: "Feed", path: "/fan/feed" },
+      { icon: Target, label: "Missions", path: "/fan/missions" },
+    ]
+  },
+  {
+    title: "Collect",
+    items: [
+      { icon: Users, label: "My Artists", path: "/fan/artists" },
+      { icon: ListMusic, label: "Playlists", path: "/fan/playlists" },
+      { icon: Trophy, label: "Supporter Pass", path: "/fan/supporter" },
+      { icon: Award, label: "Achievements", path: "/fan/achievements" },
+    ]
+  },
+  {
+    title: "Account",
+    items: [
+      { icon: Activity, label: "Activity", path: "/fan/activity" },
+      { icon: Settings, label: "Settings", path: "/fan/settings" },
+    ]
+  }
 ];
+
+// Flatten for search functionality
+const allNavItems = navSections.flatMap(section => section.items);
 
 interface MobileFanNavProps {
   inSheet?: boolean;
@@ -41,13 +59,77 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
     enabled: sheetOpen,
   });
 
-  const filteredItems = navItems.filter(item => 
-    item.label.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const handleNavigate = () => {
     setSheetOpen(false);
     onNavigate?.();
+  };
+
+  const renderNavContent = (onItemClick: () => void) => {
+    // If searching, show flat filtered list
+    if (searchQuery) {
+      const filteredItems = allNavItems.filter(item =>
+        item.label.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+      if (filteredItems.length === 0) {
+        return <p className="text-sm text-muted-foreground text-center py-4">No results found</p>;
+      }
+
+      return filteredItems.map((item) => {
+        const isActive = location.pathname === item.path;
+        const Icon = item.icon;
+
+        return (
+          <Link
+            key={item.path}
+            to={item.path}
+            onClick={onItemClick}
+            className={cn(
+              "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+              isActive
+                ? "border-primary bg-primary/10 text-primary font-semibold"
+                : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+            )}
+          >
+            <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+            <span>{item.label}</span>
+          </Link>
+        );
+      });
+    }
+
+    // Show sectioned navigation
+    return navSections.map((section, sectionIndex) => (
+      <div key={section.title}>
+        {sectionIndex > 0 && (
+          <div className="my-3 border-t border-border/30" />
+        )}
+        <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
+          {section.title}
+        </p>
+        {section.items.map((item) => {
+          const isActive = location.pathname === item.path;
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={onItemClick}
+              className={cn(
+                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                isActive
+                  ? "border-primary bg-primary/10 text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+              )}
+            >
+              <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    ));
   };
 
   if (inSheet) {
@@ -70,6 +152,8 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-9 bg-muted/30"
+              autoFocus={false}
+              autoComplete="off"
             />
             {searchQuery && (
               <button
@@ -84,31 +168,7 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
 
         <ScrollArea className="flex-1 -mx-2 px-2">
           <nav className="space-y-1 pb-8">
-            {filteredItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
-            ) : (
-              filteredItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={handleNavigate}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                      isActive
-                        ? "border-primary bg-primary/10 text-primary font-semibold"
-                        : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                    )}
-                  >
-                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })
-            )}
+            {renderNavContent(handleNavigate)}
           </nav>
         </ScrollArea>
       </div>
@@ -126,7 +186,11 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
           <Menu className="h-6 w-6" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 bg-[hsl(0,0%,5%)] border-r border-border/50">
+      <SheetContent 
+        side="left" 
+        className="w-64 bg-[hsl(0,0%,5%)] border-r border-border/50"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <SheetHeader className="mb-6 pb-4 border-b border-border/30">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
@@ -145,6 +209,8 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 pr-9 bg-muted/30"
+            autoFocus={false}
+            autoComplete="off"
           />
           {searchQuery && (
             <button
@@ -156,33 +222,11 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
           )}
         </div>
 
-        <nav className="space-y-1">
-          {filteredItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No results found</p>
-          ) : (
-            filteredItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSheetOpen(false)}
-                  className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                  isActive
-                    ? "border-primary bg-primary/10 text-primary font-semibold"
-                    : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                )}
-              >
-                <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                <span>{item.label}</span>
-                </Link>
-              );
-            })
-          )}
-        </nav>
+        <ScrollArea className="h-[calc(100vh-200px)]">
+          <nav className="space-y-1 pb-8">
+            {renderNavContent(() => setSheetOpen(false))}
+          </nav>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );
