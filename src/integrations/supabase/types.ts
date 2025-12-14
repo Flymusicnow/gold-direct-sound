@@ -1801,6 +1801,117 @@ export type Database = {
           },
         ]
       }
+      inbox_messages: {
+        Row: {
+          assigned_to: string | null
+          created_at: string | null
+          dedupe_key: string
+          id: string
+          payload: Json | null
+          priority: string
+          resolution_details: Json | null
+          resolution_summary: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          summary: string | null
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string | null
+          dedupe_key: string
+          id?: string
+          payload?: Json | null
+          priority?: string
+          resolution_details?: Json | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          summary?: string | null
+          title: string
+          type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string | null
+          dedupe_key?: string
+          id?: string
+          payload?: Json | null
+          priority?: string
+          resolution_details?: Json | null
+          resolution_summary?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          summary?: string | null
+          title?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_messages_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbox_messages_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbox_updates: {
+        Row: {
+          author_id: string | null
+          created_at: string | null
+          id: string
+          is_system: boolean | null
+          message_id: string
+          update_text: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          message_id: string
+          update_text: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_system?: boolean | null
+          message_id?: string
+          update_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbox_updates_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbox_updates_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "inbox_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       legal_acceptances: {
         Row: {
           accepted_at: string
@@ -4047,6 +4158,16 @@ export type Database = {
           _video_id?: string
         }
         Returns: undefined
+      }
+      upsert_inbox_message: {
+        Args: {
+          _dedupe_key: string
+          _payload: Json
+          _priority: string
+          _summary: string
+          _title: string
+        }
+        Returns: string
       }
     }
     Enums: {
