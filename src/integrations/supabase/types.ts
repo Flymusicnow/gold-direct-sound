@@ -2654,6 +2654,67 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_link_anomaly_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string | null
+          details: Json | null
+          external_link_id: string | null
+          id: string
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string | null
+          smart_link_page_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string | null
+          details?: Json | null
+          external_link_id?: string | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          smart_link_page_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string | null
+          details?: Json | null
+          external_link_id?: string | null
+          id?: string
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string | null
+          smart_link_page_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_anomaly_alerts_external_link_id_fkey"
+            columns: ["external_link_id"]
+            isOneToOne: false
+            referencedRelation: "smart_link_external_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_anomaly_alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "smart_link_anomaly_alerts_smart_link_page_id_fkey"
+            columns: ["smart_link_page_id"]
+            isOneToOne: false
+            referencedRelation: "smart_link_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       smart_link_audit_log: {
         Row: {
           action: string
@@ -2920,6 +2981,38 @@ export type Database = {
             columns: ["suspended_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_link_rate_limits: {
+        Row: {
+          action_type: string
+          artist_id: string
+          created_at: string | null
+          id: string
+          window_start: string | null
+        }
+        Insert: {
+          action_type: string
+          artist_id: string
+          created_at?: string | null
+          id?: string
+          window_start?: string | null
+        }
+        Update: {
+          action_type?: string
+          artist_id?: string
+          created_at?: string | null
+          id?: string
+          window_start?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_link_rate_limits_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3775,6 +3868,14 @@ export type Database = {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json
       }
+      check_smart_link_rate_limit: {
+        Args: {
+          _action_type?: string
+          _artist_id: string
+          _max_actions?: number
+        }
+        Returns: boolean
+      }
       generate_artist_referral_code: {
         Args: { _user_id: string }
         Returns: string
@@ -3925,6 +4026,10 @@ export type Database = {
       }
       is_super_admin: { Args: never; Returns: boolean }
       process_scheduled_releases: { Args: never; Returns: Json }
+      record_smart_link_action: {
+        Args: { _action_type: string; _artist_id: string }
+        Returns: undefined
+      }
       redeem_beta_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
