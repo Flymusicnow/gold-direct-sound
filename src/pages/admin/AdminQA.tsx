@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useQAHealthCheck, RouteCheckResult, DBCheckResult } from '@/hooks/useQAHealthCheck';
+import { useQAHealthCheck, RouteCheckResult, DBCheckResult, QAResults } from '@/hooks/useQAHealthCheck';
+import { createInboxMessagesFromQAResults } from '@/hooks/useInboxMessages';
 import { supabase } from '@/integrations/supabase/client';
 import { isSentryConfigured } from '@/lib/sentry';
 import { 
@@ -23,7 +24,8 @@ import {
   Clock,
   Send,
   Download,
-  Copy
+  Copy,
+  WifiOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -73,6 +75,7 @@ export default function AdminQA() {
   const [isLoadingErrors, setIsLoadingErrors] = useState(false);
   const [isSendingReport, setIsSendingReport] = useState(false);
   const [errorFilter, setErrorFilter] = useState<'1h' | '24h' | '7d'>('24h');
+  const [systemError, setSystemError] = useState<Error | null>(null);
 
   // Fetch runtime errors
   const fetchErrors = async () => {
@@ -122,13 +125,38 @@ export default function AdminQA() {
   }, [errorFilter]);
 
   const handleRunChecks = async () => {
-    const qaResults = await runAllChecks();
-    await saveResults(qaResults, 'manual');
+    let qaResults: QAResults | null = null;
+    let runError: Error | null = null;
+    setSystemError(null);
+
+    try {
+      qaResults = await runAllChecks();
+      await saveResults(qaResults, 'manual');
+    } catch (error) {
+      runError = error instanceof Error ? error : new Error(String(error));
+      setSystemError(runError);
+      console.error('QA checks failed to complete:', runError);
+    }
+
+    // ALWAYS create inbox messages - even on failure
+    await createInboxMessagesFromQAResults(qaResults, runError);
+
     await fetchReportHistory();
-    toast({
-      title: qaResults.overallPassed ? '✅ All checks passed!' : '❌ Some checks failed',
-      description: `Route: ${qaResults.routeChecks.filter(r => r.passed).length}/${qaResults.routeChecks.length} | DB: ${qaResults.dbChecks.filter(d => d.passed).length}/${qaResults.dbChecks.length}`,
-    });
+
+    if (runError) {
+      toast({
+        title: '❌ QA checks failed to complete',
+        description: runError.message,
+        variant: 'destructive',
+      });
+    } else if (qaResults) {
+      const hasFailures = !qaResults.overallPassed;
+      toast({
+        title: hasFailures ? '❌ Issues detected' : '✅ All checks passed!',
+        description: `Route: ${qaResults.routeChecks.filter(r => r.passed).length}/${qaResults.routeChecks.length} | DB: ${qaResults.dbChecks.filter(d => d.passed).length}/${qaResults.dbChecks.length}`,
+        variant: hasFailures ? 'destructive' : 'default',
+      });
+    }
   };
 
   const handleSendReport = async () => {
@@ -177,11 +205,15 @@ ${results.overallPassed ? '✅ ALL SYSTEMS OPERATIONAL' : '❌ ISSUES DETECTED'}
   return (
     <AdminLayout title="QA Mode" description="System health checks, mobile preview, and error tracking">
       {/* Status Board Header */}
-      <Card className="mb-6 border-2 border-primary/20">
+      <Card className={`mb-6 border-2 ${systemError ? 'border-destructive' : 'border-primary/20'}`}>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              {results ? (
+              {systemError ? (
+                <div className="h-16 w-16 rounded-full bg-destructive/20 flex items-center justify-center">
+                  <WifiOff className="h-8 w-8 text-destructive" />
+                </div>
+              ) : results ? (
                 results.overallPassed ? (
                   <div className="h-16 w-16 rounded-full bg-green-500/20 flex items-center justify-center">
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
@@ -198,13 +230,20 @@ ${results.overallPassed ? '✅ ALL SYSTEMS OPERATIONAL' : '❌ ISSUES DETECTED'}
               )}
               <div>
                 <h2 className="text-2xl font-bold">
-                  {results 
-                    ? results.overallPassed 
-                      ? 'All Systems Operational' 
-                      : 'Issues Detected'
-                    : 'Ready to Run Checks'}
+                  {systemError
+                    ? 'System Failure'
+                    : results 
+                      ? results.overallPassed 
+                        ? 'All Systems Operational' 
+                        : 'Issues Detected'
+                      : 'Ready to Run Checks'}
                 </h2>
-                {results && (
+                {systemError && (
+                  <p className="text-sm text-destructive">
+                    {systemError.message}
+                  </p>
+                )}
+                {results && !systemError && (
                   <p className="text-sm text-muted-foreground">
                     Last check: {format(new Date(results.timestamp), 'MMM d, yyyy HH:mm:ss')}
                   </p>

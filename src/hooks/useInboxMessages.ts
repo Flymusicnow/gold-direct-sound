@@ -319,18 +319,40 @@ export function useInboxMessage(id: string) {
   };
 }
 
-// Function to create inbox messages from QA results
-export async function createInboxMessagesFromQAResults(results: {
-  routeChecks: { route: string; status: string; category: string }[];
-  dbChecks: { table: string; status: string; responseTime: number }[];
-  errorCount: number;
-}) {
-  const { routeChecks, dbChecks, errorCount } = results;
+// Import QAResults type for proper typing
+import type { QAResults } from '@/hooks/useQAHealthCheck';
 
-  // Count failing routes
-  const failingRoutes = routeChecks.filter((r) => r.status !== "pass");
-  const failingTables = dbChecks.filter((d) => d.status !== "pass");
-  const slowTables = dbChecks.filter((d) => d.responseTime > 2000);
+// Function to create inbox messages from QA results
+export async function createInboxMessagesFromQAResults(
+  results: QAResults | null,
+  systemError?: Error | null
+) {
+  // If system error occurred (network offline, exception), create critical inbox item
+  if (systemError || !results) {
+    try {
+      await supabase.rpc("upsert_inbox_message", {
+        _dedupe_key: "qa:system_failure",
+        _title: "QA checks could not complete",
+        _summary: systemError?.message || "Unknown system error - checks failed to run",
+        _priority: "critical",
+        _payload: {
+          type: "system_failure",
+          error: systemError?.message || "Unknown error",
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
+      console.error("Failed to create system failure inbox message:", e);
+    }
+    return;
+  }
+
+  const { routeChecks, dbChecks, errorsLast24h } = results;
+
+  // Count failing routes (use passed: boolean)
+  const failingRoutes = routeChecks.filter((r) => !r.passed);
+  const failingTables = dbChecks.filter((d) => !d.passed);
+  const slowTables = dbChecks.filter((d) => d.passed && d.responseTime > 2000);
 
   // Determine priority for routes
   const getRoutePriority = (count: number): "critical" | "high" | "normal" => {
@@ -346,69 +368,73 @@ export async function createInboxMessagesFromQAResults(results: {
     return "normal";
   };
 
-  // Create messages for failing routes
-  if (failingRoutes.length > 0) {
-    const dedupeKey =
-      failingRoutes.length >= 3
-        ? "qa:routes_failing:multiple"
-        : `qa:routes_failing:${failingRoutes[0].route}`;
+  try {
+    // Create messages for failing routes
+    if (failingRoutes.length > 0) {
+      const dedupeKey =
+        failingRoutes.length >= 3
+          ? "qa:routes_failing:multiple"
+          : `qa:routes_failing:${failingRoutes[0].route}`;
 
-    const title =
-      failingRoutes.length >= 3
-        ? `${failingRoutes.length} sidor fungerar inte`
-        : `Sidan ${failingRoutes[0].route} fungerar inte`;
+      const title =
+        failingRoutes.length >= 3
+          ? `${failingRoutes.length} routes are failing`
+          : `Route ${failingRoutes[0].route} is failing`;
 
-    const summary = failingRoutes.map((r) => r.route).join(", ");
+      const summary = failingRoutes.map((r) => `${r.route} (${r.reason})`).join(", ");
 
-    await supabase.rpc("upsert_inbox_message", {
-      _dedupe_key: dedupeKey,
-      _title: title,
-      _summary: summary,
-      _priority: getRoutePriority(failingRoutes.length),
-      _payload: { type: "route_check", routes: failingRoutes },
-    });
-  }
+      await supabase.rpc("upsert_inbox_message", {
+        _dedupe_key: dedupeKey,
+        _title: title,
+        _summary: summary.substring(0, 500),
+        _priority: getRoutePriority(failingRoutes.length),
+        _payload: { type: "route_check", routes: failingRoutes.map(r => ({ route: r.route, reason: r.reason, status: r.status })) },
+      });
+    }
 
-  // Create messages for database issues
-  if (failingTables.length > 0 || slowTables.length > 0) {
-    const issues = [...failingTables, ...slowTables];
-    const dedupeKey =
-      issues.length >= 3
-        ? "qa:database_health:multiple"
-        : `qa:database_health:${issues[0].table}`;
+    // Create messages for database issues
+    if (failingTables.length > 0 || slowTables.length > 0) {
+      const issues = [...failingTables, ...slowTables];
+      const dedupeKey =
+        issues.length >= 3
+          ? "qa:database_health:multiple"
+          : `qa:database_health:${issues[0].table}`;
 
-    const title =
-      failingTables.length > 0
-        ? "Databasproblem upptäckt"
-        : "Databasen är långsam";
+      const title =
+        failingTables.length > 0
+          ? "Database issues detected"
+          : "Database is slow";
 
-    const summary = issues.map((t) => t.table).join(", ");
+      const summary = issues.map((t) => `${t.table} (${t.reason})`).join(", ");
 
-    await supabase.rpc("upsert_inbox_message", {
-      _dedupe_key: dedupeKey,
-      _title: title,
-      _summary: summary,
-      _priority: failingTables.length > 0 ? "high" : "normal",
-      _payload: { type: "database_check", tables: issues },
-    });
-  }
+      await supabase.rpc("upsert_inbox_message", {
+        _dedupe_key: dedupeKey,
+        _title: title,
+        _summary: summary.substring(0, 500),
+        _priority: failingTables.length > 0 ? "high" : "normal",
+        _payload: { type: "database_check", tables: issues.map(t => ({ table: t.table, reason: t.reason, responseTime: t.responseTime })) },
+      });
+    }
 
-  // Create messages for runtime errors
-  if (errorCount > 0) {
-    const dedupeKey =
-      errorCount >= 10
-        ? "qa:runtime_errors:multiple"
-        : "qa:runtime_errors:recent";
+    // Create messages for runtime errors
+    if (errorsLast24h > 0) {
+      const dedupeKey =
+        errorsLast24h >= 10
+          ? "qa:runtime_errors:multiple"
+          : "qa:runtime_errors:recent";
 
-    const title = `${errorCount} fel under senaste 24 timmarna`;
-    const summary = `${errorCount} runtime errors loggade`;
+      const title = `${errorsLast24h} errors in last 24 hours`;
+      const summary = `${errorsLast24h} runtime errors logged`;
 
-    await supabase.rpc("upsert_inbox_message", {
-      _dedupe_key: dedupeKey,
-      _title: title,
-      _summary: summary,
-      _priority: getErrorPriority(errorCount),
-      _payload: { type: "runtime_errors", count: errorCount },
-    });
+      await supabase.rpc("upsert_inbox_message", {
+        _dedupe_key: dedupeKey,
+        _title: title,
+        _summary: summary,
+        _priority: getErrorPriority(errorsLast24h),
+        _payload: { type: "runtime_errors", count: errorsLast24h },
+      });
+    }
+  } catch (e) {
+    console.error("Failed to create inbox messages from QA results:", e);
   }
 }
