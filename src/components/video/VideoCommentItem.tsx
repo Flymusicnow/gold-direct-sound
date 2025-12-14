@@ -221,15 +221,16 @@ export function VideoCommentItem({
 
           <p className="text-foreground/90">{comment.text}</p>
 
-          <div className="flex items-center gap-4">
+          {/* Actions - Mobile optimized touch targets */}
+          <div className="flex items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={`gap-1 h-8 ${hasLiked ? 'text-primary' : ''}`}
+              className={`gap-1.5 min-h-[44px] min-w-[44px] px-3 ${hasLiked ? 'text-primary' : 'text-muted-foreground'} hover:text-primary active:scale-95 transition-transform`}
             >
-              <Heart className={`w-4 h-4 ${hasLiked ? 'fill-current' : ''}`} />
-              {likes.length > 0 && likes.length}
+              <Heart className={`w-5 h-5 sm:w-4 sm:h-4 ${hasLiked ? 'fill-current' : ''}`} />
+              <span className="text-sm">{likes.length > 0 && likes.length}</span>
             </Button>
 
             {depth < 2 && (
@@ -237,10 +238,10 @@ export function VideoCommentItem({
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowReplyForm(!showReplyForm)}
-                className="gap-1 h-8"
+                className="gap-1.5 min-h-[44px] min-w-[44px] px-3 text-muted-foreground hover:text-primary active:scale-95 transition-transform"
               >
-                <Reply className="w-4 h-4" />
-                Reply
+                <Reply className="w-5 h-5 sm:w-4 sm:h-4" />
+                <span className="text-sm">Reply</span>
               </Button>
             )}
 

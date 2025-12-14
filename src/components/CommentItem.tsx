@@ -221,26 +221,26 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
 
           <p className="text-foreground/90 whitespace-pre-wrap mb-3">{comment.text}</p>
 
-          {/* Actions */}
-          <div className="flex items-center gap-4">
+          {/* Actions - Mobile optimized touch targets */}
+          <div className="flex items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleLike}
-              className={`gap-1 ${isLiked ? "text-primary" : "text-muted-foreground"} hover:text-primary`}
+              className={`gap-1.5 min-h-[44px] min-w-[44px] px-3 ${isLiked ? "text-primary" : "text-muted-foreground"} hover:text-primary active:scale-95 transition-transform`}
             >
-              <Heart className={`w-4 h-4 ${isLiked ? "fill-primary" : ""}`} />
-              <span>{likeCount > 0 && likeCount}</span>
+              <Heart className={`w-5 h-5 sm:w-4 sm:h-4 ${isLiked ? "fill-primary" : ""}`} />
+              <span className="text-sm">{likeCount > 0 && likeCount}</span>
             </Button>
 
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setShowReply(!showReply)}
-              className="gap-1 text-muted-foreground hover:text-primary"
+              className="gap-1.5 min-h-[44px] min-w-[44px] px-3 text-muted-foreground hover:text-primary active:scale-95 transition-transform"
             >
-              <Reply className="w-4 h-4" />
-              Reply
+              <Reply className="w-5 h-5 sm:w-4 sm:h-4" />
+              <span className="text-sm">Reply</span>
             </Button>
 
             {currentUserId === comment.user_id && (
@@ -248,9 +248,9 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
                 variant="ghost"
                 size="sm"
                 onClick={handleDelete}
-                className="gap-1 text-muted-foreground hover:text-destructive ml-auto"
+                className="gap-1 min-h-[44px] min-w-[44px] text-muted-foreground hover:text-destructive ml-auto active:scale-95 transition-transform"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-5 h-5 sm:w-4 sm:h-4" />
               </Button>
             )}
           </div>
