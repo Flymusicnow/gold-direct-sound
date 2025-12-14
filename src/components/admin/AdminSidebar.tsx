@@ -16,12 +16,15 @@ import {
   ChevronRight,
   FlaskConical,
   Link2,
+  Inbox,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+  { title: "Inbox", url: "/admin/inbox", icon: Inbox, hasBadge: true },
   { title: "QA Mode", url: "/admin/qa", icon: FlaskConical },
   { title: "Approvals", url: "/admin/approvals", icon: Shield },
   { title: "Users", url: "/admin/users", icon: Users },
@@ -43,6 +46,38 @@ const adminNavItems = [
 export function AdminSidebar() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [inboxCounts, setInboxCounts] = useState({ unread: 0, inProgress: 0 });
+
+  useEffect(() => {
+    const fetchInboxCounts = async () => {
+      try {
+        const { count: unread } = await supabase
+          .from("inbox_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "unread");
+
+        const { count: inProgress } = await supabase
+          .from("inbox_messages")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "in_progress");
+
+        setInboxCounts({
+          unread: unread || 0,
+          inProgress: inProgress || 0,
+        });
+      } catch (error) {
+        console.error("Error fetching inbox counts:", error);
+      }
+    };
+
+    fetchInboxCounts();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchInboxCounts, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const totalActive = inboxCounts.unread + inboxCounts.inProgress;
+  const hasUnread = inboxCounts.unread > 0;
 
   return (
     <aside
@@ -75,6 +110,9 @@ export function AdminSidebar() {
           const isActive = location.pathname === item.url || 
             (item.url !== "/admin" && location.pathname.startsWith(item.url));
           
+          // Special handling for Inbox badge
+          const showBadge = (item as { hasBadge?: boolean }).hasBadge && totalActive > 0;
+          
           return (
             <RouterNavLink
               key={item.url}
@@ -88,7 +126,27 @@ export function AdminSidebar() {
             >
               <item.icon className={cn("h-5 w-5 flex-shrink-0", isActive && "text-primary")} />
               {!collapsed && (
-                <span className={cn("text-sm", isActive && "font-medium")}>{item.title}</span>
+                <span className={cn("text-sm flex-1", isActive && "font-medium")}>{item.title}</span>
+              )}
+              {showBadge && !collapsed && (
+                <span
+                  className={cn(
+                    "text-xs font-medium px-1.5 py-0.5 rounded-full",
+                    hasUnread
+                      ? "bg-destructive text-destructive-foreground"
+                      : "bg-yellow-500 text-yellow-50"
+                  )}
+                >
+                  {totalActive}
+                </span>
+              )}
+              {showBadge && collapsed && (
+                <span
+                  className={cn(
+                    "absolute top-1 right-1 w-2 h-2 rounded-full",
+                    hasUnread ? "bg-destructive" : "bg-yellow-500"
+                  )}
+                />
               )}
             </RouterNavLink>
           );

@@ -67,6 +67,8 @@ import AdminUpdates from "./pages/admin/AdminUpdates";
 import AdminArtists from "./pages/admin/AdminArtists";
 import AdminTracks from "./pages/admin/AdminTracks";
 import AdminQA from "./pages/admin/AdminQA";
+import AdminInbox from "./pages/admin/AdminInbox";
+import AdminInboxDetail from "./pages/admin/AdminInboxDetail";
 import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
@@ -288,6 +290,8 @@ const App = () => (
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
             <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUpdates /></ProtectedRoute>} />
             <Route path="/admin/smart-links" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSmartLinks /></ProtectedRoute>} />
+            <Route path="/admin/inbox" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInbox /></ProtectedRoute>} />
+            <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
