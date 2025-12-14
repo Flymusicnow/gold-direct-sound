@@ -61,7 +61,7 @@ export function BottomNavBarStudio() {
               <span className="text-xs font-medium">More</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="max-h-[85vh] h-auto rounded-t-2xl flex flex-col overflow-hidden">
+          <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl flex flex-col" onOpenAutoFocus={(e) => e.preventDefault()}>
             <MobileStudioNav inSheet onNavigate={() => setSheetOpen(false)} />
           </SheetContent>
         </Sheet>

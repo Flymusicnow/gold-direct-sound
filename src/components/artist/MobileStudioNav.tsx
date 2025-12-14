@@ -182,7 +182,7 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
 
   if (inSheet) {
     return (
-      <div className="flex flex-col h-full max-h-[calc(85vh-4rem)] overflow-hidden">
+      <div className="flex flex-col h-full min-h-0">
         <div className="flex-shrink-0 pb-4 space-y-4">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
@@ -214,7 +214,7 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <motion.nav
             className="space-y-1 pb-safe"
             initial="hidden"
