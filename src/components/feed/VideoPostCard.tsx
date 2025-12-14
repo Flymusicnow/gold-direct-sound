@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -43,12 +42,12 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
   }
 
   return (
-    <div className="video-card-gold-outer shadow-lg hover:shadow-xl transition-all">
-      <div className="video-card-gold-inner">
+    <div className="video-card-gold-outer shadow-lg hover:shadow-xl transition-all w-full max-w-full overflow-hidden">
+      <div className="video-card-gold-inner w-full max-w-full overflow-hidden">
         {/* Artist Header */}
         <div className="p-5 md:p-4 flex items-center gap-4 md:gap-3 bg-card/50 backdrop-blur-sm">
           <Link to={`/artist/${artist.user_id}`}>
-            <Avatar className="h-14 w-14 md:h-12 md:w-12 border-2 border-primary/30 hover:border-primary/60 transition-colors">
+            <Avatar className="h-14 w-14 md:h-12 md:w-12 border-2 border-primary/30 hover:border-primary/60 transition-colors flex-shrink-0">
               <AvatarImage src={artist.avatar_url || undefined} />
               <AvatarFallback className="bg-primary/20 text-primary font-semibold text-lg md:text-base">
                 {artist.artist_name?.charAt(0)?.toUpperCase() || "A"}
@@ -68,13 +67,14 @@ export function VideoPostCard({ videoId, videoUrl, caption, createdAt, artist }:
           </div>
         </div>
 
-        {/* Premium Video Player with Padding */}
-        <div className="px-4 md:px-3 pb-4 md:pb-3">
+        {/* Premium Video Player with Containment */}
+        <div className="w-full max-w-full overflow-hidden">
           <PremiumVideoPlayer 
             videoUrl={videoUrl}
-            autoPlay={true}
+            autoPlay={false}
             loop={true}
             showFrame={false}
+            enableVisibilityAutoplay={true}
           />
         </div>
 
