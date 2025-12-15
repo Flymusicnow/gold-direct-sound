@@ -263,7 +263,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "FlyMusic QA <onboarding@resend.dev>",
+        from: "FlyMusic QA <noreply@flymusic.se>",
         to: adminEmails,
         subject: `${overallPassed ? "✅" : "❌"} FlyMusic QA Report - ${now.toLocaleDateString()}`,
         html: emailHtml,
