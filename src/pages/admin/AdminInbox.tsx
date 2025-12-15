@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useInboxMessages, InboxMessage } from "@/hooks/useInboxMessages";
+import { useInboxLanguage } from "@/hooks/useInboxLanguage";
+import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -23,17 +24,20 @@ import {
   Mail,
   MailOpen,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { sv } from "date-fns/locale";
+import { formatDistanceToNow, Locale } from "date-fns";
+import { sv, enUS } from "date-fns/locale";
 
 export default function AdminInbox() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const { language, setLanguage, t } = useInboxLanguage();
 
   const { messages, loading, unreadCount, inProgressCount } = useInboxMessages({
     status: statusFilter as "unread" | "in_progress" | "resolved" | "all",
     priority: priorityFilter as "critical" | "high" | "normal" | "all",
   });
+
+  const dateLocale = language === "sv" ? sv : enUS;
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -48,54 +52,42 @@ export default function AdminInbox() {
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "unread":
-        return "Oläst";
-      case "in_progress":
-        return "Pågående";
-      case "resolved":
-        return "Löst";
-      default:
-        return status;
-    }
-  };
-
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case "critical":
         return (
           <Badge variant="destructive" className="gap-1">
             <AlertCircle className="h-3 w-3" />
-            Kritisk
+            {t("priorityCritical")}
           </Badge>
         );
       case "high":
         return (
           <Badge variant="outline" className="border-yellow-500 text-yellow-600 gap-1">
             <AlertTriangle className="h-3 w-3" />
-            Hög
+            {t("priorityHigh")}
           </Badge>
         );
       default:
-        return (
-          <Badge variant="secondary">Normal</Badge>
-        );
+        return <Badge variant="secondary">{t("priorityNormal")}</Badge>;
     }
   };
 
   return (
-    <AdminLayout title="Inbox" description="Hantera QA-problem och systemmeddelanden">
-      {/* Stats bar */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10">
-          <Mail className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">{unreadCount} olästa</span>
+    <AdminLayout title={t("inbox")} description={t("inboxDescription")}>
+      {/* Language selector + Stats bar */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10">
+            <Mail className="h-4 w-4 text-primary" />
+            <span className="text-sm font-medium">{unreadCount} {t("unread")}</span>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-500/10">
+            <Clock className="h-4 w-4 text-yellow-500" />
+            <span className="text-sm font-medium">{inProgressCount} {t("inProgress")}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-yellow-500/10">
-          <Clock className="h-4 w-4 text-yellow-500" />
-          <span className="text-sm font-medium">{inProgressCount} pågående</span>
-        </div>
+        <InboxLanguageSelector language={language} onLanguageChange={setLanguage} />
       </div>
 
       {/* Filters */}
@@ -105,22 +97,22 @@ export default function AdminInbox() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alla statusar</SelectItem>
-            <SelectItem value="unread">Olästa</SelectItem>
-            <SelectItem value="in_progress">Pågående</SelectItem>
-            <SelectItem value="resolved">Lösta</SelectItem>
+            <SelectItem value="all">{t("allStatuses")}</SelectItem>
+            <SelectItem value="unread">{t("unreadStatus")}</SelectItem>
+            <SelectItem value="in_progress">{t("inProgressStatus")}</SelectItem>
+            <SelectItem value="resolved">{t("resolvedStatus")}</SelectItem>
           </SelectContent>
         </Select>
 
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
           <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Prioritet" />
+            <SelectValue placeholder={t("allPriorities")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Alla prioriteter</SelectItem>
-            <SelectItem value="critical">Kritisk</SelectItem>
-            <SelectItem value="high">Hög</SelectItem>
-            <SelectItem value="normal">Normal</SelectItem>
+            <SelectItem value="all">{t("allPriorities")}</SelectItem>
+            <SelectItem value="critical">{t("critical")}</SelectItem>
+            <SelectItem value="high">{t("high")}</SelectItem>
+            <SelectItem value="normal">{t("normal")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -142,16 +134,23 @@ export default function AdminInbox() {
         ) : messages.length === 0 ? (
           <Card className="p-8 text-center">
             <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-medium mb-1">Inga meddelanden</h3>
+            <h3 className="font-medium mb-1">{t("noMessages")}</h3>
             <p className="text-sm text-muted-foreground">
               {statusFilter !== "all" || priorityFilter !== "all"
-                ? "Inga meddelanden matchar dina filter"
-                : "Alla QA-problem har lösts!"}
+                ? t("noMessagesFiltered")
+                : t("allResolved")}
             </p>
           </Card>
         ) : (
           messages.map((message) => (
-            <InboxMessageCard key={message.id} message={message} />
+            <InboxMessageCard
+              key={message.id}
+              message={message}
+              dateLocale={dateLocale}
+              getPriorityBadge={getPriorityBadge}
+              getStatusIcon={getStatusIcon}
+              t={t}
+            />
           ))
         )}
       </div>
@@ -159,41 +158,21 @@ export default function AdminInbox() {
   );
 }
 
-function InboxMessageCard({ message }: { message: InboxMessage }) {
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "unread":
-        return <Mail className="h-4 w-4 text-primary" />;
-      case "in_progress":
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      case "resolved":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-      default:
-        return <MailOpen className="h-4 w-4" />;
-    }
-  };
+interface InboxMessageCardProps {
+  message: InboxMessage;
+  dateLocale: Locale;
+  getPriorityBadge: (priority: string) => React.ReactNode;
+  getStatusIcon: (status: string) => React.ReactNode;
+  t: (key: string) => string;
+}
 
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case "critical":
-        return (
-          <Badge variant="destructive" className="gap-1">
-            <AlertCircle className="h-3 w-3" />
-            Kritisk
-          </Badge>
-        );
-      case "high":
-        return (
-          <Badge variant="outline" className="border-yellow-500 text-yellow-600 gap-1">
-            <AlertTriangle className="h-3 w-3" />
-            Hög
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">Normal</Badge>;
-    }
-  };
-
+function InboxMessageCard({
+  message,
+  dateLocale,
+  getPriorityBadge,
+  getStatusIcon,
+  t,
+}: InboxMessageCardProps) {
   return (
     <Link to={`/admin/inbox/${message.id}`}>
       <Card
@@ -230,7 +209,7 @@ function InboxMessageCard({ message }: { message: InboxMessage }) {
               <span>
                 {formatDistanceToNow(new Date(message.created_at), {
                   addSuffix: true,
-                  locale: sv,
+                  locale: dateLocale,
                 })}
               </span>
 
@@ -242,13 +221,13 @@ function InboxMessageCard({ message }: { message: InboxMessage }) {
                       {message.assigned_profile.full_name?.[0] || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <span>{message.assigned_profile.full_name || "Tilldelad"}</span>
+                  <span>{message.assigned_profile.full_name || t("assigned")}</span>
                 </div>
               )}
 
               {message.payload?.check_count && (
                 <span className="text-yellow-600">
-                  Kontrollerat {String(message.payload.check_count)} gånger
+                  {t("checks")} {String(message.payload.check_count)} {t("times")}
                 </span>
               )}
             </div>

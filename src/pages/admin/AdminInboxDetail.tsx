@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useInboxMessage, InboxUpdate } from "@/hooks/useInboxMessages";
+import { useInboxLanguage } from "@/hooks/useInboxLanguage";
+import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
+import { LanguageAwareText } from "@/components/admin/LanguageAwareText";
 import { ResolveInboxDialog } from "@/components/admin/ResolveInboxDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,27 +31,32 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
-import { formatDistanceToNow, format } from "date-fns";
-import { sv } from "date-fns/locale";
+import { formatDistanceToNow, format, Locale } from "date-fns";
+import { sv, enUS } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import { InboxLanguage } from "@/i18n/inbox";
 
 export default function AdminInboxDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { language, setLanguage, t } = useInboxLanguage();
+  
   const { message, updates, loading, assignToMe, updateStatus, addUpdate, resolve } =
-    useInboxMessage(id || "");
+    useInboxMessage(id || "", language);
 
   const [newUpdate, setNewUpdate] = useState("");
   const [submittingUpdate, setSubmittingUpdate] = useState(false);
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
 
+  const dateLocale = language === "sv" ? sv : enUS;
+
   const handleAssign = async () => {
     const success = await assignToMe();
     if (success) {
-      toast({ title: "Tilldelad", description: "Du har tilldelat dig själv detta ärende" });
+      toast({ title: t("assignedSuccess"), description: t("assignedDescription") });
     } else {
-      toast({ title: "Fel", description: "Kunde inte tilldela ärendet", variant: "destructive" });
+      toast({ title: t("error"), description: t("couldNotAssign"), variant: "destructive" });
     }
   };
 
@@ -59,9 +67,9 @@ export default function AdminInboxDetail() {
     }
     const success = await updateStatus(newStatus as "unread" | "in_progress");
     if (success) {
-      toast({ title: "Status uppdaterad" });
+      toast({ title: t("statusUpdated") });
     } else {
-      toast({ title: "Fel", description: "Kunde inte uppdatera status", variant: "destructive" });
+      toast({ title: t("error"), description: t("couldNotUpdateStatus"), variant: "destructive" });
     }
   };
 
@@ -71,9 +79,9 @@ export default function AdminInboxDetail() {
     const success = await addUpdate(newUpdate.trim());
     if (success) {
       setNewUpdate("");
-      toast({ title: "Uppdatering tillagd" });
+      toast({ title: t("updateAdded") });
     } else {
-      toast({ title: "Fel", description: "Kunde inte lägga till uppdatering", variant: "destructive" });
+      toast({ title: t("error"), description: t("couldNotAddUpdate"), variant: "destructive" });
     }
     setSubmittingUpdate(false);
   };
@@ -86,9 +94,9 @@ export default function AdminInboxDetail() {
   }) => {
     const success = await resolve(details);
     if (success) {
-      toast({ title: "Ärendet löst!", description: "Problemet har markerats som löst" });
+      toast({ title: t("issueResolved"), description: t("resolvedDescription") });
     } else {
-      toast({ title: "Fel", description: "Kunde inte lösa ärendet", variant: "destructive" });
+      toast({ title: t("error"), description: t("couldNotResolve"), variant: "destructive" });
     }
     return success;
   };
@@ -99,18 +107,18 @@ export default function AdminInboxDetail() {
         return (
           <Badge variant="destructive" className="gap-1">
             <AlertCircle className="h-3 w-3" />
-            Kritisk
+            {t("priorityCritical")}
           </Badge>
         );
       case "high":
         return (
           <Badge variant="outline" className="border-yellow-500 text-yellow-600 gap-1">
             <AlertTriangle className="h-3 w-3" />
-            Hög
+            {t("priorityHigh")}
           </Badge>
         );
       default:
-        return <Badge variant="secondary">Normal</Badge>;
+        return <Badge variant="secondary">{t("priorityNormal")}</Badge>;
     }
   };
 
@@ -129,7 +137,7 @@ export default function AdminInboxDetail() {
 
   if (loading) {
     return (
-      <AdminLayout title="Laddar..." description="">
+      <AdminLayout title={t("loading")} description="">
         <div className="space-y-4">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-48 w-full" />
@@ -140,24 +148,28 @@ export default function AdminInboxDetail() {
 
   if (!message) {
     return (
-      <AdminLayout title="Meddelande hittades inte" description="">
+      <AdminLayout title={t("messageNotFound")} description="">
         <Button variant="outline" onClick={() => navigate("/admin/inbox")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Tillbaka till Inbox
+          {t("backToInbox")}
         </Button>
       </AdminLayout>
     );
   }
 
   const isResolved = message.status === "resolved";
+  const resolutionLanguage = (message.resolution_details as { language?: InboxLanguage })?.language;
 
   return (
     <AdminLayout title={message.title} description={message.summary || ""}>
-      {/* Back button */}
-      <Button variant="ghost" size="sm" onClick={() => navigate("/admin/inbox")} className="mb-4">
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Tillbaka
-      </Button>
+      {/* Header with back button and language selector */}
+      <div className="flex items-center justify-between mb-4">
+        <Button variant="ghost" size="sm" onClick={() => navigate("/admin/inbox")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("back")}
+        </Button>
+        <InboxLanguageSelector language={language} onLanguageChange={setLanguage} />
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main content */}
@@ -174,10 +186,10 @@ export default function AdminInboxDetail() {
                   <div className="flex items-center gap-2">
                     {getPriorityBadge(message.priority)}
                     <span className="text-sm text-muted-foreground">
-                      Skapad{" "}
+                      {t("created")}{" "}
                       {formatDistanceToNow(new Date(message.created_at), {
                         addSuffix: true,
-                        locale: sv,
+                        locale: dateLocale,
                       })}
                     </span>
                   </div>
@@ -192,7 +204,7 @@ export default function AdminInboxDetail() {
               {/* Payload details */}
               {message.payload && (
                 <div className="bg-muted rounded-lg p-4 space-y-2">
-                  <h4 className="font-medium text-sm">Detaljer</h4>
+                  <h4 className="font-medium text-sm">{t("details")}</h4>
                   <pre className="text-xs overflow-auto max-h-48">
                     {JSON.stringify(message.payload, null, 2)}
                   </pre>
@@ -204,23 +216,35 @@ export default function AdminInboxDetail() {
                 <div className="mt-4 bg-green-500/10 border border-green-500/20 rounded-lg p-4 space-y-3">
                   <div className="flex items-center gap-2 text-green-600">
                     <CheckCircle2 className="h-4 w-4" />
-                    <h4 className="font-medium">Löst</h4>
+                    <h4 className="font-medium">{t("resolved")}</h4>
                   </div>
                   <div className="space-y-2 text-sm">
                     <p>
-                      <strong>Problemet var att:</strong>{" "}
-                      {(message.resolution_details as { problem?: string }).problem}
+                      <strong>{t("problemWas")}</strong>{" "}
+                      <LanguageAwareText
+                        text={(message.resolution_details as { problem?: string }).problem || ""}
+                        contentLanguage={resolutionLanguage}
+                        viewerLanguage={language}
+                      />
                     </p>
                     <p>
-                      <strong>Vi fixade det genom att:</strong>{" "}
-                      {(message.resolution_details as { fix?: string }).fix}
+                      <strong>{t("weFixedBy")}</strong>{" "}
+                      <LanguageAwareText
+                        text={(message.resolution_details as { fix?: string }).fix || ""}
+                        contentLanguage={resolutionLanguage}
+                        viewerLanguage={language}
+                      />
                     </p>
                     <p>
-                      <strong>Nu fungerar det eftersom:</strong>{" "}
-                      {(message.resolution_details as { verification?: string }).verification}
+                      <strong>{t("nowWorking")}</strong>{" "}
+                      <LanguageAwareText
+                        text={(message.resolution_details as { verification?: string }).verification || ""}
+                        contentLanguage={resolutionLanguage}
+                        viewerLanguage={language}
+                      />
                     </p>
                     <p>
-                      <strong>Testat på:</strong>{" "}
+                      <strong>{t("testedOn")}</strong>{" "}
                       {((message.resolution_details as { testedOn?: string[] }).testedOn || []).join(", ")}
                     </p>
                   </div>
@@ -232,12 +256,18 @@ export default function AdminInboxDetail() {
           {/* Timeline */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Tidslinje</CardTitle>
+              <CardTitle className="text-base">{t("timeline")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {updates.map((update) => (
-                  <TimelineItem key={update.id} update={update} />
+                  <TimelineItem
+                    key={update.id}
+                    update={update}
+                    viewerLanguage={language}
+                    dateLocale={dateLocale}
+                    t={t}
+                  />
                 ))}
 
                 {/* Add update form */}
@@ -245,7 +275,7 @@ export default function AdminInboxDetail() {
                   <div className="pt-4 border-t">
                     <div className="flex gap-2">
                       <Textarea
-                        placeholder="Lägg till en uppdatering..."
+                        placeholder={t("addUpdatePlaceholder")}
                         value={newUpdate}
                         onChange={(e) => setNewUpdate(e.target.value)}
                         className="min-h-[80px]"
@@ -258,7 +288,7 @@ export default function AdminInboxDetail() {
                         disabled={!newUpdate.trim() || submittingUpdate}
                       >
                         <Send className="h-4 w-4 mr-2" />
-                        {submittingUpdate ? "Skickar..." : "Lägg till"}
+                        {submittingUpdate ? t("sending") : t("addUpdate")}
                       </Button>
                     </div>
                   </div>
@@ -273,7 +303,7 @@ export default function AdminInboxDetail() {
           {/* Actions */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Åtgärder</CardTitle>
+              <CardTitle className="text-base">{t("actions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               {!isResolved && (
@@ -281,7 +311,7 @@ export default function AdminInboxDetail() {
                   {!message.assigned_to && (
                     <Button className="w-full" onClick={handleAssign}>
                       <UserPlus className="h-4 w-4 mr-2" />
-                      Tilldela mig
+                      {t("assignToMe")}
                     </Button>
                   )}
 
@@ -290,12 +320,12 @@ export default function AdminInboxDetail() {
                     onValueChange={handleStatusChange}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Ändra status" />
+                      <SelectValue placeholder={t("changeStatus")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unread">Oläst</SelectItem>
-                      <SelectItem value="in_progress">Pågående</SelectItem>
-                      <SelectItem value="resolved">Löst</SelectItem>
+                      <SelectItem value="unread">{t("statusUnread")}</SelectItem>
+                      <SelectItem value="in_progress">{t("statusInProgress")}</SelectItem>
+                      <SelectItem value="resolved">{t("statusResolved")}</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -305,7 +335,7 @@ export default function AdminInboxDetail() {
                     onClick={() => setResolveDialogOpen(true)}
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Lös problemet
+                    {t("resolveProblem")}
                   </Button>
                 </>
               )}
@@ -314,10 +344,10 @@ export default function AdminInboxDetail() {
                 <div className="text-center py-4">
                   <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">
-                    Löst av {message.resolved_by_profile?.full_name || "okänd"}
+                    {t("resolvedBy")} {message.resolved_by_profile?.full_name || t("unknown")}
                     <br />
                     {message.resolved_at &&
-                      format(new Date(message.resolved_at), "d MMM yyyy HH:mm", { locale: sv })}
+                      format(new Date(message.resolved_at), "d MMM yyyy HH:mm", { locale: dateLocale })}
                   </p>
                 </div>
               )}
@@ -327,24 +357,24 @@ export default function AdminInboxDetail() {
           {/* Info */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Information</CardTitle>
+              <CardTitle className="text-base">{t("information")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Typ</span>
+                <span className="text-muted-foreground">{t("type")}</span>
                 <span>{message.type}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Skapad</span>
-                <span>{format(new Date(message.created_at), "d MMM yyyy HH:mm", { locale: sv })}</span>
+                <span className="text-muted-foreground">{t("created")}</span>
+                <span>{format(new Date(message.created_at), "d MMM yyyy HH:mm", { locale: dateLocale })}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Uppdaterad</span>
-                <span>{format(new Date(message.updated_at), "d MMM yyyy HH:mm", { locale: sv })}</span>
+                <span className="text-muted-foreground">{t("updated")}</span>
+                <span>{format(new Date(message.updated_at), "d MMM yyyy HH:mm", { locale: dateLocale })}</span>
               </div>
               {message.assigned_profile && (
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Tilldelad</span>
+                  <span className="text-muted-foreground">{t("assigned")}</span>
                   <div className="flex items-center gap-2">
                     <Avatar className="h-5 w-5">
                       <AvatarImage src={message.assigned_profile.avatar_url || undefined} />
@@ -358,8 +388,8 @@ export default function AdminInboxDetail() {
               )}
               {message.payload?.check_count && (
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Kontroller</span>
-                  <span className="text-yellow-600">{String(message.payload.check_count)} gånger</span>
+                  <span className="text-muted-foreground">{t("checks")}</span>
+                  <span className="text-yellow-600">{String(message.payload.check_count)} {t("times")}</span>
                 </div>
               )}
             </CardContent>
@@ -371,12 +401,20 @@ export default function AdminInboxDetail() {
         open={resolveDialogOpen}
         onOpenChange={setResolveDialogOpen}
         onResolve={handleResolve}
+        language={language}
       />
     </AdminLayout>
   );
 }
 
-function TimelineItem({ update }: { update: InboxUpdate }) {
+interface TimelineItemProps {
+  update: InboxUpdate;
+  viewerLanguage: InboxLanguage;
+  dateLocale: Locale;
+  t: (key: string) => string;
+}
+
+function TimelineItem({ update, viewerLanguage, dateLocale, t }: TimelineItemProps) {
   return (
     <div className="flex gap-3">
       <div className="flex-shrink-0">
@@ -397,17 +435,22 @@ function TimelineItem({ update }: { update: InboxUpdate }) {
         <div className="flex items-center gap-2 mb-1">
           <span className="font-medium text-sm">
             {update.is_system
-              ? "System"
-              : update.author_profile?.full_name || "Okänd"}
+              ? t("system")
+              : update.author_profile?.full_name || t("unknown")}
           </span>
           <span className="text-xs text-muted-foreground">
             {formatDistanceToNow(new Date(update.created_at), {
               addSuffix: true,
-              locale: sv,
+              locale: dateLocale,
             })}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground">{update.update_text}</p>
+        <LanguageAwareText
+          text={update.update_text}
+          contentLanguage={update.language}
+          viewerLanguage={viewerLanguage}
+          className="text-sm text-muted-foreground"
+        />
       </div>
     </div>
   );

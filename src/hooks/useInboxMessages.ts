@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { InboxLanguage } from "@/i18n/inbox";
 
 export interface InboxMessage {
   id: string;
@@ -34,6 +35,7 @@ export interface InboxUpdate {
   update_text: string;
   is_system: boolean;
   created_at: string;
+  language?: InboxLanguage;
   author_profile?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -117,7 +119,7 @@ export function useInboxMessages(filters?: InboxFilters) {
   };
 }
 
-export function useInboxMessage(id: string) {
+export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') {
   const { user } = useAuth();
   const [message, setMessage] = useState<InboxMessage | null>(null);
   const [updates, setUpdates] = useState<InboxUpdate[]>([]);
@@ -165,6 +167,27 @@ export function useInboxMessage(id: string) {
     }
   }, [id]);
 
+  // Get system update text based on user language
+  const getSystemText = useCallback((key: 'assigned' | 'unread' | 'in_progress' | 'resolved' | 'resolved_verified', testedOn?: string) => {
+    const texts = {
+      en: {
+        assigned: 'Assigned and started',
+        unread: 'Marked as unread',
+        in_progress: 'Marked as in progress',
+        resolved: 'Marked as resolved',
+        resolved_verified: `Resolved and verified on ${testedOn}`,
+      },
+      sv: {
+        assigned: 'Tilldelad och påbörjad',
+        unread: 'Markerad som oläst',
+        in_progress: 'Markerad som pågående',
+        resolved: 'Markerad som löst',
+        resolved_verified: `Löst och verifierat på ${testedOn}`,
+      },
+    };
+    return texts[userLanguage][key];
+  }, [userLanguage]);
+
   const assignToMe = useCallback(async () => {
     if (!message || !user) return false;
     try {
@@ -178,12 +201,13 @@ export function useInboxMessage(id: string) {
 
       if (error) throw error;
 
-      // Add system update
+      // Add system update with language
       await supabase.from("inbox_updates").insert({
         message_id: message.id,
         author_id: user.id,
-        update_text: "Tilldelad och påbörjad",
+        update_text: getSystemText('assigned'),
         is_system: true,
+        language: userLanguage,
       });
 
       await fetchMessage();
@@ -193,7 +217,7 @@ export function useInboxMessage(id: string) {
       console.error("Error assigning message:", error);
       return false;
     }
-  }, [message, user, fetchMessage, fetchUpdates]);
+  }, [message, user, fetchMessage, fetchUpdates, getSystemText, userLanguage]);
 
   const updateStatus = useCallback(
     async (newStatus: "unread" | "in_progress" | "resolved") => {
@@ -206,17 +230,13 @@ export function useInboxMessage(id: string) {
 
         if (error) throw error;
 
-        // Add system update
-        const statusLabels = {
-          unread: "Markerad som oläst",
-          in_progress: "Markerad som pågående",
-          resolved: "Markerad som löst",
-        };
+        // Add system update with language
         await supabase.from("inbox_updates").insert({
           message_id: message.id,
           author_id: user.id,
-          update_text: statusLabels[newStatus],
+          update_text: getSystemText(newStatus),
           is_system: true,
+          language: userLanguage,
         });
 
         await fetchMessage();
@@ -227,7 +247,7 @@ export function useInboxMessage(id: string) {
         return false;
       }
     },
-    [message, user, fetchMessage, fetchUpdates]
+    [message, user, fetchMessage, fetchUpdates, getSystemText, userLanguage]
   );
 
   const addUpdate = useCallback(
@@ -239,6 +259,7 @@ export function useInboxMessage(id: string) {
           author_id: user.id,
           update_text: text,
           is_system: false,
+          language: userLanguage,
         });
 
         if (error) throw error;
@@ -249,7 +270,7 @@ export function useInboxMessage(id: string) {
         return false;
       }
     },
-    [message, user, fetchUpdates]
+    [message, user, fetchUpdates, userLanguage]
   );
 
   const resolve = useCallback(
@@ -269,6 +290,12 @@ export function useInboxMessage(id: string) {
           summary = summary.substring(0, 97) + "...";
         }
 
+        // Store language with resolution details
+        const detailsWithLanguage = {
+          ...resolutionDetails,
+          language: userLanguage,
+        };
+
         const { error } = await supabase
           .from("inbox_messages")
           .update({
@@ -276,19 +303,20 @@ export function useInboxMessage(id: string) {
             resolved_at: new Date().toISOString(),
             resolved_by: user.id,
             resolution_summary: summary,
-            resolution_details: resolutionDetails,
+            resolution_details: detailsWithLanguage,
           })
           .eq("id", message.id);
 
         if (error) throw error;
 
-        // Add system update
+        // Add system update with language
         const testedOnText = resolutionDetails.testedOn.join(", ");
         await supabase.from("inbox_updates").insert({
           message_id: message.id,
           author_id: user.id,
-          update_text: `Löst och verifierat på ${testedOnText}`,
+          update_text: getSystemText('resolved_verified', testedOnText),
           is_system: true,
+          language: userLanguage,
         });
 
         await fetchMessage();
@@ -299,7 +327,7 @@ export function useInboxMessage(id: string) {
         return false;
       }
     },
-    [message, user, fetchMessage, fetchUpdates]
+    [message, user, fetchMessage, fetchUpdates, userLanguage, getSystemText]
   );
 
   useEffect(() => {
