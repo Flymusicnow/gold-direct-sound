@@ -1876,6 +1876,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_system: boolean | null
+          language: string | null
           message_id: string
           update_text: string
         }
@@ -1884,6 +1885,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_system?: boolean | null
+          language?: string | null
           message_id: string
           update_text: string
         }
@@ -1892,6 +1894,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_system?: boolean | null
+          language?: string | null
           message_id?: string
           update_text?: string
         }
@@ -2480,6 +2483,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          admin_inbox_language: string | null
           avatar_url: string | null
           created_at: string | null
           email: string
@@ -2490,6 +2494,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          admin_inbox_language?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email: string
@@ -2500,6 +2505,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          admin_inbox_language?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string

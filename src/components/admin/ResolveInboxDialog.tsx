@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { CheckCircle2 } from "lucide-react";
+import { InboxLanguage, getInboxTranslation } from "@/i18n/inbox";
 
 interface ResolveInboxDialogProps {
   open: boolean;
@@ -22,18 +23,22 @@ interface ResolveInboxDialogProps {
     verification: string;
     testedOn: string[];
   }) => Promise<boolean>;
+  language?: InboxLanguage;
 }
 
 export function ResolveInboxDialog({
   open,
   onOpenChange,
   onResolve,
+  language = "en",
 }: ResolveInboxDialogProps) {
   const [problem, setProblem] = useState("");
   const [fix, setFix] = useState("");
   const [verification, setVerification] = useState("");
   const [testedOn, setTestedOn] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const t = (key: string) => getInboxTranslation(language, key as any);
 
   const isValid =
     problem.length >= 10 &&
@@ -78,70 +83,70 @@ export function ResolveInboxDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle2 className="h-5 w-5 text-green-500" />
-            Lös problemet
+            {t("resolveDialogTitle")}
           </DialogTitle>
           <DialogDescription>
-            Fyll i alla fält för att markera problemet som löst.
+            {t("resolveDialogDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="problem" className="text-sm font-medium">
-              Problemet var att…
+              {t("problemLabel")}
             </Label>
             <Textarea
               id="problem"
-              placeholder="Beskriv vad som var fel (minst 10 tecken)"
+              placeholder={t("problemPlaceholder")}
               value={problem}
               onChange={(e) => setProblem(e.target.value)}
               className="min-h-[80px]"
             />
             {problem.length > 0 && problem.length < 10 && (
               <p className="text-xs text-destructive">
-                Minst 10 tecken ({problem.length}/10)
+                {t("minChars")} ({problem.length}/10)
               </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="fix" className="text-sm font-medium">
-              Vi fixade det genom att…
+              {t("fixLabel")}
             </Label>
             <Textarea
               id="fix"
-              placeholder="Beskriv hur du löste problemet (minst 10 tecken)"
+              placeholder={t("fixPlaceholder")}
               value={fix}
               onChange={(e) => setFix(e.target.value)}
               className="min-h-[80px]"
             />
             {fix.length > 0 && fix.length < 10 && (
               <p className="text-xs text-destructive">
-                Minst 10 tecken ({fix.length}/10)
+                {t("minChars")} ({fix.length}/10)
               </p>
             )}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="verification" className="text-sm font-medium">
-              Nu fungerar det eftersom…
+              {t("verificationLabel")}
             </Label>
             <Textarea
               id="verification"
-              placeholder="Beskriv hur du verifierade att det fungerar (minst 10 tecken)"
+              placeholder={t("verificationPlaceholder")}
               value={verification}
               onChange={(e) => setVerification(e.target.value)}
               className="min-h-[80px]"
             />
             {verification.length > 0 && verification.length < 10 && (
               <p className="text-xs text-destructive">
-                Minst 10 tecken ({verification.length}/10)
+                {t("minChars")} ({verification.length}/10)
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Testat på:</Label>
+            <Label className="text-sm font-medium">{t("testedOnLabel")}</Label>
             <div className="flex flex-wrap gap-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
@@ -182,7 +187,7 @@ export function ResolveInboxDialog({
             </div>
             {testedOn.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                Välj minst en plattform
+                {t("selectPlatform")}
               </p>
             )}
           </div>
@@ -190,10 +195,10 @@ export function ResolveInboxDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Avbryt
+            {t("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={!isValid || submitting}>
-            {submitting ? "Sparar..." : "Markera som löst"}
+            {submitting ? t("saving") : t("markAsResolved")}
           </Button>
         </DialogFooter>
       </DialogContent>
