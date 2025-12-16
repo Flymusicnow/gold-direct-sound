@@ -113,6 +113,18 @@ export const inboxTranslations = {
     ago: 'ago',
     messageNotFound: 'Message not found',
     loading: 'Loading...',
+    
+    // Report dialog
+    reportIssue: 'Report issue',
+    reportIssueDescription: 'Describe what went wrong (optional)',
+    currentPage: 'Page',
+    whatWentWrong: 'What went wrong?',
+    sendReport: 'Send report',
+    reportSent: 'Report sent',
+    reportSentDescription: 'Thanks! We will look at it as soon as possible.',
+    reportFailed: 'Could not send',
+    reportFailedDescription: 'Please try again later.',
+    issueReportedFrom: 'Issue reported from',
   },
   sv: {
     // Page titles
@@ -224,6 +236,18 @@ export const inboxTranslations = {
     ago: 'sedan',
     messageNotFound: 'Meddelande hittades inte',
     loading: 'Laddar...',
+    
+    // Report dialog
+    reportIssue: 'Rapportera problem',
+    reportIssueDescription: 'Beskriv vad som gick fel (valfritt)',
+    currentPage: 'Sida',
+    whatWentWrong: 'Vad gick fel?',
+    sendReport: 'Skicka rapport',
+    reportSent: 'Rapport skickad',
+    reportSentDescription: 'Tack! Vi tittar på det så snart vi kan.',
+    reportFailed: 'Kunde inte skicka',
+    reportFailedDescription: 'Försök igen senare.',
+    issueReportedFrom: 'Problem rapporterat från',
   },
 } as const;
 
