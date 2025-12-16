@@ -1,12 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard, Briefcase } from "lucide-react";
+import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard, Briefcase, Bug } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
+import { useBetaAccess } from "@/hooks/useBetaAccess";
+import { ReportIssueDialog } from "@/components/ReportIssueDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +20,11 @@ export const Navigation = () => {
   const { user, profile, signOut, refreshProfile, hasRole } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const { hasBetaAccess } = useBetaAccess();
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  
+  // Show report button to admins or beta users
+  const canReportIssues = user && (hasRole('admin') || hasBetaAccess);
 
   useEffect(() => {
     console.log('🔍 Navigation Debug - User ID:', user?.id);
@@ -132,6 +139,15 @@ export const Navigation = () => {
                       Settings
                     </DropdownMenuItem>
                   ) : null}
+                  
+                  {/* Report issue - visible to beta users and admins */}
+                  {canReportIssues && (
+                    <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                      <Bug className="mr-2 h-4 w-4" />
+                      Rapportera problem
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t('nav.signOut')}
@@ -248,6 +264,14 @@ export const Navigation = () => {
                     </DropdownMenuItem>
                   ) : null}
                   
+                  {/* Report issue - visible to beta users and admins */}
+                  {canReportIssues && (
+                    <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                      <Bug className="mr-2 h-4 w-4" />
+                      Rapportera problem
+                    </DropdownMenuItem>
+                  )}
+                  
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out
@@ -279,6 +303,9 @@ export const Navigation = () => {
           </DropdownMenu>
         </div>
       </div>
+      
+      {/* Report Issue Dialog */}
+      <ReportIssueDialog open={reportDialogOpen} onOpenChange={setReportDialogOpen} />
     </nav>
   );
 };

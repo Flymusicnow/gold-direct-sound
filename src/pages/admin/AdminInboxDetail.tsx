@@ -24,8 +24,10 @@ import {
   AlertTriangle,
   ArrowLeft,
   Bot,
+  Brain,
   CheckCircle2,
   Clock,
+  Copy,
   Mail,
   Send,
   User,
@@ -99,6 +101,62 @@ export default function AdminInboxDetail() {
       toast({ title: t("error"), description: t("couldNotResolve"), variant: "destructive" });
     }
     return success;
+  };
+
+  const handleGenerateFixPlan = async () => {
+    if (!message?.payload) return;
+    
+    const aiContext = (message.payload as { ai_context?: any }).ai_context;
+    if (!aiContext) {
+      toast({ 
+        title: "No AI context", 
+        description: "This report doesn't have AI context data.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Format the prompt
+    const prompt = `## Bug Report Context
+
+**Route:** ${aiContext.route || 'Unknown'}
+**User Role:** ${aiContext.user_role || 'Unknown'}
+**Device:** ${aiContext.device || 'Unknown'}
+**Browser:** ${aiContext.browser || 'Unknown'}
+
+**User's Note:**
+"${aiContext.user_note || 'No description provided'}"
+
+**Recent Errors on this route:**
+${aiContext.recent_errors?.length > 0 
+  ? aiContext.recent_errors.map((e: any) => `- "${e.message}" (${new Date(e.timestamp).toLocaleString()})`).join('\n')
+  : '- No recent errors logged'}
+
+**Timestamp:** ${aiContext.timestamp || 'Unknown'}
+
+---
+
+Please analyze this bug report and provide:
+1. Likely root cause
+2. Affected components/files
+3. Step-by-step fix plan
+4. Test cases to verify the fix`;
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast({ 
+        title: "🧠 Fix plan prompt copied!", 
+        description: "Paste it into ChatGPT or Claude to generate analysis." 
+      });
+    } catch (err) {
+      // Fallback: show in console
+      console.log('--- FIX PLAN PROMPT ---');
+      console.log(prompt);
+      toast({ 
+        title: "Prompt logged to console", 
+        description: "Check browser console (clipboard failed)." 
+      });
+    }
   };
 
   const getPriorityBadge = (priority: string) => {
@@ -306,6 +364,17 @@ export default function AdminInboxDetail() {
               <CardTitle className="text-base">{t("actions")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {/* Generate fix plan - only for contextual_report type */}
+              {message.type === 'contextual_report' && (
+                <Button 
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                  onClick={handleGenerateFixPlan}
+                >
+                  <Brain className="h-4 w-4 mr-2" />
+                  🧠 Generate fix plan
+                </Button>
+              )}
+              
               {!isResolved && (
                 <>
                   {!message.assigned_to && (
