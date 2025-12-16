@@ -163,16 +163,38 @@ export default function AdminQA() {
     setIsSendingReport(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-qa-report', {});
-      if (error) throw error;
+      
+      if (error) {
+        // Try to extract actual error message from response
+        let errorMessage = error.message || 'Unknown error';
+        if (error.context?.body) {
+          try {
+            const body = typeof error.context.body === 'string' 
+              ? JSON.parse(error.context.body) 
+              : error.context.body;
+            errorMessage = body.error || body.message || errorMessage;
+          } catch {
+            // Keep original error message
+          }
+        }
+        throw new Error(errorMessage);
+      }
+      
+      // Check if response indicates failure
+      if (data && data.ok === false) {
+        throw new Error(data.error || 'Report sending failed');
+      }
+      
       toast({ 
         title: '✅ QA Report Sent!', 
-        description: `Report sent to admin emails. Status: ${data?.status || 'OK'}` 
+        description: `Report sent to ${data?.sentTo?.length || 'admin'} email(s)` 
       });
       await fetchReportHistory();
-    } catch (error) {
+    } catch (error: any) {
+      console.error('QA Report send error:', error);
       toast({ 
         title: '❌ Failed to send report', 
-        description: String(error), 
+        description: error?.message || String(error), 
         variant: 'destructive' 
       });
     } finally {
