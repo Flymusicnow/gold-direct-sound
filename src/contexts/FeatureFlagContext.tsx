@@ -5,7 +5,8 @@ export type FeatureFlagKey =
   | 'TRUST_LAYER_ENABLED'
   | 'SOCIAL_RITUALS_ENABLED'
   | 'REACH_ECONOMY_ENABLED'
-  | 'LIVE_OS_V2_ENABLED';
+  | 'LIVE_OS_V2_ENABLED'
+  | 'CONTEXTUAL_REPORTING_ENABLED';
 
 export type UserTier = 'free' | 'pro' | 'elite' | 'supporter' | 'enterprise';
 
