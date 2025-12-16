@@ -272,17 +272,37 @@ serve(async (req) => {
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
-      console.error("[send-qa-report] Resend error:", errorText);
-      throw new Error(`Failed to send email: ${errorText}`);
+      let errorDetails: any = { raw: errorText };
+      try {
+        errorDetails = JSON.parse(errorText);
+      } catch {
+        // Keep raw text if not JSON
+      }
+      
+      console.error("[send-qa-report] Resend API error:", {
+        status: emailResponse.status,
+        statusText: emailResponse.statusText,
+        body: errorDetails
+      });
+      
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: errorDetails.message || errorDetails.name || `Resend API error (${emailResponse.status})`,
+          details: errorDetails,
+          statusCode: emailResponse.status
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    console.log("[send-qa-report] Email sent successfully");
+    console.log("[send-qa-report] Email sent successfully to:", adminEmails);
 
     // 8. Log the report run
     await supabase.from("qa_report_runs").insert({
-      run_type: "scheduled",
+      run_type: "manual",
       overall_passed: overallPassed,
-      route_checks_passed: 0, // Route checks not run from edge function
+      route_checks_passed: 0,
       route_checks_total: 0,
       db_checks_passed: dbPassed,
       db_checks_total: dbTotal,
@@ -292,6 +312,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
+        ok: true,
         success: true,
         overallPassed,
         sentTo: adminEmails,
@@ -300,10 +321,14 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
-    console.error("[send-qa-report] Error:", error);
+  } catch (error: any) {
+    console.error("[send-qa-report] Unhandled error:", error);
     return new Response(
-      JSON.stringify({ error: String(error) }),
+      JSON.stringify({ 
+        ok: false, 
+        error: error?.message || String(error),
+        details: { stack: error?.stack }
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
