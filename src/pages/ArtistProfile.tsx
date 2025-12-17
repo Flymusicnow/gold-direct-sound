@@ -71,6 +71,47 @@ export default function ArtistProfile() {
   const { playNow, addToQueue, setQueue } = useFlightdeck();
   const isMobile = useIsMobile();
 
+  const [artist, setArtist] = useState<Artist | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
+  const [spotlightEntry, setSpotlightEntry] = useState<{
+    campaignId: string;
+    campaignName: string;
+    votes: number;
+    rank: number | null;
+  } | null>(null);
+  const [hasBetaAccess, setHasBetaAccess] = useState(false);
+  const [topSupporters, setTopSupporters] = useState<any[]>([]);
+  const [showSupporterModal, setShowSupporterModal] = useState(false);
+
+  // Helper to resolve artist profile by user_id OR artist_profiles.id
+  // This handles notification links that use artist_profiles.id instead of user_id
+  const resolveArtistProfile = async (idOrUserId: string): Promise<Artist | null> => {
+    // First try by user_id (the expected case for direct links)
+    let { data } = await supabase
+      .from('artist_profiles')
+      .select('*')
+      .eq('user_id', idOrUserId)
+      .maybeSingle();
+
+    // If not found, try by artist_profiles.id (for notification links)
+    if (!data) {
+      const result = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('id', idOrUserId)
+        .maybeSingle();
+      data = result.data;
+    }
+
+    return data;
+  };
+
   // Helper to convert track to FlightdeckItem
   const trackToFlightdeckItem = (track: Track): FlightdeckItem => ({
     id: track.id,
@@ -100,27 +141,16 @@ export default function ArtistProfile() {
   const handleAddToQueue = (track: Track) => {
     addToQueue(trackToFlightdeckItem(track));
   };
-  const [artist, setArtist] = useState<Artist | null>(null);
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [albums, setAlbums] = useState<Album[]>([]);
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [followerCount, setFollowerCount] = useState(0);
-  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
-  const [spotlightEntry, setSpotlightEntry] = useState<{
-    campaignId: string;
-    campaignName: string;
-    votes: number;
-    rank: number | null;
-  } | null>(null);
-  const [hasBetaAccess, setHasBetaAccess] = useState(false);
-  const [topSupporters, setTopSupporters] = useState<any[]>([]);
-  const [showSupporterModal, setShowSupporterModal] = useState(false);
 
   useEffect(() => {
     if (userId) {
       fetchArtist();
+    }
+  }, [userId]);
+
+  // Fetch related data once artist is resolved
+  useEffect(() => {
+    if (artist) {
       fetchTracks();
       checkFollowStatus();
       fetchUserLikes();
@@ -128,7 +158,7 @@ export default function ArtistProfile() {
       fetchBetaAccess();
       fetchTopSupporters();
     }
-  }, [userId, user]);
+  }, [artist, user]);
 
   useEffect(() => {
     if (artist) {
@@ -150,49 +180,44 @@ export default function ArtistProfile() {
   }, [artist]);
 
   const fetchArtist = async () => {
-    const { data, error } = await supabase
-      .from('artist_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching artist:', error);
-    } else {
-      setArtist(data);
+    if (!userId) {
+      setLoading(false);
+      return;
     }
+    
+    const data = await resolveArtistProfile(userId);
+    
+    if (!data) {
+      console.error('Artist not found for id:', userId);
+    }
+    
+    setArtist(data);
     setLoading(false);
   };
 
   const fetchTracks = async () => {
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
+    if (!artist) return;
 
-    if (artistData) {
-      // Fetch albums first
-      const { data: albumsData } = await supabase
-        .from('albums')
-        .select('id, title, cover_url, description')
-        .eq('artist_id', artistData.id)
-        .order('created_at', { ascending: false });
+    // Fetch albums first
+    const { data: albumsData } = await supabase
+      .from('albums')
+      .select('id, title, cover_url, description')
+      .eq('artist_id', artist.id)
+      .order('created_at', { ascending: false });
 
-      if (albumsData) {
-        setAlbums(albumsData);
-      }
+    if (albumsData) {
+      setAlbums(albumsData);
+    }
 
-      // Fetch tracks
-      const { data, error } = await supabase
-        .from('tracks')
-        .select('*')
-        .eq('artist_id', artistData.id)
-        .order('created_at', { ascending: false });
+    // Fetch tracks
+    const { data, error } = await supabase
+      .from('tracks')
+      .select('*')
+      .eq('artist_id', artist.id)
+      .order('created_at', { ascending: false });
 
-      if (!error && data) {
-        setTracks(data);
-      }
+    if (!error && data) {
+      setTracks(data);
     }
   };
 
@@ -208,41 +233,25 @@ export default function ArtistProfile() {
   };
 
   const checkFollowStatus = async () => {
-    if (!user) return;
+    if (!user || !artist) return;
 
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
+    const { data } = await supabase
+      .from('follows')
       .select('id')
-      .eq('user_id', userId)
-      .single();
+      .eq('fan_id', user.id)
+      .eq('artist_id', artist.id)
+      .maybeSingle();
 
-    if (artistData) {
-      const { data } = await supabase
-        .from('follows')
-        .select('id')
-        .eq('fan_id', user.id)
-        .eq('artist_id', artistData.id)
-        .single();
-
-      setIsFollowing(!!data);
-    }
+    setIsFollowing(!!data);
   };
 
   const fetchUserLikes = async () => {
-    if (!user) return;
-
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!artistData) return;
+    if (!user || !artist) return;
 
     const { data: tracksData } = await supabase
       .from('tracks')
       .select('id')
-      .eq('artist_id', artistData.id);
+      .eq('artist_id', artist.id);
 
     if (!tracksData) return;
 
@@ -263,13 +272,7 @@ export default function ArtistProfile() {
   };
 
   const fetchSpotlightStatus = async () => {
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!artistData) return;
+    if (!artist) return;
 
     const { data: entry } = await supabase
       .from('spotlight_entries')
@@ -283,7 +286,7 @@ export default function ArtistProfile() {
           status
         )
       `)
-      .eq('artist_id', artistData.id)
+      .eq('artist_id', artist.id)
       .eq('status', 'approved')
       .eq('spotlight_campaigns.status', 'active')
       .maybeSingle();
@@ -299,31 +302,19 @@ export default function ArtistProfile() {
   };
 
   const fetchBetaAccess = async () => {
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('user_id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!artistData) return;
+    if (!artist) return;
 
     const { data: betaAccess } = await supabase
       .from("artist_beta_access")
       .select("badge_name")
-      .eq("user_id", artistData.user_id)
+      .eq("user_id", artist.user_id)
       .maybeSingle();
 
     setHasBetaAccess(!!betaAccess);
   };
 
   const fetchTopSupporters = async () => {
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!artistData) return;
+    if (!artist) return;
 
     const { data: supporters } = await supabase
       .from('fan_support_scores')
@@ -336,7 +327,7 @@ export default function ArtistProfile() {
           email
         )
       `)
-      .eq('artist_id', artistData.id)
+      .eq('artist_id', artist.id)
       .order('score', { ascending: false })
       .limit(5);
 
@@ -351,26 +342,20 @@ export default function ArtistProfile() {
       return;
     }
 
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', userId)
-      .single();
-
-    if (!artistData) return;
+    if (!artist) return;
 
     if (isFollowing) {
       await supabase
         .from('follows')
         .delete()
         .eq('fan_id', user.id)
-        .eq('artist_id', artistData.id);
+        .eq('artist_id', artist.id);
       setIsFollowing(false);
       toast.success("Unfollowed");
     } else {
       await supabase
         .from('follows')
-        .insert({ fan_id: user.id, artist_id: artistData.id });
+        .insert({ fan_id: user.id, artist_id: artist.id });
       setIsFollowing(true);
       toast.success("Following!");
     }
