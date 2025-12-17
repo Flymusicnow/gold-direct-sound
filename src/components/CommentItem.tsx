@@ -37,11 +37,13 @@ interface CommentItemProps {
   isArtistComment?: boolean;
   supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
   paidTier?: 'basic' | 'gold' | null;
+  isCommenterArtist?: boolean;
+  commenterArtistId?: string | null;
 }
 
 // Note: getDisplayName and getAvatarFallback are now imported from @/lib/displayName
 
-export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null }: CommentItemProps) => {
+export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null, isCommenterArtist = false, commenterArtistId = null }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState<any[]>([]);
@@ -129,25 +131,37 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       .eq("parent_comment_id", comment.id)
       .order("created_at", { ascending: true });
 
-    if (repliesData) {
-      // Fetch profiles for all reply authors (including avatar_url and email)
+    if (repliesData && repliesData.length > 0) {
       const userIds = repliesData.map((r) => r.user_id);
-      console.log('[CommentItem] Fetching profiles for reply userIds:', userIds);
       
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, avatar_url, email" as any)
-        .in("id", userIds);
-      
-      console.log('[CommentItem] Reply profiles fetched:', profilesData, 'Error:', profilesError);
+      // Batch fetch profiles and artist profiles
+      const [profilesResult, artistProfilesResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url, email" as any)
+          .in("id", userIds),
+        supabase
+          .from('artist_profiles')
+          .select('id, user_id')
+          .in('user_id', userIds)
+          .eq('status', 'approved')
+      ]);
+
+      const artistMap = new Map(
+        artistProfilesResult.data?.map(a => [a.user_id, a.id]) || []
+      );
 
       // Merge profiles with replies
       const repliesWithProfiles = repliesData.map((reply) => ({
         ...reply,
-        profiles: (profilesData as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null, email: null },
+        profiles: (profilesResult.data as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null, email: null },
+        isCommenterArtist: artistMap.has(reply.user_id),
+        commenterArtistId: artistMap.get(reply.user_id) || null,
       }));
 
       setReplies(repliesWithProfiles);
+    } else {
+      setReplies([]);
     }
     setLoadingReplies(false);
     setRepliesLoaded(true);
@@ -167,12 +181,18 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Link 
-              to={`/artist/${comment.user_id}`}
-              className="font-semibold text-foreground hover:text-primary transition-colors"
-            >
-              {displayName}
-            </Link>
+            {isCommenterArtist && commenterArtistId ? (
+              <Link 
+                to={`/artist/${commenterArtistId}`}
+                className="font-semibold text-foreground hover:text-primary transition-colors"
+              >
+                {displayName}
+              </Link>
+            ) : (
+              <span className="font-semibold text-foreground">
+                {displayName}
+              </span>
+            )}
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />
             )}
@@ -273,6 +293,8 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
                       artistId={artistId}
                       isArtistComment={reply.user_id === currentUserId}
                       supporterLevel="none"
+                      isCommenterArtist={reply.isCommenterArtist || false}
+                      commenterArtistId={reply.commenterArtistId || null}
                     />
                   ))}
                 </div>
