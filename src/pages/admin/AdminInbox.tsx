@@ -5,6 +5,7 @@ import { useInboxMessages, InboxMessage } from "@/hooks/useInboxMessages";
 import { useInboxLanguage } from "@/hooks/useInboxLanguage";
 import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -18,18 +19,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertCircle,
   AlertTriangle,
+  Bell,
   CheckCircle2,
   Clock,
   Inbox,
+  Loader2,
   Mail,
   MailOpen,
 } from "lucide-react";
 import { formatDistanceToNow, Locale } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function AdminInbox() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [testingTelegram, setTestingTelegram] = useState(false);
   const { language, setLanguage, t } = useInboxLanguage();
 
   const { messages, loading, unreadCount, inProgressCount } = useInboxMessages({
@@ -38,6 +44,52 @@ export default function AdminInbox() {
   });
 
   const dateLocale = language === "sv" ? sv : enUS;
+
+  const handleTestTelegram = async () => {
+    setTestingTelegram(true);
+    console.log('[Telegram Test] Starting test...');
+    
+    try {
+      const payload = {
+        inbox_id: 'VERIFY_TEST',
+        title: 'VERIFY_TELEGRAM_OK',
+        route: '/admin/inbox',
+        user_role: 'admin',
+        user_note: 'Test notification from admin panel',
+        timestamp: new Date().toISOString(),
+      };
+      
+      console.log('[Telegram Test] Sending payload:', payload);
+      
+      const { data, error } = await supabase.functions.invoke('send-telegram-notification', {
+        body: payload,
+      });
+      
+      console.log('[Telegram Test] Response - data:', data, 'error:', error);
+      
+      if (error) {
+        console.error('[Telegram Test] Edge function error:', error);
+        toast.error(`Telegram test failed: ${error.message}`);
+        return;
+      }
+      
+      if (data?.ok) {
+        toast.success(`Telegram test successful! Message ID: ${data.message_id}${data.warning ? ` ⚠️ ${data.warning}` : ''}`);
+        if (data.used_migrated_chat_id) {
+          console.warn('[Telegram Test] MIGRATION: Update TELEGRAM_CHAT_ID to', data.used_migrated_chat_id);
+        }
+      } else if (data?.skipped) {
+        toast.info(`Telegram notifications disabled (BUG_NOTIFICATIONS_ENABLED=${data.reason})`);
+      } else {
+        toast.error(`Telegram test failed: ${data?.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      console.error('[Telegram Test] Network error:', err);
+      toast.error(`Network error: ${err.message}`);
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -87,7 +139,23 @@ export default function AdminInbox() {
             <span className="text-sm font-medium">{inProgressCount} {t("inProgress")}</span>
           </div>
         </div>
-        <InboxLanguageSelector language={language} onLanguageChange={setLanguage} />
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleTestTelegram}
+            disabled={testingTelegram}
+            className="gap-2"
+          >
+            {testingTelegram ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Bell className="h-4 w-4" />
+            )}
+            Test Telegram
+          </Button>
+          <InboxLanguageSelector language={language} onLanguageChange={setLanguage} />
+        </div>
       </div>
 
       {/* Filters */}
