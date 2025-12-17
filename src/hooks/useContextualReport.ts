@@ -131,15 +131,18 @@ export function useContextualReport() {
     user_note?: string;
     timestamp: string;
   }) => {
+    console.log('[Telegram] Invoking edge function with payload:', JSON.stringify(payload, null, 2));
     try {
-      const { error } = await supabase.functions.invoke('send-telegram-notification', {
+      const { data, error } = await supabase.functions.invoke('send-telegram-notification', {
         body: payload,
       });
       if (error) {
-        console.warn('[Telegram] Failed to send notification:', error);
+        console.error('[Telegram] Edge function error:', error);
+        return;
       }
+      console.log('[Telegram] Success - response:', data);
     } catch (err) {
-      console.warn('[Telegram] Failed to send notification:', err);
+      console.error('[Telegram] Network/invoke error:', err);
     }
   };
 
@@ -171,6 +174,8 @@ export function useContextualReport() {
       // Title in selected language - use currentRoute for fresh value
       const title = `${getInboxTranslation(language, 'issueReportedFrom')} ${currentRoute}`;
 
+      console.log('[Report] Calling upsert_inbox_message RPC with dedupeKey:', dedupeKey);
+      
       const { data, error } = await supabase.rpc('upsert_inbox_message', {
         _dedupe_key: dedupeKey,
         _title: title,
@@ -184,10 +189,14 @@ export function useContextualReport() {
         }))
       });
 
+      console.log('[Report] RPC result - data:', data, 'error:', error);
+
       if (error) throw error;
       
       // Send Telegram notification in background (non-blocking)
       const inboxId = data || dedupeKey;
+      console.log('[Report] Sending Telegram notification for inbox:', inboxId);
+      
       sendTelegramNotification({
         inbox_id: inboxId,
         title: title,
@@ -195,8 +204,6 @@ export function useContextualReport() {
         user_role: aiContext.user_role,
         user_note: userNote,
         timestamp: aiContext.timestamp,
-      }).catch((err) => {
-        console.warn('[Report] Telegram notification failed:', err);
       });
       
       return true;
