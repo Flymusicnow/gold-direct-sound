@@ -26,6 +26,12 @@ export function useContextualReport() {
   const { user, hasRole } = useAuth();
   const isMobile = useIsMobile();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentRoute, setCurrentRoute] = useState(location.pathname);
+
+  // Refresh route to current location - call this when dialog opens
+  const refreshRoute = () => {
+    setCurrentRoute(location.pathname);
+  };
 
   const getUserRole = (): string => {
     if (hasRole('admin')) return 'admin';
@@ -59,7 +65,7 @@ export function useContextualReport() {
     }
 
     return {
-      route: location.pathname,
+      route: currentRoute, // Use refreshed route state
       user_role: getUserRole(),
       user_id: user?.id || 'anonymous',
       device: isMobile ? 'mobile' : 'desktop',
@@ -91,8 +97,8 @@ export function useContextualReport() {
         ? `${getUserRole()} user reported: "${userNote.slice(0, 100)}${userNote.length > 100 ? '...' : ''}"`
         : `${getUserRole()} user reported issue on ${isMobile ? 'mobile' : 'desktop'}`;
 
-      // Title in selected language
-      const title = `${getInboxTranslation(language, 'issueReportedFrom')} ${location.pathname}`;
+      // Title in selected language - use currentRoute for fresh value
+      const title = `${getInboxTranslation(language, 'issueReportedFrom')} ${currentRoute}`;
 
       const { error } = await supabase.rpc('upsert_inbox_message', {
         _dedupe_key: dedupeKey,
@@ -121,6 +127,7 @@ export function useContextualReport() {
   return {
     submitReport,
     isSubmitting,
-    currentRoute: location.pathname
+    currentRoute,
+    refreshRoute
   };
 }

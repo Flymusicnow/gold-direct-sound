@@ -4,8 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Heart, Reply, Trash2, CheckCircle2, ChevronDown, ChevronUp } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
+import { getDisplayName } from "@/lib/displayName";
+import { formatDate } from "@/lib/dateFormat";
 
 function DeleteButton({ commentUserId, onDelete }: { commentUserId: string; onDelete: () => void }) {
   const [canDelete, setCanDelete] = useState(false);
@@ -72,7 +73,7 @@ export function VideoCommentItem({
   const { toast } = useToast();
 
   const replies = allComments.filter(c => c.parent_comment_id === comment.id);
-  const displayName = comment.profiles?.full_name || comment.profiles?.email || "Anonymous";
+  const displayName = getDisplayName(comment.profiles);
 
   // Check if commenter is the artist
   const [isArtist, setIsArtist] = useState(false);
@@ -215,7 +216,7 @@ export function VideoCommentItem({
               <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+              {formatDate(comment.created_at)}
             </span>
           </div>
 

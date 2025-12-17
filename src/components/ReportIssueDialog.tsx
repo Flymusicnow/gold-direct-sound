@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bug, Send, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Bug, Send, Loader2, Keyboard } from 'lucide-react';
 import { useContextualReport } from '@/hooks/useContextualReport';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -65,11 +65,26 @@ function LanguageToggle({
 export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps) {
   const [userNote, setUserNote] = useState('');
   const [language, setLanguage] = useState<InboxLanguage>('en');
-  const { submitReport, isSubmitting, currentRoute } = useContextualReport();
+  const { submitReport, isSubmitting, currentRoute, refreshRoute } = useContextualReport();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const t = (key: Parameters<typeof getInboxTranslation>[1]) => getInboxTranslation(language, key);
+
+  // Refresh route when dialog opens to ensure context is current
+  useEffect(() => {
+    if (open) {
+      refreshRoute();
+    }
+  }, [open, refreshRoute]);
+
+  // Handle Cmd/Ctrl + Enter to submit
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && userNote.trim() && !isSubmitting) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
 
   const handleSubmit = async () => {
     const success = await submitReport(userNote, language);
@@ -103,9 +118,15 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         placeholder={t('whatWentWrong')}
         value={userNote}
         onChange={(e) => setUserNote(e.target.value)}
+        onKeyDown={handleKeyDown}
         className="min-h-[100px] resize-none"
         autoFocus={false}
       />
+      
+      <p className="text-xs text-muted-foreground flex items-center gap-1">
+        <Keyboard className="h-3 w-3" />
+        {isMobile ? 'Tap Send to submit' : 'Cmd/Ctrl + Enter to submit'}
+      </p>
       
       <Button 
         onClick={handleSubmit} 

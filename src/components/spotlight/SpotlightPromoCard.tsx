@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Trophy } from "lucide-react";
 
 interface ActiveCampaign {
   id: string;
@@ -37,14 +37,27 @@ export default function SpotlightPromoCard() {
     }
   };
 
-  if (!campaign) return null;
+  // Show placeholder when no active campaign
+  if (!campaign) {
+    return (
+      <Card className="bg-gradient-to-br from-muted/30 via-background to-background border-border">
+        <CardContent className="py-8 text-center">
+          <Trophy className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+          <p className="text-muted-foreground font-medium mb-1">Voting opens soon</p>
+          <p className="text-xs text-muted-foreground/70">
+            Check back for the next Spotlight campaign
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="bg-gradient-to-br from-[#E8BF1A]/20 via-background to-background border-[#E8BF1A]/50">
+    <Card className="bg-gradient-to-br from-primary/20 via-background to-background border-primary/50">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-[#E8BF1A]" />
-          <CardTitle className="text-[#E8BF1A]">FlyMusic Spotlight is Live!</CardTitle>
+          <Sparkles className="h-5 w-5 text-primary" />
+          <CardTitle className="text-primary">FlyMusic Spotlight is Live!</CardTitle>
         </div>
         <CardDescription className="text-foreground/80">{campaign.name}</CardDescription>
       </CardHeader>
@@ -57,7 +70,7 @@ export default function SpotlightPromoCard() {
         </p>
         <Button
           onClick={() => navigate(`/spotlight/${campaign.id}`)}
-          className="w-full bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]"
+          className="w-full bg-gradient-gold"
         >
           Vote Now
         </Button>

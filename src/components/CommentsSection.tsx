@@ -11,6 +11,7 @@ import { useSupportScore } from "@/hooks/useSupportScore";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { z } from "zod";
+import { getDisplayName } from "@/lib/displayName";
 
 const INITIAL_COMMENTS = 5;
 const LOAD_MORE_COUNT = 10;
@@ -41,33 +42,7 @@ interface CommentsSectionProps {
   currentUserId?: string;
 }
 
-// Helper function to get display name with debug logging
-const getDisplayName = (
-  profiles: { full_name: string | null; avatar_url?: string | null; email?: string } | null | undefined,
-  userId?: string
-): string => {
-  console.log('[CommentsSection] getDisplayName called for userId:', userId, 'profiles:', profiles);
-  
-  if (!profiles) {
-    console.log('[CommentsSection] No profiles object found, returning "User"');
-    return "User";
-  }
-  
-  if (profiles.full_name && profiles.full_name.trim()) {
-    console.log('[CommentsSection] Found full_name:', profiles.full_name);
-    return profiles.full_name;
-  }
-  
-  // Try email prefix as fallback
-  if ((profiles as any).email) {
-    const emailPrefix = (profiles as any).email.split('@')[0];
-    console.log('[CommentsSection] Using email prefix as fallback:', emailPrefix);
-    return emailPrefix;
-  }
-  
-  console.log('[CommentsSection] No display name found, returning "User"');
-  return "User";
-};
+// Note: getDisplayName is now imported from @/lib/displayName
 
 export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProps) => {
   const { user } = useAuth();
