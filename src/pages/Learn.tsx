@@ -184,7 +184,7 @@ export default function Learn() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/fan#support-artists">
+                  <Link to="/fan/supporter">
                     <span className="text-sm text-primary hover:underline">
                       Learn more about supporting artists →
                     </span>
@@ -242,7 +242,7 @@ export default function Learn() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/fan#listen-and-discover">
+                  <Link to="/discover">
                     <span className="text-sm text-primary hover:underline">
                       Learn more about listening and discovery →
                     </span>
@@ -302,7 +302,7 @@ export default function Learn() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/studio#uploading-music">
+                  <Link to="/studio/tracks">
                     <span className="text-sm text-primary hover:underline">
                       Learn more about uploading music →
                     </span>
@@ -360,7 +360,7 @@ export default function Learn() {
                       </p>
                     </div>
                   </div>
-                  <Link to="/studio#analytics-and-stats">
+                  <Link to="/studio/analytics">
                     <span className="text-sm text-primary hover:underline">
                       Learn more about analytics and stats →
                     </span>

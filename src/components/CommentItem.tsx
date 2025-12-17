@@ -6,11 +6,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Reply, Trash2, BadgeCheck, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { PaidSupporterBadge } from "@/components/supporter/PaidSupporterBadge";
 import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { z } from "zod";
+import { getDisplayName, getAvatarFallback } from "@/lib/displayName";
+import { formatDate } from "@/lib/dateFormat";
 
 const commentSchema = z.object({
   text: z.string()
@@ -38,39 +39,7 @@ interface CommentItemProps {
   paidTier?: 'basic' | 'gold' | null;
 }
 
-// Helper function to get display name with debug logging
-const getDisplayName = (
-  profiles: { full_name: string | null; avatar_url?: string | null; email?: string } | null | undefined,
-  userId?: string
-): string => {
-  console.log('[CommentItem] getDisplayName called for userId:', userId, 'profiles:', profiles);
-  
-  if (!profiles) {
-    console.log('[CommentItem] No profiles object found, returning "User"');
-    return "User";
-  }
-  
-  if (profiles.full_name && profiles.full_name.trim()) {
-    console.log('[CommentItem] Found full_name:', profiles.full_name);
-    return profiles.full_name;
-  }
-  
-  // Try email prefix as fallback
-  if ((profiles as any).email) {
-    const emailPrefix = (profiles as any).email.split('@')[0];
-    console.log('[CommentItem] Using email prefix as fallback:', emailPrefix);
-    return emailPrefix;
-  }
-  
-  console.log('[CommentItem] No display name found, returning "User"');
-  return "User";
-};
-
-// Helper function to get avatar fallback
-const getAvatarFallback = (profiles: { full_name: string | null } | null | undefined): string => {
-  if (!profiles?.full_name) return "U";
-  return profiles.full_name[0]?.toUpperCase() || "U";
-};
+// Note: getDisplayName and getAvatarFallback are now imported from @/lib/displayName
 
 export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
@@ -82,8 +51,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
 
   const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
   const likeCount = comment.comment_likes?.length || 0;
-
-  const displayName = getDisplayName(comment.profiles, comment.user_id);
+  const displayName = getDisplayName(comment.profiles);
 
   // Auto-load replies on mount
   useEffect(() => {
@@ -215,7 +183,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
               <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-sm text-muted-foreground">
-              {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+              {formatDate(comment.created_at)}
             </span>
           </div>
 

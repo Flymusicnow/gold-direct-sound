@@ -4,7 +4,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
 import { useBetaAccess } from "@/hooks/useBetaAccess";
@@ -25,6 +25,21 @@ export const Navigation = () => {
   
   // Show report button to admins or beta users
   const canReportIssues = user && (hasRole('admin') || hasBetaAccess);
+
+  // Global keyboard shortcut: Cmd/Ctrl + Shift + B to open report dialog
+  const handleGlobalKeydown = useCallback((e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'b') {
+      if (canReportIssues) {
+        e.preventDefault();
+        setReportDialogOpen(true);
+      }
+    }
+  }, [canReportIssues]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeydown);
+    return () => document.removeEventListener('keydown', handleGlobalKeydown);
+  }, [handleGlobalKeydown]);
 
   useEffect(() => {
     console.log('🔍 Navigation Debug - User ID:', user?.id);
