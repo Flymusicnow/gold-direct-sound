@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useReproMode } from "@/contexts/ReproModeContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
@@ -34,6 +35,7 @@ interface Stats {
 export default function StudioDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({ followers: 0, totalPlays: 0, totalLikes: 0, totalComments: 0 });
@@ -44,6 +46,11 @@ export default function StudioDashboard() {
   const [refreshPosts, setRefreshPosts] = useState(0);
   const [hasActiveSpotlightEntry, setHasActiveSpotlightEntry] = useState(false);
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
+
+  // Log page load in repro mode
+  useEffect(() => {
+    reproLog('PAGE_LOAD', 'StudioDashboard mounted');
+  }, [reproLog]);
 
   useEffect(() => {
     if (!user) {
@@ -56,12 +63,20 @@ export default function StudioDashboard() {
   const fetchData = async () => {
     if (!user) return;
 
+    trackApiCall('API', 'Fetching artist profile', { userId: user.id }, 'pending');
+    
     // Fetch artist profile
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('artist_profiles')
       .select('*')
       .eq('user_id', user.id)
       .single();
+
+    if (profileError) {
+      trackApiCall('API', 'Artist profile fetch failed', { error: profileError.message }, 'error');
+    } else {
+      trackApiCall('API', 'Artist profile fetched', { artistName: profile?.artist_name }, 'success');
+    }
 
     if (!profile || profile.status !== 'approved') {
       navigate('/studio/profile');

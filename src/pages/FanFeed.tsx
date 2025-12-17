@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useReproMode } from "@/contexts/ReproModeContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -52,6 +53,7 @@ export default function FanFeed() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { playNow, addToQueue, setQueue } = useFlightdeck();
+  const { reproLog, trackApiCall } = useReproMode();
   const [newTracks, setNewTracks] = useState<NewTrack[]>([]);
   const [videoPosts, setVideoPosts] = useState<VideoPost[]>([]);
   const [followedGenres, setFollowedGenres] = useState<string[]>([]);
@@ -59,6 +61,11 @@ export default function FanFeed() {
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
+
+  // Log page load in repro mode
+  useEffect(() => {
+    reproLog('PAGE_LOAD', 'FanFeed mounted');
+  }, [reproLog]);
 
   // Helper to convert track to FlightdeckItem
   const trackToFlightdeckItem = (track: NewTrack): FlightdeckItem => ({
@@ -102,8 +109,10 @@ export default function FanFeed() {
     if (!user) return;
 
     try {
+      trackApiCall('API', 'Fetching followed artists', { userId: user.id }, 'pending');
+      
       // Fetch followed artists
-      const { data: follows } = await supabase
+      const { data: follows, error: followsError } = await supabase
         .from('follows')
         .select(`
           artist_id,
@@ -113,6 +122,12 @@ export default function FanFeed() {
           )
         `)
         .eq('fan_id', user.id);
+
+      if (followsError) {
+        trackApiCall('API', 'Follows fetch failed', { error: followsError.message }, 'error');
+      } else {
+        trackApiCall('API', 'Follows fetched', { count: follows?.length || 0 }, 'success');
+      }
 
       const artistIds = follows?.map(f => f.artist_id) || [];
       const genres = [...new Set(follows?.map(f => f.artist_profiles?.genre).filter(Boolean) as string[])];

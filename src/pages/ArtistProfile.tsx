@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
+import { useReproMode } from "@/contexts/ReproModeContext";
 import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
@@ -69,6 +70,7 @@ export default function ArtistProfile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { playNow, addToQueue, setQueue } = useFlightdeck();
+  const { isReproMode, issueId, reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
 
   const [artist, setArtist] = useState<Artist | null>(null);
@@ -89,11 +91,18 @@ export default function ArtistProfile() {
   const [topSupporters, setTopSupporters] = useState<any[]>([]);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
 
+  // Log page load in repro mode
+  useEffect(() => {
+    reproLog('PAGE_LOAD', 'ArtistProfile mounted', { userId, issueId });
+  }, [userId, issueId, reproLog]);
+
   // Helper to resolve artist profile by user_id OR artist_profiles.id
   // This handles notification links that use artist_profiles.id instead of user_id
   const resolveArtistProfile = async (idOrUserId: string): Promise<Artist | null> => {
+    trackApiCall('API', 'Resolving artist profile', { idOrUserId }, 'pending');
+    
     // First try by user_id (the expected case for direct links)
-    let { data } = await supabase
+    let { data, error } = await supabase
       .from('artist_profiles')
       .select('*')
       .eq('user_id', idOrUserId)
@@ -107,6 +116,15 @@ export default function ArtistProfile() {
         .eq('id', idOrUserId)
         .maybeSingle();
       data = result.data;
+      error = result.error;
+    }
+
+    if (error) {
+      trackApiCall('API', 'Artist profile resolution failed', { error: error.message }, 'error');
+    } else if (data) {
+      trackApiCall('API', 'Artist profile resolved', { artistId: data.id, artistName: data.artist_name }, 'success');
+    } else {
+      trackApiCall('API', 'Artist not found', { idOrUserId }, 'error');
     }
 
     return data;
@@ -375,8 +393,18 @@ export default function ArtistProfile() {
 
   if (!artist) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Artist not found</p>
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <p className="text-muted-foreground mb-4">Artist not found</p>
+        {isReproMode && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 max-w-md text-center">
+            <p className="font-medium text-amber-600 mb-2">🔍 Repro Mode Debug Info</p>
+            <p className="text-sm text-muted-foreground">
+              Issue ID: {issueId || 'N/A'}<br/>
+              Requested ID: {userId}<br/>
+              This link may be outdated or incorrectly generated.
+            </p>
+          </div>
+        )}
       </div>
     );
   }
