@@ -122,6 +122,27 @@ export function useContextualReport() {
     };
   };
 
+  // Send Telegram notification (non-blocking)
+  const sendTelegramNotification = async (payload: {
+    inbox_id: string;
+    title: string;
+    route: string;
+    user_role: string;
+    user_note?: string;
+    timestamp: string;
+  }) => {
+    try {
+      const { error } = await supabase.functions.invoke('send-telegram-notification', {
+        body: payload,
+      });
+      if (error) {
+        console.warn('[Telegram] Failed to send notification:', error);
+      }
+    } catch (err) {
+      console.warn('[Telegram] Failed to send notification:', err);
+    }
+  };
+
   const submitReport = async (
     userNote: string, 
     language: InboxLanguage = 'en',
@@ -150,7 +171,7 @@ export function useContextualReport() {
       // Title in selected language - use currentRoute for fresh value
       const title = `${getInboxTranslation(language, 'issueReportedFrom')} ${currentRoute}`;
 
-      const { error } = await supabase.rpc('upsert_inbox_message', {
+      const { data, error } = await supabase.rpc('upsert_inbox_message', {
         _dedupe_key: dedupeKey,
         _title: title,
         _type: 'contextual_report',
@@ -164,6 +185,19 @@ export function useContextualReport() {
       });
 
       if (error) throw error;
+      
+      // Send Telegram notification in background (non-blocking)
+      const inboxId = data || dedupeKey;
+      sendTelegramNotification({
+        inbox_id: inboxId,
+        title: title,
+        route: currentRoute,
+        user_role: aiContext.user_role,
+        user_note: userNote,
+        timestamp: aiContext.timestamp,
+      }).catch((err) => {
+        console.warn('[Report] Telegram notification failed:', err);
+      });
       
       return true;
     } catch (err) {
