@@ -11,9 +11,14 @@ import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
+import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
+import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
 import Home from "./pages/Home";
+
+// Initialize network error tracking
+initNetworkErrorTracker();
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Explore from "./pages/Explore";
@@ -125,6 +130,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RouteHistoryProvider>
         <AuthProvider>
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
@@ -405,6 +411,7 @@ const App = () => (
             } />
           </Routes>
         </AuthProvider>
+        </RouteHistoryProvider>
       </BrowserRouter>
     </TooltipProvider>
     </FeatureFlagProvider>

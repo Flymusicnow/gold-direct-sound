@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bug, Send, Loader2, Keyboard } from 'lucide-react';
+import { Bug, Send, Loader2, Keyboard, ChevronDown } from 'lucide-react';
 import { useContextualReport } from '@/hooks/useContextualReport';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -18,8 +18,17 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface ReportIssueDialogProps {
   open: boolean;
@@ -64,8 +73,10 @@ function LanguageToggle({
 
 export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps) {
   const [userNote, setUserNote] = useState('');
+  const [targetRoute, setTargetRoute] = useState<string>('');
+  const [reproSteps, setReproSteps] = useState('');
   const [language, setLanguage] = useState<InboxLanguage>('en');
-  const { submitReport, isSubmitting, currentRoute, refreshRoute } = useContextualReport();
+  const { submitReport, isSubmitting, currentRoute, refreshRoute, lastRoutes } = useContextualReport();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -75,8 +86,9 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   useEffect(() => {
     if (open) {
       refreshRoute();
+      setTargetRoute(currentRoute);
     }
-  }, [open, refreshRoute]);
+  }, [open, refreshRoute, currentRoute]);
 
   // Handle Cmd/Ctrl + Enter to submit
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -87,7 +99,12 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   };
 
   const handleSubmit = async () => {
-    const success = await submitReport(userNote, language);
+    const success = await submitReport(
+      userNote, 
+      language, 
+      targetRoute !== currentRoute ? targetRoute : undefined,
+      reproSteps.trim() || undefined
+    );
     
     if (success) {
       toast({
@@ -95,6 +112,8 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         description: t('reportSentDescription'),
       });
       setUserNote('');
+      setReproSteps('');
+      setTargetRoute('');
       onOpenChange(false);
     } else {
       toast({
@@ -105,6 +124,9 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
     }
   };
 
+  // Build route options from last routes
+  const routeOptions = Array.from(new Set([currentRoute, ...lastRoutes])).slice(0, 6);
+
   const content = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -113,15 +135,59 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         </div>
         <LanguageToggle language={language} onLanguageChange={setLanguage} />
       </div>
+
+      {/* Target Route Selector */}
+      <div className="space-y-2">
+        <Label htmlFor="target-route" className="text-sm">
+          {language === 'sv' ? 'Vilken sida gäller det?' : 'Which page is the issue on?'}
+        </Label>
+        <Select value={targetRoute} onValueChange={setTargetRoute}>
+          <SelectTrigger id="target-route" className="w-full">
+            <SelectValue placeholder={language === 'sv' ? 'Välj sida...' : 'Select page...'} />
+          </SelectTrigger>
+          <SelectContent>
+            {routeOptions.map((route) => (
+              <SelectItem key={route} value={route}>
+                {route === currentRoute ? `${route} (${language === 'sv' ? 'nuvarande' : 'current'})` : route}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Repro Steps Input */}
+      <div className="space-y-2">
+        <Label htmlFor="repro-steps" className="text-sm">
+          {language === 'sv' ? 'Vad klickade du på?' : 'What did you click?'}
+          <span className="text-muted-foreground ml-1">
+            ({language === 'sv' ? 'valfritt' : 'optional'})
+          </span>
+        </Label>
+        <Input
+          id="repro-steps"
+          placeholder={language === 'sv' ? 'Ex: "Klickade på artist kort"' : 'Ex: "Clicked on artist card"'}
+          value={reproSteps}
+          onChange={(e) => setReproSteps(e.target.value)}
+          maxLength={100}
+          className="text-sm"
+        />
+      </div>
       
-      <Textarea
-        placeholder={t('whatWentWrong')}
-        value={userNote}
-        onChange={(e) => setUserNote(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className="min-h-[100px] resize-none"
-        autoFocus={false}
-      />
+      {/* Main Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description" className="text-sm">
+          {language === 'sv' ? 'Beskriv problemet' : 'Describe the issue'}
+        </Label>
+        <Textarea
+          id="description"
+          placeholder={t('whatWentWrong')}
+          value={userNote}
+          onChange={(e) => setUserNote(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="min-h-[80px] resize-none"
+          autoFocus={false}
+        />
+      </div>
       
       <p className="text-xs text-muted-foreground flex items-center gap-1">
         <Keyboard className="h-3 w-3" />
@@ -169,7 +235,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px]">
+      <DialogContent className="sm:max-w-[420px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bug className="h-5 w-5 text-primary" />
