@@ -12,8 +12,10 @@ import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
+import { ReproModeProvider } from "@/contexts/ReproModeContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
+import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
 import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
 import Home from "./pages/Home";
 
@@ -131,7 +133,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <RouteHistoryProvider>
+        <ReproModeProvider>
         <AuthProvider>
+          <ReproDebugPanel />
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
@@ -411,6 +415,7 @@ const App = () => (
             } />
           </Routes>
         </AuthProvider>
+        </ReproModeProvider>
         </RouteHistoryProvider>
       </BrowserRouter>
     </TooltipProvider>

@@ -28,7 +28,9 @@ import {
   CheckCircle2,
   Clock,
   Copy,
+  ExternalLink,
   Mail,
+  Play,
   Send,
   User,
   UserPlus,
@@ -37,12 +39,14 @@ import { formatDistanceToNow, format, Locale } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { InboxLanguage } from "@/i18n/inbox";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function AdminInboxDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language, setLanguage, t } = useInboxLanguage();
+  const { userRoles } = useAuth();
   
   const { message, updates, loading, assignToMe, updateStatus, addUpdate, resolve } =
     useInboxMessage(id || "", language);
@@ -52,6 +56,48 @@ export default function AdminInboxDetail() {
   const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
 
   const dateLocale = language === "sv" ? sv : enUS;
+
+  // Build repro URL for contextual reports
+  const buildReproUrl = () => {
+    if (!message?.payload) return null;
+    const aiContext = (message.payload as { ai_context?: any }).ai_context;
+    if (!aiContext?.route) return null;
+    
+    const origin = window.location.origin;
+    const route = aiContext.route;
+    const reportId = aiContext.report_id || message.id;
+    return `${origin}${route}?__issue=${reportId}&__repro=1`;
+  };
+
+  const reproUrl = message?.type === 'contextual_report' ? buildReproUrl() : null;
+  const aiContext = message?.payload ? (message.payload as { ai_context?: any }).ai_context : null;
+  const reportUserRole = aiContext?.user_role;
+  const currentUserRole = userRoles?.[0] || 'admin';
+  const hasRoleMismatch = reportUserRole && reportUserRole !== currentUserRole && reportUserRole !== 'admin';
+
+  const handleOpenRepro = () => {
+    if (reproUrl) {
+      navigate(reproUrl.replace(window.location.origin, ''));
+    }
+  };
+
+  const handleOpenReproNewTab = () => {
+    if (reproUrl) {
+      window.open(reproUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleCopyReproLink = async () => {
+    if (reproUrl) {
+      try {
+        await navigator.clipboard.writeText(reproUrl);
+        toast({ title: "Repro link copied!", description: "Share with other developers" });
+      } catch (err) {
+        console.log('Repro URL:', reproUrl);
+        toast({ title: "Link logged to console", description: "Clipboard access failed" });
+      }
+    }
+  };
 
   const handleAssign = async () => {
     const success = await assignToMe();
@@ -422,6 +468,60 @@ Please analyze this bug report and provide:
               )}
             </CardContent>
           </Card>
+
+          {/* Developer Tools - Only for contextual_report */}
+          {message.type === 'contextual_report' && reproUrl && (
+            <Card className="border-amber-500/30 bg-amber-500/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Play className="h-4 w-4 text-amber-500" />
+                  Developer Tools
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Role Warning */}
+                {hasRoleMismatch && (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-md p-2 text-xs">
+                    <span className="text-yellow-600 font-medium">⚠️ Role mismatch:</span>
+                    <span className="text-muted-foreground"> Issue reported by </span>
+                    <Badge variant="outline" className="text-xs">{reportUserRole}</Badge>
+                    <span className="text-muted-foreground"> — you are </span>
+                    <Badge variant="outline" className="text-xs">{currentUserRole}</Badge>
+                  </div>
+                )}
+
+                <Button
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black"
+                  onClick={handleOpenRepro}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Open page (repro)
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleOpenReproNewTab}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Open in new tab
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleCopyReproLink}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy repro link
+                </Button>
+
+                <p className="text-xs text-muted-foreground">
+                  Opens the exact route where the issue was reported with debug mode enabled.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Info */}
           <Card>

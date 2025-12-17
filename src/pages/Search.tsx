@@ -6,6 +6,7 @@ import { Search as SearchIcon, Mic } from 'lucide-react';
 import { useVoiceSearch } from '@/hooks/useVoiceSearch';
 import { useSearch } from '@/hooks/useSearch';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
+import { useReproMode } from '@/contexts/ReproModeContext';
 import { SearchArtistCard } from '@/components/search/SearchArtistCard';
 import { SearchTrackCard } from '@/components/search/SearchTrackCard';
 import { SearchVideoCard } from '@/components/search/SearchVideoCard';
@@ -25,6 +26,7 @@ type Category = 'all' | 'tracks' | 'artists' | 'videos' | 'spotlight' | 'stacks'
 export default function Search() {
   const navigate = useNavigate();
   const { playNow } = useFlightdeck();
+  const { reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
@@ -36,6 +38,18 @@ export default function Search() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [overlayItem, setOverlayItem] = useState<any>(null);
   const [overlayContext, setOverlayContext] = useState<any[]>([]);
+
+  // Log page load in repro mode
+  useEffect(() => {
+    reproLog('PAGE_LOAD', 'Search mounted', { query: urlQuery });
+  }, [reproLog, urlQuery]);
+
+  // Log search results
+  useEffect(() => {
+    if (query && !loading) {
+      trackApiCall('SEARCH', 'Search completed', { query, totalResults }, totalResults > 0 ? 'success' : 'pending');
+    }
+  }, [query, loading, totalResults, trackApiCall]);
 
   const { isListening, startListening, stopListening, isSupported: isVoiceSupported } = useVoiceSearch((transcript) => {
     handleQueryChange(transcript);
