@@ -4165,16 +4165,28 @@ export type Database = {
         }
         Returns: undefined
       }
-      upsert_inbox_message: {
-        Args: {
-          _dedupe_key: string
-          _payload: Json
-          _priority: string
-          _summary: string
-          _title: string
-        }
-        Returns: string
-      }
+      upsert_inbox_message:
+        | {
+            Args: {
+              _dedupe_key: string
+              _payload: Json
+              _priority: string
+              _summary: string
+              _title: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _dedupe_key: string
+              _payload: Json
+              _priority: string
+              _summary: string
+              _title: string
+              _type: string
+            }
+            Returns: string
+          }
     }
     Enums: {
       app_role: "admin" | "artist" | "fan" | "brand" | "super_admin"
