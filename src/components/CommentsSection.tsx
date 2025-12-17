@@ -96,14 +96,22 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
 
     // Fetch profiles for all comment authors (including avatar_url and email)
     const userIds = commentsData.map((c) => c.user_id);
-    console.log('[CommentsSection] Fetching profiles for userIds:', userIds);
     
-    const { data: profilesData, error: profilesError } = await supabase
+    const { data: profilesData } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url, email" as any)
       .in("id", userIds);
-    
-    console.log('[CommentsSection] Profiles fetched:', profilesData, 'Error:', profilesError);
+
+    // Fetch artist profiles to know which commenters are artists
+    const { data: artistProfiles } = await supabase
+      .from('artist_profiles')
+      .select('id, user_id')
+      .in('user_id', userIds)
+      .eq('status', 'approved');
+
+    const artistMap = new Map(
+      artistProfiles?.map(a => [a.user_id, a.id]) || []
+    );
 
     // Fetch supporter levels (XP-based)
     const { data: supportScores } = await supabase
@@ -128,7 +136,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       paidSubscriptions?.map(s => [s.fan_user_id, s.tier as 'basic' | 'gold']) || []
     );
 
-    // Merge profiles with comments - ensure we have proper fallback for display name
+    // Merge profiles with comments
     const commentsWithProfiles = commentsData.map((comment) => {
       const profile = (profilesData as any)?.find((p: any) => p.id === comment.user_id);
       return {
@@ -136,6 +144,8 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
         profiles: profile || { full_name: null, avatar_url: null },
         supporterLevel: supporterLevels.get(comment.user_id) || 'none',
         paidTier: paidTiers.get(comment.user_id) || null,
+        isCommenterArtist: artistMap.has(comment.user_id),
+        commenterArtistId: artistMap.get(comment.user_id) || null,
       };
     });
 
@@ -257,6 +267,8 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
                     isArtistComment={comment.user_id === currentUserId}
                     supporterLevel={(comment as any).supporterLevel || 'none'}
                     paidTier={(comment as any).paidTier || null}
+                    isCommenterArtist={(comment as any).isCommenterArtist || false}
+                    commenterArtistId={(comment as any).commenterArtistId || null}
                   />
                 ))}
                 
