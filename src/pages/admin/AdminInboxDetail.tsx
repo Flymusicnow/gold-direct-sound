@@ -6,6 +6,7 @@ import { useInboxLanguage } from "@/hooks/useInboxLanguage";
 import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
 import { LanguageAwareText } from "@/components/admin/LanguageAwareText";
 import { ResolveInboxDialog } from "@/components/admin/ResolveInboxDialog";
+import { AssignmentDropdown, getKeyLabel } from "@/components/admin/AssignmentDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +34,7 @@ import {
   Play,
   Send,
   User,
-  UserPlus,
+  Users,
 } from "lucide-react";
 import { formatDistanceToNow, format, Locale } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
@@ -48,7 +49,7 @@ export default function AdminInboxDetail() {
   const { language, setLanguage, t } = useInboxLanguage();
   const { userRoles } = useAuth();
   
-  const { message, updates, loading, assignToMe, updateStatus, addUpdate, resolve } =
+  const { message, updates, loading, assignToMe, assignToKey, unassign, updateStatus, addUpdate, resolve } =
     useInboxMessage(id || "", language);
 
   const [newUpdate, setNewUpdate] = useState("");
@@ -106,6 +107,27 @@ export default function AdminInboxDetail() {
     } else {
       toast({ title: t("error"), description: t("couldNotAssign"), variant: "destructive" });
     }
+    return success;
+  };
+
+  const handleAssignToKey = async (key: string) => {
+    const success = await assignToKey(key);
+    if (success) {
+      toast({ title: `Assigned to ${getKeyLabel(key)}` });
+    } else {
+      toast({ title: t("error"), description: t("couldNotAssign"), variant: "destructive" });
+    }
+    return success;
+  };
+
+  const handleUnassign = async () => {
+    const success = await unassign();
+    if (success) {
+      toast({ title: "Unassigned" });
+    } else {
+      toast({ title: t("error"), description: "Could not unassign", variant: "destructive" });
+    }
+    return success;
   };
 
   const handleStatusChange = async (newStatus: string) => {
@@ -423,12 +445,15 @@ Please analyze this bug report and provide:
               
               {!isResolved && (
                 <>
-                  {!message.assigned_to && (
-                    <Button className="w-full" onClick={handleAssign}>
-                      <UserPlus className="h-4 w-4 mr-2" />
-                      {t("assignToMe")}
-                    </Button>
-                  )}
+                  {/* Assignment dropdown with split-button */}
+                  <AssignmentDropdown
+                    onAssignToMe={handleAssign}
+                    onAssignToKey={handleAssignToKey}
+                    onUnassign={handleUnassign}
+                    currentAssignedTo={message.assigned_to}
+                    currentAssignedKey={message.assigned_key}
+                    className="w-full"
+                  />
 
                   <Select
                     value={message.status}
@@ -541,17 +566,27 @@ Please analyze this bug report and provide:
                 <span className="text-muted-foreground">{t("updated")}</span>
                 <span>{format(new Date(message.updated_at), "d MMM yyyy HH:mm", { locale: dateLocale })}</span>
               </div>
-              {message.assigned_profile && (
+              {/* Show assigned user OR team key */}
+              {(message.assigned_to || message.assigned_key) && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("assigned")}</span>
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={message.assigned_profile.avatar_url || undefined} />
-                      <AvatarFallback className="text-[10px]">
-                        {message.assigned_profile.full_name?.[0] || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{message.assigned_profile.full_name}</span>
+                    {message.assigned_profile ? (
+                      <>
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={message.assigned_profile.avatar_url || undefined} />
+                          <AvatarFallback className="text-[10px]">
+                            {message.assigned_profile.full_name?.[0] || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{message.assigned_profile.full_name}</span>
+                      </>
+                    ) : message.assigned_key ? (
+                      <>
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span>{getKeyLabel(message.assigned_key)}</span>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               )}

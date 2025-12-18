@@ -4,6 +4,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useInboxMessages, InboxMessage } from "@/hooks/useInboxMessages";
 import { useInboxLanguage } from "@/hooks/useInboxLanguage";
 import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
+import { getKeyLabel } from "@/components/admin/AssignmentDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   AlertCircle,
   AlertTriangle,
@@ -26,6 +28,7 @@ import {
   Loader2,
   Mail,
   MailOpen,
+  Users,
 } from "lucide-react";
 import { formatDistanceToNow, Locale } from "date-fns";
 import { sv, enUS } from "date-fns/locale";
@@ -33,14 +36,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export default function AdminInbox() {
+  const [activeTab, setActiveTab] = useState<"all" | "qa">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [testingTelegram, setTestingTelegram] = useState(false);
   const { language, setLanguage, t } = useInboxLanguage();
 
-  const { messages, loading, unreadCount, inProgressCount } = useInboxMessages({
+  // QA tab always enforces: type = 'contextual_report', excludeResolved = true
+  const isQaTab = activeTab === "qa";
+
+  const { messages, loading, unreadCount, inProgressCount, qaCount } = useInboxMessages({
     status: statusFilter as "unread" | "in_progress" | "resolved" | "all",
     priority: priorityFilter as "critical" | "high" | "normal" | "all",
+    type: isQaTab ? "contextual_report" : undefined,
+    excludeResolved: isQaTab ? true : undefined,
   });
 
   const dateLocale = language === "sv" ? sv : enUS;
@@ -125,11 +134,35 @@ export default function AdminInbox() {
     }
   };
 
+  // For QA tab, disable "resolved" option in status filter
+  const getStatusOptions = () => {
+    const options = [
+      { value: "all", label: t("allStatuses") },
+      { value: "unread", label: t("unreadStatus") },
+      { value: "in_progress", label: t("inProgressStatus") },
+    ];
+    
+    // Only show resolved option in All tab
+    if (!isQaTab) {
+      options.push({ value: "resolved", label: t("resolvedStatus") });
+    }
+    
+    return options;
+  };
+
+  // Reset status filter when switching to QA tab if it's set to "resolved"
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as "all" | "qa");
+    if (tab === "qa" && statusFilter === "resolved") {
+      setStatusFilter("all");
+    }
+  };
+
   return (
     <AdminLayout title={t("inbox")} description={t("inboxDescription")}>
       {/* Language selector + Stats bar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10">
             <Mail className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">{unreadCount} {t("unread")}</span>
@@ -158,6 +191,21 @@ export default function AdminInbox() {
         </div>
       </div>
 
+      {/* Tabs: All / QA */}
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-4">
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="qa" className="gap-2">
+            QA
+            {qaCount > 0 && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                {qaCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -165,10 +213,11 @@ export default function AdminInbox() {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t("allStatuses")}</SelectItem>
-            <SelectItem value="unread">{t("unreadStatus")}</SelectItem>
-            <SelectItem value="in_progress">{t("inProgressStatus")}</SelectItem>
-            <SelectItem value="resolved">{t("resolvedStatus")}</SelectItem>
+            {getStatusOptions().map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -206,6 +255,8 @@ export default function AdminInbox() {
             <p className="text-sm text-muted-foreground">
               {statusFilter !== "all" || priorityFilter !== "all"
                 ? t("noMessagesFiltered")
+                : isQaTab
+                ? "No open QA issues"
                 : t("allResolved")}
             </p>
           </Card>
@@ -273,7 +324,7 @@ function InboxMessageCard({
               </p>
             )}
 
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
               <span>
                 {formatDistanceToNow(new Date(message.created_at), {
                   addSuffix: true,
@@ -281,7 +332,8 @@ function InboxMessageCard({
                 })}
               </span>
 
-              {message.assigned_profile && (
+              {/* Show assignee: user profile OR team key OR unassigned */}
+              {message.assigned_profile ? (
                 <div className="flex items-center gap-1">
                   <Avatar className="h-4 w-4">
                     <AvatarImage src={message.assigned_profile.avatar_url || undefined} />
@@ -291,7 +343,12 @@ function InboxMessageCard({
                   </Avatar>
                   <span>{message.assigned_profile.full_name || t("assigned")}</span>
                 </div>
-              )}
+              ) : message.assigned_key ? (
+                <div className="flex items-center gap-1">
+                  <Users className="h-3 w-3" />
+                  <span>{getKeyLabel(message.assigned_key)}</span>
+                </div>
+              ) : null}
 
               {message.payload?.check_count && (
                 <span className="text-yellow-600">

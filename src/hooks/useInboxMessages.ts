@@ -14,6 +14,7 @@ export interface InboxMessage {
   priority: "critical" | "high" | "normal";
   dedupe_key: string;
   assigned_to: string | null;
+  assigned_key: string | null; // NEW: team assignment key
   payload: Record<string, unknown> | null;
   resolved_at: string | null;
   resolved_by: string | null;
@@ -45,6 +46,8 @@ export interface InboxUpdate {
 export interface InboxFilters {
   status?: "unread" | "in_progress" | "resolved" | "all";
   priority?: "critical" | "high" | "normal" | "all";
+  type?: string; // NEW: filter by message type
+  excludeResolved?: boolean; // NEW: exclude resolved items
 }
 
 export function useInboxMessages(filters?: InboxFilters) {
@@ -52,6 +55,7 @@ export function useInboxMessages(filters?: InboxFilters) {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inProgressCount, setInProgressCount] = useState(0);
+  const [qaCount, setQaCount] = useState(0);
 
   const fetchMessages = useCallback(async () => {
     setLoading(true);
@@ -71,6 +75,14 @@ export function useInboxMessages(filters?: InboxFilters) {
       if (filters?.priority && filters.priority !== "all") {
         query = query.eq("priority", filters.priority);
       }
+      // NEW: type filter
+      if (filters?.type) {
+        query = query.eq("type", filters.type);
+      }
+      // NEW: exclude resolved
+      if (filters?.excludeResolved) {
+        query = query.neq("status", "resolved");
+      }
 
       const { data, error } = await query;
 
@@ -81,7 +93,7 @@ export function useInboxMessages(filters?: InboxFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters?.status, filters?.priority]);
+  }, [filters?.status, filters?.priority, filters?.type, filters?.excludeResolved]);
 
   const fetchCounts = useCallback(async () => {
     try {
@@ -95,8 +107,16 @@ export function useInboxMessages(filters?: InboxFilters) {
         .select("*", { count: "exact", head: true })
         .eq("status", "in_progress");
 
+      // NEW: QA count (contextual_report type, not resolved)
+      const { count: qa } = await supabase
+        .from("inbox_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("type", "contextual_report")
+        .neq("status", "resolved");
+
       setUnreadCount(unread || 0);
       setInProgressCount(inProgress || 0);
+      setQaCount(qa || 0);
     } catch (error) {
       console.error("Error fetching inbox counts:", error);
     }
@@ -112,6 +132,7 @@ export function useInboxMessages(filters?: InboxFilters) {
     loading,
     unreadCount,
     inProgressCount,
+    qaCount,
     totalActive: unreadCount + inProgressCount,
     hasUnread: unreadCount > 0,
     refetch: fetchMessages,
@@ -195,6 +216,7 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
         .from("inbox_messages")
         .update({
           assigned_to: user.id,
+          assigned_key: null, // Clear key when assigning to real user
           status: "in_progress",
         })
         .eq("id", message.id);
@@ -218,6 +240,77 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
       return false;
     }
   }, [message, user, fetchMessage, fetchUpdates, getSystemText, userLanguage]);
+
+  // NEW: Assign to a team key (clears assigned_to)
+  const assignToKey = useCallback(async (key: string) => {
+    if (!message || !user) return false;
+    try {
+      const { error } = await supabase
+        .from("inbox_messages")
+        .update({
+          assigned_to: null, // Clear user assignment
+          assigned_key: key, // Set team key
+          status: "in_progress",
+        })
+        .eq("id", message.id);
+
+      if (error) throw error;
+
+      // Get display label for the key
+      const labelMap: Record<string, string> = {
+        'team:johan': 'Johan',
+        'team:esuni': 'Esuni',
+        'team:lajo': 'Lajo',
+        'team:qa_team': 'QA Team',
+      };
+
+      await supabase.from("inbox_updates").insert({
+        message_id: message.id,
+        author_id: user.id,
+        update_text: `Assigned to ${labelMap[key] || key}`,
+        is_system: true,
+        language: userLanguage,
+      });
+
+      await fetchMessage();
+      await fetchUpdates();
+      return true;
+    } catch (error) {
+      console.error("Error assigning to key:", error);
+      return false;
+    }
+  }, [message, user, fetchMessage, fetchUpdates, userLanguage]);
+
+  // NEW: Unassign (clear both assigned_to and assigned_key)
+  const unassign = useCallback(async () => {
+    if (!message || !user) return false;
+    try {
+      const { error } = await supabase
+        .from("inbox_messages")
+        .update({
+          assigned_to: null,
+          assigned_key: null,
+        })
+        .eq("id", message.id);
+
+      if (error) throw error;
+
+      await supabase.from("inbox_updates").insert({
+        message_id: message.id,
+        author_id: user.id,
+        update_text: 'Unassigned',
+        is_system: true,
+        language: userLanguage,
+      });
+
+      await fetchMessage();
+      await fetchUpdates();
+      return true;
+    } catch (error) {
+      console.error("Error unassigning:", error);
+      return false;
+    }
+  }, [message, user, fetchMessage, fetchUpdates, userLanguage]);
 
   const updateStatus = useCallback(
     async (newStatus: "unread" | "in_progress" | "resolved") => {
@@ -340,6 +433,8 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
     updates,
     loading,
     assignToMe,
+    assignToKey,
+    unassign,
     updateStatus,
     addUpdate,
     resolve,
