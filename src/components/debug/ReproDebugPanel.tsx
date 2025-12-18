@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useReproMode } from '@/contexts/ReproModeContext';
-import { Bug, ChevronDown, ChevronUp, X, Trash2, ArrowLeft, ExternalLink } from 'lucide-react';
+import { Bug, ChevronDown, ChevronUp, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -11,26 +10,8 @@ export function ReproDebugPanel() {
   const { isReproMode, issueId, apiCalls, errorCount, clearApiCalls } = useReproMode();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Get issue ID from URL params (for linking back to issue)
-  const urlIssueId = searchParams.get('__issue');
-  
-  // Don't show if we're already on the issue detail page
-  const isOnInboxDetail = location.pathname.startsWith('/admin/inbox/');
 
   if (!isReproMode) return null;
-  
-  // Hide panel when viewing issue detail page (debug is embedded there)
-  if (isOnInboxDetail) return null;
-
-  const handleBackToIssue = () => {
-    if (urlIssueId) {
-      navigate(`/admin/inbox/${urlIssueId}`);
-    }
-  };
 
   if (isMinimized) {
     return (
@@ -56,9 +37,9 @@ export function ReproDebugPanel() {
         <div className="flex items-center gap-2">
           <Bug className="h-4 w-4 text-amber-500" />
           <span className="font-semibold text-sm">Repro Mode</span>
-          {(urlIssueId || issueId) && (
+          {issueId && (
             <Badge variant="outline" className="text-xs">
-              #{(urlIssueId || issueId || '').slice(0, 8)}
+              #{issueId.slice(0, 8)}
             </Badge>
           )}
         </div>
@@ -90,20 +71,6 @@ export function ReproDebugPanel() {
       {/* Content */}
       {isExpanded && (
         <div className="p-2">
-          {/* Back to Issue Button - context-aware */}
-          {urlIssueId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mb-3 border-amber-500/30 hover:bg-amber-500/10"
-              onClick={handleBackToIssue}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Issue
-              <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-            </Button>
-          )}
-
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground">
               {apiCalls.length} API calls tracked
