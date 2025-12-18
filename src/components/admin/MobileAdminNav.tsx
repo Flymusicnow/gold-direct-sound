@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Shield, Users, Mic2, Music, Sparkles, Key, DollarSign, 
   ToggleRight, Building2, Target, Activity, Menu, Search, X, FlaskConical, 
-  Link2, Megaphone 
+  Link2, Megaphone, Mail
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,7 @@ const navSections = [
     title: "Overview",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+      { icon: Mail, label: "Inbox", path: "/admin/inbox" },
       { icon: FlaskConical, label: "QA Mode", path: "/admin/qa" },
     ]
   },

@@ -1803,6 +1803,7 @@ export type Database = {
       }
       inbox_messages: {
         Row: {
+          assigned_key: string | null
           assigned_to: string | null
           created_at: string | null
           dedupe_key: string
@@ -1820,6 +1821,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          assigned_key?: string | null
           assigned_to?: string | null
           created_at?: string | null
           dedupe_key: string
@@ -1837,6 +1839,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          assigned_key?: string | null
           assigned_to?: string | null
           created_at?: string | null
           dedupe_key?: string
