@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, Shield, Users, Mic2, Music, Sparkles, Key, DollarSign, 
-  ToggleRight, Building2, Target, Activity, Menu, Search, X, FlaskConical, 
-  Link2, Megaphone 
+  ToggleRight, Building2, Target, Activity, Menu, Search, X, 
+  Link2, Megaphone, Inbox
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ const navSections = [
     title: "Overview",
     items: [
       { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-      { icon: FlaskConical, label: "QA Mode", path: "/admin/qa" },
+      { icon: Inbox, label: "Inbox", path: "/admin/inbox" },
     ]
   },
   {

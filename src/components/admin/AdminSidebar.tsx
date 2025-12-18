@@ -14,7 +14,6 @@ import {
   CreditCard,
   ChevronLeft,
   ChevronRight,
-  FlaskConical,
   Link2,
   Inbox,
 } from "lucide-react";
@@ -25,7 +24,6 @@ import { supabase } from "@/integrations/supabase/client";
 const adminNavItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Inbox", url: "/admin/inbox", icon: Inbox, hasBadge: true },
-  { title: "QA Mode", url: "/admin/qa", icon: FlaskConical },
   { title: "Approvals", url: "/admin/approvals", icon: Shield },
   { title: "Users", url: "/admin/users", icon: Users },
   { title: "Artists", url: "/admin/artists", icon: Star },
