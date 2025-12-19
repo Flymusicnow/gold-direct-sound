@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,8 @@ import { MapPin, Sparkles } from 'lucide-react';
 import { SearchResultHighlight } from './SearchResultHighlight';
 import { useFollowArtist } from '@/hooks/useFollowArtist';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { VerifiedBadge } from '@/components/artist/VerifiedBadge';
+import { supabase } from '@/integrations/supabase/client';
 import type { SearchArtist } from '@/hooks/useSearch';
 
 interface SearchArtistCardProps {
@@ -17,6 +20,20 @@ interface SearchArtistCardProps {
 export function SearchArtistCard({ artist, query, hasActiveSpotlight }: SearchArtistCardProps) {
   const navigate = useNavigate();
   const { isFollowing, isUpdating, toggleFollow } = useFollowArtist(artist.id);
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    const checkVerification = async () => {
+      const { data } = await supabase
+        .from('artist_verifications')
+        .select('verification_status')
+        .eq('user_id', artist.user_id)
+        .maybeSingle();
+      
+      setIsVerified(data?.verification_status === 'verified');
+    };
+    checkVerification();
+  }, [artist.user_id]);
 
   const handleFollowClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -46,9 +63,12 @@ export function SearchArtistCard({ artist, query, hasActiveSpotlight }: SearchAr
 
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="font-semibold text-lg truncate">
-                <SearchResultHighlight text={artist.artist_name} query={query} />
-              </h3>
+              <div className="flex items-center gap-1.5">
+                <h3 className="font-semibold text-lg truncate">
+                  <SearchResultHighlight text={artist.artist_name} query={query} />
+                </h3>
+                {isVerified && <VerifiedBadge size="sm" />}
+              </div>
               {hasActiveSpotlight && (
                 <Badge className="bg-primary/20 text-primary border-primary/30 shrink-0">
                   <Sparkles className="h-3 w-3 mr-1" />

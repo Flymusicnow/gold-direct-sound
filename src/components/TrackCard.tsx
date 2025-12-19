@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Heart, Play, Music, ListMusic, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AddToPlaylistDialog from "@/components/playlists/AddToPlaylistDialog";
+import { VerifiedBadge } from "@/components/artist/VerifiedBadge";
 
 interface TrackCardProps {
   track: {
@@ -15,6 +16,7 @@ interface TrackCardProps {
     cover_url?: string | null;
   };
   artistName: string;
+  artistUserId?: string;
   isLiked?: boolean;
   onPlay: () => void;
   onAddToQueue?: () => void;
@@ -24,7 +26,8 @@ interface TrackCardProps {
 
 export function TrackCard({ 
   track, 
-  artistName, 
+  artistName,
+  artistUserId,
   isLiked = false, 
   onPlay,
   onAddToQueue,
@@ -35,6 +38,21 @@ export function TrackCard({
   const [liked, setLiked] = useState(isLiked);
   const [isUpdating, setIsUpdating] = useState(false);
   const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    if (artistUserId) {
+      const checkVerification = async () => {
+        const { data } = await supabase
+          .from('artist_verifications')
+          .select('verification_status')
+          .eq('user_id', artistUserId)
+          .maybeSingle();
+        setIsVerified(data?.verification_status === 'verified');
+      };
+      checkVerification();
+    }
+  }, [artistUserId]);
 
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -111,7 +129,10 @@ export function TrackCard({
       
       <div className="flex-1 min-w-0">
         <h3 className="text-lg md:text-sm font-semibold truncate">{track.title}</h3>
-        <p className="text-base md:text-xs text-muted-foreground truncate">{artistName}</p>
+        <div className="flex items-center gap-1">
+          <p className="text-base md:text-xs text-muted-foreground truncate">{artistName}</p>
+          {isVerified && <VerifiedBadge size="sm" />}
+        </div>
         {track.description && (
           <p className="text-sm md:text-xs text-muted-foreground/70 truncate mt-1">
             {track.description}

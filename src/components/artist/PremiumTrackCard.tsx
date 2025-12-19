@@ -11,6 +11,7 @@ import { useSupporterAccess } from "@/hooks/useSupporterAccess";
 import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
+import { VerifiedBadge } from "./VerifiedBadge";
 
 interface PremiumTrackCardProps {
   track: {
@@ -26,6 +27,7 @@ interface PremiumTrackCardProps {
     required_tier?: string | null;
   };
   artistName: string;
+  artistUserId?: string;
   isLiked?: boolean;
   onPlay: () => void;
   onAddToQueue?: () => void;
@@ -36,6 +38,7 @@ interface PremiumTrackCardProps {
 export function PremiumTrackCard({
   track,
   artistName,
+  artistUserId,
   isLiked = false,
   onPlay,
   onAddToQueue,
@@ -48,7 +51,21 @@ export function PremiumTrackCard({
   const [playlistDialogOpen, setPlaylistDialogOpen] = useState(false);
   const [collaborators, setCollaborators] = useState<any[]>([]);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   
+  useEffect(() => {
+    if (artistUserId) {
+      const checkVerification = async () => {
+        const { data } = await supabase
+          .from('artist_verifications')
+          .select('verification_status')
+          .eq('user_id', artistUserId)
+          .maybeSingle();
+        setIsVerified(data?.verification_status === 'verified');
+      };
+      checkVerification();
+    }
+  }, [artistUserId]);
   const { hasAccess, loading: accessLoading } = useSupporterAccess(
     track.artist_id,
     track.is_supporter_only ? track.required_tier : null
@@ -204,7 +221,10 @@ export function PremiumTrackCard({
                 <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} className="flex-shrink-0" />
               )}
             </div>
-            <p className="text-sm text-muted-foreground truncate">{artistName}</p>
+            <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
+              {artistName}
+              {isVerified && <VerifiedBadge size="sm" />}
+            </p>
             <div className="flex flex-wrap items-center gap-2 mt-2">
               {track.genre && (
                 <Badge className="bg-primary/10 text-primary border-primary/30 text-xs">

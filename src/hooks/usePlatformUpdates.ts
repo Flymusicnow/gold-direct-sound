@@ -6,6 +6,7 @@ export interface PlatformUpdate {
   id: string;
   title: string;
   content: string;
+  category: string | null;
   target_roles: string[];
   visibility: string;
   priority: string;
@@ -20,8 +21,27 @@ export interface PlatformUpdate {
   updated_at: string;
 }
 
+export interface ActivationLogEntry {
+  id: string;
+  update_id: string;
+  action: 'activated' | 'deactivated';
+  performed_by: string | null;
+  performed_at: string;
+}
+
+const CATEGORIES = [
+  { value: 'feature', label: 'New Feature' },
+  { value: 'improvement', label: 'Improvement' },
+  { value: 'bugfix', label: 'Bug Fix' },
+  { value: 'announcement', label: 'Announcement' },
+  { value: 'maintenance', label: 'Maintenance' },
+] as const;
+
+export const UPDATE_CATEGORIES = CATEGORIES;
+
 export function usePlatformUpdates() {
   const [updates, setUpdates] = useState<PlatformUpdate[]>([]);
+  const [activationLogs, setActivationLogs] = useState<Record<string, ActivationLogEntry[]>>({});
   const [loading, setLoading] = useState(true);
   const { user, hasRole } = useAuth();
 
@@ -49,7 +69,17 @@ export function usePlatformUpdates() {
     }
   };
 
-  const createUpdate = async (update: { title: string; content: string; target_roles: string[]; visibility: string; priority: string; link_url?: string; link_text?: string; is_active: boolean }) => {
+  const createUpdate = async (update: { 
+    title: string; 
+    content: string; 
+    category?: string;
+    target_roles: string[]; 
+    visibility: string; 
+    priority: string; 
+    link_url?: string; 
+    link_text?: string; 
+    is_active: boolean 
+  }) => {
     const { data, error } = await supabase
       .from('platform_updates')
       .insert([{ ...update, created_by: user?.id }])
@@ -84,8 +114,48 @@ export function usePlatformUpdates() {
     await fetchUpdates();
   };
 
+  const logActivation = async (updateId: string, action: 'activated' | 'deactivated') => {
+    // Store activation logs locally (could be moved to a dedicated table in the future)
+    const logEntry: ActivationLogEntry = {
+      id: crypto.randomUUID(),
+      update_id: updateId,
+      action,
+      performed_by: user?.id || null,
+      performed_at: new Date().toISOString(),
+    };
+    
+    setActivationLogs(prev => ({
+      ...prev,
+      [updateId]: [...(prev[updateId] || []), logEntry],
+    }));
+
+    return logEntry;
+  };
+
+  const toggleUpdateActive = async (id: string, currentlyActive: boolean) => {
+    const newActiveState = !currentlyActive;
+    await updateUpdate(id, { is_active: newActiveState });
+    await logActivation(id, newActiveState ? 'activated' : 'deactivated');
+    return newActiveState;
+  };
+
+  const batchActivate = async (ids: string[]) => {
+    const results = await Promise.all(
+      ids.map(async (id) => {
+        try {
+          await updateUpdate(id, { is_active: true });
+          await logActivation(id, 'activated');
+          return { id, success: true };
+        } catch (error) {
+          return { id, success: false, error };
+        }
+      })
+    );
+    await fetchUpdates();
+    return results;
+  };
+
   const dismissUpdate = async (id: string) => {
-    // Store dismissed updates in localStorage
     const dismissed = JSON.parse(localStorage.getItem('dismissedUpdates') || '[]');
     if (!dismissed.includes(id)) {
       dismissed.push(id);
@@ -99,6 +169,34 @@ export function usePlatformUpdates() {
     return updates.filter(u => !dismissed.includes(u.id));
   };
 
+  const getFilteredUpdates = (filters: {
+    search?: string;
+    status?: 'all' | 'active' | 'inactive';
+    category?: string;
+  }) => {
+    let filtered = [...updates];
+    
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(u => 
+        u.title.toLowerCase().includes(searchLower) || 
+        u.content.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    if (filters.status === 'active') {
+      filtered = filtered.filter(u => u.is_active);
+    } else if (filters.status === 'inactive') {
+      filtered = filtered.filter(u => !u.is_active);
+    }
+    
+    if (filters.category && filters.category !== 'all') {
+      filtered = filtered.filter(u => u.category === filters.category);
+    }
+    
+    return filtered;
+  };
+
   useEffect(() => {
     fetchUpdates();
   }, [user]);
@@ -106,11 +204,16 @@ export function usePlatformUpdates() {
   return {
     updates,
     visibleUpdates: getVisibleUpdates(),
+    activationLogs,
     loading,
+    categories: CATEGORIES,
     createUpdate,
     updateUpdate,
     deleteUpdate,
     dismissUpdate,
+    toggleUpdateActive,
+    batchActivate,
+    getFilteredUpdates,
     refetch: fetchUpdates
   };
 }

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -413,9 +413,32 @@ export default function ArtistProfile() {
     );
   }
 
+  // Check if current user is viewing their own artist profile
+  const isViewingOwnProfile = user?.id === artist?.user_id;
+
   return (
     <>
       <div className="min-h-screen pt-16 pb-32 md:pb-28">
+      {/* "Viewing as Fan" Banner for artists viewing their own profile */}
+      {isViewingOwnProfile && (
+        <div className="bg-primary/10 border-b border-primary/20">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Du ser din profil som fans ser den</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/studio/profile')}
+              className="text-xs"
+            >
+              Tillbaka till Studio
+            </Button>
+          </div>
+        </div>
+      )}
+      
       {/* Back Button */}
       <div className="container mx-auto px-4 pt-4">
         <Button
