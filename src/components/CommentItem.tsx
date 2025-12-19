@@ -50,9 +50,12 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [repliesLoaded, setRepliesLoaded] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
+  
+  // Local state for likes to enable optimistic UI updates
+  const [likes, setLikes] = useState<{ id: string; user_id: string }[]>(comment.comment_likes || []);
 
-  const isLiked = comment.comment_likes?.some((like) => like.user_id === currentUserId);
-  const likeCount = comment.comment_likes?.length || 0;
+  const isLiked = likes.some((like) => like.user_id === currentUserId);
+  const likeCount = likes.length;
   const displayName = getDisplayName(comment.profiles);
 
   // Auto-load replies on mount
@@ -69,15 +72,39 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
     }
 
     if (isLiked) {
-      const likeToRemove = comment.comment_likes.find((like) => like.user_id === currentUserId);
+      // Find the like to remove
+      const likeToRemove = likes.find((like) => like.user_id === currentUserId);
       if (likeToRemove) {
-        await supabase.from("comment_likes").delete().eq("id", likeToRemove.id);
+        // Optimistic UI update - remove like locally first
+        setLikes(prev => prev.filter(like => like.user_id !== currentUserId));
+        
+        const { error } = await supabase.from("comment_likes").delete().eq("id", likeToRemove.id);
+        if (error) {
+          // Rollback on error
+          setLikes(prev => [...prev, likeToRemove]);
+          toast.error("Failed to unlike");
+        }
       }
     } else {
-      await supabase.from("comment_likes").insert({
+      // Optimistic UI update - add like locally first
+      const tempLike = { id: 'temp-' + Date.now(), user_id: currentUserId };
+      setLikes(prev => [...prev, tempLike]);
+      
+      const { data, error } = await supabase.from("comment_likes").insert({
         comment_id: comment.id,
         user_id: currentUserId,
-      });
+      }).select('id, user_id').single();
+      
+      if (error) {
+        // Rollback on error
+        setLikes(prev => prev.filter(like => like.id !== tempLike.id));
+        toast.error("Failed to like");
+      } else if (data) {
+        // Replace temp like with real one
+        setLikes(prev => prev.map(like => 
+          like.id === tempLike.id ? data : like
+        ));
+      }
     }
   };
 

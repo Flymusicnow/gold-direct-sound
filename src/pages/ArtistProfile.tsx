@@ -425,7 +425,7 @@ export default function ArtistProfile() {
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium">Du ser din profil som fans ser den</span>
+              <span className="text-sm font-medium">You're viewing your profile as fans see it</span>
             </div>
             <Button
               variant="outline"
@@ -433,7 +433,7 @@ export default function ArtistProfile() {
               onClick={() => navigate('/studio/profile')}
               className="text-xs"
             >
-              Tillbaka till Studio
+              Back to Studio
             </Button>
           </div>
         </div>
