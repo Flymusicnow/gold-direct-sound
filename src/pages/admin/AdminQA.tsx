@@ -343,12 +343,12 @@ ${results.overallPassed ? '✅ ALL SYSTEMS OPERATIONAL' : '❌ ISSUES DETECTED'}
       </Card>
 
       <Tabs defaultValue="routes" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="routes">Routes</TabsTrigger>
-          <TabsTrigger value="database">Database</TabsTrigger>
-          <TabsTrigger value="preview">Mobile Preview</TabsTrigger>
-          <TabsTrigger value="errors">Errors</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto gap-1 scrollbar-hide justify-start md:grid md:grid-cols-5">
+          <TabsTrigger value="routes" className="flex-shrink-0">Routes</TabsTrigger>
+          <TabsTrigger value="database" className="flex-shrink-0">Database</TabsTrigger>
+          <TabsTrigger value="preview" className="flex-shrink-0">Mobile Preview</TabsTrigger>
+          <TabsTrigger value="errors" className="flex-shrink-0">Errors</TabsTrigger>
+          <TabsTrigger value="history" className="flex-shrink-0">History</TabsTrigger>
         </TabsList>
 
         {/* Routes Tab */}

@@ -8,6 +8,7 @@ import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
 import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RecentFanActivity } from "@/components/artist/RecentFanActivity";
 import { LatestReleases } from "@/components/artist/LatestReleases";
@@ -21,9 +22,11 @@ import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { ArtistAchievementsCard } from "@/components/artist/ArtistAchievementsCard";
 import { TopSupportersWidget } from "@/components/artist/TopSupportersWidget";
 import { LiveViewerActivityWidget } from "@/components/artist/LiveViewerActivityWidget";
-import { Users, Play, Heart, MessageSquare, Sparkles } from "lucide-react";
+import { Users, Play, Heart, MessageSquare, Sparkles, Eye, ExternalLink } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Link } from "react-router-dom";
+import { VerifiedBadge } from "@/components/artist/VerifiedBadge";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
 
 interface Stats {
   followers: number;
@@ -37,6 +40,7 @@ export default function StudioDashboard() {
   const navigate = useNavigate();
   const { reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
+  const { isVerified } = useArtistVerification();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({ followers: 0, totalPlays: 0, totalLikes: 0, totalComments: 0 });
   const [tracks, setTracks] = useState<any[]>([]);
@@ -192,9 +196,12 @@ export default function StudioDashboard() {
                   <Sparkles className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                    Creator Control Room
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                      Creator Control Room
+                    </h1>
+                    {isVerified && <VerifiedBadge size="lg" />}
+                  </div>
                   <p className="text-sm md:text-base text-muted-foreground">
                     Welcome back, {artistProfile?.artist_name} ·{" "}
                     <Link to="/learn?tab=artist" className="text-primary hover:underline">
@@ -203,7 +210,19 @@ export default function StudioDashboard() {
                   </p>
                 </div>
               </div>
-              {hasBetaAccess && <EarlyAccessBadge />}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/artist/${user?.id}`, '_blank')}
+                  className="hidden md:flex"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview as Fan
+                  <ExternalLink className="h-3 w-3 ml-1" />
+                </Button>
+                {hasBetaAccess && <EarlyAccessBadge />}
+              </div>
             </div>
             <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
               Track your impact, releases and fan engagement in one place

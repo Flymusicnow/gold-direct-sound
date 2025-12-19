@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Users, Share2 } from "lucide-react";
 import { EarlyAccessBadge } from "./EarlyAccessBadge";
+import { VerifiedBadge } from "./VerifiedBadge";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface ArtistHeroSectionProps {
   artist: {
+    user_id?: string;
     artist_name: string;
     avatar_url: string | null;
     genre: string | null;
@@ -15,6 +17,7 @@ interface ArtistHeroSectionProps {
   followerCount: number;
   isFollowing: boolean;
   hasBetaAccess: boolean;
+  isVerified?: boolean;
   onFollow: () => void;
   onShare: () => void;
 }
@@ -24,6 +27,7 @@ export function ArtistHeroSection({
   followerCount,
   isFollowing,
   hasBetaAccess,
+  isVerified,
   onFollow,
   onShare,
 }: ArtistHeroSectionProps) {
@@ -54,9 +58,12 @@ export function ArtistHeroSection({
 
           {/* Artist Info */}
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-3">
-              {artist.artist_name}
-            </h1>
+            <div className="flex items-center gap-2 justify-center md:justify-start mb-3">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
+                {artist.artist_name}
+              </h1>
+              {isVerified && <VerifiedBadge size="lg" />}
+            </div>
 
             {/* Badges Row */}
             <div className="flex flex-wrap items-center gap-2 mb-4 justify-center md:justify-start">

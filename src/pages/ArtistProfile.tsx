@@ -26,6 +26,7 @@ import TopSupportersCard from "@/components/supporter/TopSupportersCard";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupportTierModal } from "@/components/supporter/SupportTierModal";
+import { useArtistVerification } from "@/hooks/useArtistVerification";
 
 interface Artist {
   id: string;
@@ -90,6 +91,9 @@ export default function ArtistProfile() {
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
   const [topSupporters, setTopSupporters] = useState<any[]>([]);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
+  
+  // Get verification status for this artist
+  const { isVerified } = useArtistVerification(artist?.user_id);
 
   // Log page load in repro mode
   useEffect(() => {
@@ -431,6 +435,7 @@ export default function ArtistProfile() {
         followerCount={followerCount}
         isFollowing={isFollowing}
         hasBetaAccess={hasBetaAccess}
+        isVerified={isVerified}
         onFollow={handleFollow}
         onShare={() => setShowShareModal(true)}
       />
