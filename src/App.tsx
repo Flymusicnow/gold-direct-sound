@@ -52,7 +52,7 @@ import FanOnboarding from "./pages/fan/FanOnboarding";
 import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
 import FanActivity from "./pages/FanActivity";
-import FanSettings from "./pages/FanSettings";
+import FanSettings from "./pages/fan/FanSettings";
 import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSpotlight from "./pages/admin/AdminSpotlight";

@@ -167,7 +167,11 @@ export function usePushNotifications() {
   }, [user]);
 
   return {
-    ...state,
+    isSupported: state.isSupported,
+    permission: state.permission,
+    isSubscribed: state.isSubscribed,
+    isLoading: state.loading,
+    loading: state.loading,
     subscribe,
     unsubscribe,
     checkSupport,
