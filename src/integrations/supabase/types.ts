@@ -795,6 +795,48 @@ export type Database = {
           },
         ]
       }
+      artist_verifications: {
+        Row: {
+          created_at: string | null
+          documents_url: string[] | null
+          id: string
+          rejection_reason: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string
+          verification_status: string | null
+          verification_type: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          documents_url?: string[] | null
+          id?: string
+          rejection_reason?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_status?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          documents_url?: string[] | null
+          id?: string
+          rejection_reason?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          verification_status?: string | null
+          verification_type?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       artist_video_posts: {
         Row: {
           artist_id: string
@@ -2298,6 +2340,8 @@ export type Database = {
       }
       platform_updates: {
         Row: {
+          activation_log: Json | null
+          category: string | null
           content: string
           created_at: string | null
           created_by: string | null
@@ -2315,6 +2359,8 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          activation_log?: Json | null
+          category?: string | null
           content: string
           created_at?: string | null
           created_by?: string | null
@@ -2332,6 +2378,8 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          activation_log?: Json | null
+          category?: string | null
           content?: string
           created_at?: string | null
           created_by?: string | null
@@ -2630,6 +2678,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       qa_check_results: {
         Row: {

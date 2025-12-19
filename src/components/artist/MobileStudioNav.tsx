@@ -29,6 +29,7 @@ const navSections = [
       { icon: Video, label: "Videos", path: "/studio/videos" },
       { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
       { icon: FileText, label: "Press Kit", path: "/studio/presskit" },
+      { icon: Star, label: "Verification", path: "/studio/verification" },
     ]
   },
   {
