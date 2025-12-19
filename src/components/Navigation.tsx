@@ -97,6 +97,9 @@ export const Navigation = () => {
                     <Briefcase className="h-4 w-4" />
                     Brand Opportunities
                   </Link>
+                  <Link to={`/artist/${user?.id}`} className="text-foreground/80 hover:text-primary transition-colors">
+                    Min artistsida
+                  </Link>
                   <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
                     {t('nav.myStudio')}
                   </Link>

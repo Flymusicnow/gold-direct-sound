@@ -102,6 +102,9 @@ import Learn from "./pages/Learn";
 import VideoCollectionDetail from "./pages/VideoCollectionDetail";
 import Pricing from "./pages/Pricing";
 import NotFound from "./pages/NotFound";
+import Changelog from "./pages/Changelog";
+import StudioVerification from "./pages/studio/StudioVerification";
+import AdminVerifications from "./pages/admin/AdminVerifications";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
 import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 import ArtistAchievements from "./pages/ArtistAchievements";
@@ -156,6 +159,7 @@ const App = () => (
                   <Navigation />
                 <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/explore" element={<Explore />} />
@@ -272,6 +276,11 @@ const App = () => (
                 <StudioSmartLink />
               </ProtectedRoute>
             } />
+            <Route path="/studio/verification" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioVerification />
+              </ProtectedRoute>
+            } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
             <Route path="/spotlight/archive" element={<SpotlightArchive />} />
             <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
@@ -302,6 +311,7 @@ const App = () => (
             <Route path="/admin/smart-links" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSmartLinks /></ProtectedRoute>} />
             <Route path="/admin/inbox" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInbox /></ProtectedRoute>} />
             <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
+            <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
