@@ -108,6 +108,8 @@ export default function AdminInbox() {
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case "resolved":
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case "verified":
+        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
       default:
         return <MailOpen className="h-4 w-4" />;
     }
@@ -134,7 +136,7 @@ export default function AdminInbox() {
     }
   };
 
-  // For QA tab, disable "resolved" option in status filter
+  // For QA tab, disable "resolved" and "verified" options in status filter
   const getStatusOptions = () => {
     const options = [
       { value: "all", label: t("allStatuses") },
@@ -142,18 +144,19 @@ export default function AdminInbox() {
       { value: "in_progress", label: t("inProgressStatus") },
     ];
     
-    // Only show resolved option in All tab
+    // Only show resolved/verified options in All tab
     if (!isQaTab) {
       options.push({ value: "resolved", label: t("resolvedStatus") });
+      options.push({ value: "verified", label: "Verified ✓" });
     }
     
     return options;
   };
 
-  // Reset status filter when switching to QA tab if it's set to "resolved"
+  // Reset status filter when switching to QA tab if it's set to "resolved" or "verified"
   const handleTabChange = (tab: string) => {
     setActiveTab(tab as "all" | "qa");
-    if (tab === "qa" && statusFilter === "resolved") {
+    if (tab === "qa" && (statusFilter === "resolved" || statusFilter === "verified")) {
       setStatusFilter("all");
     }
   };
@@ -297,6 +300,8 @@ function InboxMessageCard({
       <Card
         className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
           message.status === "unread" ? "border-l-4 border-l-primary" : ""
+        } ${
+          message.status === "verified" ? "border-l-4 border-l-emerald-500 bg-emerald-500/5" : ""
         }`}
       >
         <div className="flex items-start gap-4">
@@ -315,6 +320,12 @@ function InboxMessageCard({
               </h3>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {getPriorityBadge(message.priority)}
+                {message.status === "verified" && (
+                  <Badge className="bg-emerald-500 text-white border-0 gap-1">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Verified
+                  </Badge>
+                )}
               </div>
             </div>
 

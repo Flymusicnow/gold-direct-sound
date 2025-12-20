@@ -70,11 +70,29 @@ export default function AdminInboxDetail() {
     return `${origin}${route}?__issue=${reportId}&__repro=1`;
   };
 
+  // Build verification URL for testing fix
+  const buildVerifyUrl = () => {
+    if (!message?.payload) return null;
+    const aiContext = (message.payload as { ai_context?: any }).ai_context;
+    if (!aiContext?.route) return null;
+    
+    const origin = window.location.origin;
+    const route = aiContext.route;
+    return `${origin}${route}?__issue=${message.id}&__verify=1`;
+  };
+
   const reproUrl = message?.type === 'contextual_report' ? buildReproUrl() : null;
+  const verifyUrl = message?.type === 'contextual_report' ? buildVerifyUrl() : null;
   const aiContext = message?.payload ? (message.payload as { ai_context?: any }).ai_context : null;
   const reportUserRole = aiContext?.user_role;
   const currentUserRole = userRoles?.[0] || 'admin';
   const hasRoleMismatch = reportUserRole && reportUserRole !== currentUserRole && reportUserRole !== 'admin';
+
+  const handleOpenVerify = () => {
+    if (verifyUrl) {
+      window.open(verifyUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const handleOpenRepro = () => {
     if (reproUrl) {
@@ -256,6 +274,8 @@ Please analyze this bug report and provide:
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case "resolved":
         return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case "verified":
+        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
       default:
         return <Mail className="h-4 w-4" />;
     }
@@ -284,6 +304,8 @@ Please analyze this bug report and provide:
   }
 
   const isResolved = message.status === "resolved";
+  const isVerified = message.status === "verified";
+  const isClosed = isResolved || isVerified;
   const resolutionLanguage = (message.resolution_details as { language?: InboxLanguage })?.language;
 
   return (
@@ -397,7 +419,7 @@ Please analyze this bug report and provide:
                 ))}
 
                 {/* Add update form */}
-                {!isResolved && (
+                {!isClosed && (
                   <div className="pt-4 border-t">
                     <div className="flex gap-2">
                       <Textarea
@@ -443,8 +465,19 @@ Please analyze this bug report and provide:
                 </Button>
               )}
               
-              {!isResolved && (
+              {!isClosed && (
                 <>
+                  {/* TEST FIX BUTTON - Primary action for verification */}
+                  {message.type === 'contextual_report' && verifyUrl && (
+                    <Button
+                      className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
+                      onClick={handleOpenVerify}
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Test Fix on Affected Page
+                    </Button>
+                  )}
+
                   {/* Assignment dropdown with split-button */}
                   <AssignmentDropdown
                     onAssignToMe={handleAssign}
@@ -466,6 +499,7 @@ Please analyze this bug report and provide:
                       <SelectItem value="unread">{t("statusUnread")}</SelectItem>
                       <SelectItem value="in_progress">{t("statusInProgress")}</SelectItem>
                       <SelectItem value="resolved">{t("statusResolved")}</SelectItem>
+                      {/* Verified is NOT manually selectable */}
                     </SelectContent>
                   </Select>
 
@@ -480,7 +514,32 @@ Please analyze this bug report and provide:
                 </>
               )}
 
-              {isResolved && (
+              {/* Verified status display */}
+              {isVerified && (
+                <div className="text-center py-4 space-y-2">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto" />
+                  <p className="text-sm font-medium text-emerald-600">System Verified</p>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>
+                      ✓ Verified on <span className="font-mono">{message.verified_route}</span>
+                    </p>
+                    <p>
+                      Device: {message.verified_device}
+                    </p>
+                    <p>
+                      By: {message.verified_by_profile?.full_name || t("unknown")}
+                    </p>
+                    {message.verified_at && (
+                      <p>
+                        {format(new Date(message.verified_at), "d MMM yyyy HH:mm", { locale: dateLocale })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Resolved status display */}
+              {isResolved && !isVerified && (
                 <div className="text-center py-4">
                   <CheckCircle2 className="h-8 w-8 text-green-500 mx-auto mb-2" />
                   <p className="text-sm text-muted-foreground">

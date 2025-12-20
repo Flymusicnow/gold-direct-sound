@@ -10,7 +10,7 @@ export interface InboxMessage {
   type: string;
   title: string;
   summary: string | null;
-  status: "unread" | "in_progress" | "resolved";
+  status: "unread" | "in_progress" | "resolved" | "verified";
   priority: "critical" | "high" | "normal";
   dedupe_key: string;
   assigned_to: string | null;
@@ -20,11 +20,18 @@ export interface InboxMessage {
   resolved_by: string | null;
   resolution_summary: string | null;
   resolution_details: Record<string, unknown> | null;
+  verified_at: string | null;
+  verified_by: string | null;
+  verified_route: string | null;
+  verified_device: string | null;
   assigned_profile?: {
     full_name: string | null;
     avatar_url: string | null;
   };
   resolved_by_profile?: {
+    full_name: string | null;
+  };
+  verified_by_profile?: {
     full_name: string | null;
   };
 }
@@ -44,10 +51,11 @@ export interface InboxUpdate {
 }
 
 export interface InboxFilters {
-  status?: "unread" | "in_progress" | "resolved" | "all";
+  status?: "unread" | "in_progress" | "resolved" | "verified" | "all";
   priority?: "critical" | "high" | "normal" | "all";
   type?: string; // NEW: filter by message type
   excludeResolved?: boolean; // NEW: exclude resolved items
+  excludeVerified?: boolean; // NEW: exclude verified items
 }
 
 export function useInboxMessages(filters?: InboxFilters) {
@@ -55,6 +63,7 @@ export function useInboxMessages(filters?: InboxFilters) {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inProgressCount, setInProgressCount] = useState(0);
+  const [verifiedCount, setVerifiedCount] = useState(0);
   const [qaCount, setQaCount] = useState(0);
 
   const fetchMessages = useCallback(async () => {
@@ -65,7 +74,8 @@ export function useInboxMessages(filters?: InboxFilters) {
         .select(`
           *,
           assigned_profile:profiles!inbox_messages_assigned_to_fkey(full_name, avatar_url),
-          resolved_by_profile:profiles!inbox_messages_resolved_by_fkey(full_name)
+          resolved_by_profile:profiles!inbox_messages_resolved_by_fkey(full_name),
+          verified_by_profile:profiles!inbox_messages_verified_by_fkey(full_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -83,6 +93,10 @@ export function useInboxMessages(filters?: InboxFilters) {
       if (filters?.excludeResolved) {
         query = query.neq("status", "resolved");
       }
+      // NEW: exclude verified
+      if (filters?.excludeVerified) {
+        query = query.neq("status", "verified");
+      }
 
       const { data, error } = await query;
 
@@ -93,7 +107,7 @@ export function useInboxMessages(filters?: InboxFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters?.status, filters?.priority, filters?.type, filters?.excludeResolved]);
+  }, [filters?.status, filters?.priority, filters?.type, filters?.excludeResolved, filters?.excludeVerified]);
 
   const fetchCounts = useCallback(async () => {
     try {
@@ -107,15 +121,21 @@ export function useInboxMessages(filters?: InboxFilters) {
         .select("*", { count: "exact", head: true })
         .eq("status", "in_progress");
 
-      // NEW: QA count (contextual_report type, not resolved)
+      const { count: verified } = await supabase
+        .from("inbox_messages")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "verified");
+
+      // NEW: QA count (contextual_report type, not resolved/verified)
       const { count: qa } = await supabase
         .from("inbox_messages")
         .select("*", { count: "exact", head: true })
         .eq("type", "contextual_report")
-        .neq("status", "resolved");
+        .not("status", "in", '("resolved","verified")');
 
       setUnreadCount(unread || 0);
       setInProgressCount(inProgress || 0);
+      setVerifiedCount(verified || 0);
       setQaCount(qa || 0);
     } catch (error) {
       console.error("Error fetching inbox counts:", error);
@@ -132,6 +152,7 @@ export function useInboxMessages(filters?: InboxFilters) {
     loading,
     unreadCount,
     inProgressCount,
+    verifiedCount,
     qaCount,
     totalActive: unreadCount + inProgressCount,
     hasUnread: unreadCount > 0,
@@ -189,7 +210,7 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
   }, [id]);
 
   // Get system update text based on user language
-  const getSystemText = useCallback((key: 'assigned' | 'unread' | 'in_progress' | 'resolved' | 'resolved_verified', testedOn?: string) => {
+  const getSystemText = useCallback((key: 'assigned' | 'unread' | 'in_progress' | 'resolved' | 'resolved_verified' | 'verified', testedOn?: string) => {
     const texts = {
       en: {
         assigned: 'Assigned and started',
@@ -197,6 +218,7 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
         in_progress: 'Marked as in progress',
         resolved: 'Marked as resolved',
         resolved_verified: `Resolved and verified on ${testedOn}`,
+        verified: `✓ Fix verified on ${testedOn}`,
       },
       sv: {
         assigned: 'Tilldelad och påbörjad',
@@ -204,6 +226,7 @@ export function useInboxMessage(id: string, userLanguage: InboxLanguage = 'en') 
         in_progress: 'Markerad som pågående',
         resolved: 'Markerad som löst',
         resolved_verified: `Löst och verifierat på ${testedOn}`,
+        verified: `✓ Fix verifierad på ${testedOn}`,
       },
     };
     return texts[userLanguage][key];

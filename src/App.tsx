@@ -13,9 +13,11 @@ import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { ReproModeProvider } from "@/contexts/ReproModeContext";
+import { VerificationModeProvider } from "@/contexts/VerificationModeContext";
 import { Navigation } from "@/components/Navigation";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
 import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
+import { VerificationBanner } from "@/components/verification/VerificationBanner";
 import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
 import Home from "./pages/Home";
 
@@ -137,8 +139,10 @@ const App = () => (
       <BrowserRouter>
         <RouteHistoryProvider>
         <ReproModeProvider>
+        <VerificationModeProvider>
         <AuthProvider>
           <ReproDebugPanel />
+          <VerificationBanner />
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
             <Route path="/link/:slug" element={<PromoPreview />} />
@@ -425,6 +429,7 @@ const App = () => (
             } />
           </Routes>
         </AuthProvider>
+        </VerificationModeProvider>
         </ReproModeProvider>
         </RouteHistoryProvider>
       </BrowserRouter>
