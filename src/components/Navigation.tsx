@@ -98,7 +98,7 @@ export const Navigation = () => {
                     Brand Opportunities
                   </Link>
                   <Link to={`/artist/${user?.id}`} className="text-foreground/80 hover:text-primary transition-colors">
-                    Min artistsida
+                    {t('nav.myArtistPage')}
                   </Link>
                   <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
                     {t('nav.myStudio')}
@@ -162,7 +162,7 @@ export const Navigation = () => {
                   {canReportIssues && (
                     <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
                       <Bug className="mr-2 h-4 w-4" />
-                      Rapportera problem
+                      {t('nav.reportIssue')}
                     </DropdownMenuItem>
                   )}
                   
@@ -286,7 +286,7 @@ export const Navigation = () => {
                   {canReportIssues && (
                     <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
                       <Bug className="mr-2 h-4 w-4" />
-                      Rapportera problem
+                      {t('nav.reportIssue')}
                     </DropdownMenuItem>
                   )}
                   

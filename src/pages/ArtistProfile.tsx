@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -398,9 +398,34 @@ export default function ArtistProfile() {
   if (!artist) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <p className="text-muted-foreground mb-4">Artist not found</p>
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center">
+            <Music2 className="h-10 w-10 text-muted-foreground opacity-50" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Artist not found</h2>
+          <p className="text-muted-foreground mb-6">
+            This artist may have been removed or the link is incorrect.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => navigate('/explore')}
+              className="gap-2 bg-primary"
+            >
+              <Home className="h-4 w-4" />
+              Explore Artists
+            </Button>
+          </div>
+        </div>
         {isReproMode && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 max-w-md text-center">
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 max-w-md text-center mt-6">
             <p className="font-medium text-amber-600 mb-2">🔍 Repro Mode Debug Info</p>
             <p className="text-sm text-muted-foreground">
               Issue ID: {issueId || 'N/A'}<br/>
