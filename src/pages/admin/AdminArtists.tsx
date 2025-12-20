@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { Search, Eye, Check, X, Music, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Artist {
   id: string;
@@ -28,6 +29,7 @@ interface Artist {
 export default function AdminArtists() {
   const navigate = useNavigate();
   const { logActivity } = useAdminActivityLog();
+  const { t } = useLanguage();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,11 +107,11 @@ export default function AdminArtists() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Approved</Badge>;
+        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">{t('admin.approved')}</Badge>;
       case "pending":
-        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">Pending</Badge>;
+        return <Badge className="bg-orange-500/10 text-orange-500 border-orange-500/20">{t('admin.pending')}</Badge>;
       case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge variant="destructive">{t('admin.rejected')}</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -123,32 +125,32 @@ export default function AdminArtists() {
   };
 
   return (
-    <AdminLayout title="Artist Management" description="View and manage all artists on the platform">
+    <AdminLayout title={t('admin.artistManagement')} description={t('admin.artistManagementDescription')}>
       <div className="space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-sm text-muted-foreground">Total Artists</p>
+              <p className="text-sm text-muted-foreground">{t('admin.totalArtists')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold text-green-500">{stats.approved}</p>
-              <p className="text-sm text-muted-foreground">Approved</p>
+              <p className="text-sm text-muted-foreground">{t('admin.approved')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold text-orange-500">{stats.pending}</p>
-              <p className="text-sm text-muted-foreground">Pending</p>
+              <p className="text-sm text-muted-foreground">{t('admin.pending')}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold text-destructive">{stats.rejected}</p>
-              <p className="text-sm text-muted-foreground">Rejected</p>
+              <p className="text-sm text-muted-foreground">{t('admin.rejected')}</p>
             </CardContent>
           </Card>
         </div>
@@ -159,8 +161,8 @@ export default function AdminArtists() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, genre, or location..."
+              <Input
+                  placeholder={t('admin.searchArtists')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -168,13 +170,13 @@ export default function AdminArtists() {
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
+                  <SelectValue placeholder={t('admin.filterByStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="all">{t('admin.allStatus')}</SelectItem>
+                  <SelectItem value="approved">{t('admin.approved')}</SelectItem>
+                  <SelectItem value="pending">{t('admin.pending')}</SelectItem>
+                  <SelectItem value="rejected">{t('admin.rejected')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -184,22 +186,22 @@ export default function AdminArtists() {
         {/* Artists Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Artists ({filteredArtists.length})</CardTitle>
+            <CardTitle>{t('admin.allArtists')} ({filteredArtists.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-muted-foreground">Loading artists...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Artist</TableHead>
-                      <TableHead>Genre</TableHead>
-                      <TableHead>Location</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Actions</TableHead>
+                      <TableHead>{t('admin.artist')}</TableHead>
+                      <TableHead>{t('admin.genre')}</TableHead>
+                      <TableHead>{t('admin.location')}</TableHead>
+                      <TableHead>{t('admin.status')}</TableHead>
+                      <TableHead>{t('admin.joined')}</TableHead>
+                      <TableHead>{t('admin.actions')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

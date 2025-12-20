@@ -27,6 +27,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Link } from "react-router-dom";
 import { VerifiedBadge } from "@/components/artist/VerifiedBadge";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Stats {
   followers: number;
@@ -41,6 +42,7 @@ export default function StudioDashboard() {
   const { reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
   const { isVerified } = useArtistVerification();
+  const { t } = useLanguage();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [stats, setStats] = useState<Stats>({ followers: 0, totalPlays: 0, totalLikes: 0, totalComments: 0 });
   const [tracks, setTracks] = useState<any[]>([]);
@@ -174,7 +176,7 @@ export default function StudioDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -198,14 +200,14 @@ export default function StudioDashboard() {
                 <div>
                   <div className="flex items-center gap-2">
                     <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                      Creator Control Room
+                      {t('studio.controlRoom')}
                     </h1>
                     {isVerified && <VerifiedBadge size="lg" />}
                   </div>
                   <p className="text-sm md:text-base text-muted-foreground">
-                    Welcome back, {artistProfile?.artist_name} ·{" "}
+                    {t('studio.welcomeBack')}, {artistProfile?.artist_name} ·{" "}
                     <Link to="/learn?tab=artist" className="text-primary hover:underline">
-                      Learn FlyMusic →
+                      {t('studio.learnFlyMusic')} →
                     </Link>
                   </p>
                 </div>
@@ -218,14 +220,14 @@ export default function StudioDashboard() {
                   className="hidden md:flex"
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  Preview as Fan
+                  {t('studio.previewAsFan')}
                   <ExternalLink className="h-3 w-3 ml-1" />
                 </Button>
                 {hasBetaAccess && <EarlyAccessBadge />}
               </div>
             </div>
             <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
-              Track your impact, releases and fan engagement in one place
+              {t('studio.trackImpact')}
             </p>
           </div>
 
@@ -242,35 +244,35 @@ export default function StudioDashboard() {
             <div className="grid grid-cols-1 gap-3">
               <CollapsibleStatCard
                 icon={Users}
-                label="Followers"
+                label={t('artist.followers')}
                 value={stats.followers}
-                trend="Your fan community"
+                trend={t('studio.yourFanCommunity')}
               />
               <CollapsibleStatCard
                 icon={Play}
-                label="Total Plays"
+                label={t('studio.totalPlays')}
                 value={stats.totalPlays}
-                trend="Across all tracks"
+                trend={t('studio.acrossAllTracks')}
               />
               <CollapsibleStatCard
                 icon={Heart}
-                label="Total Likes"
+                label={t('studio.totalLikes')}
                 value={stats.totalLikes}
-                trend="Fan engagement"
+                trend={t('studio.fanEngagement')}
               />
               <CollapsibleStatCard
                 icon={MessageSquare}
-                label="Comments"
+                label={t('artist.comments')}
                 value={stats.totalComments}
-                trend="Community feedback"
+                trend={t('studio.communityFeedback')}
               />
             </div>
           ) : (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-              <StatCard label="Followers" value={stats.followers} icon={Users} />
-              <StatCard label="Total Plays" value={stats.totalPlays} icon={Play} />
-              <StatCard label="Total Likes" value={stats.totalLikes} icon={Heart} />
-              <StatCard label="Comments" value={stats.totalComments} icon={MessageSquare} />
+              <StatCard label={t('artist.followers')} value={stats.followers} icon={Users} />
+              <StatCard label={t('studio.totalPlays')} value={stats.totalPlays} icon={Play} />
+              <StatCard label={t('studio.totalLikes')} value={stats.totalLikes} icon={Heart} />
+              <StatCard label={t('artist.comments')} value={stats.totalComments} icon={MessageSquare} />
             </div>
           )}
 

@@ -11,6 +11,7 @@ import { DollarSign, TrendingUp, Clock } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
 import { ArtistTierManager } from "@/components/supporter/ArtistTierManager";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Payout {
   id: string;
@@ -24,6 +25,7 @@ export default function StudioEarnings() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState({ total: 0, pending: 0, lastPayout: null as string | null });
   const [payouts, setPayouts] = useState<Payout[]>([]);
@@ -80,7 +82,7 @@ export default function StudioEarnings() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -94,8 +96,8 @@ export default function StudioEarnings() {
         <main className="flex-1 p-4 md:p-8 pb-32 md:pb-28">
           <div className="max-w-7xl mx-auto space-y-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">Earnings & Payouts</h1>
-              <p className="text-muted-foreground">Track your supporter revenue and payout history</p>
+              <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('studio.earnings')}</h1>
+              <p className="text-muted-foreground">{t('studio.earningsDescription')}</p>
             </div>
 
             <div className="grid gap-4 md:grid-cols-3">
@@ -103,12 +105,12 @@ export default function StudioEarnings() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-primary" />
-                    Total Earnings
+                    {t('studio.totalEarnings')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{earnings.total.toFixed(2)} kr</div>
-                  <p className="text-xs text-muted-foreground mt-1">Lifetime supporter revenue</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('studio.lifetimeRevenue')}</p>
                 </CardContent>
               </Card>
 
@@ -116,17 +118,17 @@ export default function StudioEarnings() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-primary" />
-                    Pending Payout
+                    {t('studio.pendingPayout')}
                     <InfoTooltip
-                      title="Pending Payout"
-                      description="Earnings ready for withdrawal. Minimum payout threshold is 500 kr, processed monthly by admin team."
+                      title={t('studio.pendingPayout')}
+                      description={t('studio.pendingPayoutTooltip')}
                       forRole="artist"
                     />
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">{earnings.pending.toFixed(2)} kr</div>
-                  <p className="text-xs text-muted-foreground mt-1">Available for withdrawal</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('studio.availableForWithdrawal')}</p>
                 </CardContent>
               </Card>
 
@@ -134,7 +136,7 @@ export default function StudioEarnings() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-medium flex items-center gap-2">
                     <Clock className="h-4 w-4 text-primary" />
-                    Last Payout
+                    {t('studio.lastPayout')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -142,7 +144,7 @@ export default function StudioEarnings() {
                     {earnings.lastPayout ? new Date(earnings.lastPayout).toLocaleDateString('sv-SE', { month: 'short', day: 'numeric' }) : "—"}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {earnings.lastPayout ? "Most recent" : "No payouts yet"}
+                    {earnings.lastPayout ? t('studio.mostRecent') : t('studio.noPayoutsYet')}
                   </p>
                 </CardContent>
               </Card>
@@ -150,11 +152,11 @@ export default function StudioEarnings() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Payout History</CardTitle>
+                <CardTitle>{t('studio.payoutHistory')}</CardTitle>
               </CardHeader>
               <CardContent>
                 {payouts.length === 0 ? (
-                  <p className="text-muted-foreground">No payout history yet. Keep building your supporter base!</p>
+                  <p className="text-muted-foreground">{t('empty.noPayouts')}</p>
                 ) : (
                   <div className="space-y-3">
                     {payouts.map((payout) => (
@@ -181,18 +183,18 @@ export default function StudioEarnings() {
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="font-semibold">How Payouts Work</h3>
+                  <h3 className="font-semibold">{t('studio.howPayoutsWork')}</h3>
                   <InfoTooltip
-                    title="Revenue Split"
-                    description="You receive 70% of supporter subscription revenue. FlyMusic takes 30% to cover platform costs and payment processing fees."
+                    title={t('studio.revenueSplit')}
+                    description={t('studio.revenueSplitTooltip')}
                     forRole="artist"
                   />
                 </div>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• You receive 70% of supporter subscription revenue</li>
-                  <li>• With Stripe Connect: Automatic payouts to your bank</li>
-                  <li>• Without Stripe Connect: Manual monthly payouts (min 500 kr)</li>
-                  <li>• Manage your tiers above to customize supporter benefits</li>
+                  <li>• {t('studio.payoutBullet1')}</li>
+                  <li>• {t('studio.payoutBullet2')}</li>
+                  <li>• {t('studio.payoutBullet3')}</li>
+                  <li>• {t('studio.payoutBullet4')}</li>
                 </ul>
               </CardContent>
             </Card>
