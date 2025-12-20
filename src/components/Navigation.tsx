@@ -95,7 +95,7 @@ export const Navigation = () => {
                 <>
                   <Link to="/studio/opportunities" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
-                    Brand Opportunities
+                    {t('nav.brandOpportunities')}
                   </Link>
                   <Link to={`/artist/${user?.id}`} className="text-foreground/80 hover:text-primary transition-colors">
                     {t('nav.myArtistPage')}
@@ -121,7 +121,7 @@ export const Navigation = () => {
               {/* Brand sees Brand Dashboard */}
               {hasRole('brand') && (
                 <Link to="/brand" className="text-foreground/80 hover:text-primary transition-colors">
-                  Brand Dashboard
+                  {t('nav.brandDashboard')}
                 </Link>
               )}
               
@@ -144,17 +144,17 @@ export const Navigation = () => {
                   {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : hasRole('fan') ? (
                     <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : hasRole('brand') ? (
                     <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : null}
                   
@@ -177,11 +177,11 @@ export const Navigation = () => {
             <>
               {/* Unauthenticated users see Brands link and Pricing */}
               <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
-                For Brands
+                {t('nav.forBrands')}
               </Link>
               <Link to="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
                 <CreditCard className="h-4 w-4" />
-                Pricing
+                {t('nav.pricing')}
               </Link>
               <div className="flex items-center gap-3">
                 <Button variant="ghost" onClick={() => navigate('/auth')}>
@@ -217,11 +217,11 @@ export const Navigation = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-[hsl(0,0%,6%)] border-border">
               <DropdownMenuItem onClick={() => navigate('/explore')}>
-                Explore Artists
+                {t('nav.exploreArtists')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/search')}>
                 <Search className="h-4 w-4 mr-2" />
-                Search
+                {t('nav.search')}
               </DropdownMenuItem>
               
               {user ? (
@@ -231,10 +231,10 @@ export const Navigation = () => {
                     <>
                       <DropdownMenuItem onClick={() => navigate('/studio/opportunities')}>
                         <Briefcase className="h-4 w-4 mr-2" />
-                        Brand Opportunities
+                        {t('nav.brandOpportunities')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/studio')}>
-                        My Studio
+                        {t('nav.myStudio')}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -243,10 +243,10 @@ export const Navigation = () => {
                   {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                     <>
                       <DropdownMenuItem onClick={() => navigate('/fan')}>
-                        Fan Portal
+                        {t('nav.fanPortal')}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => navigate('/fan/feed')}>
-                        Feed
+                        {t('nav.feed')}
                       </DropdownMenuItem>
                     </>
                   )}
@@ -254,13 +254,13 @@ export const Navigation = () => {
                   {/* Brand menu items */}
                   {hasRole('brand') && (
                     <DropdownMenuItem onClick={() => navigate('/brand')}>
-                      Brand Dashboard
+                      {t('nav.brandDashboard')}
                     </DropdownMenuItem>
                   )}
                   
                   {hasRole('admin') && (
                     <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      Admin
+                      {t('nav.admin')}
                     </DropdownMenuItem>
                   )}
                   
@@ -268,17 +268,17 @@ export const Navigation = () => {
                   {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : hasRole('fan') ? (
                     <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : hasRole('brand') ? (
                     <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
-                      Settings
+                      {t('nav.settings')}
                     </DropdownMenuItem>
                   ) : null}
                   
@@ -292,28 +292,28 @@ export const Navigation = () => {
                   
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    {t('nav.signOut')}
                   </DropdownMenuItem>
                 </>
               ) : (
                 <>
                   <DropdownMenuItem onClick={() => navigate('/brands')}>
-                    For Brands
+                    {t('nav.forBrands')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/pricing')}>
                     <CreditCard className="h-4 w-4 mr-2" />
-                    Pricing
+                    {t('nav.pricing')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth')}>
-                    Sign In
+                    {t('nav.signIn')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth?mode=fan')}>
                     <Heart className="mr-2 h-4 w-4" />
-                    Join as Fan
+                    {t('nav.joinFan')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/auth?mode=artist')}>
                     <Mic2 className="mr-2 h-4 w-4 text-primary" />
-                    Join as Artist
+                    {t('nav.joinArtist')}
                   </DropdownMenuItem>
                 </>
               )}

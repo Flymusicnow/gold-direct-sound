@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
@@ -51,6 +52,7 @@ interface VideoPost {
 
 export default function FanFeed() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { playNow, addToQueue, setQueue } = useFlightdeck();
   const { reproLog, trackApiCall } = useReproMode();
@@ -83,7 +85,7 @@ export default function FanFeed() {
     if (newTracks.length === 0) return;
     const allItems = newTracks.map(trackToFlightdeckItem);
     setQueue(allItems, 0);
-    toast.success(`Playing ${newTracks.length} tracks`);
+    toast.success(t('toast.playingTracks').replace('{count}', String(newTracks.length)));
   };
 
   const handlePlayTrack = (track: NewTrack) => {
@@ -94,7 +96,7 @@ export default function FanFeed() {
 
   const handleAddToQueue = (track: NewTrack) => {
     addToQueue(trackToFlightdeckItem(track));
-    toast.success(`"${track.title}" added to queue`);
+    toast.success(t('toast.addedToQueue').replace('{title}', track.title));
   };
 
   useEffect(() => {
@@ -209,7 +211,7 @@ export default function FanFeed() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading your feed...</p>
+        <p className="text-muted-foreground">{t('fan.loadingFeed')}</p>
       </div>
     );
   }
@@ -226,13 +228,13 @@ export default function FanFeed() {
           className="gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          {t('common.backToDashboard')}
         </Button>
 
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-bold mb-2">Your Feed</h1>
-          <p className="text-muted-foreground">Discover what's new from your favorite artists</p>
+          <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
+          <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -242,10 +244,10 @@ export default function FanFeed() {
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Music className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">New From Your Artists</h2>
+                <h2 className="text-2xl font-semibold">{t('fan.newFromYourArtists')}</h2>
                 <InfoTooltip
-                  title="Latest From Followed"
-                  description="Newest tracks from artists you follow, sorted by release date. Follow more artists to see more content here."
+                  title={t('fan.latestFromFollowed')}
+                  description={t('fan.latestFromFollowedDesc')}
                   forRole="fan"
                 />
               </div>
@@ -253,10 +255,10 @@ export default function FanFeed() {
               {newTracks.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-muted-foreground mb-4">
-                    No new tracks yet. Start following artists to see their latest releases!
+                    {t('fan.noNewTracksYet')}
                   </p>
                   <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
-                    Discover Artists
+                    {t('fan.discoverArtists')}
                   </Button>
                 </div>
               ) : (
@@ -268,7 +270,7 @@ export default function FanFeed() {
                       className="bg-primary hover:bg-primary/90"
                     >
                       <Play className="h-4 w-4 mr-2" />
-                      Play All ({newTracks.length})
+                      {t('actions.playAll')} ({newTracks.length})
                     </Button>
                   </div>
                   
@@ -294,7 +296,7 @@ export default function FanFeed() {
               <Card className="p-6">
                 <div className="flex items-center gap-2 mb-6">
                   <Video className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-semibold">New Videos From Your Artists</h2>
+                  <h2 className="text-2xl font-semibold">{t('fan.newVideosFromArtists')}</h2>
                 </div>
                 <div className="space-y-6">
                   {videoPosts.map((video) => (
@@ -332,7 +334,7 @@ export default function FanFeed() {
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-6">
                 <Sparkles className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">Recommended For You</h2>
+                <h2 className="text-2xl font-semibold">{t('fan.recommendedForYou')}</h2>
               </div>
 
               <DiscoverArtists
@@ -369,10 +371,10 @@ export default function FanFeed() {
             <Card className="p-6">
               <div className="flex items-center gap-2 mb-6">
                 <TrendingUp className="h-6 w-6 text-primary" />
-                <h2 className="text-xl font-semibold">Trending</h2>
+                <h2 className="text-xl font-semibold">{t('fan.trending')}</h2>
                 <InfoTooltip
-                  title="Trending Content"
-                  description="Top tracks based on plays, likes, shares, and Spotlight votes in the last 48 hours."
+                  title={t('fan.trendingContent')}
+                  description={t('fan.trendingContentDesc')}
                   forRole="fan"
                 />
               </div>

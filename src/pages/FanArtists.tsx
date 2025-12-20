@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -23,6 +24,7 @@ interface Artist {
 
 export default function FanArtists() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [artists, setArtists] = useState<Artist[]>([]);
   const [filteredArtists, setFilteredArtists] = useState<Artist[]>([]);
@@ -83,9 +85,9 @@ export default function FanArtists() {
       .eq('artist_id', artistId);
 
     if (error) {
-      toast.error("Failed to unfollow");
+      toast.error(t('toast.unfollowFailed'));
     } else {
-      toast.success("Unfollowed successfully");
+      toast.success(t('toast.unfollowedSuccessfully'));
       setArtists(prev => prev.filter(a => a.id !== artistId));
     }
   };
@@ -93,7 +95,7 @@ export default function FanArtists() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -109,16 +111,16 @@ export default function FanArtists() {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          {t('common.backToDashboard')}
         </Button>
 
-        <h1 className="text-3xl font-bold mb-8">My Artists</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('fan.myArtists')}</h1>
 
         <div className="mb-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name or genre..."
+              placeholder={t('fan.searchByNameOrGenre')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -129,10 +131,10 @@ export default function FanArtists() {
         {filteredArtists.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">
-              {searchQuery ? "No artists found matching your search" : "You're not following any artists yet"}
+              {searchQuery ? t('fan.noArtistsMatchingSearch') : t('fan.notFollowingAnyArtists')}
             </p>
             <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
-              Discover Artists
+              {t('fan.discoverArtists')}
             </Button>
           </div>
         ) : (
@@ -182,7 +184,7 @@ export default function FanArtists() {
                     className="gap-2 w-full"
                   >
                     <UserMinus className="h-4 w-4" />
-                    Unfollow
+                    {t('actions.unfollow')}
                   </Button>
                 </div>
               </Card>

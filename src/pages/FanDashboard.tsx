@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 
@@ -14,6 +15,7 @@ interface Artist {
 
 export default function FanDashboard() {
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,7 @@ export default function FanDashboard() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -60,16 +62,16 @@ export default function FanDashboard() {
   return (
     <div className="min-h-screen py-24 px-4">
       <div className="container mx-auto max-w-6xl">
-        <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('fan.yourDashboard')}</h1>
 
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Heart className="h-5 w-5 text-primary" />
-            Following
+            {t('fan.following')}
           </h2>
           
           {followedArtists.length === 0 ? (
-            <p className="text-muted-foreground">You're not following any artists yet.</p>
+            <p className="text-muted-foreground">{t('fan.notFollowingAnyArtists')}</p>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {followedArtists.map((artist) => (
