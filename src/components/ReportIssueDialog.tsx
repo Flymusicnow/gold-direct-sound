@@ -43,14 +43,14 @@ function LanguageToggle({
   onLanguageChange: (lang: InboxLanguage) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 text-xs">
+    <div className="flex items-center gap-1 text-sm">
       <button
         type="button"
         onClick={() => onLanguageChange('en')}
-        className={`px-2 py-1 rounded transition-colors ${
+        className={`min-w-[36px] min-h-[36px] px-2 py-1.5 rounded transition-colors ${
           language === 'en' 
             ? 'bg-primary text-primary-foreground font-medium' 
-            : 'text-muted-foreground hover:text-foreground'
+            : 'text-muted-foreground hover:text-foreground active:bg-muted'
         }`}
       >
         EN
@@ -59,10 +59,10 @@ function LanguageToggle({
       <button
         type="button"
         onClick={() => onLanguageChange('sv')}
-        className={`px-2 py-1 rounded transition-colors ${
+        className={`min-w-[36px] min-h-[36px] px-2 py-1.5 rounded transition-colors ${
           language === 'sv' 
             ? 'bg-primary text-primary-foreground font-medium' 
-            : 'text-muted-foreground hover:text-foreground'
+            : 'text-muted-foreground hover:text-foreground active:bg-muted'
         }`}
       >
         SV
