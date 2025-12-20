@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { Check, X, User, Building2, Music, MapPin } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PendingArtist {
   id: string;
@@ -32,6 +33,7 @@ interface PendingBrand {
 
 export default function AdminApprovals() {
   const { logActivity } = useAdminActivityLog();
+  const { t } = useLanguage();
   const [pendingArtists, setPendingArtists] = useState<PendingArtist[]>([]);
   const [pendingBrands, setPendingBrands] = useState<PendingBrand[]>([]);
   const [loading, setLoading] = useState(true);
@@ -142,21 +144,21 @@ export default function AdminApprovals() {
 
   return (
     <AdminLayout
-      title="Pending Approvals"
-      description={`${totalPending} item${totalPending !== 1 ? "s" : ""} awaiting review`}
+      title={t('admin.pendingApprovals')}
+      description={`${totalPending} ${t('admin.itemsAwaitingReview')}`}
     >
       <Tabs defaultValue="artists" className="space-y-6">
         <TabsList>
           <TabsTrigger value="artists" className="gap-2">
             <User className="h-4 w-4" />
-            Artists
+            {t('admin.artists')}
             {pendingArtists.length > 0 && (
               <Badge variant="secondary" className="ml-1">{pendingArtists.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="brands" className="gap-2">
             <Building2 className="h-4 w-4" />
-            Brands
+            {t('admin.brands')}
             {pendingBrands.length > 0 && (
               <Badge variant="secondary" className="ml-1">{pendingBrands.length}</Badge>
             )}
@@ -166,15 +168,15 @@ export default function AdminApprovals() {
         <TabsContent value="artists">
           <Card>
             <CardHeader>
-              <CardTitle>Pending Artist Applications</CardTitle>
+              <CardTitle>{t('admin.pendingArtistApplications')}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-muted-foreground">{t('common.loading')}</p>
               ) : pendingArtists.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">No pending artist applications</p>
+                  <p className="text-muted-foreground">{t('empty.noPendingArtists')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -201,17 +203,17 @@ export default function AdminApprovals() {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Applied {new Date(artist.created_at).toLocaleDateString()}
+                            {t('admin.applied')} {new Date(artist.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="default" size="sm" onClick={() => handleApproveArtist(artist)}>
                             <Check className="mr-1 h-4 w-4" />
-                            Approve
+                            {t('admin.approve')}
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => handleRejectArtist(artist)}>
                             <X className="mr-1 h-4 w-4" />
-                            Reject
+                            {t('admin.reject')}
                           </Button>
                         </div>
                       </div>
@@ -226,15 +228,15 @@ export default function AdminApprovals() {
         <TabsContent value="brands">
           <Card>
             <CardHeader>
-              <CardTitle>Pending Brand Applications</CardTitle>
+              <CardTitle>{t('admin.pendingBrandApplications')}</CardTitle>
             </CardHeader>
             <CardContent>
               {loading ? (
-                <p className="text-muted-foreground">Loading...</p>
+                <p className="text-muted-foreground">{t('common.loading')}</p>
               ) : pendingBrands.length === 0 ? (
                 <div className="text-center py-8">
                   <Building2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground">No pending brand applications</p>
+                  <p className="text-muted-foreground">{t('empty.noPendingBrands')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -253,17 +255,17 @@ export default function AdminApprovals() {
                             </p>
                           )}
                           <p className="text-xs text-muted-foreground mt-2">
-                            Applied {new Date(brand.created_at).toLocaleDateString()}
+                            {t('admin.applied')} {new Date(brand.created_at).toLocaleDateString()}
                           </p>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="default" size="sm" onClick={() => handleApproveBrand(brand)}>
                             <Check className="mr-1 h-4 w-4" />
-                            Approve
+                            {t('admin.approve')}
                           </Button>
                           <Button variant="destructive" size="sm" onClick={() => handleRejectBrand(brand)}>
                             <X className="mr-1 h-4 w-4" />
-                            Reject
+                            {t('admin.reject')}
                           </Button>
                         </div>
                       </div>

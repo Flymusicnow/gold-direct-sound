@@ -8,9 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Target, Sparkles, ArrowLeft } from 'lucide-react';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function FanMissions() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const socialRitualsEnabled = useFeatureFlag('SOCIAL_RITUALS_ENABLED');
   const reachEconomyEnabled = useFeatureFlag('REACH_ECONOMY_ENABLED');
 
@@ -25,14 +27,14 @@ export default function FanMissions() {
             className="mb-6 gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            {t('fan.backToDashboard')}
           </Button>
           <Card className="max-w-md mx-auto">
             <CardContent className="p-8 text-center">
               <Target className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Missions Coming Soon</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('fan.missionsComingSoon')}</h2>
               <p className="text-muted-foreground">
-                Daily and weekly missions are on the way. Stay tuned!
+                {t('fan.missionsComingSoonDescription')}
               </p>
             </CardContent>
           </Card>
@@ -54,7 +56,7 @@ export default function FanMissions() {
             className="gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
+            {t('fan.backToDashboard')}
           </Button>
 
           {/* Header */}
@@ -62,10 +64,10 @@ export default function FanMissions() {
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Target className="h-6 w-6 text-primary" />
-                Missions
+                {t('fan.missions')}
               </h1>
               <p className="text-muted-foreground">
-                Complete missions to earn XP and unlock rewards
+                {t('fan.missionsDescription')}
               </p>
             </div>
             {reachEconomyEnabled && <BoostTokenIndicator />}
@@ -77,10 +79,9 @@ export default function FanMissions() {
               <div className="flex items-start gap-3">
                 <Sparkles className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-sm">How it works</h3>
+                  <h3 className="font-medium text-sm">{t('fan.howItWorks')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Daily missions reset at midnight. Weekly missions reset every Monday. 
-                    Complete them to earn XP and support your favorite artists!
+                    {t('fan.missionsHowItWorksDescription')}
                   </p>
                 </div>
               </div>

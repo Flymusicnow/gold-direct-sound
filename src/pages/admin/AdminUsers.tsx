@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, Eye, Download, Trash2, UserX, UserCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface UserWithRoles {
   id: string;
@@ -25,6 +26,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     fetchUsers();
@@ -120,7 +122,7 @@ export default function AdminUsers() {
   });
 
   return (
-    <AdminLayout title="User Management" description="View and manage platform users">
+    <AdminLayout title={t('admin.userManagement')} description={t('admin.userManagementDescription')}>
       <div className="space-y-6">
         {/* Search */}
         <Card>
@@ -128,7 +130,7 @@ export default function AdminUsers() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, or ID..."
+                placeholder={t('admin.searchUsers')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -142,7 +144,7 @@ export default function AdminUsers() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-2xl font-bold">{users.length}</p>
-              <p className="text-sm text-muted-foreground">Total Users</p>
+              <p className="text-sm text-muted-foreground">{t('admin.totalUsers')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -150,7 +152,7 @@ export default function AdminUsers() {
               <p className="text-2xl font-bold">
                 {users.filter((u) => u.roles.includes("artist")).length}
               </p>
-              <p className="text-sm text-muted-foreground">Artists</p>
+              <p className="text-sm text-muted-foreground">{t('admin.artists')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -158,7 +160,7 @@ export default function AdminUsers() {
               <p className="text-2xl font-bold">
                 {users.filter((u) => u.roles.includes("fan")).length}
               </p>
-              <p className="text-sm text-muted-foreground">Fans</p>
+              <p className="text-sm text-muted-foreground">{t('admin.fans')}</p>
             </CardContent>
           </Card>
           <Card>
@@ -166,7 +168,7 @@ export default function AdminUsers() {
               <p className="text-2xl font-bold">
                 {users.filter((u) => u.is_suspended).length}
               </p>
-              <p className="text-sm text-muted-foreground">Suspended</p>
+              <p className="text-sm text-muted-foreground">{t('admin.suspended')}</p>
             </CardContent>
           </Card>
         </div>
@@ -174,20 +176,20 @@ export default function AdminUsers() {
         {/* Users Table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+            <CardTitle>{t('admin.allUsers')} ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p className="text-muted-foreground">Loading users...</p>
+              <p className="text-muted-foreground">{t('common.loading')}</p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Roles</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>{t('admin.user')}</TableHead>
+                    <TableHead>{t('admin.roles')}</TableHead>
+                    <TableHead>{t('admin.status')}</TableHead>
+                    <TableHead>{t('admin.joined')}</TableHead>
+                    <TableHead>{t('admin.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -209,7 +211,7 @@ export default function AdminUsers() {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium">{user.full_name || "No name"}</p>
+                            <p className="font-medium">{user.full_name || t('admin.noName')}</p>
                             <p className="text-xs text-muted-foreground">{user.email}</p>
                           </div>
                         </div>
@@ -225,9 +227,9 @@ export default function AdminUsers() {
                       </TableCell>
                       <TableCell>
                         {user.is_suspended ? (
-                          <Badge variant="destructive">Suspended</Badge>
+                          <Badge variant="destructive">{t('admin.suspended')}</Badge>
                         ) : (
-                          <Badge variant="outline">Active</Badge>
+                          <Badge variant="outline">{t('common.active')}</Badge>
                         )}
                       </TableCell>
                       <TableCell>

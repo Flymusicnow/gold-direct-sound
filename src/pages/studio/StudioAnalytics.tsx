@@ -13,6 +13,7 @@ import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { VideoEngagementHeatmap } from "@/components/video/VideoEngagementHeatmap";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Track {
   id: string;
@@ -52,6 +53,7 @@ export default function StudioAnalytics() {
   });
   const [topVideos, setTopVideos] = useState<VideoAnalytics[]>([]);
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
   
   // Track milestone achievements
   useVideoMilestones(topVideos.map(v => ({ id: v.id, view_count: v.view_count })));
@@ -232,7 +234,7 @@ export default function StudioAnalytics() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -251,8 +253,8 @@ export default function StudioAnalytics() {
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Analytics</h1>
-              <p className="text-sm text-muted-foreground">Track your performance and audience insights</p>
+              <h1 className="text-2xl md:text-3xl font-bold">{t('studio.analytics')}</h1>
+              <p className="text-sm text-muted-foreground">{t('studio.analyticsDescription')}</p>
             </div>
           </div>
 
@@ -261,50 +263,50 @@ export default function StudioAnalytics() {
             <Card className="p-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm text-muted-foreground">Total Followers</p>
+                  <p className="text-sm text-muted-foreground">{t('studio.totalFollowers')}</p>
                   <InfoTooltip
-                    title="Followers"
-                    description="Total fans following your profile. New followers in the last 30 days are shown as trending growth."
+                    title={t('artist.followers')}
+                    description={t('studio.followersTooltip')}
                     forRole="artist"
                   />
                 </div>
                 <p className="text-3xl font-bold">{stats.totalFollowers}</p>
-                <p className="text-xs text-primary">+{stats.followers30d} last 30 days</p>
+                <p className="text-xs text-primary">+{stats.followers30d} {t('studio.last30Days')}</p>
               </div>
             </Card>
             <Card className="p-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm text-muted-foreground">Total Plays</p>
+                  <p className="text-sm text-muted-foreground">{t('studio.totalPlays')}</p>
                   <InfoTooltip
-                    title="Track Plays"
-                    description="Total plays across all your tracks. Plays are counted when fans listen to your music through the Flightdeck player."
+                    title={t('studio.trackPlays')}
+                    description={t('studio.playsTooltip')}
                     forRole="artist"
                   />
                 </div>
                 <p className="text-3xl font-bold">{stats.totalPlays}</p>
-                <p className="text-xs text-primary">+{stats.plays30d} last 30 days</p>
+                <p className="text-xs text-primary">+{stats.plays30d} {t('studio.last30Days')}</p>
               </div>
             </Card>
-            <StatCard label="Total Likes" value={stats.totalLikes} icon={Heart} />
-            <StatCard label="Total Comments" value={stats.totalComments} icon={MessageSquare} />
+            <StatCard label={t('studio.totalLikes')} value={stats.totalLikes} icon={Heart} />
+            <StatCard label={t('studio.totalComments')} value={stats.totalComments} icon={MessageSquare} />
           </div>
 
           {/* Top Tracks */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Top Tracks</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('studio.topTracks')}</h2>
             {topTracks.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
-                No tracks yet. Upload tracks to see analytics!
+                {t('empty.noTracks')}
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Track Name</TableHead>
-                    <TableHead className="text-right">Plays</TableHead>
-                    <TableHead className="text-right">Likes</TableHead>
-                    <TableHead className="text-right">Comments</TableHead>
+                    <TableHead>{t('studio.trackName')}</TableHead>
+                    <TableHead className="text-right">{t('studio.plays')}</TableHead>
+                    <TableHead className="text-right">{t('studio.likes')}</TableHead>
+                    <TableHead className="text-right">{t('artist.comments')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

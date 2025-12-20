@@ -14,10 +14,12 @@ import { ArrowLeft, CreditCard, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function FanSettings() {
   const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -125,10 +127,10 @@ export default function FanSettings() {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          {t('fan.backToDashboard')}
         </Button>
 
-        <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('settings.accountSettings')}</h1>
 
         <Card className="p-6 mb-6">
           {/* Profile Picture Upload */}
@@ -160,16 +162,16 @@ export default function FanSettings() {
               />
             </div>
             <div>
-              <h3 className="font-semibold">Profile Picture</h3>
+              <h3 className="font-semibold">{t('settings.profilePicture')}</h3>
               <p className="text-sm text-muted-foreground">
-                Click the camera icon to upload a new photo
+                {t('settings.clickCameraToUpload')}
               </p>
             </div>
           </div>
 
           <form onSubmit={handleSave} className="space-y-6">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('settings.email')}</Label>
               <Input
                 id="email"
                 type="email"
@@ -178,36 +180,36 @@ export default function FanSettings() {
                 className="bg-muted"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Email cannot be changed
+                {t('settings.emailCannotBeChanged')}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="fullName">Display Name</Label>
+              <Label htmlFor="fullName">{t('settings.displayName')}</Label>
               <Input
                 id="fullName"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="Your name"
+                placeholder={t('settings.yourName')}
                 required
               />
             </div>
 
             <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
+              <h3 className="text-lg font-semibold mb-4">{t('settings.notificationPreferences')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Notification settings coming soon! You'll be able to customize:
+                {t('settings.notificationsComingSoon')}
               </p>
               <ul className="text-sm text-muted-foreground space-y-2 ml-4">
-                <li>• New releases from followed artists</li>
-                <li>• Comment replies</li>
-                <li>• FlyMusic campaigns and events</li>
+                <li>• {t('settings.newReleasesNotification')}</li>
+                <li>• {t('settings.commentRepliesNotification')}</li>
+                <li>• {t('settings.campaignsNotification')}</li>
               </ul>
             </div>
 
             <Button type="submit" disabled={loading} className="bg-gradient-gold">
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? t('common.saving') : t('common.saveChanges')}
             </Button>
           </form>
         </Card>
@@ -216,7 +218,7 @@ export default function FanSettings() {
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
-            Subscription & Billing
+            {t('settings.subscriptionBilling')}
           </h3>
           <BillingManagementCard userType="fan" />
         </Card>
