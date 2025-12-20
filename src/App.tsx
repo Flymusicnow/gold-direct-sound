@@ -139,8 +139,8 @@ const App = () => (
       <BrowserRouter>
         <RouteHistoryProvider>
         <ReproModeProvider>
-        <VerificationModeProvider>
         <AuthProvider>
+        <VerificationModeProvider>
           <ReproDebugPanel />
           <VerificationBanner />
           {/* Public routes - outside EarlyAccessGate */}
@@ -428,8 +428,8 @@ const App = () => (
           </EarlyAccessGate>
             } />
           </Routes>
-        </AuthProvider>
         </VerificationModeProvider>
+        </AuthProvider>
         </ReproModeProvider>
         </RouteHistoryProvider>
       </BrowserRouter>
