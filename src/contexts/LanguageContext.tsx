@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { en } from '@/i18n/en';
 import { sv } from '@/i18n/sv';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 type Language = 'en' | 'sv';
 type Translations = typeof en;
@@ -22,45 +21,52 @@ const translations: Record<Language, Translations> = {
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('en');
-  const { user, profile } = useAuth();
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Load language from profile or localStorage on mount
+  // Listen for auth state changes independently
   useEffect(() => {
-    const loadLanguage = async () => {
-      // First check localStorage for immediate display
-      const storedLang = localStorage.getItem('preferred_language') as Language | null;
-      if (storedLang && (storedLang === 'en' || storedLang === 'sv')) {
-        setLanguageState(storedLang);
+    // Load from localStorage first for immediate display
+    const storedLang = localStorage.getItem('preferred_language') as Language | null;
+    if (storedLang && (storedLang === 'en' || storedLang === 'sv')) {
+      setLanguageState(storedLang);
+    }
+
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUserId = session?.user?.id ?? null;
+      setUserId(currentUserId);
+
+      // If user just logged in, sync language preference from database
+      if (currentUserId && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        // Use setTimeout to avoid Supabase deadlock
+        setTimeout(async () => {
+          const { data } = await supabase
+            .from('profiles')
+            .select('preferred_language')
+            .eq('id', currentUserId)
+            .single();
+
+          if (data?.preferred_language && (data.preferred_language === 'en' || data.preferred_language === 'sv')) {
+            setLanguageState(data.preferred_language as Language);
+            localStorage.setItem('preferred_language', data.preferred_language);
+          }
+        }, 0);
       }
+    });
 
-      // If user is logged in, sync from database
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('preferred_language')
-          .eq('id', user.id)
-          .single();
-
-        if (data?.preferred_language && (data.preferred_language === 'en' || data.preferred_language === 'sv')) {
-          setLanguageState(data.preferred_language as Language);
-          localStorage.setItem('preferred_language', data.preferred_language);
-        }
-      }
-    };
-
-    loadLanguage();
-  }, [user]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   const setLanguage = async (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('preferred_language', lang);
 
     // If user is logged in, persist to database
-    if (user) {
+    if (userId) {
       await supabase
         .from('profiles')
         .update({ preferred_language: lang })
-        .eq('id', user.id);
+        .eq('id', userId);
     }
   };
 
