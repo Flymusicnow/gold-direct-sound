@@ -6,6 +6,7 @@ import { useInboxLanguage } from "@/hooks/useInboxLanguage";
 import { InboxLanguageSelector } from "@/components/admin/InboxLanguageSelector";
 import { LanguageAwareText } from "@/components/admin/LanguageAwareText";
 import { ResolveInboxDialog } from "@/components/admin/ResolveInboxDialog";
+import { QuickResolveDialog } from "@/components/admin/QuickResolveDialog";
 import { AssignmentDropdown, getKeyLabel } from "@/components/admin/AssignmentDropdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,8 @@ export default function AdminInboxDetail() {
 
   const [newUpdate, setNewUpdate] = useState("");
   const [submittingUpdate, setSubmittingUpdate] = useState(false);
-  const [resolveDialogOpen, setResolveDialogOpen] = useState(false);
+  const [quickResolveOpen, setQuickResolveOpen] = useState(false);
+  const [advancedResolveOpen, setAdvancedResolveOpen] = useState(false);
 
   const dateLocale = language === "sv" ? sv : enUS;
 
@@ -150,7 +152,7 @@ export default function AdminInboxDetail() {
 
   const handleStatusChange = async (newStatus: string) => {
     if (newStatus === "resolved") {
-      setResolveDialogOpen(true);
+      setQuickResolveOpen(true);
       return;
     }
     const success = await updateStatus(newStatus as "unread" | "in_progress");
@@ -504,12 +506,11 @@ Please analyze this bug report and provide:
                   </Select>
 
                   <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => setResolveDialogOpen(true)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => setQuickResolveOpen(true)}
                   >
                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                    {t("resolveProblem")}
+                    {t("quickResolve")}
                   </Button>
                 </>
               )}
@@ -660,9 +661,19 @@ Please analyze this bug report and provide:
         </div>
       </div>
 
+      <QuickResolveDialog
+        open={quickResolveOpen}
+        onOpenChange={setQuickResolveOpen}
+        onResolve={handleResolve}
+        language={language}
+        issueTitle={message?.title}
+        issueRoute={(message?.payload as any)?.ai_context?.route}
+        onAdvancedClick={() => setAdvancedResolveOpen(true)}
+      />
+
       <ResolveInboxDialog
-        open={resolveDialogOpen}
-        onOpenChange={setResolveDialogOpen}
+        open={advancedResolveOpen}
+        onOpenChange={setAdvancedResolveOpen}
         onResolve={handleResolve}
         language={language}
       />
