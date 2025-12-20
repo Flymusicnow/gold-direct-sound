@@ -147,4 +147,13 @@ export const en = {
     english: 'English',
     swedish: 'Svenska',
   },
+  verification: {
+    testFix: 'Test Fix on Affected Page',
+    verifiedStatus: 'Verified',
+    verifiedOn: 'Verified on',
+    verifiedBy: 'Verified by',
+    verifiedAt: 'Verified at',
+    cannotVerifyManually: 'Verification requires testing the affected page',
+    systemVerified: 'System-verified fix',
+  },
 };

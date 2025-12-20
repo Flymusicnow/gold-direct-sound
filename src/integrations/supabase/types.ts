@@ -1899,6 +1899,10 @@ export type Database = {
           title: string
           type: string
           updated_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+          verified_device: string | null
+          verified_route: string | null
         }
         Insert: {
           assigned_key?: string | null
@@ -1917,6 +1921,10 @@ export type Database = {
           title: string
           type?: string
           updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verified_device?: string | null
+          verified_route?: string | null
         }
         Update: {
           assigned_key?: string | null
@@ -1935,6 +1943,10 @@ export type Database = {
           title?: string
           type?: string
           updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          verified_device?: string | null
+          verified_route?: string | null
         }
         Relationships: [
           {
@@ -1947,6 +1959,13 @@ export type Database = {
           {
             foreignKeyName: "inbox_messages_resolved_by_fkey"
             columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inbox_messages_verified_by_fkey"
+            columns: ["verified_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
