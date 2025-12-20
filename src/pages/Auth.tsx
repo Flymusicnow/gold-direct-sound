@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePromoFunnel } from "@/hooks/usePromoFunnel";
 import { Music, Mic2, Heart, ArrowLeft } from "lucide-react";
 
@@ -22,6 +23,7 @@ export default function Auth() {
   const [authChecked, setAuthChecked] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Process promo funnel after authentication
   usePromoFunnel(user?.id);
@@ -45,7 +47,7 @@ export default function Auth() {
       });
 
       // Always show success message for security (don't reveal if email exists)
-      toast.success("If an account exists with this email, we've sent a password reset link.");
+      toast.success(t('auth.resetLinkSent'));
       setIsForgotPassword(false);
       
       if (error) {
@@ -77,7 +79,7 @@ export default function Auth() {
           .select('role')
           .eq('user_id', data.user.id);
 
-        toast.success("Welcome back!");
+        toast.success(t('auth.welcomeBack'));
 
         if (!roles || roles.length === 0) {
           // If user has no roles BUT came with a mode parameter,
@@ -130,7 +132,7 @@ export default function Auth() {
           }, { onConflict: 'user_id,role', ignoreDuplicates: true });
         }
 
-        toast.success(isArtistSignup ? "Artist account created! Complete your profile to get started." : "Account created!");
+        toast.success(isArtistSignup ? t('auth.artistAccountCreated') : t('auth.accountCreated'));
         
         if (isArtistSignup) {
           navigate('/studio');
@@ -139,7 +141,7 @@ export default function Auth() {
         }
       }
     } catch (error: any) {
-      toast.error(error.message || "Authentication failed");
+      toast.error(error.message || t('auth.authenticationFailed'));
     } finally {
       setLoading(false);
     }
@@ -164,36 +166,36 @@ export default function Auth() {
             className="mb-6 gap-2 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Sign In
+            {t('auth.backToSignIn')}
           </button>
 
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <Music className="h-8 w-8 text-primary" />
               <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-                Reset Password
+                {t('auth.resetPassword')}
               </h1>
             </div>
             <p className="text-muted-foreground">
-              Enter your email and we'll send a reset link if an account exists.
+              {t('auth.resetPasswordDescription')}
             </p>
           </div>
 
           <form onSubmit={handleForgotPassword} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('auth.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="Enter your email"
+                placeholder={t('auth.enterEmail')}
               />
             </div>
 
             <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-              {loading ? "Sending..." : "Send Reset Link"}
+              {loading ? t('auth.sending') : t('auth.sendResetLink')}
             </Button>
           </form>
         </div>
@@ -213,18 +215,18 @@ export default function Auth() {
           </div>
           <p className="text-muted-foreground">
             {isLogin 
-              ? "Welcome back" 
+              ? t('auth.welcomeBack')
               : isArtistSignup 
                 ? (
                   <span className="flex items-center justify-center gap-2">
                     <Mic2 className="h-4 w-4 text-primary" />
-                    Join as an Artist — Upload & share your music
+                    {t('auth.joinAsArtist')}
                   </span>
                 )
                 : (
                   <span className="flex items-center justify-center gap-2">
                     <Heart className="h-4 w-4" />
-                    Join as a Fan — Discover & support artists
+                    {t('auth.joinAsFan')}
                   </span>
                 )
             }
@@ -234,45 +236,45 @@ export default function Auth() {
         <form onSubmit={handleAuth} className="space-y-4">
           {!isLogin && (
             <div>
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="fullName">{t('auth.fullName')}</Label>
               <Input
                 id="fullName"
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                placeholder="Enter your full name"
+                placeholder={t('auth.enterFullName')}
               />
             </div>
           )}
 
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="Enter your email"
+              placeholder={t('auth.enterEmail')}
             />
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="Enter your password"
+              placeholder={t('auth.enterPassword')}
               minLength={6}
             />
           </div>
 
           <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+            {loading ? t('auth.pleaseWait') : isLogin ? t('auth.signIn') : t('auth.createAccount')}
           </Button>
 
           <div className="text-center space-y-2">
@@ -281,7 +283,7 @@ export default function Auth() {
               onClick={() => setIsLogin(!isLogin)}
               className="text-sm text-primary hover:underline"
             >
-              {isLogin ? "Need an account? Sign up" : "Already have an account? Sign in"}
+              {isLogin ? t('auth.needAccount') : t('auth.alreadyHaveAccount')}
             </button>
             
             {isLogin && (
@@ -291,7 +293,7 @@ export default function Auth() {
                   onClick={() => setIsForgotPassword(true)}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
-                  Forgot your password?
+                  {t('auth.forgotPassword')}
                 </button>
               </div>
             )}
@@ -303,7 +305,7 @@ export default function Auth() {
                   onClick={() => setIsArtistSignup(!isArtistSignup)}
                   className="text-sm text-muted-foreground hover:text-primary"
                 >
-                  {isArtistSignup ? "Sign up as a fan instead" : "Are you an artist? Sign up here"}
+                  {isArtistSignup ? t('auth.signUpAsFan') : t('auth.signUpAsArtist')}
                 </button>
               </div>
             )}

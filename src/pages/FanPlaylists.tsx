@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -23,6 +24,7 @@ interface Playlist {
 
 export default function FanPlaylists() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +69,7 @@ export default function FanPlaylists() {
       setPlaylists(playlistsWithCounts);
     } catch (error) {
       console.error("Error fetching playlists:", error);
-      toast.error("Failed to load playlists");
+      toast.error(t('toast.failedToLoadPlaylists'));
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ export default function FanPlaylists() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading playlists...</p>
+        <p className="text-muted-foreground">{t('playlist.loadingPlaylists')}</p>
       </div>
     );
   }
@@ -93,7 +95,7 @@ export default function FanPlaylists() {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
+          {t('common.backToDashboard')}
         </Button>
 
         {/* Header */}
@@ -101,21 +103,21 @@ export default function FanPlaylists() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <ListMusic className="h-10 w-10 text-primary" />
-              <h1 className="text-4xl font-bold">My Stacks</h1>
+              <h1 className="text-4xl font-bold">{t('playlist.myStacks')}</h1>
               <InfoTooltip
-                title="What are Stacks?"
-                description="Stacks are your personal track collections. Organize by mood, genre, or any theme. Make them public to share with others!"
+                title={t('playlist.whatAreStacks')}
+                description={t('playlist.stacksDescription')}
                 forRole="fan"
                 learnLink="/learn?tab=fan#stacks"
               />
             </div>
             <p className="text-muted-foreground">
-              Organize your favorite tracks into custom collections
+              {t('playlist.organizeYourFavorites')}
             </p>
           </div>
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Create Playlist
+            {t('playlist.createPlaylist')}
           </Button>
         </div>
 
@@ -123,13 +125,13 @@ export default function FanPlaylists() {
         {playlists.length === 0 ? (
           <div className="text-center py-16">
             <ListMusic className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No playlists yet</h3>
+            <h3 className="text-xl font-semibold mb-2">{t('playlist.noPlaylistsYet')}</h3>
             <p className="text-muted-foreground mb-6">
-              Create your first playlist to organize your favorite tracks
+              {t('playlist.createFirstPlaylist')}
             </p>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Create Your First Playlist
+              {t('playlist.createYourFirstPlaylist')}
             </Button>
           </div>
         ) : (

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Check, X, Users, Music, Star, Activity } from "lucide-react";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PendingArtist {
   id: string;
@@ -21,6 +22,7 @@ interface PendingArtist {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const { logActivity } = useAdminActivityLog();
   const hasLoggedPageView = useRef(false);
   const [pendingArtists, setPendingArtists] = useState<PendingArtist[]>([]);
@@ -86,10 +88,10 @@ export default function AdminDashboard() {
       .eq("id", artistId);
 
     if (error) {
-      toast.error("Error approving artist");
+      toast.error(t('admin.errorApprovingArtist'));
       console.error(error);
     } else {
-      toast.success("Artist approved!");
+      toast.success(t('admin.artistApproved'));
       fetchPendingArtists();
     }
   };
@@ -101,16 +103,16 @@ export default function AdminDashboard() {
       .eq("id", artistId);
 
     if (error) {
-      toast.error("Error rejecting artist");
+      toast.error(t('admin.errorRejectingArtist'));
       console.error(error);
     } else {
-      toast.success("Artist rejected");
+      toast.success(t('admin.artistRejected'));
       fetchPendingArtists();
     }
   };
 
   return (
-    <AdminLayout title="Admin Dashboard" description="Platform overview and management">
+    <AdminLayout title={t('admin.dashboard')} description={t('admin.platformOverview')}>
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/users")}>
@@ -121,7 +123,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalUsers}</p>
-                <p className="text-sm text-muted-foreground">Total Users</p>
+                <p className="text-sm text-muted-foreground">{t('admin.totalUsers')}</p>
               </div>
             </div>
           </CardContent>
@@ -134,7 +136,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalArtists}</p>
-                <p className="text-sm text-muted-foreground">Artists</p>
+                <p className="text-sm text-muted-foreground">{t('admin.artists')}</p>
               </div>
             </div>
           </CardContent>
@@ -147,7 +149,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.totalTracks}</p>
-                <p className="text-sm text-muted-foreground">Tracks</p>
+                <p className="text-sm text-muted-foreground">{t('admin.tracks')}</p>
               </div>
             </div>
           </CardContent>
@@ -160,7 +162,7 @@ export default function AdminDashboard() {
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingArtists.length}</p>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">{t('admin.pending')}</p>
               </div>
             </div>
           </CardContent>
@@ -170,13 +172,13 @@ export default function AdminDashboard() {
       {/* Pending Approvals */}
       <Card>
         <CardHeader>
-          <CardTitle>Pending Artist Approvals</CardTitle>
+          <CardTitle>{t('admin.pendingArtistApprovals')}</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t('common.loading')}</p>
           ) : pendingArtists.length === 0 ? (
-            <p className="text-muted-foreground">No pending approvals.</p>
+            <p className="text-muted-foreground">{t('admin.noPendingApprovals')}</p>
           ) : (
             <div className="space-y-4">
               {pendingArtists.map((artist) => (
@@ -188,8 +190,8 @@ export default function AdminDashboard() {
                         <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{artist.bio}</p>
                       )}
                       <div className="flex gap-4 text-sm text-muted-foreground">
-                        {artist.genre && <span>Genre: {artist.genre}</span>}
-                        {artist.city && <span>Location: {artist.city}, {artist.country}</span>}
+                        {artist.genre && <span>{t('admin.genre')}: {artist.genre}</span>}
+                        {artist.city && <span>{t('admin.location')}: {artist.city}, {artist.country}</span>}
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -199,7 +201,7 @@ export default function AdminDashboard() {
                         onClick={() => handleApprove(artist.id)}
                       >
                         <Check className="mr-1 h-4 w-4" />
-                        Approve
+                        {t('actions.approve')}
                       </Button>
                       <Button
                         variant="destructive"
@@ -207,7 +209,7 @@ export default function AdminDashboard() {
                         onClick={() => handleReject(artist.id)}
                       >
                         <X className="mr-1 h-4 w-4" />
-                        Reject
+                        {t('actions.reject')}
                       </Button>
                     </div>
                   </div>

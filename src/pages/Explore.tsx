@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -20,6 +21,7 @@ export default function Explore() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -50,7 +52,7 @@ export default function Explore() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading artists...</p>
+        <p className="text-muted-foreground">{t('discover.loadingArtists')}</p>
       </div>
     );
   }
@@ -61,12 +63,12 @@ export default function Explore() {
       <div className="container mx-auto max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">
-            Discover <span className="text-primary">Artists</span>
+            {t('discover.title')} <span className="text-primary">{t('discover.artists')}</span>
           </h1>
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search artists or genres..."
+              placeholder={t('discover.searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -76,7 +78,7 @@ export default function Explore() {
 
         {filteredArtists.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No artists found.</p>
+            <p className="text-muted-foreground">{t('discover.noArtistsFound')}</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
