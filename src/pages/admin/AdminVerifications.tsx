@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ interface Verification {
 
 export default function AdminVerifications() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [verifications, setVerifications] = useState<Verification[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -177,13 +179,13 @@ export default function AdminVerifications() {
   };
 
   return (
-    <AdminLayout title="Artist Verifications" description="Review and manage artist verification requests">
+    <AdminLayout title={t('admin.artistVerifications')} description={t('admin.verificationDescription')}>
       {/* Search */}
       <div className="mb-6">
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by artist name..."
+            placeholder={t('admin.searchByArtistName')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -195,25 +197,25 @@ export default function AdminVerifications() {
       <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="submitted" className="gap-1">
-            Pending Review <Badge variant="secondary" className="ml-1">{counts.submitted}</Badge>
+            {t('admin.pendingReview')} <Badge variant="secondary" className="ml-1">{counts.submitted}</Badge>
           </TabsTrigger>
           <TabsTrigger value="verified" className="gap-1">
-            Verified <Badge variant="secondary" className="ml-1">{counts.verified}</Badge>
+            {t('admin.verified')} <Badge variant="secondary" className="ml-1">{counts.verified}</Badge>
           </TabsTrigger>
           <TabsTrigger value="rejected" className="gap-1">
-            Rejected <Badge variant="secondary" className="ml-1">{counts.rejected}</Badge>
+            {t('admin.rejected')} <Badge variant="secondary" className="ml-1">{counts.rejected}</Badge>
           </TabsTrigger>
           <TabsTrigger value="all" className="gap-1">
-            All <Badge variant="secondary" className="ml-1">{counts.all}</Badge>
+            {t('common.all')} <Badge variant="secondary" className="ml-1">{counts.all}</Badge>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value={selectedTab} className="space-y-4">
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">Loading...</div>
+            <div className="text-center py-8 text-muted-foreground">{t('common.loading')}</div>
           ) : filteredVerifications.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No verifications found in this category.
+              {t('admin.noVerificationsFound')}
             </div>
           ) : (
             <div className="grid gap-4">
@@ -259,7 +261,7 @@ export default function AdminVerifications() {
                               disabled={processing}
                             >
                               <CheckCircle2 className="h-4 w-4 mr-1" />
-                              Approve
+                              {t('admin.approve')}
                             </Button>
                             <Button
                               size="sm"
@@ -267,7 +269,7 @@ export default function AdminVerifications() {
                               onClick={() => setSelectedVerification(verification)}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
-                              Reject
+                              {t('admin.reject')}
                             </Button>
                           </div>
                         )}
@@ -289,7 +291,7 @@ export default function AdminVerifications() {
                     {verification.rejection_reason && (
                       <div className="mt-3 p-3 bg-red-500/10 rounded-lg border border-red-500/30">
                         <p className="text-sm text-red-500">
-                          <strong>Rejection Reason:</strong> {verification.rejection_reason}
+                          <strong>{t('admin.rejectionReason')}:</strong> {verification.rejection_reason}
                         </p>
                       </div>
                     )}
@@ -305,23 +307,23 @@ export default function AdminVerifications() {
       <Dialog open={!!selectedVerification} onOpenChange={() => setSelectedVerification(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reject Verification</DialogTitle>
+            <DialogTitle>{t('admin.rejectVerification')}</DialogTitle>
             <DialogDescription>
-              Provide a reason for rejecting this verification request. The artist will be notified.
+              {t('admin.rejectVerificationDescription')}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Reason for rejection..."
+            placeholder={t('admin.rejectionReasonPlaceholder')}
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             rows={4}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedVerification(null)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={processing}>
-              {processing ? "Processing..." : "Reject Verification"}
+              {processing ? t('common.processing') : t('admin.rejectVerification')}
             </Button>
           </DialogFooter>
         </DialogContent>

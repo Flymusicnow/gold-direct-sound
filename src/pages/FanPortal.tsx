@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
@@ -56,6 +57,7 @@ export default function FanPortal() {
   const navigate = useNavigate();
   const { playNow } = useFlightdeck();
   const isMobile = useIsMobile();
+  const { t } = useLanguage();
   const [followedArtists, setFollowedArtists] = useState<Artist[]>([]);
   const [likedTracks, setLikedTracks] = useState<LikedTrack[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -224,7 +226,7 @@ export default function FanPortal() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading your dashboard...</p>
+        <p className="text-muted-foreground">{t('fan.loadingDashboard')}</p>
       </div>
     );
   }
@@ -238,12 +240,12 @@ export default function FanPortal() {
         {/* Welcome Header */}
           <div>
             <h1 className="text-4xl font-bold mb-2">
-              Hi, {profile?.full_name || 'Fan'}!
+              {t('fan.greeting')}, {profile?.full_name || t('fan.defaultName')}!
             </h1>
             <p className="text-muted-foreground">
-              Welcome to your FlyMusic dashboard · {" "}
+              {t('fan.welcomeMessage')} · {" "}
               <Link to="/learn?tab=fan" className="text-primary hover:underline text-sm">
-                Learn how to use FlyMusic →
+                {t('fan.learnLink')} →
               </Link>
             </p>
           </div>
@@ -252,14 +254,14 @@ export default function FanPortal() {
           {supporterStats && supporterStats.tier !== 'none' && (
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Spotlight Supporter</h2>
+                <h2 className="text-xl font-semibold">{t('fan.spotlightSupporter')}</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => navigate('/spotlight/leaderboard')}
                   className="text-primary"
                 >
-                  View Leaderboard <TrendingUp className="h-4 w-4 ml-1" />
+                  {t('fan.viewLeaderboard')} <TrendingUp className="h-4 w-4 ml-1" />
                 </Button>
               </div>
               <SpotlightSupporterBadge
@@ -278,21 +280,21 @@ export default function FanPortal() {
             <div className="grid grid-cols-1 gap-3">
               <CollapsibleStatCard
                 icon={Users}
-                label="Following"
+                label={t('fan.following')}
                 value={followedArtists.length}
-                trend="Artists you follow"
+                trend={t('fan.artistsYouFollow')}
               />
               <CollapsibleStatCard
                 icon={Heart}
-                label="Liked Tracks"
+                label={t('fan.likedTracks')}
                 value={likedTracks.length}
-                trend="Your favorite music"
+                trend={t('fan.yourFavoriteMusic')}
               />
               <CollapsibleStatCard
                 icon={MessageSquare}
-                label="Comments"
+                label={t('fan.comments')}
                 value={commentsCount}
-                trend="Your engagement"
+                trend={t('fan.yourEngagement')}
               />
               <div 
                 className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
@@ -300,7 +302,7 @@ export default function FanPortal() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">My Playlists</p>
+                    <p className="text-sm text-muted-foreground mb-1">{t('fan.myPlaylists')}</p>
                     <ListMusic className="h-8 w-8 text-primary" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
@@ -312,7 +314,7 @@ export default function FanPortal() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-primary mb-1">Supporter Pass</p>
+                    <p className="text-sm text-primary mb-1">{t('fan.supporterPass')}</p>
                     <Trophy className="h-8 w-8 text-primary" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-primary" />
@@ -321,16 +323,16 @@ export default function FanPortal() {
             </div>
           ) : (
             <div className="grid sm:grid-cols-4 gap-6">
-              <StatCard label="Following" value={followedArtists.length} icon={Users} />
-              <StatCard label="Liked Tracks" value={likedTracks.length} icon={Heart} />
-              <StatCard label="Comments" value={commentsCount} icon={MessageSquare} />
+              <StatCard label={t('fan.following')} value={followedArtists.length} icon={Users} />
+              <StatCard label={t('fan.likedTracks')} value={likedTracks.length} icon={Heart} />
+              <StatCard label={t('fan.comments')} value={commentsCount} icon={MessageSquare} />
               <div 
                 className="p-6 rounded-lg border border-border bg-card hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => navigate('/fan/playlists')}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">My Stacks</p>
+                    <p className="text-sm text-muted-foreground mb-1">{t('fan.myStacks')}</p>
                     <ListMusic className="h-8 w-8 text-primary" />
                   </div>
                   <ArrowRight className="h-5 w-5 text-muted-foreground" />
@@ -348,12 +350,12 @@ export default function FanPortal() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Trophy className="h-6 w-6 text-primary" />
-                  <h2 className="text-xl font-semibold text-primary">Supporter Pass</h2>
+                  <h2 className="text-xl font-semibold text-primary">{t('fan.supporterPass')}</h2>
                 </div>
                 <ArrowRight className="h-5 w-5 text-primary" />
               </div>
               <p className="text-sm text-muted-foreground">
-                Track your support levels and earn badges for supporting your favorite artists
+                {t('fan.supporterPassDescription')}
               </p>
             </Card>
           )}
@@ -364,10 +366,10 @@ export default function FanPortal() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Trophy className="h-5 w-5 text-primary" />
-                  Supporter Progress
+                  {t('fan.supporterProgress')}
                   <InfoTooltip
-                    title="Supporter Level"
-                    description="Earn XP through likes, follows, votes, and shares. Higher levels unlock badges and show artists your commitment."
+                    title={t('fan.supporterLevel')}
+                    description={t('fan.supporterLevelDescription')}
                     forRole="fan"
                     learnLink="/learn?tab=fan#supporter-level"
                   />
@@ -376,7 +378,7 @@ export default function FanPortal() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium capitalize">
-                    {supporterLevel === 'none' ? 'Supporter' : `${supporterLevel} Supporter`}
+                    {supporterLevel === 'none' ? t('fan.supporter') : `${supporterLevel} ${t('fan.supporter')}`}
                   </span>
                   <span className="text-sm text-primary font-semibold">{totalXP} XP</span>
                 </div>
@@ -384,17 +386,17 @@ export default function FanPortal() {
                 <div className="space-y-1">
                   <Progress value={progressToNextLevel} className="h-2" />
                   <p className="text-xs text-muted-foreground">
-                    {supporterLevel === 'gold' ? 'Max level reached!' : `Next: ${supporterLevel === 'silver' ? 'Gold' : supporterLevel === 'bronze' ? 'Silver' : 'Bronze'}`}
+                    {supporterLevel === 'gold' ? t('fan.maxLevelReached') : `${t('fan.next')}: ${supporterLevel === 'silver' ? 'Gold' : supporterLevel === 'bronze' ? 'Silver' : 'Bronze'}`}
                   </p>
                 </div>
 
                 <div className="pt-2">
                   <p className="text-sm text-muted-foreground mb-3">
-                    {achievements.filter(a => a.unlocked).length} achievements unlocked
+                    {achievements.filter(a => a.unlocked).length} {t('fan.achievementsUnlocked')}
                   </p>
                   <Link to="/fan/achievements">
                     <Button variant="outline" className="w-full gap-2">
-                      View Your Journey →
+                      {t('fan.viewYourJourney')} →
                     </Button>
                   </Link>
                 </div>
@@ -408,7 +410,7 @@ export default function FanPortal() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-semibold flex items-center gap-2">
                 <Users className="h-6 w-6 text-primary" />
-                My Artists
+                {t('fan.myArtists')}
               </h2>
               <Button
                 variant="ghost"
@@ -416,15 +418,15 @@ export default function FanPortal() {
                 onClick={() => navigate('/fan/artists')}
                 className="text-primary"
               >
-                View All <ArrowRight className="h-4 w-4 ml-1" />
+                {t('common.viewAll')} <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
 
             {followedArtists.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground mb-4">You're not following any artists yet</p>
+                <p className="text-muted-foreground mb-4">{t('fan.noFollowedArtists')}</p>
                 <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
-                  Discover Artists
+                  {t('fan.discoverArtists')}
                 </Button>
               </div>
             ) : (

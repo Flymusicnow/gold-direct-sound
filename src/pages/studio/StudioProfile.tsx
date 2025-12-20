@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { sanitizeFileName, cn } from "@/lib/utils";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
@@ -20,6 +21,7 @@ import { Camera, Save, Music, User, X, Plus, Upload } from "lucide-react";
 export default function StudioProfile() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
@@ -228,7 +230,7 @@ export default function StudioProfile() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+        <p className="text-muted-foreground">{t('common.loading')}</p>
       </div>
     );
   }
@@ -239,33 +241,33 @@ export default function StudioProfile() {
         <StudioSidebar />
         <main className="flex-1 p-8">
           <div className="max-w-2xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8">Create Your Artist Profile</h1>
+            <h1 className="text-3xl font-bold mb-8">{t('studio.createProfile')}</h1>
             <Card className="p-6">
               <form onSubmit={handleCreateProfile} className="space-y-4">
                 <div>
-                  <Label htmlFor="artist_name">Artist Name *</Label>
+                  <Label htmlFor="artist_name">{t('studio.artistName')} *</Label>
                   <Input id="artist_name" name="artist_name" required />
                 </div>
                 <div>
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio">{t('studio.bio')}</Label>
                   <Textarea id="bio" name="bio" rows={4} />
                 </div>
                 <div>
-                  <Label htmlFor="genre">Genre</Label>
+                  <Label htmlFor="genre">{t('studio.genre')}</Label>
                   <Input id="genre" name="genre" />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">{t('studio.city')}</Label>
                     <Input id="city" name="city" />
                   </div>
                   <div>
-                    <Label htmlFor="country">Country</Label>
+                    <Label htmlFor="country">{t('studio.country')}</Label>
                     <Input id="country" name="country" />
                   </div>
                 </div>
                 <Button type="submit" className="w-full">
-                  Create Profile
+                  {t('studio.createProfile')}
                 </Button>
               </form>
             </Card>
@@ -282,9 +284,9 @@ export default function StudioProfile() {
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center">
             <Music className="h-16 w-16 text-primary mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-2">Profile Pending Approval</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('studio.profilePending')}</h2>
             <p className="text-muted-foreground">
-              Your artist profile is being reviewed. You'll be able to upload tracks once approved.
+              {t('studio.profilePendingDescription')}
             </p>
           </div>
         </main>
@@ -306,14 +308,14 @@ export default function StudioProfile() {
               <User className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Profile Settings</h1>
-              <p className="text-sm text-muted-foreground">Manage your artist profile and information</p>
+              <h1 className="text-2xl md:text-3xl font-bold">{t('studio.profileSettings')}</h1>
+              <p className="text-sm text-muted-foreground">{t('studio.profileSettingsDescription')}</p>
             </div>
           </div>
 
           {/* Profile Image with Drag & Drop */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Profile Image</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('studio.profileImage')}</h2>
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <Avatar className="h-32 w-32 border-2 border-primary flex-shrink-0">
                 <AvatarImage src={artistProfile.avatar_url || undefined} alt={artistProfile.artist_name} />
@@ -359,10 +361,10 @@ export default function StudioProfile() {
 
           {/* Edit Profile */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Profile Information</h2>
+            <h2 className="text-xl font-semibold mb-4">{t('studio.profileInformation')}</h2>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="artist_name">Artist Name</Label>
+                <Label htmlFor="artist_name">{t('studio.artistName')}</Label>
                 <Input
                   id="artist_name"
                   value={artistName}
@@ -371,17 +373,17 @@ export default function StudioProfile() {
                 />
               </div>
               <div>
-                <Label htmlFor="edit_bio">Bio</Label>
+                <Label htmlFor="edit_bio">{t('studio.bio')}</Label>
                 <Textarea
                   id="edit_bio"
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
                   rows={6}
-                  placeholder="Tell fans about yourself..."
+                  placeholder={t('studio.bioPlaceholder')}
                 />
               </div>
               <div>
-                <Label htmlFor="edit_genre">Genres</Label>
+                <Label htmlFor="edit_genre">{t('studio.genres')}</Label>
                 <div className="space-y-3">
                   {/* Selected Genres */}
                   {selectedGenres.length > 0 && (
