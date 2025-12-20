@@ -68,7 +68,7 @@ export const inboxTranslations = {
     unknown: 'unknown',
     system: 'System',
     
-    // Resolve dialog
+    // Resolve dialog (advanced)
     resolveDialogTitle: 'Resolve the problem',
     resolveDialogDescription: 'Fill in all fields to mark the problem as resolved.',
     problemLabel: 'The problem was that…',
@@ -82,6 +82,23 @@ export const inboxTranslations = {
     cancel: 'Cancel',
     markAsResolved: 'Mark as resolved',
     minChars: 'At least 10 characters',
+    
+    // Quick Resolve
+    quickResolve: 'Quick Resolve',
+    advancedResolve: 'Advanced Resolve',
+    resolutionType: 'Resolution type',
+    selectResolutionType: 'Select resolution type',
+    bugFixed: 'Bug fixed',
+    uiFix: 'UI fix',
+    logicUpdated: 'Logic updated',
+    dataCorrected: 'Data corrected',
+    invalidReport: 'Invalid report',
+    addDetailedResolution: 'Add detailed resolution (optional)',
+    autoVerificationText: 'Verified using repro mode on selected platforms.',
+    platformDesktop: 'Desktop',
+    platformIPhone: 'iPhone',
+    platformAndroid: 'Android',
+    selectAtLeastOnePlatform: 'Select at least one platform',
     
     // Toasts
     assignedSuccess: 'Assigned',
@@ -125,10 +142,26 @@ export const inboxTranslations = {
     reportFailed: 'Could not send',
     reportFailedDescription: 'Please try again later.',
     issueReportedFrom: 'Issue reported from',
+
+    // Developer tools
+    generateFixPlan: 'Generate fix plan',
+    testFixOnPage: 'Test Fix on Affected Page',
+    developerTools: 'Developer Tools',
+    openPageRepro: 'Open page (repro)',
+    openInNewTab: 'Open in new tab',
+    copyReproLink: 'Copy repro link',
+    reproLinkCopied: 'Repro link copied!',
+    shareWithDevelopers: 'Share with other developers',
+    roleMismatch: 'Role mismatch',
+    issueReportedBy: 'Issue reported by',
+    youAre: 'you are',
+    systemVerified: 'System Verified',
+    verifiedOnRoute: 'Verified on',
+    device: 'Device',
   },
   sv: {
     // Page titles
-    inbox: 'Inbox',
+    inbox: 'Inkorg',
     inboxDescription: 'Hantera QA-problem och systemmeddelanden',
     
     // Stats
@@ -162,7 +195,7 @@ export const inboxTranslations = {
     
     // Actions
     back: 'Tillbaka',
-    backToInbox: 'Tillbaka till Inbox',
+    backToInbox: 'Tillbaka till inkorg',
     assignToMe: 'Tilldela mig',
     changeStatus: 'Ändra status',
     resolveProblem: 'Lös problemet',
@@ -191,7 +224,7 @@ export const inboxTranslations = {
     unknown: 'okänd',
     system: 'System',
     
-    // Resolve dialog
+    // Resolve dialog (advanced)
     resolveDialogTitle: 'Lös problemet',
     resolveDialogDescription: 'Fyll i alla fält för att markera problemet som löst.',
     problemLabel: 'Problemet var att…',
@@ -205,6 +238,23 @@ export const inboxTranslations = {
     cancel: 'Avbryt',
     markAsResolved: 'Markera som löst',
     minChars: 'Minst 10 tecken',
+    
+    // Quick Resolve
+    quickResolve: 'Snabblös',
+    advancedResolve: 'Avancerad lösning',
+    resolutionType: 'Typ av lösning',
+    selectResolutionType: 'Välj lösningstyp',
+    bugFixed: 'Bugg åtgärdad',
+    uiFix: 'UI-fix',
+    logicUpdated: 'Logik uppdaterad',
+    dataCorrected: 'Data korrigerad',
+    invalidReport: 'Ogiltig rapport',
+    addDetailedResolution: 'Lägg till detaljerad lösning (valfritt)',
+    autoVerificationText: 'Verifierat med repro-läge på valda plattformar.',
+    platformDesktop: 'Desktop',
+    platformIPhone: 'iPhone',
+    platformAndroid: 'Android',
+    selectAtLeastOnePlatform: 'Välj minst en plattform',
     
     // Toasts
     assignedSuccess: 'Tilldelad',
@@ -248,6 +298,22 @@ export const inboxTranslations = {
     reportFailed: 'Kunde inte skicka',
     reportFailedDescription: 'Försök igen senare.',
     issueReportedFrom: 'Problem rapporterat från',
+
+    // Developer tools
+    generateFixPlan: 'Generera fixplan',
+    testFixOnPage: 'Testa fix på berörd sida',
+    developerTools: 'Utvecklarverktyg',
+    openPageRepro: 'Öppna sida (repro)',
+    openInNewTab: 'Öppna i ny flik',
+    copyReproLink: 'Kopiera repro-länk',
+    reproLinkCopied: 'Repro-länk kopierad!',
+    shareWithDevelopers: 'Dela med andra utvecklare',
+    roleMismatch: 'Roll stämmer inte',
+    issueReportedBy: 'Problem rapporterat av',
+    youAre: 'du är',
+    systemVerified: 'Systemverifierad',
+    verifiedOnRoute: 'Verifierad på',
+    device: 'Enhet',
   },
 } as const;
 

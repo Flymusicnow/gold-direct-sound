@@ -343,12 +343,22 @@ ${results.overallPassed ? '✅ ALL SYSTEMS OPERATIONAL' : '❌ ISSUES DETECTED'}
       </Card>
 
       <Tabs defaultValue="routes" className="space-y-4">
-        <TabsList className="flex w-full overflow-x-auto gap-1 scrollbar-hide justify-start md:grid md:grid-cols-5">
-          <TabsTrigger value="routes" className="flex-shrink-0">Routes</TabsTrigger>
-          <TabsTrigger value="database" className="flex-shrink-0">Database</TabsTrigger>
-          <TabsTrigger value="preview" className="flex-shrink-0">Mobile Preview</TabsTrigger>
-          <TabsTrigger value="errors" className="flex-shrink-0">Errors</TabsTrigger>
-          <TabsTrigger value="history" className="flex-shrink-0">History</TabsTrigger>
+        <TabsList className="flex w-full overflow-x-auto gap-2 p-1 bg-muted/50 rounded-lg scrollbar-hide justify-start md:grid md:grid-cols-5">
+          <TabsTrigger value="routes" className="flex-shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-4 py-2">
+            Routes
+          </TabsTrigger>
+          <TabsTrigger value="database" className="flex-shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-4 py-2">
+            Database
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="flex-shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-4 py-2">
+            Mobile Preview
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="flex-shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-4 py-2">
+            Errors
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex-shrink-0 data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-md px-4 py-2">
+            History
+          </TabsTrigger>
         </TabsList>
 
         {/* Routes Tab */}
