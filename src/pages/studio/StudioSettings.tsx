@@ -3,17 +3,64 @@ import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Settings, User, CreditCard, Bell, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Settings, User, CreditCard, Bell, Loader2, Pencil, Check, X, Globe, Mail } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export default function StudioSettings() {
   const isMobile = useIsMobile();
-  const { profile } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
+  const { t } = useLanguage();
   const { isSupported, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+
+  // Name editing state
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState(profile?.full_name || '');
+  const [savingName, setSavingName] = useState(false);
+
+  // Email editing state
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+
+  // Changelog subscription state
+  const [changelogSubscribed, setChangelogSubscribed] = useState(false);
+  const [loadingChangelog, setLoadingChangelog] = useState(true);
+
+  // Sync name when profile loads
+  useEffect(() => {
+    if (profile?.full_name) {
+      setNewName(profile.full_name);
+    }
+  }, [profile?.full_name]);
+
+  // Load changelog subscription status
+  useEffect(() => {
+    const loadChangelogSubscription = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('changelog_subscriptions')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setChangelogSubscribed(data?.is_active ?? false);
+      setLoadingChangelog(false);
+    };
+
+    loadChangelogSubscription();
+  }, [user]);
 
   const handlePushToggle = async (enabled: boolean) => {
     if (enabled) {
@@ -21,6 +68,89 @@ export default function StudioSettings() {
     } else {
       await unsubscribe();
     }
+  };
+
+  const handleSaveName = async () => {
+    if (!user || !newName.trim()) return;
+    
+    setSavingName(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: newName.trim() })
+      .eq('id', user.id);
+
+    if (error) {
+      toast.error('Failed to update name');
+    } else {
+      toast.success(t('settings.nameUpdated'));
+      await refreshProfile();
+      setEditingName(false);
+    }
+    setSavingName(false);
+  };
+
+  const handleSaveEmail = async () => {
+    if (!newEmail.trim()) return;
+    
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    setSavingEmail(true);
+    const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+
+    if (error) {
+      toast.error(error.message || 'Failed to update email');
+    } else {
+      toast.success(t('settings.emailUpdateRequested'));
+      setEditingEmail(false);
+      setNewEmail('');
+    }
+    setSavingEmail(false);
+  };
+
+  const handleChangelogToggle = async (enabled: boolean) => {
+    if (!user || !profile?.email) return;
+    
+    setLoadingChangelog(true);
+    
+    if (enabled) {
+      // Subscribe
+      const { error } = await supabase
+        .from('changelog_subscriptions')
+        .upsert({
+          user_id: user.id,
+          email: profile.email,
+          is_active: true,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) {
+        toast.error('Failed to subscribe');
+      } else {
+        setChangelogSubscribed(true);
+        toast.success('Subscribed to changelog updates');
+      }
+    } else {
+      // Unsubscribe
+      const { error } = await supabase
+        .from('changelog_subscriptions')
+        .update({ is_active: false })
+        .eq('user_id', user.id);
+
+      if (error) {
+        toast.error('Failed to unsubscribe');
+      } else {
+        setChangelogSubscribed(false);
+        toast.success('Unsubscribed from changelog updates');
+      }
+    }
+    
+    setLoadingChangelog(false);
   };
 
   return (
@@ -32,10 +162,10 @@ export default function StudioSettings() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <Settings className="h-8 w-8 text-primary" />
-              Settings
+              {t('settings.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage your account and preferences
+              {t('settings.subtitle')}
             </p>
           </div>
 
@@ -44,22 +174,120 @@ export default function StudioSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                Account
+                {t('settings.account')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Email with edit */}
               <div>
-                <label className="text-sm text-muted-foreground">Email</label>
-                <p className="font-medium">{profile?.email || "—"}</p>
+                <label className="text-sm text-muted-foreground">{t('common.email')}</label>
+                {editingEmail ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder={profile?.email || 'New email address'}
+                      className="flex-1"
+                    />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={handleSaveEmail}
+                      disabled={savingEmail || !newEmail.trim()}
+                    >
+                      {savingEmail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => { setEditingEmail(false); setNewEmail(''); }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="font-medium">{profile?.email || "—"}</p>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setEditingEmail(true)}
+                      className="h-8"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      {t('common.edit')}
+                    </Button>
+                  </div>
+                )}
+                {editingEmail && (
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    {t('settings.emailVerificationSent')}
+                  </p>
+                )}
               </div>
+
+              {/* Name with edit */}
               <div>
-                <label className="text-sm text-muted-foreground">Name</label>
-                <p className="font-medium">{profile?.full_name || "—"}</p>
+                <label className="text-sm text-muted-foreground">{t('common.name')}</label>
+                {editingName ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="Your name"
+                      className="flex-1"
+                    />
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={handleSaveName}
+                      disabled={savingName || !newName.trim()}
+                    >
+                      {savingName ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                    </Button>
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      onClick={() => { setEditingName(false); setNewName(profile?.full_name || ''); }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="font-medium">{profile?.full_name || "—"}</p>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setEditingName(true)}
+                      className="h-8"
+                    >
+                      <Pencil className="h-3 w-3 mr-1" />
+                      {t('common.edit')}
+                    </Button>
+                  </div>
+                )}
               </div>
+
               <div>
                 <label className="text-sm text-muted-foreground">Role</label>
                 <p className="font-medium capitalize">{profile?.role || "—"}</p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Language Preference */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                {t('settings.language')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LanguageSwitcher showLabel={false} />
             </CardContent>
           </Card>
 
@@ -68,17 +296,17 @@ export default function StudioSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bell className="h-5 w-5 text-primary" />
-                Notifications
+                {t('settings.notifications')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="push-notifications">Push Notifications</Label>
+                  <Label htmlFor="push-notifications">{t('settings.pushNotifications')}</Label>
                   <p className="text-sm text-muted-foreground">
                     {!isSupported 
-                      ? "Push notifications are not supported in your browser"
-                      : "Get notified about new followers, comments, and important updates"}
+                      ? t('settings.pushNotificationsNotSupported')
+                      : t('settings.pushNotificationsDescription')}
                   </p>
                 </div>
                 {isLoading ? (
@@ -92,6 +320,25 @@ export default function StudioSettings() {
                   />
                 )}
               </div>
+
+              {/* Changelog email subscription */}
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="space-y-0.5">
+                  <Label htmlFor="changelog-updates">{t('settings.changelogUpdates')}</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.changelogUpdatesDescription')}
+                  </p>
+                </div>
+                {loadingChangelog ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Switch
+                    id="changelog-updates"
+                    checked={changelogSubscribed}
+                    onCheckedChange={handleChangelogToggle}
+                  />
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -100,7 +347,7 @@ export default function StudioSettings() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-primary" />
-                Billing & Subscription
+                {t('settings.billing')}
               </CardTitle>
             </CardHeader>
             <CardContent>

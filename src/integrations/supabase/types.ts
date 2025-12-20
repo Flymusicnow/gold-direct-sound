@@ -1099,6 +1099,44 @@ export type Database = {
         }
         Relationships: []
       }
+      changelog_subscriptions: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          unsubscribe_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          unsubscribe_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "changelog_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       collab_applications: {
         Row: {
           artist_id: string
@@ -2541,6 +2579,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_suspended: boolean | null
+          preferred_language: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
         }
@@ -2552,6 +2591,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_suspended?: boolean | null
+          preferred_language?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }
@@ -2563,6 +2603,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_suspended?: boolean | null
+          preferred_language?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
         }

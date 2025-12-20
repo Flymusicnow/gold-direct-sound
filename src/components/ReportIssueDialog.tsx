@@ -196,8 +196,8 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
       
       <Button 
         onClick={handleSubmit} 
-        disabled={isSubmitting}
-        className="w-full"
+        disabled={isSubmitting || !userNote.trim()}
+        className="w-full min-h-[44px]"
       >
         {isSubmitting ? (
           <>
@@ -217,17 +217,19 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="px-4 pb-8">
-          <DrawerHeader className="text-left">
-            <DrawerTitle className="flex items-center gap-2">
+        <DrawerContent className="px-4 pb-safe-bottom">
+          <DrawerHeader className="text-left pt-4">
+            <DrawerTitle className="flex items-center gap-2 text-lg">
               <Bug className="h-5 w-5 text-primary" />
               {t('reportIssue')}
             </DrawerTitle>
-            <DrawerDescription>
+            <DrawerDescription className="text-sm">
               {t('reportIssueDescription')}
             </DrawerDescription>
           </DrawerHeader>
-          {content}
+          <div className="pb-6">
+            {content}
+          </div>
         </DrawerContent>
       </Drawer>
     );
