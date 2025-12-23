@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, X, Plus } from 'lucide-react';
+import { ArrowLeft, Save, X, Plus, Trash2, Pencil, Calendar, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
+import { OpportunityDialog } from '@/components/admin/OpportunityDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const COLLAB_TYPES = [
   { value: 'festival_slot', label: 'Festival Slot' },
@@ -45,14 +48,36 @@ interface FormData {
   is_active: boolean;
 }
 
+interface Opportunity {
+  id: string;
+  title: string;
+  type: string;
+  description: string | null;
+  location: string | null;
+  budget_range: string | null;
+  application_deadline: string | null;
+  remote_ok: boolean;
+  min_supporters: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 export default function AdminCollabEntityEdit() {
   const { id } = useParams();
   const isNew = id === 'new';
   const { user, profile } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [newTag, setNewTag] = useState('');
+  
+  // Opportunity states
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [loadingOpportunities, setLoadingOpportunities] = useState(false);
+  const [opportunityDialogOpen, setOpportunityDialogOpen] = useState(false);
+  const [editingOpportunity, setEditingOpportunity] = useState<Opportunity | null>(null);
+  const [savingOpportunity, setSavingOpportunity] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     type: 'brand',
@@ -83,6 +108,7 @@ export default function AdminCollabEntityEdit() {
     }
     if (!isNew) {
       fetchEntity();
+      fetchOpportunities();
     }
   }, [user, profile, navigate, id, isNew]);
 
@@ -116,10 +142,105 @@ export default function AdminCollabEntityEdit() {
       }
     } catch (error) {
       console.error('Error fetching entity:', error);
-      toast.error('Failed to load entity');
+      toast.error(t('errors.loadFailed'));
       navigate('/admin/collab-entities');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOpportunities = async () => {
+    if (!id || isNew) return;
+    setLoadingOpportunities(true);
+    try {
+      const { data, error } = await supabase
+        .from('collab_opportunities')
+        .select('*')
+        .eq('collab_entity_id', id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOpportunities(data || []);
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+    } finally {
+      setLoadingOpportunities(false);
+    }
+  };
+
+  const handleSaveOpportunity = async (oppData: any) => {
+    setSavingOpportunity(true);
+    try {
+      const payload = {
+        collab_entity_id: id,
+        title: oppData.title,
+        type: oppData.type,
+        description: oppData.description || null,
+        location: oppData.location || null,
+        budget_range: oppData.budget_range || null,
+        application_deadline: oppData.application_deadline 
+          ? new Date(oppData.application_deadline).toISOString() 
+          : null,
+        remote_ok: oppData.remote_ok,
+        min_supporters: oppData.min_supporters || 0,
+        is_active: oppData.is_active,
+      };
+
+      if (oppData.id) {
+        // Update existing
+        const { error } = await supabase
+          .from('collab_opportunities')
+          .update(payload)
+          .eq('id', oppData.id);
+        if (error) throw error;
+        toast.success(t('admin.opportunityUpdated'));
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('collab_opportunities')
+          .insert(payload);
+        if (error) throw error;
+        toast.success(t('admin.opportunityCreated'));
+      }
+
+      setOpportunityDialogOpen(false);
+      setEditingOpportunity(null);
+      fetchOpportunities();
+    } catch (error) {
+      console.error('Error saving opportunity:', error);
+      toast.error(t('errors.saveFailed'));
+    } finally {
+      setSavingOpportunity(false);
+    }
+  };
+
+  const handleDeleteOpportunity = async (oppId: string) => {
+    try {
+      const { error } = await supabase
+        .from('collab_opportunities')
+        .delete()
+        .eq('id', oppId);
+      if (error) throw error;
+      toast.success(t('admin.opportunityDeleted'));
+      fetchOpportunities();
+    } catch (error) {
+      console.error('Error deleting opportunity:', error);
+      toast.error(t('errors.deleteFailed'));
+    }
+  };
+
+  const handleToggleOpportunityActive = async (opp: Opportunity) => {
+    try {
+      const { error } = await supabase
+        .from('collab_opportunities')
+        .update({ is_active: !opp.is_active })
+        .eq('id', opp.id);
+      if (error) throw error;
+      toast.success(opp.is_active ? t('admin.opportunityDeactivated') : t('admin.opportunityActivated'));
+      fetchOpportunities();
+    } catch (error) {
+      console.error('Error toggling opportunity:', error);
+      toast.error(t('errors.saveFailed'));
     }
   };
 
@@ -478,7 +599,7 @@ export default function AdminCollabEntityEdit() {
           {/* Social Links */}
           <Card>
             <CardHeader>
-              <CardTitle>Social Links</CardTitle>
+              <CardTitle>{t('admin.socialLinks')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {['instagram', 'tiktok', 'twitter', 'youtube', 'linkedin'].map((platform) => (
@@ -503,14 +624,135 @@ export default function AdminCollabEntityEdit() {
               onClick={() => navigate('/admin/collab-entities')}
               className="flex-1"
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={saving} className="flex-1 gap-2">
               <Save className="h-4 w-4" />
-              {saving ? 'Saving...' : (isNew ? 'Create Entity' : 'Save Changes')}
+              {saving ? t('common.saving') : (isNew ? t('admin.createEntity') : t('common.save'))}
             </Button>
           </div>
         </form>
+
+        {/* Opportunities Section - only for existing entities */}
+        {!isNew && (
+          <Card className="mt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>{t('admin.opportunities')}</CardTitle>
+                <CardDescription>{t('admin.opportunitiesDescription')}</CardDescription>
+              </div>
+              <Button 
+                onClick={() => {
+                  setEditingOpportunity(null);
+                  setOpportunityDialogOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                {t('admin.createOpportunity')}
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {loadingOpportunities ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                </div>
+              ) : opportunities.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>{t('admin.noOpportunities')}</p>
+                  <p className="text-sm mt-1">{t('admin.createFirstOpportunity')}</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {opportunities.map((opp) => (
+                    <div 
+                      key={opp.id} 
+                      className="flex items-center justify-between p-4 border rounded-lg bg-card"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-medium">{opp.title}</h4>
+                          <Badge variant={opp.is_active ? 'default' : 'secondary'}>
+                            {opp.is_active ? t('common.active') : t('common.inactive')}
+                          </Badge>
+                          <Badge variant="outline">{opp.type.replace('_', ' ')}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          {opp.location && (
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {opp.location}
+                            </span>
+                          )}
+                          {opp.application_deadline && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {new Date(opp.application_deadline).toLocaleDateString()}
+                            </span>
+                          )}
+                          {opp.budget_range && (
+                            <span className="capitalize">{opp.budget_range} {t('admin.budget')}</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleOpportunityActive(opp)}
+                        >
+                          {opp.is_active ? t('admin.pause') : t('admin.activate')}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setEditingOpportunity(opp);
+                            setOpportunityDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>{t('admin.deleteOpportunity')}</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                {t('admin.deleteOpportunityConfirm')}
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                              <AlertDialogAction 
+                                onClick={() => handleDeleteOpportunity(opp.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                {t('common.delete')}
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <OpportunityDialog
+          open={opportunityDialogOpen}
+          onOpenChange={setOpportunityDialogOpen}
+          opportunity={editingOpportunity}
+          onSave={handleSaveOpportunity}
+          saving={savingOpportunity}
+        />
       </div>
     </div>
   );
