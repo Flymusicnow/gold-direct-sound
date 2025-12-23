@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useRouteHistory } from '@/contexts/RouteHistoryContext';
 import { getRecentFailedRequests, NetworkError } from '@/lib/networkErrorTracker';
 import { InboxLanguage, getInboxTranslation } from '@/i18n/inbox';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface RecentError {
   type: 'runtime' | 'network';
@@ -33,6 +34,17 @@ export interface AIContext {
   recent_errors: RecentError[];
   timestamp: string;
 }
+
+export interface Attachment {
+  url: string;
+  path: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILES = 5;
 
 export function useContextualReport() {
   const location = useLocation();
@@ -122,6 +134,39 @@ export function useContextualReport() {
     };
   };
 
+  // Upload screenshots to storage
+  const uploadScreenshots = async (inboxId: string, files: File[]): Promise<Attachment[]> => {
+    const uploaded: Attachment[] = [];
+    
+    for (const file of files) {
+      const ext = file.name.split('.').pop() || 'png';
+      const path = `${inboxId}/${crypto.randomUUID()}.${ext}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('issue-screenshots')
+        .upload(path, file, { upsert: false, contentType: file.type });
+      
+      if (uploadError) {
+        console.error('[Report] Upload failed:', uploadError);
+        continue; // Skip failed uploads, don't throw
+      }
+      
+      const { data: publicData } = supabase.storage
+        .from('issue-screenshots')
+        .getPublicUrl(path);
+      
+      uploaded.push({
+        url: publicData.publicUrl,
+        path,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+    }
+    
+    return uploaded;
+  };
+
   // Send Telegram notification (non-blocking)
   const sendTelegramNotification = async (payload: {
     inbox_id: string;
@@ -146,17 +191,45 @@ export function useContextualReport() {
     }
   };
 
+  // Validate files before upload
+  const validateFiles = (files: File[]): { valid: boolean; error?: string } => {
+    if (files.length > MAX_FILES) {
+      return { valid: false, error: 'tooManyFiles' };
+    }
+    
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return { valid: false, error: 'fileTooLarge' };
+      }
+      if (!file.type.startsWith('image/')) {
+        return { valid: false, error: 'invalidFileType' };
+      }
+    }
+    
+    return { valid: true };
+  };
+
   const submitReport = async (
     userNote: string, 
     language: InboxLanguage = 'en',
     targetRoute?: string,
-    reproSteps?: string
+    reproSteps?: string,
+    files?: File[]
   ): Promise<boolean> => {
     if (!user) return false;
     
     setIsSubmitting(true);
     
     try {
+      // Validate files if provided
+      if (files && files.length > 0) {
+        const validation = validateFiles(files);
+        if (!validation.valid) {
+          console.error('[Report] File validation failed:', validation.error);
+          return false;
+        }
+      }
+      
       const aiContext = await collectContext(userNote, language, targetRoute, reproSteps);
       
       // Generate dedupe key: max 1 report per route per user per day
@@ -193,8 +266,30 @@ export function useContextualReport() {
 
       if (error) throw error;
       
-      // Send Telegram notification in background (non-blocking)
       const inboxId = data || dedupeKey;
+      
+      // Upload screenshots if provided
+      if (files && files.length > 0) {
+        console.log('[Report] Uploading', files.length, 'screenshots for inbox:', inboxId);
+        const attachments = await uploadScreenshots(inboxId, files);
+        
+        if (attachments.length > 0) {
+          // Update inbox message with attachments (cast to JSON for Supabase)
+          const { error: updateError } = await supabase
+            .from('inbox_messages')
+            .update({ attachments: JSON.parse(JSON.stringify(attachments)) as Json })
+            .eq('id', inboxId);
+          
+          if (updateError) {
+            console.error('[Report] Failed to update attachments:', updateError);
+            // Don't fail the report, attachments are optional
+          } else {
+            console.log('[Report] Attachments updated successfully:', attachments.length);
+          }
+        }
+      }
+      
+      // Send Telegram notification in background (non-blocking)
       console.log('[Report] Sending Telegram notification for inbox:', inboxId);
       
       sendTelegramNotification({
@@ -220,6 +315,9 @@ export function useContextualReport() {
     isSubmitting,
     currentRoute,
     refreshRoute,
-    lastRoutes
+    lastRoutes,
+    validateFiles,
+    MAX_FILES,
+    MAX_FILE_SIZE,
   };
 }

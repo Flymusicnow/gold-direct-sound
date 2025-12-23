@@ -158,6 +158,17 @@ export const inboxTranslations = {
     systemVerified: 'System Verified',
     verifiedOnRoute: 'Verified on',
     device: 'Device',
+
+    // Attachments
+    attachScreenshots: 'Attach screenshots',
+    maxFilesInfo: 'Max 5 files, 10MB each',
+    removeImage: 'Remove',
+    attachments: 'Attachments',
+    noAttachments: 'No screenshots attached',
+    uploading: 'Uploading...',
+    uploadFailed: 'Failed to upload images',
+    fileTooLarge: 'File too large (max 10MB)',
+    tooManyFiles: 'Maximum 5 files allowed',
   },
   sv: {
     // Page titles
@@ -314,6 +325,17 @@ export const inboxTranslations = {
     systemVerified: 'Systemverifierad',
     verifiedOnRoute: 'Verifierad på',
     device: 'Enhet',
+
+    // Attachments
+    attachScreenshots: 'Bifoga skärmbilder',
+    maxFilesInfo: 'Max 5 filer, 10MB vardera',
+    removeImage: 'Ta bort',
+    attachments: 'Bilagor',
+    noAttachments: 'Inga skärmbilder bifogade',
+    uploading: 'Laddar upp...',
+    uploadFailed: 'Kunde inte ladda upp bilder',
+    fileTooLarge: 'Filen är för stor (max 10MB)',
+    tooManyFiles: 'Max 5 filer tillåtna',
   },
 } as const;
 

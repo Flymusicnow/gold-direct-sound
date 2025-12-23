@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Bug, Send, Loader2, Keyboard, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Bug, Send, Loader2, Keyboard, ImagePlus, X } from 'lucide-react';
 import { useContextualReport } from '@/hooks/useContextualReport';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -76,7 +76,11 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   const [targetRoute, setTargetRoute] = useState<string>('');
   const [reproSteps, setReproSteps] = useState('');
   const [language, setLanguage] = useState<InboxLanguage>('en');
-  const { submitReport, isSubmitting, currentRoute, refreshRoute, lastRoutes } = useContextualReport();
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { submitReport, isSubmitting, currentRoute, refreshRoute, lastRoutes, validateFiles, MAX_FILES } = useContextualReport();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -90,6 +94,27 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
     }
   }, [open, refreshRoute, currentRoute]);
 
+  // Clean up preview URLs when files change
+  useEffect(() => {
+    // Revoke old URLs
+    previews.forEach(url => URL.revokeObjectURL(url));
+    // Create new URLs
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setPreviews(newPreviews);
+    
+    return () => {
+      newPreviews.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [files]);
+
+  // Reset files when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setFiles([]);
+      setPreviews([]);
+    }
+  }, [open]);
+
   // Handle Cmd/Ctrl + Enter to submit
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && userNote.trim() && !isSubmitting) {
@@ -98,12 +123,39 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
+    
+    const newFiles = [...files, ...selectedFiles].slice(0, MAX_FILES);
+    const validation = validateFiles(newFiles);
+    
+    if (!validation.valid) {
+      toast({
+        title: '❌ ' + t(validation.error as any),
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setFiles(newFiles);
+    // Reset input so same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async () => {
     const success = await submitReport(
       userNote, 
       language, 
       targetRoute !== currentRoute ? targetRoute : undefined,
-      reproSteps.trim() || undefined
+      reproSteps.trim() || undefined,
+      files.length > 0 ? files : undefined
     );
     
     if (success) {
@@ -114,6 +166,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
       setUserNote('');
       setReproSteps('');
       setTargetRoute('');
+      setFiles([]);
       onOpenChange(false);
     } else {
       toast({
@@ -188,6 +241,63 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
           autoFocus={false}
         />
       </div>
+
+      {/* Screenshot Attachments */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-sm">{t('attachScreenshots')}</Label>
+          <span className="text-xs text-muted-foreground">{t('maxFilesInfo')}</span>
+        </div>
+        
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          onChange={handleFileSelect}
+        />
+        
+        {/* Preview grid */}
+        {files.length > 0 && (
+          <div className="grid grid-cols-3 gap-2">
+            {previews.map((preview, index) => (
+              <div key={index} className="relative aspect-square rounded-md overflow-hidden border border-border">
+                <img
+                  src={preview}
+                  alt={`Screenshot ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeFile(index)}
+                  className="absolute top-1 right-1 p-1 rounded-full bg-background/80 hover:bg-background text-foreground shadow-sm"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Add image button */}
+        {files.length < MAX_FILES && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <ImagePlus className="h-4 w-4 mr-2" />
+            {files.length === 0 
+              ? t('attachScreenshots')
+              : `${language === 'sv' ? 'Lägg till fler' : 'Add more'} (${files.length}/${MAX_FILES})`
+            }
+          </Button>
+        )}
+      </div>
       
       <p className="text-xs text-muted-foreground flex items-center gap-1">
         <Keyboard className="h-3 w-3" />
@@ -202,7 +312,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
         {isSubmitting ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            {t('sending')}
+            {files.length > 0 ? t('uploading') : t('sending')}
           </>
         ) : (
           <>
