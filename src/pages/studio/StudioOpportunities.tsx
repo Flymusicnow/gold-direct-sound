@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ import { useApplicationStatus } from "@/hooks/useApplicationStatus";
 
 export default function StudioOpportunities() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -137,28 +139,28 @@ export default function StudioOpportunities() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'submitted':
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Submitted</Badge>;
+        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />{t('studio.applicationSubmitted')}</Badge>;
       case 'viewed':
-        return <Badge variant="outline" className="border-blue-500 text-blue-500"><Eye className="h-3 w-3 mr-1" />Viewed</Badge>;
+        return <Badge variant="outline" className="border-blue-500 text-blue-500"><Eye className="h-3 w-3 mr-1" />{t('studio.applicationViewed')}</Badge>;
       case 'shortlisted':
-        return <Badge variant="outline" className="border-primary text-primary"><Star className="h-3 w-3 mr-1" />Shortlisted</Badge>;
+        return <Badge variant="outline" className="border-primary text-primary"><Star className="h-3 w-3 mr-1" />{t('studio.applicationShortlisted')}</Badge>;
       case 'accepted':
-        return <Badge variant="default" className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" />Accepted</Badge>;
+        return <Badge variant="default" className="bg-green-500"><CheckCircle className="h-3 w-3 mr-1" />{t('studio.applicationAccepted')}</Badge>;
       case 'rejected':
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Not Selected</Badge>;
+        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />{t('studio.applicationNotSelected')}</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   const opportunityTypes = [
-    { value: 'all', label: 'All Types' },
-    { value: 'live_event', label: 'Live Events' },
-    { value: 'festival_slot', label: 'Festival Slots' },
-    { value: 'brand_campaign', label: 'Brand Campaigns' },
-    { value: 'sponsored_content', label: 'Sponsored Content' },
-    { value: 'ugc_content', label: 'UGC Content' },
-    { value: 'residency', label: 'Residencies' },
+    { value: 'all', label: t('common.all') + ' ' + t('common.type') },
+    { value: 'live_event', label: t('opportunityTypes.liveEvent') },
+    { value: 'festival_slot', label: t('opportunityTypes.festivalSlot') },
+    { value: 'brand_deal', label: t('opportunityTypes.brandDeal') },
+    { value: 'sponsorship', label: t('opportunityTypes.sponsorship') },
+    { value: 'ugc_content', label: t('opportunityTypes.ugcContent') },
+    { value: 'partnership', label: t('opportunityTypes.partnership') },
   ];
 
   return (
@@ -170,7 +172,7 @@ export default function StudioOpportunities() {
         <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-8">
           <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back
+            {t('common.back')}
           </Button>
         </div>
         
@@ -180,18 +182,18 @@ export default function StudioOpportunities() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold flex items-center gap-3">
               <Briefcase className="h-8 w-8 text-primary" />
-              Opportunities
+              {t('studio.opportunities')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Discover collaboration opportunities from brands, festivals, and venues
+              {t('studio.opportunitiesDescription')}
             </p>
           </div>
 
           <Tabs defaultValue="browse" className="space-y-6">
             <TabsList>
-              <TabsTrigger value="browse">Browse Opportunities</TabsTrigger>
+              <TabsTrigger value="browse">{t('studio.browseOpportunities')}</TabsTrigger>
               <TabsTrigger value="applications">
-                My Applications
+                {t('studio.myApplications')}
                 {myApplications.length > 0 && (
                   <Badge variant="secondary" className="ml-2">{myApplications.length}</Badge>
                 )}
@@ -205,14 +207,14 @@ export default function StudioOpportunities() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search opportunities..."
+                    placeholder={t('studio.searchOpportunities')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-full sm:w-48">
+                  <SelectTrigger className="w-full sm:w-48" aria-label={t('common.filter') + ' ' + t('common.type')}>
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,11 +236,11 @@ export default function StudioOpportunities() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">No Opportunities Found</h3>
+                    <h3 className="font-semibold mb-2">{t('studio.noOpportunitiesFound')}</h3>
                     <p className="text-muted-foreground">
                       {searchQuery || typeFilter !== "all" 
-                        ? "Try adjusting your filters"
-                        : "Check back soon for new opportunities"}
+                        ? t('studio.tryAdjustingFilters')
+                        : t('studio.checkBackSoon')}
                     </p>
                   </CardContent>
                 </Card>
@@ -286,7 +288,7 @@ export default function StudioOpportunities() {
                             </span>
                           )}
                           {opp.remote_ok && (
-                            <Badge variant="secondary">Remote OK</Badge>
+                            <Badge variant="secondary">{t('studio.remoteOk')}</Badge>
                           )}
                           {opp.budget_range && (
                             <span className="flex items-center gap-1">
@@ -294,33 +296,33 @@ export default function StudioOpportunities() {
                               {opp.budget_range}
                             </span>
                           )}
-                          {opp.min_supporters && (
+                          {opp.min_supporters ? (
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
-                              {opp.min_supporters}+ supporters
+                              {opp.min_supporters}+ {t('studio.supporters').toLowerCase()}
                             </span>
-                          )}
+                          ) : null}
                         </div>
 
-                        {opp.application_deadline && (
+                        {opp.application_deadline ? (
                           <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            Deadline: {format(new Date(opp.application_deadline), 'MMM d, yyyy')}
+                            {t('studio.deadline')}: {format(new Date(opp.application_deadline), 'MMM d, yyyy')}
                           </p>
-                        )}
+                        ) : null}
 
                         <div className="flex gap-2 pt-2">
                           {hasApplied(opp.id) ? (
                             <Button variant="outline" disabled className="flex-1">
                               <CheckCircle className="h-4 w-4 mr-2" />
-                              Applied
+                              {t('studio.applied')}
                             </Button>
                           ) : (
                             <Button 
                               onClick={() => setSelectedOpportunity(opp)}
                               className="flex-1"
                             >
-                              Apply Now
+                              {t('studio.applyNow')}
                             </Button>
                           )}
                         </div>
@@ -341,12 +343,12 @@ export default function StudioOpportunities() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <h3 className="font-semibold mb-2">No Applications Yet</h3>
+                    <h3 className="font-semibold mb-2">{t('studio.noApplicationsYet')}</h3>
                     <p className="text-muted-foreground mb-4">
-                      Start applying to opportunities to see your applications here
+                      {t('studio.startApplyingToSee')}
                     </p>
                     <Button variant="outline" onClick={() => document.querySelector('[value="browse"]')?.dispatchEvent(new Event('click'))}>
-                      Browse Opportunities
+                      {t('studio.browseOpportunities')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -371,7 +373,7 @@ export default function StudioOpportunities() {
                             <div>
                               <p className="font-medium">{app.opportunity?.title}</p>
                               <p className="text-sm text-muted-foreground">
-                                {app.opportunity?.entity?.name} • Applied {format(new Date(app.created_at), 'MMM d, yyyy')}
+                                {app.opportunity?.entity?.name} • {t('studio.appliedOn')} {format(new Date(app.created_at), 'MMM d, yyyy')}
                               </p>
                             </div>
                           </div>
