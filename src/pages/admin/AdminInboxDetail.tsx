@@ -8,6 +8,7 @@ import { LanguageAwareText } from "@/components/admin/LanguageAwareText";
 import { ResolveInboxDialog } from "@/components/admin/ResolveInboxDialog";
 import { QuickResolveDialog } from "@/components/admin/QuickResolveDialog";
 import { AssignmentDropdown, getKeyLabel } from "@/components/admin/AssignmentDropdown";
+import { AttachmentViewer } from "@/components/admin/AttachmentViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -402,6 +403,14 @@ Please analyze this bug report and provide:
               )}
             </CardContent>
           </Card>
+
+          {/* Attachments viewer */}
+          {message.attachments && Array.isArray(message.attachments) && message.attachments.length > 0 && (
+            <AttachmentViewer 
+              attachments={message.attachments} 
+              language={language} 
+            />
+          )}
 
           {/* Timeline */}
           <Card>

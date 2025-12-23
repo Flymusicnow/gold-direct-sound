@@ -24,6 +24,7 @@ export interface InboxMessage {
   verified_by: string | null;
   verified_route: string | null;
   verified_device: string | null;
+  attachments: { url: string; path: string; name: string; type: string; size: number }[] | null;
   assigned_profile?: {
     full_name: string | null;
     avatar_url: string | null;

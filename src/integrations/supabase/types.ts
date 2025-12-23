@@ -1885,6 +1885,7 @@ export type Database = {
         Row: {
           assigned_key: string | null
           assigned_to: string | null
+          attachments: Json | null
           created_at: string | null
           dedupe_key: string
           id: string
@@ -1907,6 +1908,7 @@ export type Database = {
         Insert: {
           assigned_key?: string | null
           assigned_to?: string | null
+          attachments?: Json | null
           created_at?: string | null
           dedupe_key: string
           id?: string
@@ -1929,6 +1931,7 @@ export type Database = {
         Update: {
           assigned_key?: string | null
           assigned_to?: string | null
+          attachments?: Json | null
           created_at?: string | null
           dedupe_key?: string
           id?: string
