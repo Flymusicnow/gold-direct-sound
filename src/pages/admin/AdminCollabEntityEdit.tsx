@@ -16,13 +16,13 @@ import { toast } from 'sonner';
 import { OpportunityDialog } from '@/components/admin/OpportunityDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-const COLLAB_TYPES = [
-  { value: 'festival_slot', label: 'Festival Slot' },
-  { value: 'brand_deal', label: 'Brand Deal' },
-  { value: 'ugc_content', label: 'UGC Content' },
-  { value: 'sponsorship', label: 'Sponsorship' },
-  { value: 'live_event', label: 'Live Event' },
-  { value: 'partnership', label: 'Partnership' },
+const getCollabTypes = (t: (key: string) => string) => [
+  { value: 'festival_slot', label: t('admin.collabTypeFestivalSlot') },
+  { value: 'brand_deal', label: t('admin.collabTypeBrandDeal') },
+  { value: 'ugc_content', label: t('admin.collabTypeUgcContent') },
+  { value: 'sponsorship', label: t('admin.collabTypeSponsorship') },
+  { value: 'live_event', label: t('admin.collabTypeLiveEvent') },
+  { value: 'partnership', label: t('admin.collabTypePartnership') },
 ];
 
 const STYLE_SUGGESTIONS = [
@@ -293,7 +293,7 @@ export default function AdminCollabEntityEdit() {
     e.preventDefault();
     
     if (!formData.name || !formData.slug || !formData.type) {
-      toast.error('Please fill in required fields');
+      toast.error(t('admin.fillRequiredFields'));
       return;
     }
 
@@ -322,23 +322,23 @@ export default function AdminCollabEntityEdit() {
           .from('collab_entities')
           .insert(payload);
         if (error) throw error;
-        toast.success('Entity created successfully');
+        toast.success(t('admin.entityCreated'));
       } else {
         const { error } = await supabase
           .from('collab_entities')
           .update(payload)
           .eq('id', id);
         if (error) throw error;
-        toast.success('Entity updated successfully');
+        toast.success(t('admin.entityUpdated'));
       }
 
       navigate('/admin/collab-entities');
     } catch (error: any) {
       console.error('Error saving entity:', error);
       if (error.code === '23505') {
-        toast.error('Slug already exists. Please choose a different one.');
+        toast.error(t('admin.slugExists'));
       } else {
-        toast.error('Failed to save entity');
+        toast.error(t('admin.entitySaveFailed'));
       }
     } finally {
       setSaving(false);
@@ -363,10 +363,10 @@ export default function AdminCollabEntityEdit() {
           </Button>
           <div className="flex-1">
             <h1 className="text-2xl font-bold text-foreground">
-              {isNew ? 'Create Entity' : 'Edit Entity'}
+              {isNew ? t('admin.createEntityTitle') : t('admin.editEntityTitle')}
             </h1>
             <p className="text-sm text-muted-foreground">
-              {isNew ? 'Add a new brand, festival, sponsor or agency' : formData.name}
+              {isNew ? t('admin.createEntityDescription') : formData.name}
             </p>
           </div>
         </div>
@@ -375,62 +375,62 @@ export default function AdminCollabEntityEdit() {
           {/* Basic Info */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>{t('admin.basicInformation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="type">Type *</Label>
+                  <Label htmlFor="type">{t('admin.entityType')} *</Label>
                   <Select value={formData.type} onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="brand">Brand</SelectItem>
-                      <SelectItem value="festival">Festival</SelectItem>
-                      <SelectItem value="sponsor">Sponsor</SelectItem>
-                      <SelectItem value="event_agency">Event Agency</SelectItem>
+                      <SelectItem value="brand">{t('entityTypes.brand')}</SelectItem>
+                      <SelectItem value="festival">{t('entityTypes.festival')}</SelectItem>
+                      <SelectItem value="sponsor">{t('entityTypes.sponsor')}</SelectItem>
+                      <SelectItem value="event_agency">{t('entityTypes.eventAgency')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="budget_range">Budget Range</Label>
+                  <Label htmlFor="budget_range">{t('admin.budgetRange')}</Label>
                   <Select value={formData.budget_range} onValueChange={(v) => setFormData(prev => ({ ...prev, budget_range: v }))}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="low">{t('admin.budgetLow')}</SelectItem>
+                      <SelectItem value="medium">{t('admin.budgetMedium')}</SelectItem>
+                      <SelectItem value="high">{t('admin.budgetHigh')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
+                <Label htmlFor="name">{t('admin.entityName')} *</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  placeholder="Enter entity name"
+                  placeholder={t('admin.enterEntityName')}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="slug">Slug *</Label>
+                <Label htmlFor="slug">{t('admin.entitySlug')} *</Label>
                 <Input
                   id="slug"
                   value={formData.slug}
                   onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="url-friendly-slug"
+                  placeholder={t('admin.urlFriendlySlug')}
                 />
                 <p className="text-xs text-muted-foreground">URL: /partners/{formData.slug || 'slug'}</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="logo_url">Logo URL</Label>
+                <Label htmlFor="logo_url">{t('admin.logoUrl')}</Label>
                 <Input
                   id="logo_url"
                   value={formData.logo_url}
@@ -440,7 +440,7 @@ export default function AdminCollabEntityEdit() {
               </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="is_active">Active</Label>
+                <Label htmlFor="is_active">{t('common.active')}</Label>
                 <Switch
                   id="is_active"
                   checked={formData.is_active}
@@ -453,12 +453,12 @@ export default function AdminCollabEntityEdit() {
           {/* Details */}
           <Card>
             <CardHeader>
-              <CardTitle>Details</CardTitle>
+              <CardTitle>{t('admin.entityDetails')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
+                  <Label htmlFor="website">{t('admin.website')}</Label>
                   <Input
                     id="website"
                     value={formData.website}
@@ -467,56 +467,56 @@ export default function AdminCollabEntityEdit() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
+                  <Label htmlFor="location">{t('admin.location')}</Label>
                   <Input
                     id="location"
                     value={formData.location}
                     onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Stockholm, Sweden"
+                    placeholder={t('admin.locationPlaceholder')}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="mission">Mission</Label>
+                <Label htmlFor="mission">{t('admin.mission')}</Label>
                 <Textarea
                   id="mission"
                   value={formData.mission}
                   onChange={(e) => setFormData(prev => ({ ...prev, mission: e.target.value }))}
-                  placeholder="What is the core mission or purpose?"
+                  placeholder={t('admin.missionPlaceholder')}
                   rows={2}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t('common.description')}</Label>
                 <Textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Detailed description..."
+                  placeholder={t('admin.detailedDescription')}
                   rows={4}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brand_values">Brand Values</Label>
+                <Label htmlFor="brand_values">{t('admin.brandValues')}</Label>
                 <Textarea
                   id="brand_values"
                   value={formData.brand_values}
                   onChange={(e) => setFormData(prev => ({ ...prev, brand_values: e.target.value }))}
-                  placeholder="Core values and principles..."
+                  placeholder={t('admin.coreValues')}
                   rows={2}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="avoid_categories">Avoid Categories</Label>
+                <Label htmlFor="avoid_categories">{t('admin.avoidCategories')}</Label>
                 <Input
                   id="avoid_categories"
                   value={formData.avoid_categories}
                   onChange={(e) => setFormData(prev => ({ ...prev, avoid_categories: e.target.value }))}
-                  placeholder="Categories to avoid (e.g., politics, controversial topics)"
+                  placeholder={t('admin.avoidCategoriesPlaceholder')}
                 />
               </div>
             </CardContent>
@@ -525,7 +525,7 @@ export default function AdminCollabEntityEdit() {
           {/* Style Tags */}
           <Card>
             <CardHeader>
-              <CardTitle>Style Tags</CardTitle>
+              <CardTitle>{t('admin.styleTags')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -543,7 +543,7 @@ export default function AdminCollabEntityEdit() {
                 <Input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="Add custom tag"
+                  placeholder={t('admin.addCustomTag')}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       e.preventDefault();
@@ -574,11 +574,11 @@ export default function AdminCollabEntityEdit() {
           {/* Collab Types */}
           <Card>
             <CardHeader>
-              <CardTitle>Collaboration Types</CardTitle>
+              <CardTitle>{t('admin.collaborationTypes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {COLLAB_TYPES.map((type) => (
+                {getCollabTypes(t).map((type) => (
                   <button
                     key={type.value}
                     type="button"
