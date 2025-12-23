@@ -17,6 +17,7 @@ import {
   FlaskConical,
   Link2,
   Inbox,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -35,6 +36,7 @@ const adminNavItems = [
   { title: "Beta Codes", url: "/admin/beta-codes", icon: KeyRound },
   { title: "Feature Flags", url: "/admin/features", icon: Flag },
   { title: "Collab Entities", url: "/admin/collab-entities", icon: Building2 },
+  { title: "Opportunities", url: "/admin/opportunities", icon: Briefcase },
   { title: "Matching", url: "/admin/matching", icon: Handshake },
   { title: "Activity Log", url: "/admin/activity", icon: Activity },
   { title: "Brand Applications", url: "/admin/brand-applications", icon: Building2 },

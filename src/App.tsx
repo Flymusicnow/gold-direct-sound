@@ -79,6 +79,7 @@ import AdminQA from "./pages/admin/AdminQA";
 import AdminInbox from "./pages/admin/AdminInbox";
 import AdminInboxDetail from "./pages/admin/AdminInboxDetail";
 import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
+import AdminOpportunities from "./pages/admin/AdminOpportunities";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
@@ -308,6 +309,7 @@ const App = () => (
             <Route path="/admin/collab-entities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntities /></ProtectedRoute>} />
             <Route path="/admin/collab-entities/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntityEdit /></ProtectedRoute>} />
             <Route path="/admin/matching" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminMatching /></ProtectedRoute>} />
+            <Route path="/admin/opportunities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOpportunities /></ProtectedRoute>} />
             <Route path="/admin/brand-applications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBrandApplications /></ProtectedRoute>} />
             <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
             <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
