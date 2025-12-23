@@ -8,14 +8,14 @@ import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const OPPORTUNITY_TYPES = [
-  { value: 'festival_slot', label: 'Festival Slot' },
-  { value: 'live_event', label: 'Live Event' },
-  { value: 'brand_campaign', label: 'Brand Campaign' },
-  { value: 'sponsored_content', label: 'Sponsored Content' },
-  { value: 'ugc_content', label: 'UGC Content' },
-  { value: 'residency', label: 'Residency' },
-  { value: 'partnership', label: 'Partnership' },
+const getOpportunityTypes = (t: (key: string) => string) => [
+  { value: 'festival_slot', label: t('opportunityTypes.festivalSlot') },
+  { value: 'live_event', label: t('opportunityTypes.liveEvent') },
+  { value: 'brand_campaign', label: t('opportunityTypes.brandCampaign') },
+  { value: 'sponsored_content', label: t('opportunityTypes.sponsoredContent') },
+  { value: 'ugc_content', label: t('opportunityTypes.ugcContent') },
+  { value: 'residency', label: t('opportunityTypes.residency') },
+  { value: 'partnership', label: t('opportunityTypes.partnership') },
 ];
 
 interface OpportunityFormData {
@@ -129,7 +129,7 @@ export function OpportunityDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {OPPORTUNITY_TYPES.map((type) => (
+                  {getOpportunityTypes(t).map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>
@@ -174,7 +174,7 @@ export function OpportunityDialog({
                 id="opp-location"
                 value={formData.location}
                 onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                placeholder="Stockholm, Sweden"
+                placeholder={t('admin.locationPlaceholder')}
               />
             </div>
 
