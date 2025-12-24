@@ -281,7 +281,7 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
 
         <ScrollArea className="h-[calc(100vh-200px)]">
           <motion.nav
-            className="space-y-1 pb-8"
+            className="space-y-1 pb-safe"
             initial="hidden"
             animate="visible"
             variants={{

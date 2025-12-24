@@ -242,9 +242,10 @@ export default function FanPortal() {
             <h1 className="text-4xl font-bold mb-2">
               {t('fan.greeting')}, {profile?.full_name || t('fan.defaultName')}!
             </h1>
-            <p className="text-muted-foreground">
-              {t('fan.welcomeMessage')} · {" "}
-              <Link to="/learn?tab=fan" className="text-primary hover:underline text-sm">
+            <p className="text-muted-foreground min-w-0">
+              <span>{t('fan.welcomeMessage')}</span>
+              {' '}
+              <Link to="/learn?tab=fan" className="text-primary hover:underline text-sm whitespace-nowrap">
                 {t('fan.learnLink')} →
               </Link>
             </p>

@@ -204,9 +204,12 @@ export default function StudioDashboard() {
                     </h1>
                     {isVerified && <VerifiedBadge size="lg" />}
                   </div>
-                  <p className="text-sm md:text-base text-muted-foreground">
-                    {t('studio.welcomeBack')}, {artistProfile?.artist_name} ·{" "}
-                    <Link to="/learn?tab=artist" className="text-primary hover:underline">
+                  <p className="text-sm md:text-base text-muted-foreground min-w-0">
+                    <span className="truncate">
+                      {t('studio.welcomeBack')}{artistProfile?.artist_name ? `, ${artistProfile.artist_name}` : ''}
+                    </span>
+                    {' '}
+                    <Link to="/learn?tab=artist" className="text-primary hover:underline whitespace-nowrap">
                       {t('studio.learnFlyMusic')} →
                     </Link>
                   </p>

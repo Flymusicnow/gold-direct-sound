@@ -15,6 +15,7 @@ import { ArrowLeft, Save, X, Plus, Trash2, Pencil, Calendar, MapPin } from 'luci
 import { toast } from 'sonner';
 import { OpportunityDialog } from '@/components/admin/OpportunityDialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { IconImageUploader } from '@/components/admin/IconImageUploader';
 
 const getCollabTypes = (t: (key: string) => string) => [
   { value: 'festival_slot', label: t('admin.collabTypeFestivalSlot') },
@@ -430,13 +431,24 @@ export default function AdminCollabEntityEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="logo_url">{t('admin.logoUrl')}</Label>
-                <Input
-                  id="logo_url"
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
-                  placeholder="https://..."
-                />
+                <Label>{t('admin.logoUrl')}</Label>
+                <div className="flex items-start gap-4">
+                  <IconImageUploader
+                    currentUrl={formData.logo_url}
+                    onUpload={(url) => setFormData(prev => ({ ...prev, logo_url: url }))}
+                    storagePath={`entities/${formData.slug || 'new'}`}
+                  />
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      id="logo_url"
+                      value={formData.logo_url}
+                      onChange={(e) => setFormData(prev => ({ ...prev, logo_url: e.target.value }))}
+                      placeholder="https://... or upload →"
+                      className="text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">Upload an image or paste a URL</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between">
