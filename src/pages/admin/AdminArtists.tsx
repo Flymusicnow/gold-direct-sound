@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { Search, Eye, Check, X, Music, MapPin } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -124,6 +125,70 @@ export default function AdminArtists() {
     rejected: artists.filter((a) => a.status === "rejected").length,
   };
 
+  if (loading) {
+    return (
+      <AdminLayout title={t('admin.artistManagement')} description={t('admin.artistManagementDescription')}>
+        <div className="space-y-6">
+          {/* Stats skeleton - 4 cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-4 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {/* Filters skeleton */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 w-full md:w-[180px]" />
+              </div>
+            </CardContent>
+          </Card>
+          {/* Table skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                    {/* Avatar + name/bio */}
+                    <div className="flex items-center gap-3 flex-1">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                    </div>
+                    {/* Genre */}
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    {/* Location */}
+                    <Skeleton className="h-4 w-24" />
+                    {/* Status */}
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    {/* Date */}
+                    <Skeleton className="h-4 w-20" />
+                    {/* Actions */}
+                    <div className="flex gap-1">
+                      <Skeleton className="h-8 w-8 rounded" />
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout title={t('admin.artistManagement')} description={t('admin.artistManagementDescription')}>
       <div className="space-y-6">
@@ -189,10 +254,7 @@ export default function AdminArtists() {
             <CardTitle>{t('admin.allArtists')} ({filteredArtists.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <p className="text-muted-foreground">{t('common.loading')}</p>
-            ) : (
-              <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -290,7 +352,6 @@ export default function AdminArtists() {
                   </TableBody>
                 </Table>
               </div>
-            )}
           </CardContent>
         </Card>
       </div>

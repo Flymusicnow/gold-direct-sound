@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { Search, Play, Trash2, Music } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -114,6 +115,64 @@ export default function AdminTracks() {
     totalPlays: tracks.reduce((acc, t) => acc + (t.play_count || 0), 0),
   };
 
+  if (loading) {
+    return (
+      <AdminLayout title="Track Management" description="View and manage all tracks on the platform">
+        <div className="space-y-6">
+          {/* Stats skeleton - 2 cards */}
+          <div className="grid grid-cols-2 gap-4">
+            {[1, 2].map((i) => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-8 w-20 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {/* Search skeleton */}
+          <Card>
+            <CardContent className="pt-6">
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+          {/* Table skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 py-3 border-b last:border-0">
+                    {/* Track cover + title */}
+                    <div className="flex items-center gap-3 flex-1">
+                      <Skeleton className="h-10 w-10 rounded" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                    {/* Artist */}
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    {/* Genre badge */}
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    {/* Plays */}
+                    <Skeleton className="h-4 w-12" />
+                    {/* Date */}
+                    <Skeleton className="h-4 w-20" />
+                    {/* Action */}
+                    <Skeleton className="h-8 w-8 rounded" />
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout title="Track Management" description="View and manage all tracks on the platform">
       <div className="space-y-6">
@@ -154,10 +213,7 @@ export default function AdminTracks() {
             <CardTitle>All Tracks ({filteredTracks.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <p className="text-muted-foreground">Loading tracks...</p>
-            ) : (
-              <div className="overflow-x-auto">
+            <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -237,7 +293,6 @@ export default function AdminTracks() {
                   </TableBody>
                 </Table>
               </div>
-            )}
           </CardContent>
         </Card>
       </div>
