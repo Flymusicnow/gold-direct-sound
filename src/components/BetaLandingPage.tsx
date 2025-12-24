@@ -4,15 +4,23 @@ import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { RequestBetaDialog } from "./RequestBetaDialog";
+import heroImage from "@/assets/hero-music.jpg";
 
 export function BetaLandingPage() {
   const navigate = useNavigate();
   const [showRequestDialog, setShowRequestDialog] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+      {/* Background Image - subtle human presence */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-20"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
+      
       {/* Hero Section */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 relative z-10">
         <div className="max-w-4xl w-full text-center space-y-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
