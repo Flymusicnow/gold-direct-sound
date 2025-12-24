@@ -2,13 +2,15 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Heart, MessageSquare, Users } from "lucide-react";
+import { Heart, MessageSquare, Users } from "lucide-react";
 
 interface Activity {
   type: 'like' | 'comment' | 'follow';
@@ -19,6 +21,7 @@ interface Activity {
 
 export default function FanActivity() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,7 +128,7 @@ export default function FanActivity() {
   const ActivityList = ({ items }: { items: Activity[] }) => (
     <div className="space-y-4">
       {items.length === 0 ? (
-        <p className="text-center text-muted-foreground py-12">No activity found</p>
+        <p className="text-center text-muted-foreground py-12">{t('fan.noActivityFound')}</p>
       ) : (
         items.map((activity, index) => (
           <Card
@@ -155,7 +158,7 @@ export default function FanActivity() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading activity...</p>
+        <p className="text-muted-foreground">{t('fan.loadingActivity')}</p>
       </div>
     );
   }
@@ -163,44 +166,40 @@ export default function FanActivity() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
-        <div className="container mx-auto max-w-4xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/fan')}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Button>
+      <div className="flex min-h-screen w-full pt-16">
+        <FanSidebar />
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+          <PageBreadcrumb role="fan" />
+          
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">{t('fan.myActivity')}</h1>
 
-        <h1 className="text-3xl font-bold mb-8">My Activity</h1>
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
+                <TabsTrigger value="likes">{t('common.likes')}</TabsTrigger>
+                <TabsTrigger value="comments">{t('common.comments')}</TabsTrigger>
+                <TabsTrigger value="follows">{t('common.follows')}</TabsTrigger>
+              </TabsList>
 
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="likes">Likes</TabsTrigger>
-            <TabsTrigger value="comments">Comments</TabsTrigger>
-            <TabsTrigger value="follows">Follows</TabsTrigger>
-          </TabsList>
+              <TabsContent value="all" className="mt-6">
+                <ActivityList items={filterActivities()} />
+              </TabsContent>
 
-          <TabsContent value="all" className="mt-6">
-            <ActivityList items={filterActivities()} />
-          </TabsContent>
+              <TabsContent value="likes" className="mt-6">
+                <ActivityList items={filterActivities('like')} />
+              </TabsContent>
 
-          <TabsContent value="likes" className="mt-6">
-            <ActivityList items={filterActivities('like')} />
-          </TabsContent>
+              <TabsContent value="comments" className="mt-6">
+                <ActivityList items={filterActivities('comment')} />
+              </TabsContent>
 
-          <TabsContent value="comments" className="mt-6">
-            <ActivityList items={filterActivities('comment')} />
-          </TabsContent>
-
-          <TabsContent value="follows" className="mt-6">
-            <ActivityList items={filterActivities('follow')} />
-          </TabsContent>
-        </Tabs>
-        </div>
+              <TabsContent value="follows" className="mt-6">
+                <ActivityList items={filterActivities('follow')} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>

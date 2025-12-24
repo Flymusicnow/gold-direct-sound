@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Navigation } from '@/components/Navigation';
+import { MobileFanNav } from '@/components/fan/MobileFanNav';
+import { FanSidebar } from '@/components/fan/FanSidebar';
+import { PageBreadcrumb } from '@/components/navigation/PageBreadcrumb';
 import { FlyWrappedCard } from '@/components/wrapped/FlyWrappedCard';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Trophy, ArrowLeft } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 
 interface MonthlyWrap {
@@ -25,7 +28,9 @@ interface MonthlyWrap {
 
 export default function FanWrapped() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [wraps, setWraps] = useState<MonthlyWrap[]>([]);
   const [loading, setLoading] = useState(true);
   const socialRitualsEnabled = useFeatureFlag('SOCIAL_RITUALS_ENABLED');
@@ -70,95 +75,86 @@ export default function FanWrapped() {
 
   if (!socialRitualsEnabled) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="container mx-auto px-4 py-8 pb-44 md:pb-24">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/fan")}
-            className="mb-6 gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-          <Card className="max-w-md mx-auto">
-            <CardContent className="p-8 text-center">
-              <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h2 className="text-xl font-semibold mb-2">FlyWrapped Coming Soon</h2>
-              <p className="text-muted-foreground">
-                Your monthly music journey summaries are on the way!
-              </p>
-            </CardContent>
-          </Card>
-        </main>
-        <BottomNavBarFan />
-      </div>
+      <>
+        <MobileFanNav />
+        <div className="flex min-h-screen w-full pt-16">
+          <FanSidebar />
+          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+            <PageBreadcrumb role="fan" />
+            <Card className="max-w-md mx-auto">
+              <CardContent className="p-8 text-center">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">{t('fan.wrappedComingSoon')}</h2>
+                <p className="text-muted-foreground">
+                  {t('fan.wrappedComingSoonDescription')}
+                </p>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+        {isMobile && <BottomNavBarFan />}
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="container mx-auto px-4 py-8 pb-44 md:pb-24">
-        <div className="max-w-2xl mx-auto space-y-6">
-          {/* Back Button */}
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/fan")}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
+    <>
+      <MobileFanNav />
+      <div className="flex min-h-screen w-full pt-16">
+        <FanSidebar />
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+          <PageBreadcrumb role="fan" />
+          
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Header */}
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                <Trophy className="h-6 w-6 text-primary" />
+                {t('fan.wrapped')}
+              </h1>
+              <p className="text-muted-foreground">
+                {t('fan.wrappedDescription')}
+              </p>
+            </div>
 
-          {/* Header */}
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Trophy className="h-6 w-6 text-primary" />
-              FlyWrapped
-            </h1>
-            <p className="text-muted-foreground">
-              Your monthly music journey on FlyMusic
-            </p>
+            {/* Wraps List */}
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            ) : wraps.length > 0 ? (
+              <div className="space-y-4">
+                {wraps.map((wrap, i) => (
+                  <FlyWrappedCard
+                    key={i}
+                    month={wrap.month}
+                    year={wrap.year}
+                    topArtists={wrap.top_artists || []}
+                    topTracks={wrap.top_tracks || []}
+                    totalXpEarned={wrap.total_xp_earned}
+                    artistsDiscovered={wrap.artists_discovered}
+                    spotlightVotes={wrap.spotlight_votes_cast}
+                    totalPlays={wrap.total_plays}
+                    onShare={() => handleShare(wrap)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">{t('fan.noWrapsYet')}</h2>
+                  <p className="text-muted-foreground">
+                    {t('fan.noWrapsYetDescription')}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
-
-          {/* Wraps List */}
-          {loading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-64 w-full" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          ) : wraps.length > 0 ? (
-            <div className="space-y-4">
-              {wraps.map((wrap, i) => (
-                <FlyWrappedCard
-                  key={i}
-                  month={wrap.month}
-                  year={wrap.year}
-                  topArtists={wrap.top_artists || []}
-                  topTracks={wrap.top_tracks || []}
-                  totalXpEarned={wrap.total_xp_earned}
-                  artistsDiscovered={wrap.artists_discovered}
-                  spotlightVotes={wrap.spotlight_votes_cast}
-                  totalPlays={wrap.total_plays}
-                  onShare={() => handleShare(wrap)}
-                />
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h2 className="text-xl font-semibold mb-2">No Wraps Yet</h2>
-                <p className="text-muted-foreground">
-                  Your first FlyWrapped will be generated at the end of the month!
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </main>
-      <BottomNavBarFan />
-    </div>
+        </main>
+      </div>
+      {isMobile && <BottomNavBarFan />}
+    </>
   );
 }

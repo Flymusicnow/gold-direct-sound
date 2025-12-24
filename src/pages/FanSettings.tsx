@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
@@ -10,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, CreditCard, Camera, Loader2 } from "lucide-react";
+import { CreditCard, Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
@@ -119,115 +121,111 @@ export default function FanSettings() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-20 md:pb-4">
-        <div className="container mx-auto max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/fan')}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('fan.backToDashboard')}
-        </Button>
+      <div className="flex min-h-screen w-full pt-16">
+        <FanSidebar />
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+          <PageBreadcrumb role="fan" />
+          
+          <div className="max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold mb-8">{t('settings.accountSettings')}</h1>
 
-        <h1 className="text-3xl font-bold mb-8">{t('settings.accountSettings')}</h1>
+            <Card className="p-6 mb-6">
+              {/* Profile Picture Upload */}
+              <div className="flex items-center gap-6 mb-6 pb-6 border-b border-border">
+                <div className="relative">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={avatarUrl || undefined} alt="Profile" />
+                    <AvatarFallback className="text-2xl bg-primary/20 text-primary">
+                      {fullName?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors"
+                  >
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{t('settings.profilePicture')}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.clickCameraToUpload')}
+                  </p>
+                </div>
+              </div>
 
-        <Card className="p-6 mb-6">
-          {/* Profile Picture Upload */}
-          <div className="flex items-center gap-6 mb-6 pb-6 border-b border-border">
-            <div className="relative">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarUrl || undefined} alt="Profile" />
-                <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                  {fullName?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar}
-                className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors"
-              >
-                {uploadingAvatar ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Camera className="h-4 w-4" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
-            <div>
-              <h3 className="font-semibold">{t('settings.profilePicture')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('settings.clickCameraToUpload')}
-              </p>
+              <form onSubmit={handleSave} className="space-y-6">
+                <div>
+                  <Label htmlFor="email">{t('settings.email')}</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={profile?.email || ""}
+                    disabled
+                    className="bg-muted"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t('settings.emailCannotBeChanged')}
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="fullName">{t('settings.displayName')}</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder={t('settings.yourName')}
+                    required
+                  />
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4">{t('settings.notificationPreferences')}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    {t('settings.notificationsComingSoon')}
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-2 ml-4">
+                    <li>• {t('settings.newReleasesNotification')}</li>
+                    <li>• {t('settings.commentRepliesNotification')}</li>
+                    <li>• {t('settings.campaignsNotification')}</li>
+                  </ul>
+                </div>
+
+                <Button type="submit" disabled={loading} className="bg-gradient-gold">
+                  {loading ? t('common.saving') : t('common.saveChanges')}
+                </Button>
+              </form>
+            </Card>
+
+            {/* Subscription & Billing Section */}
+            <Card className="p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                {t('settings.subscriptionBilling')}
+              </h3>
+              <BillingManagementCard userType="fan" />
+            </Card>
+
+            {/* Legal Documents Section */}
+            <div className="mt-8">
+              <LegalSettingsSection isArtist={false} isBrand={false} />
             </div>
           </div>
-
-          <form onSubmit={handleSave} className="space-y-6">
-            <div>
-              <Label htmlFor="email">{t('settings.email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={profile?.email || ""}
-                disabled
-                className="bg-muted"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {t('settings.emailCannotBeChanged')}
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="fullName">{t('settings.displayName')}</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder={t('settings.yourName')}
-                required
-              />
-            </div>
-
-            <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold mb-4">{t('settings.notificationPreferences')}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {t('settings.notificationsComingSoon')}
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-2 ml-4">
-                <li>• {t('settings.newReleasesNotification')}</li>
-                <li>• {t('settings.commentRepliesNotification')}</li>
-                <li>• {t('settings.campaignsNotification')}</li>
-              </ul>
-            </div>
-
-            <Button type="submit" disabled={loading} className="bg-gradient-gold">
-              {loading ? t('common.saving') : t('common.saveChanges')}
-            </Button>
-          </form>
-        </Card>
-
-        {/* Subscription & Billing Section */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-primary" />
-            {t('settings.subscriptionBilling')}
-          </h3>
-          <BillingManagementCard userType="fan" />
-        </Card>
-
-        {/* Legal Documents Section */}
-        <div className="mt-8">
-          <LegalSettingsSection isArtist={false} isBrand={false} />
-        </div>
-        </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>
