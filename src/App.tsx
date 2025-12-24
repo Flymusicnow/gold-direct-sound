@@ -14,7 +14,7 @@ import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { ReproModeProvider } from "@/contexts/ReproModeContext";
 import { VerificationModeProvider } from "@/contexts/VerificationModeContext";
-import { Navigation } from "@/components/Navigation";
+import { NavigationWrapper } from "@/components/NavigationWrapper";
 import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
 import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
 import { VerificationBanner } from "@/components/verification/VerificationBanner";
@@ -161,7 +161,7 @@ const App = () => (
               <VideoPlaybackProvider>
                 <FlightdeckProvider>
                   <SwipeBackProvider>
-                  <Navigation />
+                  <NavigationWrapper />
                 <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/changelog" element={<Changelog />} />

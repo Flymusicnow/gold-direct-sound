@@ -33,6 +33,8 @@ import {
   CreditCard,
   FlaskConical,
   Inbox,
+  CheckCircle,
+  Bell,
   LucideIcon,
 } from "lucide-react";
 
@@ -165,10 +167,12 @@ export const adminNavConfig: NavConfig = {
       title: "Content",
       items: [
         { icon: Shield, label: "Approvals", path: "/admin/approvals", i18nKey: "admin.approvals" },
+        { icon: CheckCircle, label: "Verifications", path: "/admin/verifications", i18nKey: "admin.verifications" },
         { icon: Star, label: "Artists", path: "/admin/artists", i18nKey: "admin.artists" },
         { icon: Activity, label: "Tracks", path: "/admin/tracks", i18nKey: "admin.tracks" },
         { icon: Link2, label: "Smart Links", path: "/admin/smart-links", i18nKey: "admin.smartLinks" },
         { icon: Star, label: "Spotlight", path: "/admin/spotlight", i18nKey: "nav.spotlight" },
+        { icon: Bell, label: "Updates", path: "/admin/updates", i18nKey: "admin.updates" },
       ],
     },
     {
@@ -181,7 +185,7 @@ export const adminNavConfig: NavConfig = {
         { icon: Briefcase, label: "Opportunities", path: "/admin/opportunities", i18nKey: "admin.opportunities" },
         { icon: Handshake, label: "Matching", path: "/admin/matching", i18nKey: "admin.matching" },
         { icon: Activity, label: "Activity Log", path: "/admin/activity", i18nKey: "admin.activityLog" },
-        { icon: Shield, label: "Roles", path: "/admin/roleManagement", i18nKey: "admin.roleManagement" },
+        { icon: Shield, label: "Roles", path: "/admin/roles", i18nKey: "admin.roleManagement" },
       ],
     },
     {
