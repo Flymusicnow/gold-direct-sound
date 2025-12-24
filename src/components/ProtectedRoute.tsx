@@ -11,6 +11,9 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
   const { user, loading, hasRole } = useAuth();
   const navigate = useNavigate();
 
+  // Admins can access all protected routes (for testing reported issues, etc.)
+  const isAdmin = hasRole('admin') || hasRole('super_admin');
+
   useEffect(() => {
     if (!loading) {
       if (!user) {
@@ -18,12 +21,12 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
         return;
       }
 
-      const hasAllowedRole = allowedRoles.some(role => hasRole(role));
+      const hasAllowedRole = isAdmin || allowedRoles.some(role => hasRole(role));
       if (!hasAllowedRole) {
         navigate('/');
       }
     }
-  }, [user, loading, allowedRoles, hasRole, navigate]);
+  }, [user, loading, allowedRoles, hasRole, navigate, isAdmin]);
 
   if (loading) {
     return (
@@ -33,7 +36,7 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
     );
   }
 
-  if (!user || !allowedRoles.some(role => hasRole(role))) {
+  if (!user || !(isAdmin || allowedRoles.some(role => hasRole(role)))) {
     return null;
   }
 
