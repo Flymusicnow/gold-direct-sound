@@ -62,6 +62,7 @@ export interface InboxFilters {
 export function useInboxMessages(filters?: InboxFilters) {
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [inProgressCount, setInProgressCount] = useState(0);
   const [verifiedCount, setVerifiedCount] = useState(0);
@@ -69,6 +70,10 @@ export function useInboxMessages(filters?: InboxFilters) {
 
   const fetchMessages = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    
+    console.log('[Inbox] Fetching messages with filters:', filters);
+    
     try {
       let query = supabase
         .from("inbox_messages")
@@ -99,12 +104,24 @@ export function useInboxMessages(filters?: InboxFilters) {
         query = query.neq("status", "verified");
       }
 
-      const { data, error } = await query;
+      const { data, error: queryError } = await query;
 
-      if (error) throw error;
+      if (queryError) {
+        console.error('[Inbox] Query error:', queryError.code, queryError.message);
+        setError(queryError.message || 'Failed to load messages');
+        throw queryError;
+      }
+      
+      console.log('[Inbox] Fetched messages:', data?.length || 0);
+      
+      if (data?.length === 0) {
+        console.warn('[Inbox] Empty result - possible RLS policy issue. Check admin status.');
+      }
+      
       setMessages((data as unknown as InboxMessage[]) || []);
-    } catch (error) {
-      console.error("Error fetching inbox messages:", error);
+    } catch (err: any) {
+      console.error("Error fetching inbox messages:", err);
+      setError(err?.message || 'Failed to load messages');
     } finally {
       setLoading(false);
     }
@@ -151,6 +168,7 @@ export function useInboxMessages(filters?: InboxFilters) {
   return {
     messages,
     loading,
+    error,
     unreadCount,
     inProgressCount,
     verifiedCount,
