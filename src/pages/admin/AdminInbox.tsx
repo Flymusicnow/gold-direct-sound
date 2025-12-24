@@ -45,12 +45,22 @@ export default function AdminInbox() {
   // QA tab always enforces: type = 'contextual_report', excludeResolved = true
   const isQaTab = activeTab === "qa";
 
-  const { messages, loading, unreadCount, inProgressCount, qaCount } = useInboxMessages({
+  const { messages, loading, error, unreadCount, inProgressCount, qaCount, refetch } = useInboxMessages({
     status: statusFilter as "unread" | "in_progress" | "resolved" | "all",
     priority: priorityFilter as "critical" | "high" | "normal" | "all",
     type: isQaTab ? "contextual_report" : undefined,
     excludeResolved: isQaTab ? true : undefined,
   });
+
+  const handleRetry = async () => {
+    console.log('[Inbox] Retrying with session refresh...');
+    try {
+      await supabase.auth.refreshSession();
+    } catch (e) {
+      console.warn('[Inbox] Session refresh failed:', e);
+    }
+    refetch();
+  };
 
   const dateLocale = language === "sv" ? sv : enUS;
 
@@ -251,6 +261,16 @@ export default function AdminInbox() {
               </div>
             </Card>
           ))
+        ) : error ? (
+          <Card className="p-8 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
+            <h3 className="font-medium mb-2">Could not load messages</h3>
+            <p className="text-sm text-muted-foreground mb-4">{error}</p>
+            <Button onClick={handleRetry} variant="outline" className="gap-2">
+              <Loader2 className="h-4 w-4" />
+              Try Again
+            </Button>
+          </Card>
         ) : messages.length === 0 ? (
           <Card className="p-8 text-center">
             <Inbox className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
