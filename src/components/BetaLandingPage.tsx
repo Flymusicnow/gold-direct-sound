@@ -4,7 +4,7 @@ import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { RequestBetaDialog } from "./RequestBetaDialog";
-import heroImage from "@/assets/hero-music.jpg";
+import heroImage from "@/assets/hero-artist-spotlight.png";
 
 export function BetaLandingPage() {
   const navigate = useNavigate();
@@ -12,12 +12,15 @@ export function BetaLandingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Background Image - subtle human presence */}
+      {/* Background Image - silhouetted artist with spotlight */}
       <div 
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
+        className="absolute inset-0 bg-cover bg-no-repeat"
+        style={{ 
+          backgroundImage: `url(${heroImage})`,
+          backgroundPosition: 'center top'
+        }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-background" />
       
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 relative z-10">
