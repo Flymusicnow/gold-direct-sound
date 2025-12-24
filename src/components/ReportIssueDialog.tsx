@@ -181,7 +181,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   const routeOptions = Array.from(new Set([currentRoute, ...lastRoutes])).slice(0, 6);
 
   const content = (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground bg-muted/50 rounded px-2 py-1">
           {t('currentPage')}: {currentRoute}
@@ -195,7 +195,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
           {language === 'sv' ? 'Vilken sida gäller det?' : 'Which page is the issue on?'}
         </Label>
         <Select value={targetRoute} onValueChange={setTargetRoute}>
-          <SelectTrigger id="target-route" className="w-full">
+          <SelectTrigger id="target-route" className="w-full min-h-[44px]">
             <SelectValue placeholder={language === 'sv' ? 'Välj sida...' : 'Select page...'} />
           </SelectTrigger>
           <SelectContent>
@@ -222,7 +222,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
           value={reproSteps}
           onChange={(e) => setReproSteps(e.target.value)}
           maxLength={100}
-          className="text-sm"
+          className="text-sm min-h-[44px]"
         />
       </div>
       
@@ -259,9 +259,9 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
           onChange={handleFileSelect}
         />
         
-        {/* Preview grid */}
+        {/* Preview grid - responsive for mobile */}
         {files.length > 0 && (
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {previews.map((preview, index) => (
               <div key={index} className="relative aspect-square rounded-md overflow-hidden border border-border">
                 <img
@@ -272,9 +272,10 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="absolute top-1 right-1 p-1 rounded-full bg-background/80 hover:bg-background text-foreground shadow-sm"
+                  className="absolute top-1 right-1 min-w-[32px] min-h-[32px] flex items-center justify-center rounded-full bg-background/90 hover:bg-background active:bg-muted text-foreground shadow-sm touch-manipulation"
+                  aria-label={t('removeImage')}
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             ))}
@@ -287,7 +288,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
             type="button"
             variant="outline"
             size="sm"
-            className="w-full"
+            className="w-full min-h-[44px]"
             onClick={() => fileInputRef.current?.click()}
           >
             <ImagePlus className="h-4 w-4 mr-2" />
@@ -327,8 +328,8 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="px-4 pb-safe-bottom">
-          <DrawerHeader className="text-left pt-4">
+        <DrawerContent className="px-4 pb-safe-bottom max-h-[85vh] supports-[height:100dvh]:max-h-[85dvh] flex flex-col">
+          <DrawerHeader className="text-left pt-4 flex-shrink-0">
             <DrawerTitle className="flex items-center gap-2 text-lg">
               <Bug className="h-5 w-5 text-primary" />
               {t('reportIssue')}
@@ -337,7 +338,7 @@ export function ReportIssueDialog({ open, onOpenChange }: ReportIssueDialogProps
               {t('reportIssueDescription')}
             </DrawerDescription>
           </DrawerHeader>
-          <div className="pb-6">
+          <div className="pb-6 overflow-y-auto flex-1 overscroll-contain">
             {content}
           </div>
         </DrawerContent>
