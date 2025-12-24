@@ -22,9 +22,20 @@ export const Navigation = () => {
   const navigate = useNavigate();
   const { hasBetaAccess } = useBetaAccess();
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   // Show report button to admins or beta users
   const canReportIssues = user && (hasRole('admin') || hasBetaAccess);
+
+  // Golden Journey - Scroll listener for navigation anchoring effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Global keyboard shortcut: Cmd/Ctrl + Shift + B to open report dialog
   const handleGlobalKeydown = useCallback((e: KeyboardEvent) => {
@@ -69,7 +80,7 @@ export const Navigation = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
+    <nav className={`fixed top-0 left-0 right-0 z-50 nav-premium border-b border-border ${isScrolled ? 'scrolled' : ''}`}>
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Link to={getLogoRoute()} className="flex items-center">
@@ -79,10 +90,10 @@ export const Navigation = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-6">
-          <Link to="/explore" className="text-foreground/80 hover:text-primary transition-colors">
+          <Link to="/explore" className="nav-link-gold">
             {t('nav.explore')}
           </Link>
-          <Link to="/search" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+          <Link to="/search" className="nav-link-gold flex items-center gap-1">
             <Search className="h-4 w-4" />
             {t('nav.search')}
           </Link>
@@ -93,14 +104,14 @@ export const Navigation = () => {
               {/* Artist sees Brand Opportunities */}
               {hasRole('artist') && (
                 <>
-                  <Link to="/studio/opportunities" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+                  <Link to="/studio/opportunities" className="nav-link-gold flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
                     {t('nav.brandOpportunities')}
                   </Link>
-                  <Link to={`/artist/${user?.id}`} className="text-foreground/80 hover:text-primary transition-colors">
+                  <Link to={`/artist/${user?.id}`} className="nav-link-gold">
                     {t('nav.myArtistPage')}
                   </Link>
-                  <Link to="/studio" className="text-foreground/80 hover:text-primary transition-colors">
+                  <Link to="/studio" className="nav-link-gold">
                     {t('nav.myStudio')}
                   </Link>
                 </>
@@ -109,10 +120,10 @@ export const Navigation = () => {
               {/* Fan sees Fan Portal and Feed */}
               {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                 <>
-                  <Link to="/fan" className="text-foreground/80 hover:text-primary transition-colors">
+                  <Link to="/fan" className="nav-link-gold">
                     {t('nav.fanPortal')}
                   </Link>
-                  <Link to="/fan/feed" className="text-foreground/80 hover:text-primary transition-colors">
+                  <Link to="/fan/feed" className="nav-link-gold">
                     {t('nav.feed')}
                   </Link>
                 </>
@@ -120,13 +131,13 @@ export const Navigation = () => {
               
               {/* Brand sees Brand Dashboard */}
               {hasRole('brand') && (
-                <Link to="/brand" className="text-foreground/80 hover:text-primary transition-colors">
+                <Link to="/brand" className="nav-link-gold">
                   {t('nav.brandDashboard')}
                 </Link>
               )}
               
               {hasRole('admin') && (
-                <Link to="/admin" className="text-foreground/80 hover:text-primary transition-colors">
+                <Link to="/admin" className="nav-link-gold">
                   {t('nav.admin')}
                 </Link>
               )}
@@ -176,10 +187,10 @@ export const Navigation = () => {
           ) : (
             <>
               {/* Unauthenticated users see Brands link and Pricing */}
-              <Link to="/brands" className="text-foreground/80 hover:text-primary transition-colors">
+              <Link to="/brands" className="nav-link-gold">
                 {t('nav.forBrands')}
               </Link>
-              <Link to="/pricing" className="text-foreground/80 hover:text-primary transition-colors flex items-center gap-1">
+              <Link to="/pricing" className="nav-link-gold flex items-center gap-1">
                 <CreditCard className="h-4 w-4" />
                 {t('nav.pricing')}
               </Link>
@@ -187,7 +198,7 @@ export const Navigation = () => {
                 <Button variant="ghost" onClick={() => navigate('/auth')}>
                   {t('nav.signIn')}
                 </Button>
-                <Button 
+                <Button
                   variant="ghost" 
                   className="text-foreground/80"
                   onClick={() => navigate('/auth?mode=fan')}
