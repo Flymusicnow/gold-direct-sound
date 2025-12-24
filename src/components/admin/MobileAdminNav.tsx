@@ -192,7 +192,7 @@ export function MobileAdminNav({ inSheet = false, onNavigate }: MobileAdminNavPr
         </div>
 
         <ScrollArea className="flex-1 -mx-2 px-2">
-          <nav className="space-y-1 pb-8">
+          <nav className="space-y-1 pb-safe">
             {renderNavContent(handleNavigate)}
           </nav>
         </ScrollArea>
@@ -248,7 +248,7 @@ export function MobileAdminNav({ inSheet = false, onNavigate }: MobileAdminNavPr
         </div>
 
         <ScrollArea className="h-[calc(100vh-200px)]">
-          <nav className="space-y-1 pb-8">
+          <nav className="space-y-1 pb-safe">
             {renderNavContent(() => setSheetOpen(false))}
           </nav>
         </ScrollArea>
