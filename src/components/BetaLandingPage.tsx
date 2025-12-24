@@ -12,15 +12,15 @@ export function BetaLandingPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Background Image - silhouetted artist with spotlight */}
+      {/* Background Image - silhouetted artists with golden spotlights */}
       <div 
         className="absolute inset-0 bg-cover bg-no-repeat"
         style={{ 
           backgroundImage: `url(${heroImage})`,
-          backgroundPosition: 'center top'
+          backgroundPosition: 'center 30%'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background via-black/60 to-black/30" />
       
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 relative z-10">
