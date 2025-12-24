@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
 import { StatCard } from "@/components/StatCard";
@@ -23,6 +23,7 @@ import { Link } from "react-router-dom";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { FanOnboardingTour } from "@/components/fan/FanOnboardingTour";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 
 interface Artist {
   id: string;
@@ -234,9 +235,10 @@ export default function FanPortal() {
   return (
     <>
       <FanOnboardingTour />
-      {!isMobile && <MobileFanNav />}
-      <div className="min-h-screen py-24 px-4 pb-44 md:pb-28">
-        <div className="container mx-auto max-w-7xl space-y-8">
+      <div className="flex min-h-screen w-full">
+        <FanSidebar />
+        <main className="flex-1 py-24 px-4 pb-44 md:pb-28 md:py-8 md:px-6">
+          <div className="max-w-7xl mx-auto space-y-8">
         {/* Welcome Header */}
           <div>
             <h1 className="text-4xl font-bold mb-2">
@@ -623,6 +625,7 @@ export default function FanPortal() {
           </Button>
         </div>
         </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>

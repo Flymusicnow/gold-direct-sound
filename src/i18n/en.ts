@@ -97,6 +97,7 @@ export const en = {
     popular: 'Popular',
     featured: 'Featured',
     recommended: 'Recommended',
+    backToDashboard: 'Back to Dashboard',
   },
   nav: {
     explore: 'Explore Artists',
@@ -725,6 +726,16 @@ export const en = {
     share: 'Share',
     playAll: 'Play All',
     shuffle: 'Shuffle',
+    // Additional keys
+    myStacks: 'My Stacks',
+    organizeYourFavorites: 'Organize your favorite tracks',
+    createPlaylist: 'Create Playlist',
+    whatAreStacks: 'What are Stacks?',
+    stacksDescription: 'Stacks are your personal playlists to organize music',
+    noPlaylistsYet: 'No playlists yet',
+    createFirstPlaylist: 'Create your first playlist',
+    createYourFirstPlaylist: 'Create Your First Playlist',
+    loadingPlaylists: 'Loading playlists...',
   },
   auth: {
     signIn: 'Sign In',
@@ -833,6 +844,9 @@ export const en = {
     copied: 'Copied to clipboard',
     failed: 'Operation failed',
     tryAgain: 'Please try again',
+    failedToLoadPlaylists: 'Failed to load playlists',
+    unfollowFailed: 'Failed to unfollow',
+    unfollowedSuccessfully: 'Unfollowed successfully',
   },
   qa: {
     title: 'QA Mode',

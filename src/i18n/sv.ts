@@ -97,6 +97,7 @@ export const sv = {
     popular: 'Populär',
     featured: 'Utvald',
     recommended: 'Rekommenderad',
+    backToDashboard: 'Tillbaka till översikten',
   },
   nav: {
     explore: 'Utforska artister',
@@ -725,6 +726,16 @@ export const sv = {
     share: 'Dela',
     playAll: 'Spela alla',
     shuffle: 'Blanda',
+    // Additional keys
+    myStacks: 'Mina Stacks',
+    organizeYourFavorites: 'Organisera dina favoritlåtar',
+    createPlaylist: 'Skapa spellista',
+    whatAreStacks: 'Vad är Stacks?',
+    stacksDescription: 'Stacks är dina personliga spellistor för att organisera musik',
+    noPlaylistsYet: 'Inga spellistor ännu',
+    createFirstPlaylist: 'Skapa din första spellista',
+    createYourFirstPlaylist: 'Skapa din första spellista',
+    loadingPlaylists: 'Laddar spellistor...',
   },
   auth: {
     signIn: 'Logga in',
@@ -833,6 +844,9 @@ export const sv = {
     copied: 'Kopierat till urklipp',
     failed: 'Operationen misslyckades',
     tryAgain: 'Försök igen',
+    failedToLoadPlaylists: 'Kunde inte ladda spellistor',
+    unfollowFailed: 'Kunde inte sluta följa',
+    unfollowedSuccessfully: 'Slutade följa',
   },
   qa: {
     title: 'QA-läge',
