@@ -97,13 +97,22 @@ export default function Auth() {
           }
         } else {
           // User already has roles - redirect based on existing roles
+          // Priority: admin/super_admin > brand > artist > fan
+          const hasAdmin = roles.some(r => r.role === 'admin' || r.role === 'super_admin');
+          const hasBrand = roles.some(r => r.role === 'brand');
           const hasArtist = roles.some(r => r.role === 'artist');
           const hasFan = roles.some(r => r.role === 'fan');
           
-          if (hasArtist && !hasFan) {
+          if (hasAdmin) {
+            navigate('/admin');
+          } else if (hasBrand) {
+            navigate('/brand');
+          } else if (hasArtist) {
             navigate('/studio');
-          } else {
+          } else if (hasFan) {
             navigate('/fan');
+          } else {
+            navigate('/');
           }
         }
       } else {
