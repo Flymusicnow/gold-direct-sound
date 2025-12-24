@@ -14,10 +14,10 @@ export function BetaLandingPage() {
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Background Image - subtle human presence */}
       <div 
-        className="absolute inset-0 bg-cover bg-center opacity-20"
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
       
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 md:py-20 relative z-10">
