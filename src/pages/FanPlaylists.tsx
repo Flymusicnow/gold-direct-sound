@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Plus, ListMusic, ArrowLeft } from "lucide-react";
+import { Plus, ListMusic } from "lucide-react";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
@@ -85,77 +86,71 @@ export default function FanPlaylists() {
 
   return (
     <>
-      <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-44 md:pb-28">
-        <div className="container mx-auto max-w-6xl">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/fan")}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('common.backToDashboard')}
-        </Button>
+      <div className="flex min-h-screen w-full">
+        <FanSidebar />
+        <main className="flex-1 py-24 px-4 pb-44 md:pb-28 md:py-8 md:px-6">
+          <div className="max-w-6xl mx-auto">
+            <PageBreadcrumb role="fan" />
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <ListMusic className="h-10 w-10 text-primary" />
-              <h1 className="text-4xl font-bold">{t('playlist.myStacks')}</h1>
-              <InfoTooltip
-                title={t('playlist.whatAreStacks')}
-                description={t('playlist.stacksDescription')}
-                forRole="fan"
-                learnLink="/learn?tab=fan#stacks"
-              />
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <ListMusic className="h-10 w-10 text-primary" />
+                  <h1 className="text-4xl font-bold">{t('playlist.myStacks')}</h1>
+                  <InfoTooltip
+                    title={t('playlist.whatAreStacks')}
+                    description={t('playlist.stacksDescription')}
+                    forRole="fan"
+                    learnLink="/learn?tab=fan#stacks"
+                  />
+                </div>
+                <p className="text-muted-foreground">
+                  {t('playlist.organizeYourFavorites')}
+                </p>
+              </div>
+              <Button onClick={() => setCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t('playlist.createPlaylist')}
+              </Button>
             </div>
-            <p className="text-muted-foreground">
-              {t('playlist.organizeYourFavorites')}
-            </p>
-          </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            {t('playlist.createPlaylist')}
-          </Button>
-        </div>
 
-        {/* Playlists Grid */}
-        {playlists.length === 0 ? (
-          <div className="text-center py-16">
-            <ListMusic className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">{t('playlist.noPlaylistsYet')}</h3>
-            <p className="text-muted-foreground mb-6">
-              {t('playlist.createFirstPlaylist')}
-            </p>
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              {t('playlist.createYourFirstPlaylist')}
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {playlists.map((playlist) => (
-              <PlaylistCard
-                key={playlist.id}
-                id={playlist.id}
-                name={playlist.name}
-                description={playlist.description}
-                isPublic={playlist.is_public}
-                trackCount={playlist.track_count}
-                coverUrl={playlist.cover_url}
-              />
-            ))}
-          </div>
-        )}
-        </div>
+            {/* Playlists Grid */}
+            {playlists.length === 0 ? (
+              <div className="text-center py-16">
+                <ListMusic className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">{t('playlist.noPlaylistsYet')}</h3>
+                <p className="text-muted-foreground mb-6">
+                  {t('playlist.createFirstPlaylist')}
+                </p>
+                <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('playlist.createYourFirstPlaylist')}
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {playlists.map((playlist) => (
+                  <PlaylistCard
+                    key={playlist.id}
+                    id={playlist.id}
+                    name={playlist.name}
+                    description={playlist.description}
+                    isPublic={playlist.is_public}
+                    trackCount={playlist.track_count}
+                    coverUrl={playlist.cover_url}
+                  />
+                ))}
+              </div>
+            )}
 
-        <CreatePlaylistDialog
-          isOpen={createDialogOpen}
-          onClose={() => setCreateDialogOpen(false)}
-          onSuccess={fetchPlaylists}
-        />
+            <CreatePlaylistDialog
+              isOpen={createDialogOpen}
+              onClose={() => setCreateDialogOpen(false)}
+              onSuccess={fetchPlaylists}
+            />
+          </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>

@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Search, UserMinus } from "lucide-react";
+import { Search, UserMinus } from "lucide-react";
 import { toast } from "sonner";
 
 interface Artist {
@@ -102,31 +103,25 @@ export default function FanArtists() {
 
   return (
     <>
-      <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
-        <div className="container mx-auto max-w-6xl">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/fan')}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('common.backToDashboard')}
-        </Button>
+      <div className="flex min-h-screen w-full">
+        <FanSidebar />
+        <main className="flex-1 py-24 px-4 pb-32 md:pb-28 md:py-8 md:px-6">
+          <div className="max-w-6xl mx-auto">
+            <PageBreadcrumb role="fan" />
 
-        <h1 className="text-3xl font-bold mb-8">{t('fan.myArtists')}</h1>
+            <h1 className="text-3xl font-bold mb-8">{t('fan.myArtists')}</h1>
 
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('fan.searchByNameOrGenre')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={t('fan.searchByNameOrGenre')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
 
         {filteredArtists.length === 0 ? (
           <div className="text-center py-12">
@@ -188,10 +183,11 @@ export default function FanArtists() {
                   </Button>
                 </div>
               </Card>
-            ))}
+              ))}
+            </div>
+          )}
           </div>
-        )}
-        </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>
