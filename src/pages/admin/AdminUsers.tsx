@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, Eye, Download, Trash2, UserX, UserCheck } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -121,6 +122,67 @@ export default function AdminUsers() {
     );
   });
 
+  if (loading) {
+    return (
+      <AdminLayout title={t('admin.userManagement')} description={t('admin.userManagementDescription')}>
+        <div className="space-y-6">
+          {/* Search skeleton */}
+          <Card>
+            <CardContent className="pt-6">
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+          {/* Stats skeleton - 4 cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i}>
+                <CardContent className="pt-6">
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-4 w-24" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          {/* Table skeleton */}
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {/* Table header */}
+                <div className="flex gap-4 border-b pb-2">
+                  {['w-1/4', 'w-1/6', 'w-1/6', 'w-1/6', 'w-1/6'].map((w, i) => (
+                    <Skeleton key={i} className={`h-4 ${w}`} />
+                  ))}
+                </div>
+                {/* Table rows */}
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="flex items-center gap-4 py-3">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Skeleton className="h-8 w-8 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                    </div>
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-5 w-16" />
+                    <Skeleton className="h-4 w-20" />
+                    <div className="flex gap-1">
+                      <Skeleton className="h-8 w-8 rounded" />
+                      <Skeleton className="h-8 w-8 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout title={t('admin.userManagement')} description={t('admin.userManagementDescription')}>
       <div className="space-y-6">
@@ -179,10 +241,7 @@ export default function AdminUsers() {
             <CardTitle>{t('admin.allUsers')} ({filteredUsers.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <p className="text-muted-foreground">{t('common.loading')}</p>
-            ) : (
-              <Table>
+            <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('admin.user')}</TableHead>
@@ -268,7 +327,6 @@ export default function AdminUsers() {
                   ))}
                 </TableBody>
               </Table>
-            )}
           </CardContent>
         </Card>
       </div>
