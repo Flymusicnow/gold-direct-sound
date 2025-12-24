@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { FanSidebar } from "@/components/fan/FanSidebar";
+import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
@@ -14,7 +16,7 @@ import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Video, Play, ArrowLeft } from "lucide-react";
+import { Music, TrendingUp, Sparkles, Video, Play } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
@@ -219,175 +221,170 @@ export default function FanFeed() {
   return (
     <>
       <MobileFanNav />
-      <div className="min-h-screen py-24 px-4 pb-44 md:pb-28">
-        <div className="container mx-auto max-w-7xl space-y-6 md:space-y-8">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/fan")}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {t('common.backToDashboard')}
-        </Button>
+      <div className="flex min-h-screen w-full pt-16">
+        <FanSidebar />
+        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+          <PageBreadcrumb role="fan" />
+          
+          <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+            {/* Header */}
+            <div>
+              <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
+              <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
+            </div>
 
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
-          <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Feed Column */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* New From Your Artists */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Music className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">{t('fan.newFromYourArtists')}</h2>
-                <InfoTooltip
-                  title={t('fan.latestFromFollowed')}
-                  description={t('fan.latestFromFollowedDesc')}
-                  forRole="fan"
-                />
-              </div>
-
-              {newTracks.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">
-                    {t('fan.noNewTracksYet')}
-                  </p>
-                  <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
-                    {t('fan.discoverArtists')}
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Play All Button */}
-                  <div className="flex items-center gap-3">
-                    <Button 
-                      onClick={handlePlayAll}
-                      className="bg-primary hover:bg-primary/90"
-                    >
-                      <Play className="h-4 w-4 mr-2" />
-                      {t('actions.playAll')} ({newTracks.length})
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {newTracks.map((track) => (
-                      <TrackCard
-                        key={track.id}
-                        track={track}
-                        artistName={track.artist_profiles.artist_name}
-                        isLiked={likedTrackIds.has(track.id)}
-                        onPlay={() => handlePlayTrack(track)}
-                        onAddToQueue={() => handleAddToQueue(track)}
-                        onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Video Posts */}
-            {videoPosts.length > 0 && (
-              <Card className="p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <Video className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-semibold">{t('fan.newVideosFromArtists')}</h2>
-                </div>
-                <div className="space-y-6">
-                  {videoPosts.map((video) => (
-                    <VideoPostCard
-                      key={video.id}
-                      videoId={video.id}
-                      videoUrl={video.video_url}
-                      caption={video.caption}
-                      createdAt={video.created_at}
-                      artist={video.artist_profiles}
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Main Feed Column */}
+              <div className="lg:col-span-2 space-y-8">
+                {/* New From Your Artists */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Music className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-semibold">{t('fan.newFromYourArtists')}</h2>
+                    <InfoTooltip
+                      title={t('fan.latestFromFollowed')}
+                      description={t('fan.latestFromFollowedDesc')}
+                      forRole="fan"
                     />
-                  ))}
-                </div>
-              </Card>
-            )}
+                  </div>
 
-            {/* Upcoming Events */}
-            <UpcomingEventsCard followedArtistIds={followedArtistIds} />
+                  {newTracks.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground mb-4">
+                        {t('fan.noNewTracksYet')}
+                      </p>
+                      <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
+                        {t('fan.discoverArtists')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Play All Button */}
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          onClick={handlePlayAll}
+                          className="bg-primary hover:bg-primary/90"
+                        >
+                          <Play className="h-4 w-4 mr-2" />
+                          {t('actions.playAll')} ({newTracks.length})
+                        </Button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {newTracks.map((track) => (
+                          <TrackCard
+                            key={track.id}
+                            track={track}
+                            artistName={track.artist_profiles.artist_name}
+                            isLiked={likedTrackIds.has(track.id)}
+                            onPlay={() => handlePlayTrack(track)}
+                            onAddToQueue={() => handleAddToQueue(track)}
+                            onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Card>
 
-            {/* Trending in Spotlight */}
-            <SpotlightTrendingCard
-              onPlayTrack={(url, title, artist, cover) => playNow({
-                id: `spotlight-${url}`,
-                type: 'track',
-                title,
-                artistId: '',
-                artistName: artist,
-                artistUserId: '',
-                mediaUrl: url,
-                coverUrl: cover,
-              })}
-            />
+                {/* Video Posts */}
+                {videoPosts.length > 0 && (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Video className="h-6 w-6 text-primary" />
+                      <h2 className="text-2xl font-semibold">{t('fan.newVideosFromArtists')}</h2>
+                    </div>
+                    <div className="space-y-6">
+                      {videoPosts.map((video) => (
+                        <VideoPostCard
+                          key={video.id}
+                          videoId={video.id}
+                          videoUrl={video.video_url}
+                          caption={video.caption}
+                          createdAt={video.created_at}
+                          artist={video.artist_profiles}
+                        />
+                      ))}
+                    </div>
+                  </Card>
+                )}
 
-            {/* Recommended For You */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="h-6 w-6 text-primary" />
-                <h2 className="text-2xl font-semibold">{t('fan.recommendedForYou')}</h2>
-              </div>
+                {/* Upcoming Events */}
+                <UpcomingEventsCard followedArtistIds={followedArtistIds} />
 
-              <DiscoverArtists
-                followedGenres={followedGenres}
-                followedArtistIds={followedArtistIds}
-                limit={6}
-              />
-            </Card>
-          </div>
-
-          {/* Sidebar Column */}
-          <div className="space-y-8">
-            {/* Your Artists in Top 10 */}
-            <SpotlightRankMilestoneCard />
-
-            {/* Spotlight New Entries */}
-            <SpotlightNewEntryCard
-              onPlayTrack={(url, title, artist, cover) => playNow({
-                id: `spotlight-new-${url}`,
-                type: 'track',
-                title,
-                artistId: '',
-                artistName: artist,
-                artistUserId: '',
-                mediaUrl: url,
-                coverUrl: cover,
-              })}
-            />
-
-            {/* Your Artists Are Rising */}
-            <SpotlightRisingCard />
-
-            {/* Trending on FlyMusic */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <h2 className="text-xl font-semibold">{t('fan.trending')}</h2>
-                <InfoTooltip
-                  title={t('fan.trendingContent')}
-                  description={t('fan.trendingContentDesc')}
-                  forRole="fan"
+                {/* Trending in Spotlight */}
+                <SpotlightTrendingCard
+                  onPlayTrack={(url, title, artist, cover) => playNow({
+                    id: `spotlight-${url}`,
+                    type: 'track',
+                    title,
+                    artistId: '',
+                    artistName: artist,
+                    artistUserId: '',
+                    mediaUrl: url,
+                    coverUrl: cover,
+                  })}
                 />
+
+                {/* Recommended For You */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                    <h2 className="text-2xl font-semibold">{t('fan.recommendedForYou')}</h2>
+                  </div>
+
+                  <DiscoverArtists
+                    followedGenres={followedGenres}
+                    followedArtistIds={followedArtistIds}
+                    limit={6}
+                  />
+                </Card>
               </div>
 
-              <TrendingSection
-                type="tracks"
-                limit={10}
-                onTrackPlay={(item) => playNow(item)}
-              />
-            </Card>
+              {/* Sidebar Column */}
+              <div className="space-y-8">
+                {/* Your Artists in Top 10 */}
+                <SpotlightRankMilestoneCard />
+
+                {/* Spotlight New Entries */}
+                <SpotlightNewEntryCard
+                  onPlayTrack={(url, title, artist, cover) => playNow({
+                    id: `spotlight-new-${url}`,
+                    type: 'track',
+                    title,
+                    artistId: '',
+                    artistName: artist,
+                    artistUserId: '',
+                    mediaUrl: url,
+                    coverUrl: cover,
+                  })}
+                />
+
+                {/* Your Artists Are Rising */}
+                <SpotlightRisingCard />
+
+                {/* Trending on FlyMusic */}
+                <Card className="p-6">
+                  <div className="flex items-center gap-2 mb-6">
+                    <TrendingUp className="h-6 w-6 text-primary" />
+                    <h2 className="text-xl font-semibold">{t('fan.trending')}</h2>
+                    <InfoTooltip
+                      title={t('fan.trendingContent')}
+                      description={t('fan.trendingContentDesc')}
+                      forRole="fan"
+                    />
+                  </div>
+
+                  <TrendingSection
+                    type="tracks"
+                    limit={10}
+                    onTrackPlay={(item) => playNow(item)}
+                  />
+                </Card>
+              </div>
+            </div>
           </div>
-        </div>
-        </div>
+        </main>
       </div>
       {isMobile && <BottomNavBarFan />}
     </>
