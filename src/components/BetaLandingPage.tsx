@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FlyMusicLogo } from "./FlyMusicLogo";
+import flyMusicGoldLogo from "@/assets/flymusic-gold-logo.png";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { RequestBetaDialog } from "./RequestBetaDialog";
@@ -21,7 +21,11 @@ export function BetaLandingPage() {
         <div className="max-w-4xl w-full text-center space-y-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <FlyMusicLogo size="lg" />
+            <img 
+              src={flyMusicGoldLogo} 
+              alt="Fly Music" 
+              className="h-32 md:h-48 w-auto"
+            />
           </div>
 
           {/* Beta Badge */}
