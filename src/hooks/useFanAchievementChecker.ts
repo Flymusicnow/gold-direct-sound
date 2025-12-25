@@ -55,16 +55,24 @@ export function useFanAchievementChecker() {
   const { user } = useAuth();
 
   const checkAndUnlockAchievements = async () => {
-    if (!user) return [];
+    if (!user) {
+      console.log("[Achievements] No user, skipping check");
+      return [];
+    }
+
+    console.log("[Achievements] Checking achievements for user:", user.id);
 
     try {
       const { data, error } = await supabase.rpc("check_and_unlock_fan_achievements", {
         _fan_user_id: user.id,
       });
 
+      console.log("[Achievements] RPC response:", { data, error });
+
       if (error) throw error;
 
-      const newAchievements = data as string[];
+      const newAchievements = (data as string[]) || [];
+      console.log("[Achievements] New achievements to unlock:", newAchievements);
 
       // Celebrate each new achievement with staggered timing for visibility
       newAchievements.forEach((achievementKey, index) => {
@@ -91,7 +99,8 @@ export function useFanAchievementChecker() {
 
       return newAchievements;
     } catch (error) {
-      console.error("Error checking achievements:", error);
+      console.error("[Achievements] Error checking achievements:", error);
+      toast.error("Could not check achievements. Please try again.");
       return [];
     }
   };
