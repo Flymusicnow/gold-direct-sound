@@ -71,7 +71,7 @@ function QueueItem({ item, isCurrent }: { item: FlightdeckItem; isCurrent: boole
 }
 
 export function FlightdeckMiniQueue({ isExpanded, onToggle }: FlightdeckMiniQueueProps) {
-  const { queue, currentItem, setQueue } = useFlightdeck();
+  const { queue, currentItem, reorderQueue } = useFlightdeck();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -88,7 +88,15 @@ export function FlightdeckMiniQueue({ isExpanded, onToggle }: FlightdeckMiniQueu
       const newIndex = queue.findIndex((item) => item.id === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        setQueue(arrayMove(queue, oldIndex, newIndex));
+        const newQueue = arrayMove(queue, oldIndex, newIndex);
+        
+        // Find where the currently playing song ends up in the new queue
+        const newCurrentIndex = currentItem 
+          ? newQueue.findIndex(item => item.id === currentItem.id)
+          : 0;
+        
+        // Reorder without affecting playback
+        reorderQueue(newQueue, newCurrentIndex >= 0 ? newCurrentIndex : 0);
       }
     }
   };
