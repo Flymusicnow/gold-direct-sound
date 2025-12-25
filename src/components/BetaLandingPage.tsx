@@ -34,7 +34,7 @@ export function BetaLandingPage() {
             <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
               The New Era of Music
             </h1>
-            <p className="text-2xl text-foreground/80 -mt-2 my-[10px] md:text-5xl font-bold">
+            <p className="text-2xl text-foreground/80 -mt-2 my-[10px] font-bold md:text-6xl">
               Is Here
             </p>
           <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
