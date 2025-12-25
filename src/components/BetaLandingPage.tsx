@@ -21,7 +21,7 @@ export function BetaLandingPage() {
         <div className="max-w-4xl w-full text-center space-y-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <FlyMusicLogo size="lg" />
+            <FlyMusicLogo size="xl" />
           </div>
 
           {/* Beta Badge */}
