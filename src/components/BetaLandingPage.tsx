@@ -5,21 +5,15 @@ import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { RequestBetaDialog } from "./RequestBetaDialog";
 import heroImage from "@/assets/hero-artist-spotlight.png";
-
 export function BetaLandingPage() {
   const navigate = useNavigate();
   const [showRequestDialog, setShowRequestDialog] = useState(false);
-
-  return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
+  return <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Background Image - silhouetted artists with golden spotlights */}
-      <div 
-        className="absolute inset-0 bg-cover bg-no-repeat"
-        style={{ 
-          backgroundImage: `url(${heroImage})`,
-          backgroundPosition: 'center 30%'
-        }}
-      />
+      <div className="absolute inset-0 bg-cover bg-no-repeat" style={{
+      backgroundImage: `url(${heroImage})`,
+      backgroundPosition: 'center 30%'
+    }} />
       <div className="absolute inset-0 bg-gradient-to-t from-background via-black/60 to-black/30" />
       
       {/* Hero Section */}
@@ -31,10 +25,7 @@ export function BetaLandingPage() {
           </div>
 
           {/* Beta Badge */}
-          <Badge 
-            variant="outline" 
-            className="bg-primary/10 text-primary border-primary/30 px-6 py-2 text-sm font-semibold"
-          >
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 px-6 py-2 text-sm font-semibold">
             PRIVATE BETA
           </Badge>
 
@@ -43,7 +34,7 @@ export function BetaLandingPage() {
             <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
               The New Era of Music
             </h1>
-            <p className="text-2xl md:text-3xl font-medium text-foreground/80 -mt-2">
+            <p className="text-2xl text-foreground/80 -mt-2 my-[10px] md:text-5xl font-bold">
               Is Here
             </p>
           <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
@@ -54,31 +45,17 @@ export function BetaLandingPage() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-6">
-            <Button 
-              size="lg"
-              onClick={() => navigate("/auth?mode=signin")}
-              className="w-full sm:w-auto min-w-[180px] bg-primary text-primary-foreground hover:bg-primary/90"
-            >
+            <Button size="lg" onClick={() => navigate("/auth?mode=signin")} className="w-full sm:w-auto min-w-[180px] bg-primary text-primary-foreground hover:bg-primary/90">
               Sign In
             </Button>
-            <Button 
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/auth?mode=signup")}
-              className="w-full sm:w-auto min-w-[180px]"
-            >
+            <Button size="lg" variant="outline" onClick={() => navigate("/auth?mode=signup")} className="w-full sm:w-auto min-w-[180px]">
               Create Account
             </Button>
           </div>
 
           {/* Request Beta Code Button */}
           <div className="pt-6">
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setShowRequestDialog(true)}
-              className="w-full sm:w-auto min-w-[200px] border-primary/30 text-primary hover:bg-primary/10"
-            >
+            <Button size="lg" variant="outline" onClick={() => setShowRequestDialog(true)} className="w-full sm:w-auto min-w-[200px] border-primary/30 text-primary hover:bg-primary/10">
               Request Beta Code
             </Button>
           </div>
@@ -92,6 +69,5 @@ export function BetaLandingPage() {
 
       {/* Request Beta Dialog */}
       <RequestBetaDialog open={showRequestDialog} onOpenChange={setShowRequestDialog} />
-    </div>
-  );
+    </div>;
 }
