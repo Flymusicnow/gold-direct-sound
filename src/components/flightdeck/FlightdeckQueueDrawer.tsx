@@ -161,7 +161,7 @@ export function FlightdeckQueueDrawer({
     isPlaying,
     shuffleEnabled,
     repeatMode,
-    setQueue, 
+    reorderQueue, 
     clearQueue,
     togglePlay,
     playNext,
@@ -231,7 +231,12 @@ export function FlightdeckQueueDrawer({
       const newIndex = queue.findIndex((item) => item.id === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
-        setQueue(arrayMove(queue, oldIndex, newIndex));
+        const newQueue = arrayMove(queue, oldIndex, newIndex);
+        // Calculate new current index to preserve playback position
+        const newCurrentIndex = currentItem 
+          ? newQueue.findIndex(item => item.id === currentItem.id)
+          : 0;
+        reorderQueue(newQueue, newCurrentIndex >= 0 ? newCurrentIndex : 0);
       }
     }
   };
