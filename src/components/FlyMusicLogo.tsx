@@ -1,7 +1,7 @@
 import logoImage from "@/assets/flymusic-logo.png";
 
 interface FlyMusicLogoProps {
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
 }
 
@@ -10,6 +10,7 @@ export function FlyMusicLogo({ size = 'md', className = '' }: FlyMusicLogoProps)
     sm: 32,
     md: 40,
     lg: 64,
+    xl: 96,
   };
 
   return (
