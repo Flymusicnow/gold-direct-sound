@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MerchProductCard } from "@/components/artist/MerchProductCard";
 import { AddMerchDialog } from "@/components/artist/AddMerchDialog";
+import { EditMerchDialog } from "@/components/artist/EditMerchDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag } from "lucide-react";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
@@ -29,6 +30,7 @@ export default function StudioMerch() {
   const [products, setProducts] = useState<MerchProduct[]>([]);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [editingProduct, setEditingProduct] = useState<MerchProduct | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -175,6 +177,7 @@ export default function StudioMerch() {
                 key={product.id}
                 product={product}
                 isOwner
+                onEdit={() => setEditingProduct(product)}
                 onDelete={() => handleDelete(product.id)}
               />
             ))}
@@ -185,6 +188,18 @@ export default function StudioMerch() {
       </div>
       </div>
       {isMobile && <BottomNavBarStudio />}
+      
+      {/* Edit Merch Dialog */}
+      {editingProduct && (
+        <EditMerchDialog
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSuccess={() => {
+            setEditingProduct(null);
+            if (artistId) fetchProducts(artistId);
+          }}
+        />
+      )}
     </>
   );
 }
