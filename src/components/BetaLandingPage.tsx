@@ -43,7 +43,10 @@ export function BetaLandingPage() {
             <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
               The New Era of Music
             </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-2xl md:text-3xl font-medium text-foreground/80 -mt-2">
+              Is Here
+            </p>
+          <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
             FlyMusic connects artists directly with fans. No intermediaries. 
             Just real connection, community, and ownership.
           </p>
