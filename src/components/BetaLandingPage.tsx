@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { RequestBetaDialog } from "./RequestBetaDialog";
 import heroImage from "@/assets/hero-artist-spotlight.png";
+import flyMusicIsHereLogo from "@/assets/flymusic-ishere-logo.png";
 
 export function BetaLandingPage() {
   const navigate = useNavigate();
@@ -27,7 +27,11 @@ export function BetaLandingPage() {
         <div className="max-w-4xl w-full text-center space-y-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
-            <FlyMusicLogo size="lg" />
+            <img 
+              src={flyMusicIsHereLogo} 
+              alt="FlyMusic Is Here" 
+              className="h-28 md:h-40 w-auto transition-all duration-300 ease-out hover:scale-105 hover:drop-shadow-[0_0_20px_rgba(232,191,26,0.4)]"
+            />
           </div>
 
           {/* Beta Badge */}
@@ -40,16 +44,10 @@ export function BetaLandingPage() {
 
           {/* Hero Text */}
           <div className="space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight">
-              The New Era of Music
-            </h1>
-            <p className="text-2xl md:text-3xl font-medium text-foreground/80 -mt-2">
-              Is Here
+            <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+              FlyMusic connects artists directly with fans. No intermediaries. 
+              Just real connection, community, and ownership.
             </p>
-          <p className="text-lg md:text-xl text-foreground/70 max-w-2xl mx-auto drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-            FlyMusic connects artists directly with fans. No intermediaries. 
-            Just real connection, community, and ownership.
-          </p>
           </div>
 
           {/* CTAs */}
