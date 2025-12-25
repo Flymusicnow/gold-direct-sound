@@ -39,6 +39,7 @@ interface FlightdeckContextType {
   togglePlay: () => void;
   seek: (time: number) => void;
   setQueue: (items: FlightdeckItem[], startIndex?: number) => void;
+  reorderQueue: (items: FlightdeckItem[], newCurrentIndex: number) => void;
   clearQueue: () => void;
   setIsPlaying: (playing: boolean) => void;
   setCurrentTime: (time: number) => void;
@@ -148,6 +149,12 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     setIsPlaying(true);
   }, []);
 
+  // Reorder queue without affecting playback state
+  const reorderQueue = useCallback((items: FlightdeckItem[], newCurrentIndex: number) => {
+    setQueueState(items);
+    setCurrentIndex(newCurrentIndex);
+  }, []);
+
   const clearQueue = useCallback(() => {
     setQueueState([]);
     setCurrentIndex(-1);
@@ -205,6 +212,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
         togglePlay,
         seek,
         setQueue,
+        reorderQueue,
         clearQueue,
         setIsPlaying,
         setCurrentTime,

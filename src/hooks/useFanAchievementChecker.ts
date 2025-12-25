@@ -66,22 +66,26 @@ export function useFanAchievementChecker() {
 
       const newAchievements = data as string[];
 
-      // Celebrate each new achievement
-      newAchievements.forEach((achievementKey) => {
+      // Celebrate each new achievement with staggered timing for visibility
+      newAchievements.forEach((achievementKey, index) => {
         const achievement = ACHIEVEMENT_DEFINITIONS[achievementKey as keyof typeof ACHIEVEMENT_DEFINITIONS];
         if (achievement) {
-          // Trigger confetti
-          confetti({
-            particleCount: 50,
-            spread: 60,
-            origin: { y: 0.6 },
-            colors: ["#E8BF1A", "#F4D67A", "#C89F0A"],
-          });
+          // Stagger notifications so they don't stack and disappear quickly
+          setTimeout(() => {
+            // Trigger confetti
+            confetti({
+              particleCount: 50,
+              spread: 60,
+              origin: { y: 0.6 },
+              colors: ["#E8BF1A", "#F4D67A", "#C89F0A"],
+            });
 
-          // Show toast
-          toast.success(`🏆 Achievement Unlocked: ${achievement.name}`, {
-            description: achievement.description,
-          });
+            // Show toast with longer duration
+            toast.success(`🏆 Achievement Unlocked: ${achievement.name}`, {
+              description: achievement.description,
+              duration: 5000, // 5 seconds for better visibility
+            });
+          }, index * 1500); // 1.5 second delay between each
         }
       });
 
