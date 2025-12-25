@@ -16,9 +16,13 @@ const PUBLIC_ROUTES = [
 ];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
-  const { user, loading: authLoading } = useAuth();
+  // ALL hooks must be called at the top, before any early returns
+  const { user, loading: authLoading, hasRole } = useAuth();
   const { hasBetaAccess, loading: betaLoading, refetch } = useBetaAccess();
   const location = useLocation();
+
+  // Determine primary role using hasRole() - computed after hooks
+  const primaryRole = hasRole('artist') ? 'artist' : hasRole('fan') ? 'fan' : null;
 
   // Check if current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
@@ -48,10 +52,6 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   }
 
   // If user doesn't have beta access, show the wall
-  // Determine primary role for role-specific messaging
-  const { userRoles } = useAuth();
-  const primaryRole = userRoles.includes('artist') ? 'artist' : userRoles.includes('fan') ? 'fan' : null;
-  
   if (hasBetaAccess === false) {
     return <EarlyAccessWall onCodeRedeemed={refetch} userRole={primaryRole} />;
   }
