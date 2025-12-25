@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePromoFunnel } from "@/hooks/usePromoFunnel";
 import { Music, Mic2, Heart, ArrowLeft } from "lucide-react";
+import authHeroImage from "@/assets/auth-hero-concert.png";
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
@@ -167,8 +168,14 @@ export default function Auth() {
 
   if (isForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${authHeroImage})` }}
+        >
+          <div className="absolute inset-0 bg-black/60" />
+        </div>
+        <div className="w-full max-w-md relative z-10">
           <button
             type="button"
             onClick={() => setIsForgotPassword(false)}
@@ -213,8 +220,14 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${authHeroImage})` }}
+      >
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Music className="h-8 w-8 text-primary" />
