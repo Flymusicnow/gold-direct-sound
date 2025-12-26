@@ -64,7 +64,7 @@ export default function RoleSelection() {
       return null;
     }
     if (hasRole("brand")) {
-      navigate("/brand/dashboard", { replace: true });
+      navigate("/brand", { replace: true });
       return null;
     }
   }

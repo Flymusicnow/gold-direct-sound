@@ -5,6 +5,7 @@ import {
   fanNavConfig,
   artistNavConfig,
   adminNavConfig,
+  brandNavConfig,
   getFlatNavItems,
   getBreadcrumbsForPath,
   NavItem,
@@ -13,7 +14,7 @@ import {
 interface NavConfigContextType {
   config: NavConfig;
   flatItems: NavItem[];
-  role: "fan" | "artist" | "admin";
+  role: "fan" | "artist" | "admin" | "brand";
   getBreadcrumbs: (path: string) => { label: string; path: string; i18nKey?: string }[];
 }
 
@@ -22,8 +23,9 @@ const NavConfigContext = createContext<NavConfigContextType | null>(null);
 export function NavConfigProvider({ children }: { children: React.ReactNode }) {
   const { hasRole } = useAuth();
 
-  const role = useMemo((): "fan" | "artist" | "admin" => {
+  const role = useMemo((): "fan" | "artist" | "admin" | "brand" => {
     if (hasRole("admin")) return "admin";
+    if (hasRole("brand")) return "brand";
     if (hasRole("artist")) return "artist";
     return "fan";
   }, [hasRole]);
@@ -32,6 +34,8 @@ export function NavConfigProvider({ children }: { children: React.ReactNode }) {
     switch (role) {
       case "admin":
         return adminNavConfig;
+      case "brand":
+        return brandNavConfig;
       case "artist":
         return artistNavConfig;
       default:
@@ -80,5 +84,13 @@ export function useAdminNav() {
     config: adminNavConfig,
     flatItems: getFlatNavItems(adminNavConfig),
     getBreadcrumbs: (path: string) => getBreadcrumbsForPath(adminNavConfig, path),
+  };
+}
+
+export function useBrandNav() {
+  return {
+    config: brandNavConfig,
+    flatItems: getFlatNavItems(brandNavConfig),
+    getBreadcrumbs: (path: string) => getBreadcrumbsForPath(brandNavConfig, path),
   };
 }
