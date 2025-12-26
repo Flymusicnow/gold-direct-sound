@@ -813,6 +813,37 @@ export const en = {
     brandApplicationPending: 'Your brand application is still pending approval. Please wait for our team to review it.',
     brandApplicationRejected: 'Your brand application was not approved. Please contact support for more information.',
     noBrandApplication: 'No brand application found for this email. Please apply for brand access first.',
+    // Join page titles and subtitles
+    joinArtistTitle: 'Join as Artist',
+    joinArtistSubtitle: 'Create your artist account and start sharing your music',
+    joinFanTitle: 'Join as Fan',
+    joinFanSubtitle: 'Create your fan account and discover amazing music',
+    joinBrandTitle: 'Join as Brand',
+    joinBrandSubtitle: 'Create your brand account and connect with artists',
+    // Sign-in page titles
+    signInArtistTitle: 'Sign in as Artist',
+    signInArtistSubtitle: 'Welcome back to your studio',
+    signInFanTitle: 'Sign in as Fan',
+    signInFanSubtitle: 'Welcome back to your music',
+    signInBrandTitle: 'Sign in as Brand',
+    signInBrandSubtitle: 'Welcome back to your dashboard',
+    // Email labels for human-readable copy
+    artistEmailLabel: 'Artist email address',
+    fanEmailLabel: 'Fan email address',
+    brandEmailLabel: 'Brand email address',
+    passwordLabel: 'Password',
+    fullNameLabel: 'Full name',
+    // Wrong role messages
+    wrongRole: 'Wrong account type',
+    areaForArtists: 'This area is for Artist accounts only',
+    areaForFans: 'This area is for Fan accounts only',
+    areaForBrands: 'This area is for Brand accounts only',
+    areaForAdmins: 'This area is for Admin accounts only',
+    yourAccountIs: 'Your account is registered as:',
+    signInAsArtist: 'Sign in as Artist',
+    signInAsFan: 'Sign in as Fan',
+    goToYourDashboard: 'Go to your dashboard',
+    wrongRoleError: 'Your account is not registered as this role. Please sign in with the correct account.',
   },
   empty: {
     noData: 'No data available',
@@ -1010,5 +1041,10 @@ export const en = {
     saveDescription: 'Create an account to save tracks and build your music collection.',
     createAccount: 'Create Account',
     signIn: 'Already have an account? Sign In',
+  },
+  brand: {
+    partnerDashboard: 'Partner Dashboard',
+    discoverArtists: 'Discover Artists',
+    applications: 'Applications',
   },
 };
