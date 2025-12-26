@@ -104,6 +104,8 @@ import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
 import VideoCollectionDetail from "./pages/VideoCollectionDetail";
 import Pricing from "./pages/Pricing";
+import HowItWorks from "./pages/HowItWorks";
+import TopArtists from "./pages/TopArtists";
 import NotFound from "./pages/NotFound";
 import Changelog from "./pages/Changelog";
 import StudioVerification from "./pages/studio/StudioVerification";
@@ -151,6 +153,8 @@ const App = () => (
             <Route path="/@:slug" element={<SmartLinkPage />} />
             <Route path="/brands/apply" element={<BrandApply />} />
             <Route path="/trust" element={<TrustPage />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/top-artists" element={<TopArtists />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -60,8 +60,23 @@ export function BetaLandingPage() {
             </Button>
           </div>
 
+          {/* Quick Navigation Links */}
+          <div className="pt-8 flex flex-wrap justify-center gap-4 text-sm">
+            <Link to="/how-it-works" className="text-foreground/70 hover:text-primary transition-colors">
+              How It Works
+            </Link>
+            <span className="text-foreground/30">|</span>
+            <Link to="/explore" className="text-foreground/70 hover:text-primary transition-colors">
+              Explore Artists
+            </Link>
+            <span className="text-foreground/30">|</span>
+            <Link to="/trust" className="text-foreground/70 hover:text-primary transition-colors">
+              Trust & Safety
+            </Link>
+          </div>
+
           {/* Footer Message */}
-          <div className="pt-12 text-sm text-muted-foreground">
+          <div className="pt-8 text-sm text-muted-foreground">
             <p>Want early access? Sign up and request a beta code.</p>
           </div>
         </div>

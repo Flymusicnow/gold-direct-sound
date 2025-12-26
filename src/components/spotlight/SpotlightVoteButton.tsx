@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
 interface SpotlightVoteButtonProps {
   entryId: string;
@@ -13,9 +14,10 @@ interface SpotlightVoteButtonProps {
 
 export default function SpotlightVoteButton({ entryId, onVoteSuccess }: SpotlightVoteButtonProps) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -43,7 +45,7 @@ export default function SpotlightVoteButton({ entryId, onVoteSuccess }: Spotligh
 
   const handleVote = async () => {
     if (!user) {
-      navigate('/auth');
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -107,15 +109,24 @@ export default function SpotlightVoteButton({ entryId, onVoteSuccess }: Spotligh
   };
 
   return (
-    <Button
-      onClick={handleVote}
-      disabled={loading}
-      variant={hasVoted ? "default" : "outline"}
-      size="sm"
-      className={hasVoted ? "bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]" : ""}
-    >
-      <Heart className={`h-4 w-4 mr-1 ${hasVoted ? 'fill-current' : ''}`} />
-      {hasVoted ? 'Voted' : 'Vote'}
-    </Button>
+    <>
+      <Button
+        onClick={handleVote}
+        disabled={loading}
+        variant={hasVoted ? "default" : "outline"}
+        size="sm"
+        className={hasVoted ? "bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]" : ""}
+      >
+        <Heart className={`h-4 w-4 mr-1 ${hasVoted ? 'fill-current' : ''}`} />
+        {hasVoted ? 'Voted' : 'Vote'}
+      </Button>
+      
+      <LoginPromptOverlay
+        open={showLoginPrompt}
+        onOpenChange={setShowLoginPrompt}
+        action="vote"
+        redirectPath={location.pathname}
+      />
+    </>
   );
 }
