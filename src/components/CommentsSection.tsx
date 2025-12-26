@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { z } from "zod";
 import { getDisplayName } from "@/lib/displayName";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
 const INITIAL_COMMENTS = 5;
 const LOAD_MORE_COUNT = 10;
@@ -46,6 +48,7 @@ interface CommentsSectionProps {
 
 export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProps) => {
   const { user } = useAuth();
+  const location = useLocation();
   const { updateSupportScore } = useSupportScore();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -53,6 +56,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
   const [sortBy, setSortBy] = useState<"newest" | "top">("newest");
   const [isExpanded, setIsExpanded] = useState(true);
   const [visibleCount, setVisibleCount] = useState(INITIAL_COMMENTS);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     fetchComments();
@@ -233,8 +237,11 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
               </div>
             </div>
           ) : (
-            <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg text-center">
-              <p className="text-muted-foreground">Sign in to leave a comment</p>
+            <div 
+              className="mb-8 p-4 bg-card/50 border border-border rounded-lg text-center cursor-pointer hover:bg-card/70 transition-colors"
+              onClick={() => setShowLoginPrompt(true)}
+            >
+              <p className="text-muted-foreground">Create an account to join the conversation</p>
             </div>
           )}
 
@@ -296,6 +303,13 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
           </div>
         </CollapsibleContent>
       </Collapsible>
+      
+      <LoginPromptOverlay
+        open={showLoginPrompt}
+        onOpenChange={setShowLoginPrompt}
+        action="comment"
+        redirectPath={location.pathname}
+      />
     </div>
   );
 };

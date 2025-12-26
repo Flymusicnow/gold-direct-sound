@@ -9,10 +9,21 @@ interface EarlyAccessGateProps {
   children: ReactNode;
 }
 
-// Routes that don't require beta access
+// Routes that don't require beta access - browsing is free, participation is gated
 const PUBLIC_ROUTES = [
   '/auth',
   '/learn',
+  '/explore',
+  '/search',
+  '/pricing',
+  '/how-it-works',
+  '/top-artists',
+  '/artist/',
+  '/spotlight/',
+  '/collections/',
+  '/changelog',
+  '/trust',
+  '/brands',
 ];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {

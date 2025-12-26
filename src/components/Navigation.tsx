@@ -186,7 +186,16 @@ export const Navigation = () => {
             </>
           ) : (
             <>
-              {/* Unauthenticated users see Brands link and Pricing */}
+              {/* Unauthenticated users see expanded navigation */}
+              <Link to="/how-it-works" className="nav-link-gold">
+                {t('nav.howItWorks')}
+              </Link>
+              <Link to="/top-artists" className="nav-link-gold">
+                {t('nav.topArtists')}
+              </Link>
+              <Link to="/trust" className="nav-link-gold">
+                {t('nav.trust')}
+              </Link>
               <Link to="/brands" className="nav-link-gold">
                 {t('nav.forBrands')}
               </Link>
@@ -308,6 +317,15 @@ export const Navigation = () => {
                 </>
               ) : (
                 <>
+                  <DropdownMenuItem onClick={() => navigate('/how-it-works')}>
+                    {t('nav.howItWorks')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/top-artists')}>
+                    {t('nav.topArtists')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/trust')}>
+                    {t('nav.trust')}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/brands')}>
                     {t('nav.forBrands')}
                   </DropdownMenuItem>

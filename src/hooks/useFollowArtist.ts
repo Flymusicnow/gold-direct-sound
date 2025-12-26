@@ -9,10 +9,11 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
   const { updateSupportScore } = useSupportScore();
   const [isFollowing, setIsFollowing] = useState(initialFollowing);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const toggleFollow = async () => {
     if (!user) {
-      toast.error('Please sign in to follow artists');
+      setShowLoginPrompt(true);
       return;
     }
 
@@ -57,5 +58,7 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
     }
   };
 
-  return { isFollowing, isUpdating, toggleFollow };
+  const closeLoginPrompt = () => setShowLoginPrompt(false);
+
+  return { isFollowing, isUpdating, toggleFollow, showLoginPrompt, closeLoginPrompt };
 }

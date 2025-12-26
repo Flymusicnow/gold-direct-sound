@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SupportTierModal } from './SupportTierModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { LoginPromptOverlay } from '@/components/LoginPromptOverlay';
 
 interface SupportButtonProps {
   artistId: string;
@@ -21,12 +22,13 @@ export function SupportButton({
   className = ''
 }: SupportButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleClick = () => {
     if (!user) {
-      navigate('/auth?redirect=' + encodeURIComponent(`/artist/${artistId}`));
+      setShowLoginPrompt(true);
       return;
     }
     setIsModalOpen(true);
@@ -49,6 +51,13 @@ export function SupportButton({
         onOpenChange={setIsModalOpen}
         artistId={artistId}
         artistName={artistName}
+      />
+      
+      <LoginPromptOverlay
+        open={showLoginPrompt}
+        onOpenChange={setShowLoginPrompt}
+        action="support"
+        redirectPath={location.pathname}
       />
     </>
   );
