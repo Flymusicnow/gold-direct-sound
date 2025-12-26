@@ -45,6 +45,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Verify session is valid before fetching profile
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log("No session found during profile fetch");
+        return null;
+      }
+
       // Fetch roles
       const { data: rolesData } = await supabase
         .from('user_roles')

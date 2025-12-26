@@ -59,7 +59,7 @@ export default function BrandOnboarding() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  // Check for existing entity on mount
+  // Check for existing entity on mount and validate session
   useEffect(() => {
     const checkExistingEntity = async () => {
       if (!user) {
@@ -68,6 +68,15 @@ export default function BrandOnboarding() {
       }
       
       try {
+        // Verify session is valid before making authenticated requests
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+          console.log("No valid session, redirecting to sign in");
+          toast.error("Session expired. Please sign in again.");
+          navigate('/signin/brand');
+          return;
+        }
+
         const { data } = await supabase
           .from("collab_entity_admins")
           .select("collab_entity_id")
@@ -205,6 +214,14 @@ export default function BrandOnboarding() {
 
   const createEntity = async () => {
     if (!user) return null;
+    
+    // Ensure we have a valid session before proceeding
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      toast.error("Session expired. Please sign in again.");
+      navigate('/signin/brand');
+      return null;
+    }
     
     // Upload logo if present
     let logoUrl = formData.logoUrl;
