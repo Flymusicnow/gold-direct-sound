@@ -781,6 +781,7 @@ export const sv = {
     dontHaveAccount: 'Har du inget konto?',
     continueWith: 'Fortsätt med',
     orContinueWith: 'Eller fortsätt med',
+    continueWithGoogle: 'Fortsätt med Google',
     google: 'Google',
     github: 'GitHub',
     termsAgreement: 'Genom att fortsätta godkänner du våra',
