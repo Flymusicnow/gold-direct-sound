@@ -131,6 +131,7 @@ import BrandOpportunities from "./pages/brand/BrandOpportunities";
 import BrandApplications from "./pages/brand/BrandApplications";
 import BrandSettings from "./pages/brand/BrandSettings";
 import BrandAnalytics from "./pages/brand/BrandAnalytics";
+import BrandInbox from "./pages/brand/BrandInbox";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
@@ -433,6 +434,11 @@ const App = () => (
             <Route path="/brand/settings" element={
               <ProtectedRoute allowedRoles={['brand']}>
                 <BrandSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/inbox" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandInbox />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

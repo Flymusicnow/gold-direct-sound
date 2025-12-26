@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, ArrowRight, ArrowLeft, Check, X } from "lucide-react";
+import { Building2, ArrowRight, ArrowLeft, Check, X, Briefcase, SkipForward } from "lucide-react";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
@@ -33,11 +33,20 @@ const GENRES = [
   "Pop", "Hip-Hop", "Electronic", "R&B", "Rock", "Indie", "Jazz", "Classical", "Latin", "Country"
 ];
 
+const OPPORTUNITY_TYPES = [
+  { value: "festival_slot", label: "Festival Slot" },
+  { value: "live_event", label: "Live Event" },
+  { value: "brand_campaign", label: "Brand Campaign" },
+  { value: "sponsorship", label: "Sponsorship" },
+  { value: "ugc_content", label: "UGC Content" },
+];
+
 export default function BrandOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [entityId, setEntityId] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -50,6 +59,16 @@ export default function BrandOnboarding() {
     styleGenres: [] as string[],
     budgetRange: "",
   });
+
+  const [opportunityData, setOpportunityData] = useState({
+    title: "",
+    type: "",
+    description: "",
+    budgetRange: "",
+    deadline: "",
+  });
+
+  const totalSteps = 4;
 
   const handleNext = () => {
     if (step === 1 && (!formData.name || !formData.type)) {
@@ -81,51 +100,108 @@ export default function BrandOnboarding() {
     }));
   };
 
+  const createEntity = async () => {
+    if (!user) return null;
+    
+    const slug = formData.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    const { data: entity, error: entityError } = await supabase
+      .from("collab_entities")
+      .insert({
+        name: formData.name,
+        slug,
+        type: formData.type,
+        location: formData.location || null,
+        website: formData.website || null,
+        mission: formData.mission || null,
+        brand_values: formData.brandValues || null,
+        collab_types: formData.collabTypes.length > 0 ? formData.collabTypes : null,
+        style_tags: formData.styleGenres.length > 0 ? formData.styleGenres : null,
+        budget_range: formData.budgetRange || null,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (entityError) throw entityError;
+
+    const { error: adminError } = await supabase
+      .from("collab_entity_admins")
+      .insert({
+        collab_entity_id: entity.id,
+        user_id: user.id,
+        role: "owner",
+      });
+
+    if (adminError) throw adminError;
+
+    return entity.id;
+  };
+
+  const handleCompleteWithOpportunity = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      let createdEntityId = entityId;
+      
+      if (!createdEntityId) {
+        createdEntityId = await createEntity();
+        setEntityId(createdEntityId);
+      }
+
+      if (opportunityData.title && opportunityData.type && createdEntityId) {
+        await supabase.from("collab_opportunities").insert({
+          collab_entity_id: createdEntityId,
+          title: opportunityData.title,
+          type: opportunityData.type,
+          description: opportunityData.description || null,
+          budget_range: opportunityData.budgetRange || null,
+          application_deadline: opportunityData.deadline || null,
+          is_active: true,
+        });
+      }
+
+      toast.success("Brand profile created successfully!");
+      navigate("/brand");
+    } catch (error: any) {
+      console.error("Error creating brand:", error);
+      toast.error(error.message || "Failed to create brand profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkipOpportunity = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      if (!entityId) {
+        await createEntity();
+      }
+
+      toast.success("Brand profile created successfully!");
+      navigate("/brand");
+    } catch (error: any) {
+      console.error("Error creating brand:", error);
+      toast.error(error.message || "Failed to create brand profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleComplete = async () => {
     if (!user) return;
     
     setLoading(true);
     try {
-      // Generate slug from name
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-
-      // Create collab entity
-      const { data: entity, error: entityError } = await supabase
-        .from("collab_entities")
-        .insert({
-          name: formData.name,
-          slug,
-          type: formData.type,
-          location: formData.location || null,
-          website: formData.website || null,
-          mission: formData.mission || null,
-          brand_values: formData.brandValues || null,
-          collab_types: formData.collabTypes.length > 0 ? formData.collabTypes : null,
-          style_tags: formData.styleGenres.length > 0 ? formData.styleGenres : null,
-          budget_range: formData.budgetRange || null,
-          is_active: true,
-        })
-        .select()
-        .single();
-
-      if (entityError) throw entityError;
-
-      // Link user as admin
-      const { error: adminError } = await supabase
-        .from("collab_entity_admins")
-        .insert({
-          collab_entity_id: entity.id,
-          user_id: user.id,
-          role: "owner",
-        });
-
-      if (adminError) throw adminError;
-
-      toast.success("Brand profile created successfully!");
-      navigate("/brand");
+      await createEntity();
+      // Move to step 4 for opportunity creation
+      setStep(4);
     } catch (error: any) {
       console.error("Error creating brand:", error);
       toast.error(error.message || "Failed to create brand profile");
@@ -150,11 +226,11 @@ export default function BrandOnboarding() {
 
         {/* Progress */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          {[1, 2, 3].map((s) => (
+          {Array.from({ length: totalSteps }).map((_, i) => (
             <div
-              key={s}
+              key={i}
               className={`w-3 h-3 rounded-full transition-colors ${
-                s === step ? "bg-primary" : s < step ? "bg-primary/50" : "bg-muted"
+                i + 1 === step ? "bg-primary" : i + 1 < step ? "bg-primary/50" : "bg-muted"
               }`}
             />
           ))}
@@ -163,10 +239,15 @@ export default function BrandOnboarding() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-primary" />
+              {step < 4 ? (
+                <Building2 className="h-5 w-5 text-primary" />
+              ) : (
+                <Briefcase className="h-5 w-5 text-primary" />
+              )}
               {step === 1 && "Company Information"}
               {step === 2 && "Brand Profile"}
               {step === 3 && "Collaboration Preferences"}
+              {step === 4 && "Create Your First Opportunity (Optional)"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -310,9 +391,87 @@ export default function BrandOnboarding() {
               </>
             )}
 
+            {step === 4 && (
+              <>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Post your first opportunity to start attracting artists. You can skip this and create opportunities later.
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="oppTitle">Opportunity Title</Label>
+                  <Input
+                    id="oppTitle"
+                    placeholder="e.g., Summer Festival Main Stage"
+                    value={opportunityData.title}
+                    onChange={(e) => setOpportunityData(prev => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="oppType">Opportunity Type</Label>
+                  <Select
+                    value={opportunityData.type}
+                    onValueChange={(value) => setOpportunityData(prev => ({ ...prev, type: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {OPPORTUNITY_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="oppDesc">Description</Label>
+                  <Textarea
+                    id="oppDesc"
+                    placeholder="Describe the opportunity and what you're looking for..."
+                    value={opportunityData.description}
+                    onChange={(e) => setOpportunityData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="oppBudget">Budget Range</Label>
+                    <Select
+                      value={opportunityData.budgetRange}
+                      onValueChange={(value) => setOpportunityData(prev => ({ ...prev, budgetRange: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select budget" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="< 5,000 SEK">Under 5,000 SEK</SelectItem>
+                        <SelectItem value="5,000 - 25,000 SEK">5,000 - 25,000 SEK</SelectItem>
+                        <SelectItem value="25,000 - 100,000 SEK">25,000 - 100,000 SEK</SelectItem>
+                        <SelectItem value="> 100,000 SEK">Over 100,000 SEK</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="oppDeadline">Application Deadline</Label>
+                    <Input
+                      id="oppDeadline"
+                      type="date"
+                      value={opportunityData.deadline}
+                      onChange={(e) => setOpportunityData(prev => ({ ...prev, deadline: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex justify-between pt-4">
-              {step > 1 ? (
+              {step > 1 && step < 4 ? (
                 <Button variant="outline" onClick={handleBack}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
@@ -321,20 +480,43 @@ export default function BrandOnboarding() {
                 <div />
               )}
 
-              {step < 3 ? (
+              {step < 3 && (
                 <Button onClick={handleNext} className="bg-gradient-gold">
                   Next
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
-              ) : (
+              )}
+
+              {step === 3 && (
                 <Button
                   onClick={handleComplete}
                   disabled={loading}
                   className="bg-gradient-gold"
                 >
-                  {loading ? "Creating..." : "Complete Setup"}
-                  <Check className="h-4 w-4 ml-2" />
+                  {loading ? "Creating..." : "Continue"}
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
+              )}
+
+              {step === 4 && (
+                <div className="flex gap-2 w-full justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={handleSkipOpportunity}
+                    disabled={loading}
+                  >
+                    <SkipForward className="h-4 w-4 mr-2" />
+                    Skip & Finish
+                  </Button>
+                  <Button
+                    onClick={handleCompleteWithOpportunity}
+                    disabled={loading || !opportunityData.title || !opportunityData.type}
+                    className="bg-gradient-gold"
+                  >
+                    {loading ? "Creating..." : "Create & Finish"}
+                    <Check className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
