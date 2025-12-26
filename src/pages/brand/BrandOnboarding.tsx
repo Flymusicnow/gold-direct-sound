@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Building2, ArrowRight, ArrowLeft, Check, X, Briefcase, SkipForward } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Building2, ArrowRight, ArrowLeft, Check, X, Briefcase, SkipForward, Upload, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
@@ -41,12 +42,21 @@ const OPPORTUNITY_TYPES = [
   { value: "ugc_content", label: "UGC Content" },
 ];
 
+interface ValidationErrors {
+  name?: string;
+  type?: string;
+}
+
 export default function BrandOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [entityId, setEntityId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -58,6 +68,7 @@ export default function BrandOnboarding() {
     collabTypes: [] as string[],
     styleGenres: [] as string[],
     budgetRange: "",
+    logoUrl: "",
   });
 
   const [opportunityData, setOpportunityData] = useState({
@@ -70,10 +81,71 @@ export default function BrandOnboarding() {
 
   const totalSteps = 4;
 
+  const validateStep1 = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    
+    if (!formData.name.trim()) {
+      newErrors.name = "Company name is required";
+    }
+    
+    if (!formData.type) {
+      newErrors.type = "Company type is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Logo must be less than 2MB");
+        return;
+      }
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadLogo = async (): Promise<string | null> => {
+    if (!logoFile || !user) return null;
+    
+    setUploadingLogo(true);
+    try {
+      const fileExt = logoFile.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `brand-logos/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("entity-icons")
+        .upload(filePath, logoFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("entity-icons")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      toast.error("Failed to upload logo");
+      return null;
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleNext = () => {
-    if (step === 1 && (!formData.name || !formData.type)) {
-      toast.error("Please fill in required fields");
-      return;
+    if (step === 1) {
+      if (!validateStep1()) {
+        return;
+      }
     }
     setStep(step + 1);
   };
@@ -103,6 +175,15 @@ export default function BrandOnboarding() {
   const createEntity = async () => {
     if (!user) return null;
     
+    // Upload logo if present
+    let logoUrl = formData.logoUrl;
+    if (logoFile) {
+      const uploadedUrl = await uploadLogo();
+      if (uploadedUrl) {
+        logoUrl = uploadedUrl;
+      }
+    }
+
     const slug = formData.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -121,6 +202,7 @@ export default function BrandOnboarding() {
         collab_types: formData.collabTypes.length > 0 ? formData.collabTypes : null,
         style_tags: formData.styleGenres.length > 0 ? formData.styleGenres : null,
         budget_range: formData.budgetRange || null,
+        logo_url: logoUrl || null,
         is_active: true,
       })
       .select()
@@ -199,7 +281,8 @@ export default function BrandOnboarding() {
     
     setLoading(true);
     try {
-      await createEntity();
+      const createdId = await createEntity();
+      setEntityId(createdId);
       // Move to step 4 for opportunity creation
       setStep(4);
     } catch (error: any) {
@@ -253,23 +336,60 @@ export default function BrandOnboarding() {
           <CardContent className="space-y-6">
             {step === 1 && (
               <>
+                {/* Logo Upload */}
+                <div className="space-y-3">
+                  <Label>Company Logo</Label>
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-20 w-20 rounded-xl">
+                      <AvatarImage src={logoPreview || undefined} />
+                      <AvatarFallback className="rounded-xl text-xl bg-muted">
+                        {formData.name ? formData.name.charAt(0) : <Upload className="h-6 w-6" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoChange}
+                        className="cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Max 2MB. Recommended: 400x400px
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="name">Company Name *</Label>
                   <Input
                     id="name"
                     placeholder="Enter your company name"
                     value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, name: e.target.value }));
+                      if (errors.name) setErrors(prev => ({ ...prev, name: undefined }));
+                    }}
+                    className={errors.name ? "border-destructive" : ""}
                   />
+                  {errors.name && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="type">Company Type *</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, type: value }));
+                      if (errors.type) setErrors(prev => ({ ...prev, type: undefined }));
+                    }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errors.type ? "border-destructive" : ""}>
                       <SelectValue placeholder="Select company type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -280,6 +400,12 @@ export default function BrandOnboarding() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.type && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.type}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -490,10 +616,10 @@ export default function BrandOnboarding() {
               {step === 3 && (
                 <Button
                   onClick={handleComplete}
-                  disabled={loading}
+                  disabled={loading || uploadingLogo}
                   className="bg-gradient-gold"
                 >
-                  {loading ? "Creating..." : "Continue"}
+                  {loading || uploadingLogo ? "Creating..." : "Continue"}
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               )}

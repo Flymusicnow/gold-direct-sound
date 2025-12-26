@@ -6,6 +6,7 @@ import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
+  { icon: Building2, label: "Profile", path: "/brand/profile" },
   { icon: Users, label: "Discover Artists", path: "/brand/discovery" },
   { icon: Briefcase, label: "Opportunities", path: "/brand/opportunities" },
   { icon: Inbox, label: "Applications", path: "/brand/applications" },
