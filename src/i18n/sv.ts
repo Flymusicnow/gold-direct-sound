@@ -727,6 +727,9 @@ export const sv = {
     editorialPicks: 'Redaktionens val',
     spotlight: 'Spotlight',
     crowdPush: 'Crowd Push',
+    searchPlaceholder: 'Sök efter artister eller genrer...',
+    loadingArtists: 'Laddar artister...',
+    noArtistsFound: 'Inga artister hittades',
   },
   playlist: {
     create: 'Skapa spellista',
