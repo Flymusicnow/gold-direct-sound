@@ -37,14 +37,14 @@ export function BetaLandingPage() {
       <div className="atmospheric-haze" />
       
       {/* Layer 6: Logo at convergence point */}
-      <div className="absolute top-[28%] md:top-[30%] left-1/2 -translate-x-1/2 z-10">
+      <div className="absolute top-[15%] md:top-[18%] left-1/2 -translate-x-1/2 z-20">
         <div className="logo-illuminated">
           <FlyMusicLogo size="xl" />
         </div>
       </div>
       
       {/* Layer 7: Content below logo */}
-      <div className="flex-1 flex flex-col items-center justify-end px-4 pb-12 md:pb-20 pt-[55%] md:pt-[45%] relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-end px-4 pb-12 md:pb-20 pt-[40%] md:pt-[38%] relative z-10">
         <div className="max-w-4xl w-full text-center space-y-6">
           {/* Beta Badge */}
           <Badge 
