@@ -801,6 +801,7 @@ export const en = {
     dontHaveAccount: "Don't have an account?",
     continueWith: 'Continue with',
     orContinueWith: 'Or continue with',
+    continueWithGoogle: 'Continue with Google',
     google: 'Google',
     github: 'GitHub',
     termsAgreement: 'By continuing, you agree to our',
