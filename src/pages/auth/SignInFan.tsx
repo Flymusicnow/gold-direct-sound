@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import TrustBadge from "@/components/trust/TrustBadge";
 import authHero from "@/assets/auth-hero-concert.png";
 
 export default function SignInFan() {
@@ -84,15 +85,20 @@ export default function SignInFan() {
 
   return (
     <div className="min-h-screen flex">
+      {/* Minimal header - logo + trust badge (desktop only) */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <Link to="/">
+          <FlyMusicLogo size="sm" />
+        </Link>
+        <TrustBadge />
+      </div>
+
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 pt-20">
         <div className="w-full max-w-md space-y-8">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <FlyMusicLogo size="md" />
-          </div>
 
           <Card className="border-accent/20">
             <CardHeader className="text-center">

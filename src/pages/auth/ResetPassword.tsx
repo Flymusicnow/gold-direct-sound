@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Music, CheckCircle, ArrowLeft } from "lucide-react";
+import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import TrustBadge from "@/components/trust/TrustBadge";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -49,6 +51,14 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12">
+        {/* Minimal header */}
+        <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+          <Link to="/">
+            <FlyMusicLogo size="sm" />
+          </Link>
+          <TrustBadge />
+        </div>
+
         <div className="w-full max-w-md text-center">
           <div className="flex items-center justify-center gap-2 mb-6">
             <Music className="h-8 w-8 text-primary" />
@@ -78,15 +88,18 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      {/* Minimal header */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+        <button onClick={() => navigate('/auth')} className="text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <Link to="/">
+          <FlyMusicLogo size="sm" />
+        </Link>
+        <TrustBadge />
+      </div>
+
       <div className="w-full max-w-md">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/auth')}
-          className="mb-6 gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Sign In
-        </Button>
 
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">

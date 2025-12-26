@@ -13,6 +13,13 @@ export function NavigationWrapper() {
   if (location.pathname.startsWith('/brand')) {
     return null;
   }
+
+  // Hide global navigation on auth pages (they have their own minimal header)
+  if (location.pathname.startsWith('/auth') || 
+      location.pathname.startsWith('/signin') || 
+      location.pathname.startsWith('/join')) {
+    return null;
+  }
   
   return <Navigation />;
 }
