@@ -509,6 +509,7 @@ export default function AdminBetaCodes() {
                         <SelectContent>
                           <SelectItem value="artist">Artist</SelectItem>
                           <SelectItem value="fan">Fan</SelectItem>
+                          <SelectItem value="brand">Brand</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -633,7 +634,7 @@ export default function AdminBetaCodes() {
               <DialogHeader>
                 <DialogTitle>Create New Beta Code</DialogTitle>
                 <DialogDescription>
-                  Generate a new beta access code for artists or fans
+                  Generate a new beta access code for artists, fans, or brands
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreateCode} className="space-y-4">
@@ -675,6 +676,7 @@ export default function AdminBetaCodes() {
                     <SelectContent>
                       <SelectItem value="artist">Artist</SelectItem>
                       <SelectItem value="fan">Fan</SelectItem>
+                      <SelectItem value="brand">Brand</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
