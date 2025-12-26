@@ -7,8 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Building2, Mail, Phone, Globe, Calendar, CheckCircle, XCircle, Clock, MessageSquare } from "lucide-react";
+import { Building2, Mail, Phone, Globe, Calendar, CheckCircle, XCircle, Clock, MessageSquare, Link as LinkIcon } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -35,17 +37,26 @@ interface BrandApplication {
   created_at: string;
 }
 
+interface CollabEntity {
+  id: string;
+  name: string;
+  type: string;
+}
+
 export default function AdminBrandApplications() {
   const { user } = useAuth();
   const [applications, setApplications] = useState<BrandApplication[]>([]);
+  const [existingEntities, setExistingEntities] = useState<CollabEntity[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("pending");
   const [selectedApp, setSelectedApp] = useState<BrandApplication | null>(null);
   const [actionType, setActionType] = useState<"approve" | "reject" | "changes" | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
+  const [selectedEntityId, setSelectedEntityId] = useState<string>("");
 
   useEffect(() => {
     fetchApplications();
+    fetchExistingEntities();
   }, []);
 
   const fetchApplications = async () => {
@@ -62,6 +73,21 @@ export default function AdminBrandApplications() {
       toast.error("Failed to load applications");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExistingEntities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("collab_entities")
+        .select("id, name, type")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setExistingEntities(data || []);
+    } catch (error) {
+      console.error("Error fetching entities:", error);
     }
   };
 
@@ -82,20 +108,66 @@ export default function AdminBrandApplications() {
     }
   };
 
+  const linkUserToExistingEntity = async (app: BrandApplication, entityId: string) => {
+    // Find user by email
+    const { data: profileData } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("email", app.email)
+      .single();
+
+    if (profileData) {
+      // Check if already linked
+      const { data: existingAdmin } = await supabase
+        .from("collab_entity_admins")
+        .select("id")
+        .eq("collab_entity_id", entityId)
+        .eq("user_id", profileData.id)
+        .single();
+
+      if (!existingAdmin) {
+        await supabase.from("collab_entity_admins").insert({
+          collab_entity_id: entityId,
+          user_id: profileData.id,
+          role: "owner",
+        });
+      }
+    }
+  };
+
   const updateStatus = async (status: string) => {
     if (!selectedApp || !user) return;
 
     try {
-      const { error } = await (supabase.from("brand_applications") as any)
-        .update({
-          status,
-          reviewed_by: user.id,
-          reviewed_at: new Date().toISOString(),
-          admin_notes: adminNotes || null,
-        })
-        .eq("id", selectedApp.id);
+      // If linking to existing entity, skip trigger by handling manually
+      if (status === "approved" && selectedEntityId && selectedEntityId !== "auto") {
+        // Link user to existing entity first
+        await linkUserToExistingEntity(selectedApp, selectedEntityId);
+        
+        // Update status without triggering auto-create (by setting a flag in admin_notes)
+        const { error } = await (supabase.from("brand_applications") as any)
+          .update({
+            status,
+            reviewed_by: user.id,
+            reviewed_at: new Date().toISOString(),
+            admin_notes: adminNotes ? `[LINKED TO EXISTING ENTITY: ${selectedEntityId}] ${adminNotes}` : `[LINKED TO EXISTING ENTITY: ${selectedEntityId}]`,
+          })
+          .eq("id", selectedApp.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Normal flow - let trigger handle entity creation
+        const { error } = await (supabase.from("brand_applications") as any)
+          .update({
+            status,
+            reviewed_by: user.id,
+            reviewed_at: new Date().toISOString(),
+            admin_notes: adminNotes || null,
+          })
+          .eq("id", selectedApp.id);
+
+        if (error) throw error;
+      }
 
       // Log activity
       await (supabase.from("admin_activity_logs") as any).insert({
@@ -103,7 +175,11 @@ export default function AdminBrandApplications() {
         action: `brand_application_${status}`,
         target_type: "brand_application",
         target_id: selectedApp.id,
-        details: { company_name: selectedApp.company_name, notes: adminNotes },
+        details: { 
+          company_name: selectedApp.company_name, 
+          notes: adminNotes,
+          linked_entity_id: selectedEntityId && selectedEntityId !== "auto" ? selectedEntityId : null 
+        },
       });
 
       // Send email notification
@@ -115,6 +191,7 @@ export default function AdminBrandApplications() {
       setSelectedApp(null);
       setActionType(null);
       setAdminNotes("");
+      setSelectedEntityId("");
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
@@ -275,7 +352,7 @@ export default function AdminBrandApplications() {
       </Tabs>
 
       {/* Action Dialog */}
-      <Dialog open={!!actionType} onOpenChange={() => { setActionType(null); setAdminNotes(""); }}>
+      <Dialog open={!!actionType} onOpenChange={() => { setActionType(null); setAdminNotes(""); setSelectedEntityId(""); }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
@@ -290,6 +367,33 @@ export default function AdminBrandApplications() {
             </DialogDescription>
           </DialogHeader>
 
+          {actionType === "approve" && (
+            <div className="space-y-2">
+              <Label htmlFor="entity-select" className="flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" />
+                Link to Entity
+              </Label>
+              <Select value={selectedEntityId} onValueChange={setSelectedEntityId}>
+                <SelectTrigger id="entity-select">
+                  <SelectValue placeholder="Auto-create new entity" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto-create new entity</SelectItem>
+                  {existingEntities.map((entity) => (
+                    <SelectItem key={entity.id} value={entity.id}>
+                      {entity.name} ({entity.type})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {selectedEntityId && selectedEntityId !== "auto" 
+                  ? "User will be linked as owner to the selected entity. No new entity will be created."
+                  : "A new collab entity will be created automatically from the application data."}
+              </p>
+            </div>
+          )}
+
           <Textarea
             placeholder={actionType === "changes" ? "What information do you need?" : "Optional notes..."}
             value={adminNotes}
@@ -298,7 +402,7 @@ export default function AdminBrandApplications() {
           />
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setActionType(null); setAdminNotes(""); }}>
+            <Button variant="outline" onClick={() => { setActionType(null); setAdminNotes(""); setSelectedEntityId(""); }}>
               Cancel
             </Button>
             <Button

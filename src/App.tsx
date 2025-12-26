@@ -126,6 +126,7 @@ import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import RiskDisclaimer from "./pages/legal/RiskDisclaimer";
 import BrandDashboard from "./pages/brand/BrandDashboard";
 import BrandOnboarding from "./pages/brand/BrandOnboarding";
+import BrandProfile from "./pages/brand/BrandProfile";
 import BrandDiscovery from "./pages/brand/BrandDiscovery";
 import BrandOpportunities from "./pages/brand/BrandOpportunities";
 import BrandApplications from "./pages/brand/BrandApplications";
@@ -409,6 +410,11 @@ const App = () => (
             <Route path="/brand" element={
               <ProtectedRoute allowedRoles={['brand']}>
                 <BrandDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/brand/profile" element={
+              <ProtectedRoute allowedRoles={['brand']}>
+                <BrandProfile />
               </ProtectedRoute>
             } />
             <Route path="/brand/discovery" element={
