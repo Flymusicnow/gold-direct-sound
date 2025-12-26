@@ -4183,6 +4183,10 @@ export type Database = {
         Args: { _fan_user_id: string }
         Returns: Json
       }
+      check_brand_application_status: {
+        Args: { _email: string }
+        Returns: string
+      }
       check_feature_access: {
         Args: { _feature_key: string; _user_id: string }
         Returns: Json

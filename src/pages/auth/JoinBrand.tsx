@@ -19,18 +19,13 @@ export default function JoinBrand() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Check if this email has an approved brand application
+  // Check if this email has an approved brand application using RPC (bypasses RLS)
   const checkBrandApproval = async (email: string): Promise<'approved' | 'pending' | 'rejected' | null> => {
-    const { data } = await supabase
-      .from('brand_applications')
-      .select('status')
-      .eq('email', email)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await supabase
+      .rpc('check_brand_application_status', { _email: email });
     
-    if (!data) return null;
-    return data.status as 'approved' | 'pending' | 'rejected';
+    if (error || !data) return null;
+    return data as 'approved' | 'pending' | 'rejected';
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
