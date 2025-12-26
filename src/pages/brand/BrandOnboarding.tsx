@@ -381,10 +381,10 @@ export default function BrandOnboarding() {
                       <SelectValue placeholder="Select budget range" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="< 5,000 SEK">Under 5,000 SEK</SelectItem>
-                      <SelectItem value="5,000 - 25,000 SEK">5,000 - 25,000 SEK</SelectItem>
-                      <SelectItem value="25,000 - 100,000 SEK">25,000 - 100,000 SEK</SelectItem>
-                      <SelectItem value="> 100,000 SEK">Over 100,000 SEK</SelectItem>
+                      <SelectItem value="low">Under 5,000 SEK</SelectItem>
+                      <SelectItem value="medium">5,000 - 25,000 SEK</SelectItem>
+                      <SelectItem value="high">25,000 - 100,000 SEK</SelectItem>
+                      <SelectItem value="enterprise">Over 100,000 SEK</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -448,10 +448,10 @@ export default function BrandOnboarding() {
                         <SelectValue placeholder="Select budget" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="< 5,000 SEK">Under 5,000 SEK</SelectItem>
-                        <SelectItem value="5,000 - 25,000 SEK">5,000 - 25,000 SEK</SelectItem>
-                        <SelectItem value="25,000 - 100,000 SEK">25,000 - 100,000 SEK</SelectItem>
-                        <SelectItem value="> 100,000 SEK">Over 100,000 SEK</SelectItem>
+                        <SelectItem value="low">Under 5,000 SEK</SelectItem>
+                        <SelectItem value="medium">5,000 - 25,000 SEK</SelectItem>
+                        <SelectItem value="high">25,000 - 100,000 SEK</SelectItem>
+                        <SelectItem value="enterprise">Over 100,000 SEK</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
