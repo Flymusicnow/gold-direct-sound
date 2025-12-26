@@ -256,7 +256,13 @@ export const getBreadcrumbsForPath = (
   const breadcrumbs: { label: string; path: string; i18nKey?: string }[] = [];
 
   // Add portal root
-  const rootPath = config === fanNavConfig ? "/fan" : config === artistNavConfig ? "/studio" : "/admin";
+  const rootPath = config === fanNavConfig 
+    ? "/fan" 
+    : config === artistNavConfig 
+      ? "/studio" 
+      : config === brandNavConfig
+        ? "/brand"
+        : "/admin";
   breadcrumbs.push({
     label: config.portalName,
     path: rootPath,

@@ -66,6 +66,7 @@ export const Navigation = () => {
   // Role-aware logo routing
   const getLogoRoute = () => {
     if (!user) return "/";
+    if (hasRole('brand')) return "/brand";
     if (hasRole('fan')) return "/fan/feed";
     if (hasRole('artist')) return "/studio";
     if (hasRole('admin')) return "/admin";
