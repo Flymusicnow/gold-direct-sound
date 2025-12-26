@@ -152,9 +152,13 @@ const App = () => (
             <Route path="/epk/:slug" element={<PublicPresskit />} />
             <Route path="/@:slug" element={<SmartLinkPage />} />
             <Route path="/brands/apply" element={<BrandApply />} />
+            <Route path="/brands" element={<BrandPortal />} />
             <Route path="/trust" element={<TrustPage />} />
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/top-artists" element={<TopArtists />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/search" element={<Search />} />
+            <Route path="/pricing" element={<Pricing />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />
@@ -171,7 +175,6 @@ const App = () => (
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/explore" element={<Explore />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
             <Route path="/role-selection" element={<RoleSelection />} />
@@ -377,7 +380,6 @@ const App = () => (
                 <FanWrapped />
               </ProtectedRoute>
             } />
-            <Route path="/search" element={<Search />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/learn" element={<Learn />} />
             <Route path="/legal/user-agreement" element={<UserAgreement />} />
@@ -386,7 +388,6 @@ const App = () => (
             <Route path="/legal/brand-portal-terms" element={<BrandPortalTerms />} />
             <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
-            <Route path="/pricing" element={<Pricing />} />
             <Route path="/checkout/success" element={<CheckoutSuccess />} />
             <Route path="/checkout/cancel" element={<CheckoutCancel />} />
             <Route path="/brand/onboarding" element={
