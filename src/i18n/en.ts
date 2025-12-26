@@ -1073,9 +1073,4 @@ export const en = {
     createAccount: 'Create Account',
     signIn: 'Already have an account? Sign In',
   },
-  brand: {
-    partnerDashboard: 'Partner Dashboard',
-    discoverArtists: 'Discover Artists',
-    applications: 'Applications',
-  },
 };
