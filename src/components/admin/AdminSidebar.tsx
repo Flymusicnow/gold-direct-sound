@@ -32,7 +32,7 @@ const navSections = [
     title: "Overview",
     items: [
       { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
-      { title: "Inbox", url: "/admin/inbox", icon: Inbox, hasBadge: true },
+      { title: "Inbox", url: "/admin/inbox", icon: Inbox, badgeType: 'inbox' as const },
       { title: "QA Mode", url: "/admin/qa", icon: FlaskConical },
     ]
   },
@@ -55,7 +55,7 @@ const navSections = [
       { title: "Collab Entities", url: "/admin/collab-entities", icon: Building2 },
       { title: "Opportunities", url: "/admin/opportunities", icon: Briefcase },
       { title: "Matching", url: "/admin/matching", icon: Handshake },
-      { title: "Brand Applications", url: "/admin/brand-applications", icon: Building2 },
+      { title: "Brand Applications", url: "/admin/brand-applications", icon: Building2, badgeType: 'brand' as const },
       { title: "Campaigns", url: "/admin/campaigns", icon: Activity },
     ]
   },
@@ -76,10 +76,12 @@ export function AdminSidebar() {
   const { signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [inboxCounts, setInboxCounts] = useState({ unread: 0, inProgress: 0 });
+  const [brandAppCount, setBrandAppCount] = useState(0);
 
   useEffect(() => {
-    const fetchInboxCounts = async () => {
+    const fetchCounts = async () => {
       try {
+        // Fetch inbox counts
         const { count: unread } = await supabase
           .from("inbox_messages")
           .select("*", { count: "exact", head: true })
@@ -94,18 +96,37 @@ export function AdminSidebar() {
           unread: unread || 0,
           inProgress: inProgress || 0,
         });
+
+        // Fetch pending brand applications count
+        const { count: pendingBrand } = await supabase
+          .from("brand_applications")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending");
+
+        setBrandAppCount(pendingBrand || 0);
       } catch (error) {
-        console.error("Error fetching inbox counts:", error);
+        console.error("Error fetching counts:", error);
       }
     };
 
-    fetchInboxCounts();
-    const interval = setInterval(fetchInboxCounts, 30000);
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const totalActive = inboxCounts.unread + inboxCounts.inProgress;
+  const totalInboxActive = inboxCounts.unread + inboxCounts.inProgress;
   const hasUnread = inboxCounts.unread > 0;
+
+  // Get badge info for an item
+  const getBadgeInfo = (badgeType?: 'inbox' | 'brand') => {
+    if (badgeType === 'inbox' && totalInboxActive > 0) {
+      return { count: totalInboxActive, isUrgent: hasUnread };
+    }
+    if (badgeType === 'brand' && brandAppCount > 0) {
+      return { count: brandAppCount, isUrgent: true };
+    }
+    return null;
+  };
 
   return (
     <aside
@@ -159,7 +180,7 @@ export function AdminSidebar() {
                 const isActive = location.pathname === item.url || 
                   (item.url !== "/admin" && location.pathname.startsWith(item.url));
                 
-                const showBadge = (item as { hasBadge?: boolean }).hasBadge && totalActive > 0;
+                const badgeInfo = getBadgeInfo((item as any).badgeType);
                 
                 return (
                   <RouterNavLink
@@ -176,23 +197,23 @@ export function AdminSidebar() {
                     {!collapsed && (
                       <span className={cn("text-sm flex-1", isActive && "font-medium")}>{item.title}</span>
                     )}
-                    {showBadge && !collapsed && (
+                    {badgeInfo && !collapsed && (
                       <span
                         className={cn(
                           "text-xs font-medium px-1.5 py-0.5 rounded-full",
-                          hasUnread
+                          badgeInfo.isUrgent
                             ? "bg-destructive text-destructive-foreground"
                             : "bg-yellow-500 text-yellow-50"
                         )}
                       >
-                        {totalActive}
+                        {badgeInfo.count}
                       </span>
                     )}
-                    {showBadge && collapsed && (
+                    {badgeInfo && collapsed && (
                       <span
                         className={cn(
                           "absolute top-1 right-1 w-2 h-2 rounded-full",
-                          hasUnread ? "bg-destructive" : "bg-yellow-500"
+                          badgeInfo.isUrgent ? "bg-destructive" : "bg-yellow-500"
                         )}
                       />
                     )}
