@@ -61,11 +61,12 @@ export default function BrandPortal() {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase.from("beta_waitlist").insert({
+      const { error } = await supabase.from("brand_applications").insert({
+        company_name: formData.company_name,
+        contact_person: formData.contact_name,
         email: formData.email,
-        name: `${formData.contact_name} (${formData.company_name})`,
-        user_type: "brand",
-        message: `Company Type: ${formData.company_type}\n\n${formData.message || "No message provided"}`,
+        company_type: formData.company_type,
+        intended_use: formData.message || null,
         status: "pending",
       });
 
