@@ -6,7 +6,7 @@ import { Music, Sparkles, TrendingUp, BarChart3, Mail, Headphones, Heart, Librar
 
 interface EarlyAccessWallProps {
   onCodeRedeemed: () => void;
-  userRole: 'artist' | 'fan' | null;
+  userRole: 'artist' | 'fan' | 'brand' | null;
 }
 
 const artistBenefits = [
@@ -66,7 +66,7 @@ export function EarlyAccessWall({ onCodeRedeemed, userRole }: EarlyAccessWallPro
 
   // Choose benefits based on user role (default to artist if unknown)
   const benefits = userRole === 'fan' ? fanBenefits : artistBenefits;
-  const roleLabel = userRole === 'fan' ? 'Fan' : 'Artist';
+  const roleLabel = userRole === 'fan' ? 'Fan' : userRole === 'brand' ? 'Brand' : 'Artist';
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
