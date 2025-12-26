@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,11 +52,42 @@ export default function BrandOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [checkingExisting, setCheckingExisting] = useState(true);
   const [entityId, setEntityId] = useState<string | null>(null);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Check for existing entity on mount
+  useEffect(() => {
+    const checkExistingEntity = async () => {
+      if (!user) {
+        setCheckingExisting(false);
+        return;
+      }
+      
+      try {
+        const { data } = await supabase
+          .from("collab_entity_admins")
+          .select("collab_entity_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        if (data) {
+          toast.info("You already have a brand profile set up");
+          navigate("/brand");
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking existing entity:", error);
+      } finally {
+        setCheckingExisting(false);
+      }
+    };
+    
+    checkExistingEntity();
+  }, [user, navigate]);
   
   const [formData, setFormData] = useState({
     name: "",
@@ -184,10 +215,22 @@ export default function BrandOnboarding() {
       }
     }
 
-    const slug = formData.name
+    // Generate base slug
+    let baseSlug = formData.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
+
+    // Check if slug exists and make it unique
+    const { data: existingEntity } = await supabase
+      .from("collab_entities")
+      .select("id")
+      .eq("slug", baseSlug)
+      .maybeSingle();
+
+    const slug = existingEntity 
+      ? `${baseSlug}-${Date.now().toString(36)}` 
+      : baseSlug;
 
     const { data: entity, error: entityError } = await supabase
       .from("collab_entities")
@@ -292,6 +335,17 @@ export default function BrandOnboarding() {
       setLoading(false);
     }
   };
+
+  if (checkingExisting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-muted-foreground">Checking your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/50 flex items-center justify-center px-4 py-12">
