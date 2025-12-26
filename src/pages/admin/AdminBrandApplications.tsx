@@ -302,7 +302,14 @@ export default function AdminBrandApplications() {
               Cancel
             </Button>
             <Button
-              onClick={() => updateStatus(actionType === "changes" ? "changes_requested" : actionType!)}
+              onClick={() => {
+                const statusMap: Record<string, string> = {
+                  approve: "approved",
+                  reject: "rejected",
+                  changes: "changes_requested"
+                };
+                updateStatus(statusMap[actionType!]);
+              }}
               className={actionType === "approve" ? "bg-green-600 hover:bg-green-700" : actionType === "reject" ? "bg-destructive" : ""}
             >
               {actionType === "approve" && "Approve & Notify"}
