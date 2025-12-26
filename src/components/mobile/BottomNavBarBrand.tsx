@@ -1,16 +1,18 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Briefcase, Inbox, Menu, BarChart3, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Inbox, Menu, BarChart3, Settings, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useBrandPendingCount } from "@/hooks/useBrandPendingCount";
+import { useBrandMessages } from "@/hooks/useBrandMessages";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
   { icon: Users, label: "Artists", path: "/brand/discovery" },
   { icon: Briefcase, label: "Jobs", path: "/brand/opportunities" },
-  { icon: Inbox, label: "Apps", path: "/brand/applications", hasBadge: true },
+  { icon: Inbox, label: "Apps", path: "/brand/applications", badgeType: "pending" as const },
+  { icon: MessageSquare, label: "Msgs", path: "/brand/inbox", badgeType: "messages" as const },
 ];
 
 const moreNavItems = [
@@ -22,6 +24,13 @@ export function BottomNavBarBrand() {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { pendingCount } = useBrandPendingCount();
+  const { unreadCount } = useBrandMessages();
+
+  const getBadgeCount = (badgeType?: "pending" | "messages") => {
+    if (badgeType === "pending") return pendingCount;
+    if (badgeType === "messages") return unreadCount;
+    return 0;
+  };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden">
@@ -29,24 +38,25 @@ export function BottomNavBarBrand() {
         {mainNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
+          const badgeCount = getBadgeCount(item.badgeType);
 
           return (
             <Link
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative",
+                "flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors relative",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
               <div className="relative">
                 <Icon className="h-5 w-5" />
-                {item.hasBadge && pendingCount > 0 && (
+                {badgeCount > 0 && (
                   <Badge 
                     variant="destructive" 
                     className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
                   >
-                    {pendingCount}
+                    {badgeCount}
                   </Badge>
                 )}
               </div>
@@ -57,7 +67,7 @@ export function BottomNavBarBrand() {
 
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center gap-1 px-3 py-2 text-muted-foreground">
+            <button className="flex flex-col items-center gap-1 px-2 py-2 text-muted-foreground">
               <Menu className="h-5 w-5" />
               <span className="text-xs">More</span>
             </button>

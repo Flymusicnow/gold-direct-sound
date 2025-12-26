@@ -1099,6 +1099,67 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_messages: {
+        Row: {
+          application_id: string | null
+          artist_id: string | null
+          collab_entity_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          recipient_user_id: string
+          sender_user_id: string
+          subject: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          artist_id?: string | null
+          collab_entity_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          recipient_user_id: string
+          sender_user_id: string
+          subject?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          artist_id?: string | null
+          collab_entity_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          recipient_user_id?: string
+          sender_user_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "brand_messages_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "collab_applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_messages_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "brand_messages_collab_entity_id_fkey"
+            columns: ["collab_entity_id"]
+            isOneToOne: false
+            referencedRelation: "collab_entities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       changelog_subscriptions: {
         Row: {
           created_at: string | null

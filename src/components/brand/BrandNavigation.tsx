@@ -24,13 +24,16 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
+import { useBrandMessages } from "@/hooks/useBrandMessages";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
   { icon: Users, label: "Discover Artists", path: "/brand/discovery" },
   { icon: Briefcase, label: "Opportunities", path: "/brand/opportunities" },
-  { icon: Inbox, label: "Applications", path: "/brand/applications", hasBadge: true },
+  { icon: Inbox, label: "Applications", path: "/brand/applications", hasBadge: true, badgeType: "pending" as const },
+  { icon: MessageSquare, label: "Messages", path: "/brand/inbox", hasBadge: true, badgeType: "messages" as const },
   { icon: BarChart3, label: "Analytics", path: "/brand/analytics" },
 ];
 
@@ -39,6 +42,7 @@ export function BrandNavigation() {
   const { user, signOut } = useAuth();
   const [pendingCount, setPendingCount] = useState(0);
   const [brandName, setBrandName] = useState<string | null>(null);
+  const { unreadCount: messagesUnreadCount } = useBrandMessages();
 
   useEffect(() => {
     if (user) {
@@ -127,9 +131,14 @@ export function BrandNavigation() {
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
-                {item.hasBadge && pendingCount > 0 && (
+                {item.hasBadge && item.badgeType === "pending" && pendingCount > 0 && (
                   <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
                     {pendingCount}
+                  </Badge>
+                )}
+                {item.hasBadge && item.badgeType === "messages" && messagesUnreadCount > 0 && (
+                  <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-xs">
+                    {messagesUnreadCount}
                   </Badge>
                 )}
               </Link>

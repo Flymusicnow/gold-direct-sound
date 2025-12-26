@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandLayout } from "@/components/brand/BrandLayout";
 import { BrandSidebar } from "@/components/brand/BrandSidebar";
-import { BottomNavBarBrand } from "@/components/mobile/BottomNavBarBrand";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Users, Briefcase, TrendingUp, Eye, Heart } from "lucide-react";
+import { BarChart3, Users, Briefcase, TrendingUp, Heart } from "lucide-react";
 
 export default function BrandAnalytics() {
   const { user } = useAuth();
@@ -36,7 +36,6 @@ export default function BrandAnalytics() {
 
       if (!adminData) return;
 
-      // Get opportunities
       const { data: opps, count: totalOpps } = await supabase
         .from("collab_opportunities")
         .select("*", { count: "exact" })
@@ -44,7 +43,6 @@ export default function BrandAnalytics() {
 
       const activeOpps = opps?.filter((o) => o.is_active).length || 0;
 
-      // Get applications for these opportunities
       const oppIds = opps?.map((o) => o.id) || [];
       let totalApps = 0;
       let acceptedApps = 0;
@@ -59,7 +57,6 @@ export default function BrandAnalytics() {
         acceptedApps = apps?.filter((a) => a.status === "accepted").length || 0;
       }
 
-      // Get interests
       const { count: interestsCount } = await supabase
         .from("collab_interest")
         .select("*", { count: "exact" })
@@ -71,7 +68,7 @@ export default function BrandAnalytics() {
         totalApplications: totalApps,
         acceptedApplications: acceptedApps,
         totalInterests: interestsCount || 0,
-        profileViews: 0, // Placeholder - would need view tracking
+        profileViews: 0,
       });
     } catch (error) {
       console.error("Error loading stats:", error);
@@ -82,9 +79,11 @@ export default function BrandAnalytics() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
+      <BrandLayout>
+        <div className="flex items-center justify-center py-12">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </BrandLayout>
     );
   }
 
@@ -118,63 +117,59 @@ export default function BrandAnalytics() {
   ];
 
   return (
-    <div className="min-h-screen bg-background flex w-full">
-      <BrandSidebar />
-
-      <main className="flex-1 p-6 pb-24 md:pb-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          {/* Header */}
-          <div>
-            <h1 className="text-3xl font-bold flex items-center gap-2">
-              <BarChart3 className="h-8 w-8 text-primary" />
-              Analytics
-            </h1>
-            <p className="text-muted-foreground">
-              Track your partnership performance and reach
-            </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {statCards.map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <Card key={stat.title}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{stat.title}</p>
-                        <p className="text-3xl font-bold mt-1">{stat.value}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {stat.description}
-                        </p>
-                      </div>
-                      <div className="p-2 rounded-lg bg-primary/10">
-                        <Icon className="h-5 w-5 text-primary" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Coming Soon */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Detailed Analytics</CardTitle>
-            </CardHeader>
-            <CardContent className="py-12 text-center">
-              <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+    <BrandLayout>
+      <div className="flex w-full">
+        <BrandSidebar />
+        <main className="flex-1 p-6">
+          <div className="max-w-6xl mx-auto space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold flex items-center gap-2">
+                <BarChart3 className="h-8 w-8 text-primary" />
+                Analytics
+              </h1>
               <p className="text-muted-foreground">
-                Detailed analytics with charts and trends coming soon
+                Track your partnership performance and reach
               </p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+            </div>
 
-      <BottomNavBarBrand />
-    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {statCards.map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <Card key={stat.title}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">{stat.title}</p>
+                          <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {stat.description}
+                          </p>
+                        </div>
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Detailed Analytics</CardTitle>
+              </CardHeader>
+              <CardContent className="py-12 text-center">
+                <BarChart3 className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">
+                  Detailed analytics with charts and trends coming soon
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    </BrandLayout>
   );
 }
