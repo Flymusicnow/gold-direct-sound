@@ -1,16 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, Users, Briefcase, Inbox, Menu } from "lucide-react";
+import { LayoutDashboard, Users, Briefcase, Inbox, Menu, BarChart3, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { BarChart3, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useBrandPendingCount } from "@/hooks/useBrandPendingCount";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
   { icon: Users, label: "Artists", path: "/brand/discovery" },
   { icon: Briefcase, label: "Jobs", path: "/brand/opportunities" },
-  { icon: Inbox, label: "Apps", path: "/brand/applications" },
+  { icon: Inbox, label: "Apps", path: "/brand/applications", hasBadge: true },
 ];
 
 const moreNavItems = [
@@ -21,6 +21,7 @@ const moreNavItems = [
 export function BottomNavBarBrand() {
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const { pendingCount } = useBrandPendingCount();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border md:hidden">
@@ -34,11 +35,21 @@ export function BottomNavBarBrand() {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors",
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative",
                 isActive ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon className="h-5 w-5" />
+              <div className="relative">
+                <Icon className="h-5 w-5" />
+                {item.hasBadge && pendingCount > 0 && (
+                  <Badge 
+                    variant="destructive" 
+                    className="absolute -top-2 -right-2 h-4 min-w-4 px-1 text-[10px] flex items-center justify-center"
+                  >
+                    {pendingCount}
+                  </Badge>
+                )}
+              </div>
               <span className="text-xs">{item.label}</span>
             </Link>
           );

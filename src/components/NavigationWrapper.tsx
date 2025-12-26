@@ -8,6 +8,11 @@ export function NavigationWrapper() {
   if (location.pathname.startsWith('/admin')) {
     return null;
   }
+
+  // Hide global navigation on brand pages (they have their own navigation)
+  if (location.pathname.startsWith('/brand')) {
+    return null;
+  }
   
   return <Navigation />;
 }
