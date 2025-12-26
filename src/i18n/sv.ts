@@ -824,6 +824,37 @@ export const sv = {
     brandApplicationPending: 'Din varumärkesansökan väntar fortfarande på godkännande. Vänligen vänta på att vårt team granskar den.',
     brandApplicationRejected: 'Din varumärkesansökan godkändes inte. Vänligen kontakta support för mer information.',
     noBrandApplication: 'Ingen varumärkesansökan hittades för denna e-post. Vänligen ansök om varumärkesåtkomst först.',
+    // Join page titles and subtitles
+    joinArtistTitle: 'Gå med som artist',
+    joinArtistSubtitle: 'Skapa ditt artistkonto och börja dela din musik',
+    joinFanTitle: 'Gå med som fan',
+    joinFanSubtitle: 'Skapa ditt fankonto och upptäck fantastisk musik',
+    joinBrandTitle: 'Gå med som varumärke',
+    joinBrandSubtitle: 'Skapa ditt varumärkeskonto och få kontakt med artister',
+    // Sign-in page titles
+    signInArtistTitle: 'Logga in som artist',
+    signInArtistSubtitle: 'Välkommen tillbaka till din studio',
+    signInFanTitle: 'Logga in som fan',
+    signInFanSubtitle: 'Välkommen tillbaka till din musik',
+    signInBrandTitle: 'Logga in som varumärke',
+    signInBrandSubtitle: 'Välkommen tillbaka till din översikt',
+    // Email labels for human-readable copy
+    artistEmailLabel: 'Artist e-postadress',
+    fanEmailLabel: 'Fan e-postadress',
+    brandEmailLabel: 'Varumärkes e-postadress',
+    passwordLabel: 'Lösenord',
+    fullNameLabel: 'Fullständigt namn',
+    // Wrong role messages
+    wrongRole: 'Fel kontotyp',
+    areaForArtists: 'Detta område är endast för artistkonton',
+    areaForFans: 'Detta område är endast för fankonton',
+    areaForBrands: 'Detta område är endast för varumärkeskonton',
+    areaForAdmins: 'Detta område är endast för adminkonton',
+    yourAccountIs: 'Ditt konto är registrerat som:',
+    signInAsArtist: 'Logga in som artist',
+    signInAsFan: 'Logga in som fan',
+    goToYourDashboard: 'Gå till din översikt',
+    wrongRoleError: 'Ditt konto är inte registrerat för denna roll. Logga in med rätt konto.',
   },
   empty: {
     noData: 'Ingen data tillgänglig',
@@ -1021,5 +1052,10 @@ export const sv = {
     saveDescription: 'Skapa ett konto för att spara låtar och bygga din musiksamling.',
     createAccount: 'Skapa konto',
     signIn: 'Har du redan ett konto? Logga in',
+  },
+  brand: {
+    partnerDashboard: 'Partnerpanel',
+    discoverArtists: 'Upptäck artister',
+    applications: 'Ansökningar',
   },
 };

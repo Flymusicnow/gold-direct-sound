@@ -16,6 +16,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   userRoles: string[];
+  primaryRole: 'admin' | 'brand' | 'artist' | 'fan' | null;
   hasRole: (role: string) => boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -32,6 +33,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   const hasRole = (role: string) => userRoles.includes(role);
+
+  // Compute primary role (single-role architecture)
+  const primaryRole = (() => {
+    if (userRoles.includes('admin') || userRoles.includes('super_admin')) return 'admin';
+    if (userRoles.includes('brand')) return 'brand';
+    if (userRoles.includes('artist')) return 'artist';
+    if (userRoles.includes('fan')) return 'fan';
+    return null;
+  })() as 'admin' | 'brand' | 'artist' | 'fan' | null;
 
   const fetchProfile = async (userId: string) => {
     try {
@@ -138,7 +148,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, userRoles, hasRole, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, userRoles, primaryRole, hasRole, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

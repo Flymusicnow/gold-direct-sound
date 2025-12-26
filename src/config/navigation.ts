@@ -199,13 +199,41 @@ export const adminNavConfig: NavConfig = {
   ],
 };
 
+// Brand Navigation Config
+export const brandNavConfig: NavConfig = {
+  portalName: "Brand Portal",
+  portalNameI18nKey: "nav.brandPortal",
+  subtitle: "Partner Dashboard",
+  subtitleI18nKey: "brand.partnerDashboard",
+  sections: [
+    {
+      title: "Overview",
+      i18nKey: "admin.overview",
+      items: [
+        { icon: LayoutDashboard, label: "Dashboard", path: "/brand", i18nKey: "nav.dashboard" },
+        { icon: Users, label: "Discover Artists", path: "/brand/discovery", i18nKey: "brand.discoverArtists" },
+        { icon: Briefcase, label: "Opportunities", path: "/brand/opportunities", i18nKey: "nav.opportunities" },
+        { icon: Inbox, label: "Applications", path: "/brand/applications", i18nKey: "brand.applications" },
+        { icon: BarChart3, label: "Analytics", path: "/brand/analytics", i18nKey: "nav.analytics" },
+      ],
+    },
+    {
+      title: "Account",
+      i18nKey: "mobile.account",
+      items: [
+        { icon: Settings, label: "Settings", path: "/brand/settings", i18nKey: "nav.settings" },
+      ],
+    },
+  ],
+};
+
 // Helper to get all nav items flattened
 export const getFlatNavItems = (config: NavConfig): NavItem[] => {
   return config.sections.flatMap((section) => section.items);
 };
 
 // Helper to get nav config by role
-export const getNavConfigForRole = (role: "fan" | "artist" | "admin"): NavConfig => {
+export const getNavConfigForRole = (role: "fan" | "artist" | "admin" | "brand"): NavConfig => {
   switch (role) {
     case "fan":
       return fanNavConfig;
@@ -213,6 +241,8 @@ export const getNavConfigForRole = (role: "fan" | "artist" | "admin"): NavConfig
       return artistNavConfig;
     case "admin":
       return adminNavConfig;
+    case "brand":
+      return brandNavConfig;
     default:
       return fanNavConfig;
   }
