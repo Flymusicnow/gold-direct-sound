@@ -25,6 +25,12 @@ import Home from "./pages/Home";
 initNetworkErrorTracker();
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/auth/ResetPassword";
+import JoinArtist from "./pages/auth/JoinArtist";
+import JoinFan from "./pages/auth/JoinFan";
+import JoinBrand from "./pages/auth/JoinBrand";
+import SignInArtist from "./pages/auth/SignInArtist";
+import SignInFan from "./pages/auth/SignInFan";
+import SignInBrand from "./pages/auth/SignInBrand";
 import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
 import StudioDashboard from "./pages/studio/StudioDashboard";
@@ -55,7 +61,6 @@ import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
 import FanActivity from "./pages/FanActivity";
 import FanSettings from "./pages/fan/FanSettings";
-import RoleSelection from "./pages/RoleSelection";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminSpotlight from "./pages/admin/AdminSpotlight";
 import AdminSpotlightEntries from "./pages/admin/AdminSpotlightEntries";
@@ -175,9 +180,14 @@ const App = () => (
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/join/artist" element={<JoinArtist />} />
+            <Route path="/join/fan" element={<JoinFan />} />
+            <Route path="/join/brand" element={<JoinBrand />} />
+            <Route path="/signin/artist" element={<SignInArtist />} />
+            <Route path="/signin/fan" element={<SignInFan />} />
+            <Route path="/signin/brand" element={<SignInBrand />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
-            <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/studio/onboarding" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioOnboarding />
