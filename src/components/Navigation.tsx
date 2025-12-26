@@ -204,20 +204,20 @@ export const Navigation = () => {
                 {t('nav.pricing')}
               </Link>
               <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={() => navigate('/auth')}>
+                <Button variant="ghost" onClick={() => navigate('/signin/artist')}>
                   {t('nav.signIn')}
                 </Button>
                 <Button
                   variant="ghost" 
                   className="text-foreground/80"
-                  onClick={() => navigate('/auth?mode=fan')}
+                  onClick={() => navigate('/join/fan')}
                 >
                   <Heart className="h-4 w-4 mr-1" />
                   {t('nav.joinFan')}
                 </Button>
                 <Button 
                   className="bg-gradient-gold" 
-                  onClick={() => navigate('/auth?mode=artist')}
+                  onClick={() => navigate('/join/artist')}
                 >
                   <Mic2 className="h-4 w-4 mr-1" />
                   {t('nav.joinArtist')}
@@ -333,14 +333,14 @@ export const Navigation = () => {
                     <CreditCard className="h-4 w-4 mr-2" />
                     {t('nav.pricing')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/auth')}>
+                  <DropdownMenuItem onClick={() => navigate('/signin/artist')}>
                     {t('nav.signIn')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/auth?mode=fan')}>
+                  <DropdownMenuItem onClick={() => navigate('/join/fan')}>
                     <Heart className="mr-2 h-4 w-4" />
                     {t('nav.joinFan')}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/auth?mode=artist')}>
+                  <DropdownMenuItem onClick={() => navigate('/join/artist')}>
                     <Mic2 className="mr-2 h-4 w-4 text-primary" />
                     {t('nav.joinArtist')}
                   </DropdownMenuItem>
