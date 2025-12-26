@@ -97,6 +97,20 @@ export default function Auth() {
     }
   };
 
+  // Check if email has an approved brand application
+  const checkBrandApproval = async (userEmail: string): Promise<'approved' | 'pending' | 'rejected' | 'not_found'> => {
+    const { data } = await supabase
+      .from('brand_applications')
+      .select('status')
+      .eq('email', userEmail)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    
+    if (!data) return 'not_found';
+    return data.status as 'approved' | 'pending' | 'rejected';
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -129,8 +143,27 @@ export default function Auth() {
             
             navigate(mode === 'fan' ? '/fan' : '/studio');
           } else if (mode === 'brand') {
-            // Brand users go to brand dashboard
-            navigate('/brand');
+            // Check if user has an approved brand application
+            const approvalStatus = await checkBrandApproval(email);
+            
+            if (approvalStatus === 'approved') {
+              // Assign brand role and redirect to onboarding
+              await supabase.from('user_roles').upsert({
+                user_id: data.user.id,
+                role: 'brand',
+              }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+              
+              navigate('/brand/onboarding');
+            } else if (approvalStatus === 'pending') {
+              toast.error(t('auth.brandApplicationPending'));
+              await supabase.auth.signOut();
+            } else if (approvalStatus === 'rejected') {
+              toast.error(t('auth.brandApplicationRejected'));
+              await supabase.auth.signOut();
+            } else {
+              toast.error(t('auth.noBrandApplication'));
+              await supabase.auth.signOut();
+            }
           } else {
             // No mode specified - let them choose
             navigate('/role-selection');
@@ -156,6 +189,24 @@ export default function Auth() {
           }
         }
       } else {
+        // Handle brand signup
+        if (mode === 'brand') {
+          // Check if email has approved brand application before signup
+          const approvalStatus = await checkBrandApproval(email);
+          
+          if (approvalStatus !== 'approved') {
+            if (approvalStatus === 'pending') {
+              toast.error(t('auth.brandApplicationPending'));
+            } else if (approvalStatus === 'rejected') {
+              toast.error(t('auth.brandApplicationRejected'));
+            } else {
+              toast.error(t('auth.noBrandApplication'));
+            }
+            setLoading(false);
+            return;
+          }
+        }
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -163,7 +214,7 @@ export default function Auth() {
             emailRedirectTo: `${window.location.origin}/`,
             data: {
               full_name: fullName,
-              role: isArtistSignup ? 'artist' : 'fan',
+              role: mode === 'brand' ? 'brand' : isArtistSignup ? 'artist' : 'fan',
             },
           },
         });
@@ -172,7 +223,7 @@ export default function Auth() {
 
         // Insert role into user_roles table (use upsert to prevent duplicates)
         if (data.user) {
-          const roleToSet = mode === 'fan' ? 'fan' : isArtistSignup ? 'artist' : 'fan';
+          const roleToSet = mode === 'brand' ? 'brand' : mode === 'fan' ? 'fan' : isArtistSignup ? 'artist' : 'fan';
           
           await supabase.from('user_roles').upsert({
             user_id: data.user.id,
@@ -180,12 +231,17 @@ export default function Auth() {
           }, { onConflict: 'user_id,role', ignoreDuplicates: true });
         }
 
-        toast.success(isArtistSignup ? t('auth.artistAccountCreated') : t('auth.accountCreated'));
-        
-        if (isArtistSignup) {
-          navigate('/studio');
+        if (mode === 'brand') {
+          toast.success(t('auth.brandAccountCreated'));
+          navigate('/brand/onboarding');
         } else {
-          navigate('/fan');
+          toast.success(isArtistSignup ? t('auth.artistAccountCreated') : t('auth.accountCreated'));
+          
+          if (isArtistSignup) {
+            navigate('/studio');
+          } else {
+            navigate('/fan');
+          }
         }
       }
     } catch (error: any) {
@@ -350,16 +406,17 @@ export default function Auth() {
           </Button>
 
           <div className="text-center space-y-2">
-            {/* Brand mode doesn't show signup toggle */}
-            {mode !== 'brand' && (
-              <button
-                type="button"
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-sm text-primary hover:underline"
-              >
-                {isLogin ? t('auth.needAccount') : t('auth.alreadyHaveAccount')}
-              </button>
-            )}
+            {/* Show signup toggle - brand mode shows special text */}
+            <button
+              type="button"
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-sm text-primary hover:underline"
+            >
+              {isLogin 
+                ? (mode === 'brand' ? t('auth.needAccount') : t('auth.needAccount'))
+                : t('auth.alreadyHaveAccount')
+              }
+            </button>
             
             {isLogin && (
               <div>

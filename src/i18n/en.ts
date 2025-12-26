@@ -808,7 +808,11 @@ export const en = {
     signUpAsArtist: 'Sign up as Artist instead',
     signUpAsFan: 'Sign up as Fan instead',
     artistAccountCreated: 'Your artist account has been created',
+    brandAccountCreated: 'Your brand account has been created',
     authenticationFailed: 'Authentication failed',
+    brandApplicationPending: 'Your brand application is still pending approval. Please wait for our team to review it.',
+    brandApplicationRejected: 'Your brand application was not approved. Please contact support for more information.',
+    noBrandApplication: 'No brand application found for this email. Please apply for brand access first.',
   },
   empty: {
     noData: 'No data available',
