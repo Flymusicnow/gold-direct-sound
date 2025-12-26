@@ -20,6 +20,15 @@ export function NavigationWrapper() {
       location.pathname.startsWith('/join')) {
     return null;
   }
+
+  // Hide global navigation on trust pages (they have their own minimal header)
+  if (location.pathname.startsWith('/trust') ||
+      location.pathname === '/principles' ||
+      location.pathname === '/safety' ||
+      location.pathname === '/data' ||
+      location.pathname === '/culture') {
+    return null;
+  }
   
   return <Navigation />;
 }

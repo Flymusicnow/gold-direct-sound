@@ -1,11 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Shield, Eye, Heart, Scale, Lock, ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Shield, Eye, Heart, Scale, Lock, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation } from '@/components/Navigation';
+import { FlyMusicLogo } from '@/components/FlyMusicLogo';
+import TrustBadge from '@/components/trust/TrustBadge';
 
 const TrustPage: React.FC = () => {
+  const navigate = useNavigate();
+  
   const trustPillars = [
     {
       icon: <Eye className="h-8 w-8" />,
@@ -35,9 +38,21 @@ const TrustPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      {/* Minimal Header */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
+        <button 
+          onClick={() => navigate('/')} 
+          className="p-2 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <Link to="/">
+          <FlyMusicLogo size="sm" />
+        </Link>
+        <TrustBadge />
+      </div>
       
-      <main className="container max-w-5xl mx-auto px-4 pt-20 md:pt-12 pb-12">
+      <main className="container max-w-5xl mx-auto px-4 pt-24 pb-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
