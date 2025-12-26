@@ -1,11 +1,14 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Scale, Users, Eye, Ban, Sparkles, Heart } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Navigation } from '@/components/Navigation';
+import { FlyMusicLogo } from '@/components/FlyMusicLogo';
+import TrustBadge from '@/components/trust/TrustBadge';
 
 const PrinciplesPage: React.FC = () => {
+  const navigate = useNavigate();
+  
   const principles = [
     {
       icon: <Scale className="h-6 w-6" />,
@@ -47,15 +50,21 @@ const PrinciplesPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      
-      <main className="container max-w-4xl mx-auto px-4 pt-20 md:pt-12 pb-12">
-        <Link to="/trust">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Trust
-          </Button>
+      {/* Minimal Header */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="p-2 rounded-full bg-background/80 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <Link to="/">
+          <FlyMusicLogo size="sm" />
         </Link>
+        <TrustBadge />
+      </div>
+      
+      <main className="container max-w-4xl mx-auto px-4 pt-24 pb-12">
 
         <div className="mb-12">
           <h1 className="text-4xl font-bold mb-4">Our Principles</h1>
