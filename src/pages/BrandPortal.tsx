@@ -137,7 +137,7 @@ export default function BrandPortal() {
               <span className="text-lg font-semibold text-foreground">FlyMusic</span>
             </Link>
             <div className="flex items-center gap-4">
-              <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/auth?mode=brand" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                 Sign In
               </Link>
               <Button asChild size="sm" className="bg-primary hover:bg-primary/90">

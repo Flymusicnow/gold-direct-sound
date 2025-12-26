@@ -8,13 +8,46 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePromoFunnel } from "@/hooks/usePromoFunnel";
-import { Music, Mic2, Heart, ArrowLeft } from "lucide-react";
+import { Music, Mic2, Heart, ArrowLeft, Building2 } from "lucide-react";
 import authHeroImage from "@/assets/auth-hero-concert.png";
+
+// Role configuration for contextual auth
+const roleConfig = {
+  brand: {
+    icon: Building2,
+    titleKey: 'signInAsBrand',
+    subtitleKey: 'brandSubtitle',
+    emailPlaceholderKey: 'brandEmailPlaceholder',
+    color: 'text-primary',
+  },
+  artist: {
+    icon: Mic2,
+    titleKey: 'joinAsArtist',
+    subtitleKey: 'artistSubtitle',
+    emailPlaceholderKey: 'artistEmailPlaceholder',
+    color: 'text-primary',
+  },
+  fan: {
+    icon: Heart,
+    titleKey: 'joinAsFan',
+    subtitleKey: 'fanSubtitle',
+    emailPlaceholderKey: 'fanEmailPlaceholder',
+    color: 'text-pink-500',
+  },
+  default: {
+    icon: Music,
+    titleKey: 'welcomeBack',
+    subtitleKey: 'signInToAccess',
+    emailPlaceholderKey: 'enterEmail',
+    color: 'text-primary',
+  },
+};
 
 export default function Auth() {
   const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') as 'brand' | 'artist' | 'fan' | null;
   const initialMode = searchParams.get('mode');
-  const [isLogin, setIsLogin] = useState(initialMode !== 'artist');
+  const [isLogin, setIsLogin] = useState(initialMode !== 'artist' && initialMode !== 'fan');
   const [isArtistSignup, setIsArtistSignup] = useState(initialMode === 'artist');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -25,6 +58,11 @@ export default function Auth() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { t } = useLanguage();
+
+  // Get the current role context
+  const currentRole = mode && roleConfig[mode] ? mode : 'default';
+  const config = roleConfig[currentRole];
+  const RoleIcon = config.icon;
 
   // Process promo funnel after authentication
   usePromoFunnel(user?.id);
@@ -72,8 +110,6 @@ export default function Auth() {
 
         if (error) throw error;
         
-        const mode = searchParams.get('mode');
-        
         // Check user roles and redirect accordingly
         const { data: roles } = await supabase
           .from('user_roles')
@@ -92,6 +128,9 @@ export default function Auth() {
             }, { onConflict: 'user_id,role', ignoreDuplicates: true });
             
             navigate(mode === 'fan' ? '/fan' : '/studio');
+          } else if (mode === 'brand') {
+            // Brand users go to brand dashboard
+            navigate('/brand');
           } else {
             // No mode specified - let them choose
             navigate('/role-selection');
@@ -133,7 +172,6 @@ export default function Auth() {
 
         // Insert role into user_roles table (use upsert to prevent duplicates)
         if (data.user) {
-          const mode = searchParams.get('mode');
           const roleToSet = mode === 'fan' ? 'fan' : isArtistSignup ? 'artist' : 'fan';
           
           await supabase.from('user_roles').upsert({
@@ -155,6 +193,14 @@ export default function Auth() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get contextual email placeholder
+  const getEmailPlaceholder = () => {
+    if (mode === 'brand') return t('auth.brandEmailPlaceholder');
+    if (mode === 'artist' || isArtistSignup) return t('auth.artistEmailPlaceholder');
+    if (mode === 'fan' || !isLogin) return t('auth.fanEmailPlaceholder');
+    return t('auth.enterEmail');
   };
 
   // Show loading while checking auth to prevent flash
@@ -219,6 +265,10 @@ export default function Auth() {
     );
   }
 
+  // Determine which CTA is primary based on context
+  const isArtistPrimary = mode === 'artist' || isArtistSignup;
+  const isFanPrimary = mode === 'fan' || (!isLogin && !isArtistSignup);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
       <div 
@@ -228,29 +278,29 @@ export default function Auth() {
         <div className="absolute inset-0 bg-black/60" />
       </div>
       <div className="w-full max-w-md relative z-10">
+        {/* Role-aware header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Music className="h-8 w-8 text-primary" />
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <RoleIcon className={`h-8 w-8 ${config.color}`} />
             <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-              FlyMusic
+              {mode === 'brand' 
+                ? t('auth.signInAsBrand')
+                : isLogin 
+                  ? 'FlyMusic'
+                  : isArtistSignup 
+                    ? t('auth.joinAsArtist')
+                    : t('auth.joinAsFan')
+              }
             </h1>
           </div>
           <p className="text-muted-foreground">
-            {isLogin 
-              ? t('auth.welcomeBack')
-              : isArtistSignup 
-                ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Mic2 className="h-4 w-4 text-primary" />
-                    {t('auth.joinAsArtist')}
-                  </span>
-                )
-                : (
-                  <span className="flex items-center justify-center gap-2">
-                    <Heart className="h-4 w-4" />
-                    {t('auth.joinAsFan')}
-                  </span>
-                )
+            {mode === 'brand'
+              ? t('auth.brandSubtitle')
+              : isLogin 
+                ? t('auth.welcomeBack')
+                : isArtistSignup 
+                  ? t('auth.artistSubtitle')
+                  : t('auth.fanSubtitle')
             }
           </p>
         </div>
@@ -278,7 +328,7 @@ export default function Auth() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder={t('auth.enterEmail')}
+              placeholder={getEmailPlaceholder()}
             />
           </div>
 
@@ -300,13 +350,16 @@ export default function Auth() {
           </Button>
 
           <div className="text-center space-y-2">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-primary hover:underline"
-            >
-              {isLogin ? t('auth.needAccount') : t('auth.alreadyHaveAccount')}
-            </button>
+            {/* Brand mode doesn't show signup toggle */}
+            {mode !== 'brand' && (
+              <button
+                type="button"
+                onClick={() => setIsLogin(!isLogin)}
+                className="text-sm text-primary hover:underline"
+              >
+                {isLogin ? t('auth.needAccount') : t('auth.alreadyHaveAccount')}
+              </button>
+            )}
             
             {isLogin && (
               <div>
@@ -320,12 +373,17 @@ export default function Auth() {
               </div>
             )}
             
-            {!isLogin && (
-              <div>
+            {/* Role toggle CTAs - only show one as primary based on context */}
+            {!isLogin && mode !== 'brand' && (
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setIsArtistSignup(!isArtistSignup)}
-                  className="text-sm text-muted-foreground hover:text-primary"
+                  className={`text-sm transition-colors ${
+                    isArtistSignup 
+                      ? 'text-muted-foreground hover:text-primary' 
+                      : 'text-muted-foreground hover:text-primary'
+                  }`}
                 >
                   {isArtistSignup ? t('auth.signUpAsFan') : t('auth.signUpAsArtist')}
                 </button>
