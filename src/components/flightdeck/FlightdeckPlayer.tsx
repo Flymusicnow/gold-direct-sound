@@ -38,6 +38,7 @@ export function FlightdeckPlayer() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const miniPlayerRef = useRef<HTMLDivElement>(null);
+  const currentItemIdRef = useRef<string | null>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
@@ -107,8 +108,19 @@ export function FlightdeckPlayer() {
   }, [miniPlayerPosition]);
 
   // Update media element when current item changes
+  // Only reload media when the actual item ID changes, not when queue is reordered
   useEffect(() => {
-    if (!currentItem) return;
+    if (!currentItem) {
+      currentItemIdRef.current = null;
+      return;
+    }
+
+    // Skip reload if it's the same item (prevents stopping playback on queue reorder)
+    if (currentItem.id === currentItemIdRef.current) {
+      return;
+    }
+
+    currentItemIdRef.current = currentItem.id;
 
     const mediaElement = currentItem.type === 'track' ? audioRef.current : videoRef.current;
     if (!mediaElement) return;
@@ -118,7 +130,7 @@ export function FlightdeckPlayer() {
     if (isPlaying) {
       mediaElement.play().catch(console.error);
     }
-  }, [currentItem]);
+  }, [currentItem?.id, isPlaying]);
 
   // Handle play/pause
   useEffect(() => {
