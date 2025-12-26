@@ -112,6 +112,7 @@ import Pricing from "./pages/Pricing";
 import HowItWorks from "./pages/HowItWorks";
 import TopArtists from "./pages/TopArtists";
 import NotFound from "./pages/NotFound";
+import RoleSelection from "./pages/RoleSelection";
 import Changelog from "./pages/Changelog";
 import StudioVerification from "./pages/studio/StudioVerification";
 import AdminVerifications from "./pages/admin/AdminVerifications";
@@ -179,6 +180,7 @@ const App = () => (
                   <NavigationWrapper />
                 <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />

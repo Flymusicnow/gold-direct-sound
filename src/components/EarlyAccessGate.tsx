@@ -33,7 +33,7 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   const location = useLocation();
 
   // Determine primary role using hasRole() - computed after hooks
-  const primaryRole = hasRole('artist') ? 'artist' : hasRole('fan') ? 'fan' : null;
+  const primaryRole = hasRole('brand') ? 'brand' : hasRole('artist') ? 'artist' : hasRole('fan') ? 'fan' : null;
 
   // Check if current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
