@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePromoFunnel } from "@/hooks/usePromoFunnel";
 import { Music, Mic2, Heart, ArrowLeft, Building2 } from "lucide-react";
 import authHeroImage from "@/assets/auth-hero-concert.png";
+import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import TrustBadge from "@/components/trust/TrustBadge";
 
 // Role configuration for contextual auth
 const roleConfig = {
@@ -300,6 +302,17 @@ export default function Auth() {
   if (isForgotPassword) {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
+        {/* Minimal header - logo + trust badge */}
+        <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+          <button onClick={() => setIsForgotPassword(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Link to="/">
+            <FlyMusicLogo size="sm" />
+          </Link>
+          <TrustBadge />
+        </div>
+
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${authHeroImage})` }}
@@ -356,6 +369,17 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12 relative">
+      {/* Minimal header - logo + trust badge */}
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <Link to="/">
+          <FlyMusicLogo size="sm" />
+        </Link>
+        <TrustBadge />
+      </div>
+
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${authHeroImage})` }}
