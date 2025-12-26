@@ -716,6 +716,9 @@ export const en = {
     editorialPicks: 'Editorial Picks',
     spotlight: 'Spotlight',
     crowdPush: 'Crowd Push',
+    searchPlaceholder: 'Search for artists or genres...',
+    loadingArtists: 'Loading artists...',
+    noArtistsFound: 'No artists found',
   },
   playlist: {
     create: 'Create Playlist',
