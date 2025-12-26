@@ -97,18 +97,13 @@ export default function Auth() {
     }
   };
 
-  // Check if email has an approved brand application
+  // Check if email has an approved brand application using RPC (bypasses RLS)
   const checkBrandApproval = async (userEmail: string): Promise<'approved' | 'pending' | 'rejected' | 'not_found'> => {
-    const { data } = await supabase
-      .from('brand_applications')
-      .select('status')
-      .eq('email', userEmail)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    const { data, error } = await supabase
+      .rpc('check_brand_application_status', { _email: userEmail });
     
-    if (!data) return 'not_found';
-    return data.status as 'approved' | 'pending' | 'rejected';
+    if (error || !data) return 'not_found';
+    return data as 'approved' | 'pending' | 'rejected';
   };
 
   const handleAuth = async (e: React.FormEvent) => {
