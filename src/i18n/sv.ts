@@ -819,7 +819,11 @@ export const sv = {
     signUpAsArtist: 'Skapa konto som artist istället',
     signUpAsFan: 'Skapa konto som fan istället',
     artistAccountCreated: 'Ditt artistkonto har skapats',
+    brandAccountCreated: 'Ditt varumärkeskonto har skapats',
     authenticationFailed: 'Autentisering misslyckades',
+    brandApplicationPending: 'Din varumärkesansökan väntar fortfarande på godkännande. Vänligen vänta på att vårt team granskar den.',
+    brandApplicationRejected: 'Din varumärkesansökan godkändes inte. Vänligen kontakta support för mer information.',
+    noBrandApplication: 'Ingen varumärkesansökan hittades för denna e-post. Vänligen ansök om varumärkesåtkomst först.',
   },
   empty: {
     noData: 'Ingen data tillgänglig',
