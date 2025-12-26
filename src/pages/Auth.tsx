@@ -169,14 +169,48 @@ export default function Auth() {
             navigate('/role-selection');
           }
         } else {
-          // User already has roles - redirect based on existing roles
-          // Priority: admin/super_admin > brand > artist > fan
+          // User already has roles
           const hasAdmin = roles.some(r => r.role === 'admin' || r.role === 'super_admin');
           const hasBrand = roles.some(r => r.role === 'brand');
           const hasArtist = roles.some(r => r.role === 'artist');
           const hasFan = roles.some(r => r.role === 'fan');
           
-          if (hasAdmin) {
+          // If mode=brand and user doesn't have brand role, check if they have approved application
+          if (mode === 'brand' && !hasBrand) {
+            const approvalStatus = await checkBrandApproval(email);
+            
+            if (approvalStatus === 'approved') {
+              // Add brand role to existing user
+              await supabase.from('user_roles').upsert({
+                user_id: data.user.id,
+                role: 'brand',
+              }, { onConflict: 'user_id,role', ignoreDuplicates: true });
+              
+              navigate('/brand/onboarding');
+              return;
+            } else if (approvalStatus === 'pending') {
+              toast.error(t('auth.brandApplicationPending'));
+              await supabase.auth.signOut();
+              return;
+            } else if (approvalStatus === 'rejected') {
+              toast.error(t('auth.brandApplicationRejected'));
+              await supabase.auth.signOut();
+              return;
+            } else {
+              toast.error(t('auth.noBrandApplication'));
+              await supabase.auth.signOut();
+              return;
+            }
+          }
+          
+          // If mode matches an existing role, go there
+          if (mode === 'brand' && hasBrand) {
+            navigate('/brand');
+          } else if (mode === 'artist' && hasArtist) {
+            navigate('/studio');
+          } else if (mode === 'fan' && hasFan) {
+            navigate('/fan');
+          } else if (hasAdmin) {
             navigate('/admin');
           } else if (hasBrand) {
             navigate('/brand');
