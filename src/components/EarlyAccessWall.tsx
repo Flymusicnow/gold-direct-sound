@@ -6,7 +6,6 @@ import { Music, Sparkles, TrendingUp, BarChart3, Mail, Headphones, Heart, Librar
 
 interface EarlyAccessWallProps {
   onCodeRedeemed: () => void;
-  userRole: 'artist' | 'fan' | 'brand' | null;
 }
 
 const artistBenefits = [
@@ -55,7 +54,7 @@ const fanBenefits = [
   }
 ];
 
-export function EarlyAccessWall({ onCodeRedeemed, userRole }: EarlyAccessWallProps) {
+export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
   const navigate = useNavigate();
 
   const handleCodeSuccess = () => {
@@ -64,9 +63,8 @@ export function EarlyAccessWall({ onCodeRedeemed, userRole }: EarlyAccessWallPro
     navigate('/role-selection');
   };
 
-  // Choose benefits based on user role (default to artist if unknown)
-  const benefits = userRole === 'fan' ? fanBenefits : artistBenefits;
-  const roleLabel = userRole === 'fan' ? 'Fan' : userRole === 'brand' ? 'Brand' : 'Artist';
+  // Show both artist and fan benefits since role is chosen later
+  const benefits = artistBenefits;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

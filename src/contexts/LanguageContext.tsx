@@ -29,6 +29,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     const storedLang = localStorage.getItem('preferred_language') as Language | null;
     if (storedLang && (storedLang === 'en' || storedLang === 'sv')) {
       setLanguageState(storedLang);
+    } else {
+      // Detect browser language on first visit
+      const browserLang = navigator.language.startsWith('sv') ? 'sv' : 'en';
+      setLanguageState(browserLang);
+      localStorage.setItem('preferred_language', browserLang);
     }
 
     // Set up auth listener

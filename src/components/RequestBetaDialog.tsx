@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, CheckCircle2 } from "lucide-react";
 
 interface RequestBetaDialogProps {
@@ -24,7 +23,6 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [userType, setUserType] = useState<"artist" | "fan" | "both">("fan");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -49,13 +47,12 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
         .insert({
           email: email.trim(),
           name: name.trim() || null,
-          user_type: userType,
+          user_type: "general",
           message: message.trim() || null,
         });
 
       if (error) {
         if (error.code === "23505") {
-          // Unique constraint violation
           toast({
             title: "Already registered",
             description: "This email is already on the waitlist",
@@ -84,11 +81,9 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset form after animation completes
     setTimeout(() => {
       setEmail("");
       setName("");
-      setUserType("fan");
       setMessage("");
       setSuccess(false);
     }, 300);
@@ -148,31 +143,6 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
               />
-            </div>
-
-            {/* User Type */}
-            <div className="space-y-2">
-              <Label>I'm interested as...</Label>
-              <RadioGroup value={userType} onValueChange={(value) => setUserType(value as any)} disabled={loading}>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="artist" id="artist" />
-                  <Label htmlFor="artist" className="font-normal cursor-pointer">
-                    An Artist
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fan" id="fan" />
-                  <Label htmlFor="fan" className="font-normal cursor-pointer">
-                    A Fan
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="both" id="both" />
-                  <Label htmlFor="both" className="font-normal cursor-pointer">
-                    Both Artist & Fan
-                  </Label>
-                </div>
-              </RadioGroup>
             </div>
 
             {/* Message */}
