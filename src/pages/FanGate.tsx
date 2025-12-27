@@ -38,16 +38,18 @@ export default function FanGate() {
   const isPreview = searchParams.get('preview') === '1';
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4">
-      {/* Full-screen background */}
-      <div className="absolute inset-0">
+    <div className="min-h-screen relative">
+      {/* Layer 0: Full-screen background - FIXED */}
+      <div className="fixed inset-0 z-0">
         <img
           src={fanHero}
           alt="Concert crowd"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="w-full h-full object-cover object-center"
         />
-        <div className="absolute inset-0 bg-black/70" />
       </div>
+
+      {/* Layer 1: Dark overlay - FIXED */}
+      <div className="fixed inset-0 z-[1] bg-black/60" />
 
       {/* Preview mode banner */}
       {isPreview && (
@@ -63,8 +65,9 @@ export default function FanGate() {
         </Link>
       </div>
 
-      {/* Main content */}
-      <div className={`relative z-10 w-full max-w-lg mx-auto space-y-8 ${isPreview ? 'pt-12' : ''}`}>
+      {/* Layer 2: Main content - relative with high z-index */}
+      <div className={`relative z-10 min-h-screen flex items-center justify-center p-4 ${isPreview ? 'pt-16' : ''}`}>
+      <div className="w-full max-w-lg mx-auto space-y-8">
         {/* Hero text */}
         <div className="text-center space-y-3">
           <h1 className="text-4xl md:text-5xl font-bold text-white">
@@ -76,7 +79,7 @@ export default function FanGate() {
         </div>
 
         {/* Primary CTA: Waitlist */}
-        <div className="bg-card/95 backdrop-blur-sm rounded-xl p-6 border border-border space-y-4">
+        <div className="bg-card rounded-xl p-6 border border-border space-y-4">
           <div>
             <h2 className="text-xl font-semibold text-foreground mb-1">
               Get Early Access
@@ -94,7 +97,7 @@ export default function FanGate() {
         </div>
 
         {/* Benefits */}
-        <div className="bg-card/80 backdrop-blur-sm rounded-xl p-6 border border-border">
+        <div className="bg-card rounded-xl p-6 border border-border">
           <h3 className="text-lg font-semibold text-foreground mb-4">
             Why FlyMusic?
           </h3>
@@ -127,6 +130,7 @@ export default function FanGate() {
             Already have an account? Sign in
           </Link>
         </div>
+      </div>
       </div>
     </div>
   );
