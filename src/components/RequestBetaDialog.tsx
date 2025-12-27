@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, Music, Heart } from "lucide-react";
 
 interface RequestBetaDialogProps {
   open: boolean;
@@ -23,6 +23,7 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"artist" | "fan" | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -39,6 +40,15 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
       return;
     }
 
+    if (!role) {
+      toast({
+        title: "Please select a role",
+        description: "Let us know if you're an artist or a fan",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -47,7 +57,7 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
         .insert({
           email: email.trim(),
           name: name.trim() || null,
-          user_type: "general",
+          user_type: role,
           message: message.trim() || null,
         });
 
@@ -84,6 +94,7 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
     setTimeout(() => {
       setEmail("");
       setName("");
+      setRole(null);
       setMessage("");
       setSuccess(false);
     }, 300);
@@ -143,6 +154,35 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
               />
+            </div>
+
+            {/* Role Selector */}
+            <div className="space-y-2">
+              <Label>
+                I am a... <span className="text-destructive">*</span>
+              </Label>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  type="button"
+                  variant={role === "artist" ? "default" : "outline"}
+                  onClick={() => setRole("artist")}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  <Music className="mr-2 h-4 w-4" />
+                  Artist
+                </Button>
+                <Button
+                  type="button"
+                  variant={role === "fan" ? "default" : "outline"}
+                  onClick={() => setRole("fan")}
+                  className="w-full"
+                  disabled={loading}
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  Fan
+                </Button>
+              </div>
             </div>
 
             {/* Message */}
