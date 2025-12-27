@@ -256,30 +256,16 @@ export function FlightdeckPlayer() {
 
   return (
     <>
-      {/* Desktop Queue Sidebar - with integrated player controls */}
+      {/* Desktop Queue Sidebar - shows queue list only */}
       <FlightdeckQueueSidebar 
         isOpen={queueOpen} 
         onClose={() => setQueueOpen(false)}
-        currentTime={currentTime}
-        duration={duration}
-        volume={volume}
-        isMuted={isMuted}
-        onSeek={handleSeek}
-        onVolumeChange={handleVolumeChange}
-        onToggleMute={toggleMute}
       />
       
-      {/* Mobile Queue Drawer - with integrated player controls */}
+      {/* Mobile Queue Drawer - shows queue list only */}
       <FlightdeckQueueDrawer 
         isOpen={queueOpen} 
         onClose={() => setQueueOpen(false)}
-        currentTime={currentTime}
-        duration={duration}
-        volume={volume}
-        isMuted={isMuted}
-        onSeek={handleSeek}
-        onVolumeChange={handleVolumeChange}
-        onToggleMute={toggleMute}
       />
 
       {/* Hidden media elements - always present */}
@@ -302,7 +288,7 @@ export function FlightdeckPlayer() {
       <div 
         ref={playerRef}
         className={cn(
-          "fixed bottom-16 md:bottom-0 left-0 right-0 z-[60] transition-all duration-300 pb-safe",
+          "fixed bottom-16 md:bottom-0 lg:bottom-0 left-0 right-0 z-[60] transition-all duration-300 pb-safe",
           queueOpen && "opacity-0 pointer-events-none translate-y-full"
         )}
         onMouseEnter={() => setIsHovered(true)}

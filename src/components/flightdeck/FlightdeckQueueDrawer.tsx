@@ -1,7 +1,6 @@
-import { useState, useRef, useEffect } from "react";
-import { GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { GripVertical, Music, Heart, X } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -134,40 +133,17 @@ function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueIt
 interface FlightdeckQueueDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  currentTime: number;
-  duration: number;
-  volume: number;
-  isMuted: boolean;
-  onSeek: (value: number[]) => void;
-  onVolumeChange: (value: number[]) => void;
-  onToggleMute: () => void;
 }
 
 export function FlightdeckQueueDrawer({ 
   isOpen, 
   onClose,
-  currentTime,
-  duration,
-  volume,
-  isMuted,
-  onSeek,
-  onVolumeChange,
-  onToggleMute,
 }: FlightdeckQueueDrawerProps) {
   const { 
     queue, 
     currentItem, 
-    currentIndex,
-    isPlaying,
-    shuffleEnabled,
-    repeatMode,
     reorderQueue, 
     clearQueue,
-    togglePlay,
-    playNext,
-    playPrev,
-    toggleShuffle,
-    cycleRepeat,
     removeFromQueue,
   } = useFlightdeck();
 
@@ -268,126 +244,30 @@ export function FlightdeckQueueDrawer({
             </div>
           </DrawerHeader>
 
-          {/* Now Playing Section - flex-shrink-0 to prevent compression */}
+          {/* Now Playing - Simple display */}
           {currentItem && (
-            <div className="flex-shrink-0 px-4 py-3 bg-gradient-to-b from-primary/5 to-transparent">
-              <div className="flex items-center gap-4 mb-3">
-                {/* Smaller Album Art */}
-                <Link to={`/artist/${currentItem.artistUserId}`} className="flex-shrink-0">
-                  {currentItem.coverUrl ? (
-                    <img
-                      src={currentItem.coverUrl}
-                      alt={currentItem.title}
-                      className="w-24 h-24 rounded-lg object-cover shadow-lg border border-primary/20"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 rounded-lg bg-muted flex items-center justify-center border border-border">
-                      <Music className="h-10 w-10 text-muted-foreground" />
-                    </div>
-                  )}
-                </Link>
-
-                {/* Track Info with Like */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-base truncate">{currentItem.title}</h3>
-                  <Link 
-                    to={`/artist/${currentItem.artistUserId}`}
-                    className="text-muted-foreground hover:text-primary transition-colors text-sm truncate block"
-                  >
-                    {currentItem.artistName}
-                  </Link>
-                </div>
-
-                {/* Like button for current item */}
-                {currentItem.type === 'track' && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleToggleLike(currentItem.id, currentItem.artistId)}
-                    className={cn("h-10 w-10", likedTracks[currentItem.id] && "text-red-500")}
-                  >
-                    <Heart className={cn("h-5 w-5", likedTracks[currentItem.id] && "fill-current")} />
-                  </Button>
+            <div className="flex-shrink-0 px-4 py-3 bg-primary/5 border-b border-border">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Now Playing</p>
+              <Link 
+                to={`/artist/${currentItem.artistUserId}`}
+                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+              >
+                {currentItem.coverUrl ? (
+                  <img
+                    src={currentItem.coverUrl}
+                    alt={currentItem.title}
+                    className="w-12 h-12 rounded object-cover border border-primary/20"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded bg-muted flex items-center justify-center border border-border">
+                    <Music className="h-5 w-5 text-muted-foreground" />
+                  </div>
                 )}
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-3">
-                <Slider
-                  value={[currentTime]}
-                  max={duration || 100}
-                  step={0.1}
-                  onValueChange={onSeek}
-                  className="cursor-pointer"
-                />
-                <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{currentItem.title}</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentItem.artistName}</p>
                 </div>
-              </div>
-
-              {/* Playback Controls with Shuffle & Repeat */}
-              <div className="flex items-center justify-center gap-2">
-                {/* Shuffle */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleShuffle}
-                  className={cn("h-10 w-10", shuffleEnabled && "text-primary")}
-                >
-                  <Shuffle className="h-5 w-5" />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={playPrev}
-                  disabled={currentIndex === 0}
-                  className="h-10 w-10"
-                >
-                  <SkipBack className="h-5 w-5" />
-                </Button>
-                <Button
-                  onClick={togglePlay}
-                  size="icon"
-                  className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90"
-                >
-                  {isPlaying ? <Pause className="h-7 w-7" /> : <Play className="h-7 w-7 ml-0.5" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={playNext}
-                  disabled={currentIndex === queue.length - 1 && repeatMode === 'off'}
-                  className="h-10 w-10"
-                >
-                  <SkipForward className="h-5 w-5" />
-                </Button>
-
-                {/* Repeat */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={cycleRepeat}
-                  className={cn("h-10 w-10", repeatMode !== 'off' && "text-primary")}
-                >
-                  {repeatMode === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
-                </Button>
-              </div>
-
-              {/* Volume inline */}
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-10 w-10">
-                  {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
-                </Button>
-                <Slider
-                  value={[isMuted ? 0 : volume]}
-                  max={1}
-                  step={0.01}
-                  onValueChange={onVolumeChange}
-                  className="w-24"
-                />
-              </div>
+              </Link>
             </div>
           )}
 
