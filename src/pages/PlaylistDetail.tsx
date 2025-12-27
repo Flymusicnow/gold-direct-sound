@@ -83,8 +83,7 @@ export default function PlaylistDetail() {
 
   const handlePlayTrack = (track: Track) => {
     const item = trackToFlightdeckItem(track);
-    const context = tracks.map(trackToFlightdeckItem);
-    playNow(item, context);
+    playNow(item);
   };
 
   useEffect(() => {

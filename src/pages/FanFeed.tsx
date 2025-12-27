@@ -92,8 +92,7 @@ export default function FanFeed() {
 
   const handlePlayTrack = (track: NewTrack) => {
     const item = trackToFlightdeckItem(track);
-    const context = newTracks.map(trackToFlightdeckItem);
-    playNow(item, context);
+    playNow(item);
   };
 
   const handleAddToQueue = (track: NewTrack) => {

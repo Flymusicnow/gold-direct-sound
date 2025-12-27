@@ -236,7 +236,6 @@ export function ContentOverlay({
                   isLiked={isLiked}
                   isFollowing={following}
                   hasVoted={hasVoted}
-                  contextItems={items}
                 />
               </div>
 

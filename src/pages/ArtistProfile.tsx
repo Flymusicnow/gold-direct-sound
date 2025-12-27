@@ -156,8 +156,7 @@ export default function ArtistProfile() {
   const handlePlayTrack = (track: Track) => {
     if (!artist) return;
     const item = trackToFlightdeckItem(track);
-    const context = tracks.map(trackToFlightdeckItem);
-    playNow(item, context);
+    playNow(item);
   };
 
   const handleAddToQueue = (track: Track) => {

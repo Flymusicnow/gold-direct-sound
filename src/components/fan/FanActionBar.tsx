@@ -15,7 +15,6 @@ interface FanActionBarProps {
   isLiked?: boolean;
   isFollowing?: boolean;
   hasVoted?: boolean;
-  contextItems?: FlightdeckItem[];
 }
 
 export function FanActionBar({
@@ -25,7 +24,6 @@ export function FanActionBar({
   isLiked = false,
   isFollowing = false,
   hasVoted = false,
-  contextItems,
 }: FanActionBarProps) {
   const { playNow, addToQueue } = useFlightdeck();
   const { liked, toggleLike } = useLikeTrack(item.id, item.artistId, isLiked);
@@ -60,7 +58,7 @@ export function FanActionBar({
           variant="default"
           size={variant === 'compact' ? 'icon' : 'default'}
           className={`${buttonClass} transition-all hover:scale-105 active:scale-95`}
-          onClick={() => playNow(item, contextItems)}
+          onClick={() => playNow(item)}
         >
           <Play className="h-4 w-4" />
           {showLabels && variant !== 'compact' && <span className="ml-2">Play Now</span>}
