@@ -62,8 +62,8 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     return <BetaLandingPage />;
   }
 
-  // If user doesn't have beta access, show the wall
-  if (hasBetaAccess === false) {
+  // If user doesn't have beta access, show the wall (defensive check for null/false)
+  if (hasBetaAccess !== true) {
     return <EarlyAccessWall onCodeRedeemed={refetch} userRole={primaryRole} />;
   }
 
