@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { X, GripVertical, Music, Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Heart, Shuffle, Repeat, Repeat1 } from "lucide-react";
+import { X, GripVertical, Music, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { cn } from "@/lib/utils";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -134,40 +133,17 @@ function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueIt
 interface FlightdeckQueueSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  currentTime: number;
-  duration: number;
-  volume: number;
-  isMuted: boolean;
-  onSeek: (value: number[]) => void;
-  onVolumeChange: (value: number[]) => void;
-  onToggleMute: () => void;
 }
 
 export function FlightdeckQueueSidebar({ 
   isOpen, 
   onClose,
-  currentTime,
-  duration,
-  volume,
-  isMuted,
-  onSeek,
-  onVolumeChange,
-  onToggleMute,
 }: FlightdeckQueueSidebarProps) {
   const { 
     queue, 
     currentItem, 
-    currentIndex,
-    isPlaying,
-    shuffleEnabled,
-    repeatMode,
     setQueue, 
     clearQueue,
-    togglePlay,
-    playNext,
-    playPrev,
-    toggleShuffle,
-    cycleRepeat,
     removeFromQueue,
   } = useFlightdeck();
 
@@ -242,12 +218,12 @@ export function FlightdeckQueueSidebar({
   if (!isOpen) return null;
 
   return (
-    <div className="hidden lg:flex fixed right-0 top-0 bottom-0 w-96 bg-card border-l border-border shadow-2xl z-[70] flex-col animate-fade-in">
+    <div className="hidden lg:flex fixed right-0 top-0 bottom-0 w-72 bg-card border-l border-border shadow-2xl z-[70] flex-col animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-lg">Now Playing</h2>
+            <h2 className="font-semibold text-lg">Queue</h2>
             <InfoTooltip
               title="Queue vs Play Now"
               description="'Add to Queue' adds tracks to your playback list without interrupting current track. 'Play Now' starts playing immediately."
@@ -259,124 +235,30 @@ export function FlightdeckQueueSidebar({
         </Button>
       </div>
 
-      {/* Now Playing Section */}
+      {/* Now Playing - Simple display */}
       {currentItem && (
-        <div className="p-6 border-b border-border bg-gradient-to-b from-primary/5 to-transparent">
-          {/* Album Art */}
-          <Link to={`/artist/${currentItem.artistUserId}`} className="block mb-4">
+        <div className="px-4 py-3 border-b border-border bg-primary/5">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Now Playing</p>
+          <Link 
+            to={`/artist/${currentItem.artistUserId}`}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             {currentItem.coverUrl ? (
               <img
                 src={currentItem.coverUrl}
                 alt={currentItem.title}
-                className="w-40 h-40 mx-auto rounded-lg object-cover shadow-lg border border-primary/20 hover:opacity-90 transition-opacity"
+                className="w-10 h-10 rounded object-cover border border-primary/20"
               />
             ) : (
-              <div className="w-40 h-40 mx-auto rounded-lg bg-muted flex items-center justify-center border border-border">
-                <Music className="h-16 w-16 text-muted-foreground" />
+              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center border border-border">
+                <Music className="h-4 w-4 text-muted-foreground" />
               </div>
             )}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-sm truncate">{currentItem.title}</p>
+              <p className="text-xs text-muted-foreground truncate">{currentItem.artistName}</p>
+            </div>
           </Link>
-
-          {/* Track Info with Like */}
-          <div className="text-center mb-4">
-            <div className="flex items-center justify-center gap-2">
-              <h3 className="font-bold text-lg truncate">{currentItem.title}</h3>
-              {currentItem.type === 'track' && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleToggleLike(currentItem.id, currentItem.artistId)}
-                  className={cn("h-8 w-8", likedTracks[currentItem.id] && "text-red-500")}
-                >
-                  <Heart className={cn("h-5 w-5", likedTracks[currentItem.id] && "fill-current")} />
-                </Button>
-              )}
-            </div>
-            <Link 
-              to={`/artist/${currentItem.artistUserId}`}
-              className="text-muted-foreground hover:text-primary transition-colors"
-            >
-              {currentItem.artistName}
-            </Link>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-4">
-            <Slider
-              value={[currentTime]}
-              max={duration || 100}
-              step={0.1}
-              onValueChange={onSeek}
-              className="cursor-pointer"
-            />
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
-            </div>
-          </div>
-
-          {/* Playback Controls with Shuffle & Repeat */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            {/* Shuffle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleShuffle}
-              className={cn("h-10 w-10", shuffleEnabled && "text-primary")}
-            >
-              <Shuffle className="h-5 w-5" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={playPrev}
-              disabled={currentIndex === 0}
-              className="h-10 w-10"
-            >
-              <SkipBack className="h-5 w-5" />
-            </Button>
-            <Button
-              onClick={togglePlay}
-              size="icon"
-              className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90"
-            >
-              {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={playNext}
-              disabled={currentIndex === queue.length - 1 && repeatMode === 'off'}
-              className="h-10 w-10"
-            >
-              <SkipForward className="h-5 w-5" />
-            </Button>
-
-            {/* Repeat */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={cycleRepeat}
-              className={cn("h-10 w-10", repeatMode !== 'off' && "text-primary")}
-            >
-              {repeatMode === 'one' ? <Repeat1 className="h-5 w-5" /> : <Repeat className="h-5 w-5" />}
-            </Button>
-          </div>
-
-          {/* Volume Control */}
-          <div className="flex items-center justify-center gap-3">
-            <Button variant="ghost" size="icon" onClick={onToggleMute} className="h-8 w-8">
-              {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </Button>
-            <Slider
-              value={[isMuted ? 0 : volume]}
-              max={1}
-              step={0.01}
-              onValueChange={onVolumeChange}
-              className="w-32"
-            />
-          </div>
         </div>
       )}
 
