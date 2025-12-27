@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
+import { consumeInviteToken } from "@/hooks/useFanInviteAccess";
 import fanHero from "@/assets/fan-hero-concert.png";
+
+const STORAGE_KEY = 'fan_invite_token';
 
 export default function JoinFan() {
   const { t } = useLanguage();
@@ -55,6 +58,12 @@ export default function JoinFan() {
           user_id: data.user.id,
           role: 'fan',
         });
+
+        // Consume invite token (mark as used)
+        const inviteToken = localStorage.getItem(STORAGE_KEY);
+        if (inviteToken) {
+          await consumeInviteToken(inviteToken);
+        }
 
         toast.success(t('auth.signUpSuccess'));
         navigate('/fan/onboarding');

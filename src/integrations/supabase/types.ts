@@ -1626,6 +1626,44 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_invite_sessions: {
+        Row: {
+          code_id: string | null
+          created_at: string | null
+          email: string | null
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          code_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          code_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_invite_sessions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fan_monthly_wraps: {
         Row: {
           artists_discovered: number | null
@@ -4393,6 +4431,7 @@ export type Database = {
             }
             Returns: string
           }
+      validate_fan_invite_code: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "artist" | "fan" | "brand" | "super_admin"
