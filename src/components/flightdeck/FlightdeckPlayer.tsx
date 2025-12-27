@@ -47,11 +47,15 @@ export function FlightdeckPlayer() {
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [queueOpen, setQueueOpen] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  // Default to minimized (compact pill) - full bar only when expanded
+  const [isMinimized, setIsMinimized] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
     return (localStorage.getItem('miniPlayerPosition') as MiniPlayerPosition) || 'bottom-right';
   });
+
+  // Calculate progress percentage for thin progress bar
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   // Swipe gesture state for mobile
   const touchStartY = useRef<number | null>(null);
@@ -483,115 +487,97 @@ export function FlightdeckPlayer() {
       </div>
       </div>
 
-      {/* Compact Mini-Player when minimized */}
+      {/* Sleek Compact Mini-Player Pill - Default state */}
       {isMinimized && currentItem && !queueOpen && (
         <div 
           ref={miniPlayerRef}
           className={cn(
-            "fixed z-[60] flex items-center gap-3 px-4 py-2.5 rounded-full bg-card border border-border shadow-xl animate-fade-in",
+            "fixed z-[60] group animate-fade-in",
             positionClasses[miniPlayerPosition]
           )}
           onTouchStart={handleMiniTouchStart}
           onTouchEnd={handleMiniTouchEnd}
         >
-          {/* Album Art - Clickable */}
-          <Link to={`/artist/${currentItem.artistUserId}`} className="hover:opacity-80 transition-opacity">
-            {currentItem.coverUrl && (
-              <img 
-                src={currentItem.coverUrl} 
-                alt={currentItem.title}
-                className="w-10 h-10 rounded-full object-cover border-2 border-primary/30 shadow-md" 
-              />
-            )}
-          </Link>
-          
-          {/* Track Info - Clickable */}
-          <Link to={`/artist/${currentItem.artistUserId}`} className="max-w-[120px] hidden sm:block hover:opacity-80 transition-opacity">
-            <p className="text-sm font-medium truncate text-foreground">{currentItem.title}</p>
-            <p className="text-xs text-muted-foreground truncate">{currentItem.artistName}</p>
-          </Link>
-          
-          {/* Play/Pause Button */}
-          <Button
-            size="sm"
-            onClick={togglePlay}
-            className="w-8 h-8 rounded-full bg-primary hover:bg-primary/90 p-0"
-          >
-            {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          
-          {/* Expand Button */}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => setIsMinimized(false)}
-            className="w-8 h-8 rounded-full p-0"
-          >
-            <ChevronUp className="h-4 w-4" />
-          </Button>
-          
-          {/* Position Settings */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-8 h-8 rounded-full p-0"
+          {/* Main pill container with overflow hidden for progress bar */}
+          <div className="relative bg-card/95 backdrop-blur-md border border-border rounded-full shadow-xl overflow-hidden">
+            {/* Thin progress indicator at bottom */}
+            <div 
+              className="absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-150"
+              style={{ width: `${progressPercent}%` }}
+            />
+            
+            <div className="flex items-center gap-2 px-2 py-1.5">
+              {/* Album Art with play state ring */}
+              <button 
+                onClick={() => setQueueOpen(true)}
+                className="relative flex-shrink-0 hover:scale-105 transition-transform"
               >
-                <Settings className="h-3.5 w-3.5" />
+                {currentItem.coverUrl ? (
+                  <img 
+                    src={currentItem.coverUrl} 
+                    alt={currentItem.title}
+                    className={cn(
+                      "w-8 h-8 rounded-full object-cover ring-2 transition-all",
+                      isPlaying ? "ring-primary ring-offset-1 ring-offset-card" : "ring-border"
+                    )}
+                  />
+                ) : (
+                  <div className={cn(
+                    "w-8 h-8 rounded-full bg-muted flex items-center justify-center ring-2 transition-all",
+                    isPlaying ? "ring-primary ring-offset-1 ring-offset-card" : "ring-border"
+                  )}>
+                    <Play className="h-3 w-3 text-muted-foreground" />
+                  </div>
+                )}
+                {/* Subtle pulse when playing */}
+                {isPlaying && (
+                  <div className="absolute inset-0 rounded-full ring-2 ring-primary/50 animate-ping opacity-30" />
+                )}
+              </button>
+              
+              {/* Track Info - Single line on mobile, two lines on desktop */}
+              <button 
+                onClick={() => setQueueOpen(true)}
+                className="min-w-0 text-left hover:opacity-80 transition-opacity"
+              >
+                <p className="text-xs font-medium truncate max-w-[100px] sm:max-w-[140px]">
+                  {currentItem.title}
+                  <span className="text-muted-foreground font-normal"> · {currentItem.artistName}</span>
+                </p>
+              </button>
+              
+              {/* Play/Pause Button */}
+              <Button
+                size="icon"
+                onClick={togglePlay}
+                className="w-7 h-7 rounded-full bg-primary hover:bg-primary/90 flex-shrink-0"
+              >
+                {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-44 p-3" side="top">
-              <p className="text-xs font-semibold mb-2 text-foreground">Mini Player Position</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                <Button
-                  size="sm"
-                  variant={miniPlayerPosition === 'top-left' ? 'default' : 'outline'}
-                  onClick={() => setMiniPlayerPosition('top-left')}
-                  className="text-xs h-8"
-                >
-                  ↖ Top Left
-                </Button>
-                <Button
-                  size="sm"
-                  variant={miniPlayerPosition === 'top-right' ? 'default' : 'outline'}
-                  onClick={() => setMiniPlayerPosition('top-right')}
-                  className="text-xs h-8"
-                >
-                  ↗ Top Right
-                </Button>
-                <Button
-                  size="sm"
-                  variant={miniPlayerPosition === 'bottom-left' ? 'default' : 'outline'}
-                  onClick={() => setMiniPlayerPosition('bottom-left')}
-                  className="text-xs h-8"
-                >
-                  ↙ Bottom Left
-                </Button>
-                <Button
-                  size="sm"
-                  variant={miniPlayerPosition === 'bottom-right' ? 'default' : 'outline'}
-                  onClick={() => setMiniPlayerPosition('bottom-right')}
-                  className="text-xs h-8"
-                >
-                  ↘ Bottom Right
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
-          
-          {/* Close Button */}
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setIsMinimized(false);
-              clearQueue();
-            }}
-            className="w-8 h-8 rounded-full p-0 text-muted-foreground hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+              
+              {/* Expand to full player - hidden by default, shows on hover/focus */}
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setIsMinimized(false)}
+                className="w-6 h-6 rounded-full opacity-0 group-hover:opacity-100 sm:opacity-100 transition-opacity flex-shrink-0"
+              >
+                <ChevronUp className="h-3.5 w-3.5" />
+              </Button>
+              
+              {/* Close Button - Desktop only, shows on hover */}
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  clearQueue();
+                }}
+                className="w-6 h-6 rounded-full hidden sm:flex opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground flex-shrink-0"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </>
