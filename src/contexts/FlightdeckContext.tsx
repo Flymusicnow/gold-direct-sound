@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface FlightdeckItem {
   id: string;
+  queueId?: string; // Unique ID for this queue entry (auto-generated when adding to queue)
   type: 'track' | 'video';
   title: string;
   artistId: string;
@@ -19,6 +20,10 @@ export interface FlightdeckItem {
   spotlightEntryId?: string;
   spotlightCampaignId?: string;
 }
+
+// Helper to generate unique queue ID
+const generateQueueId = (itemId: string) => 
+  `${itemId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export type RepeatMode = 'off' | 'all' | 'one';
 
@@ -88,20 +93,27 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     pauseAllVideos();
     
     if (context && context.length > 0) {
-      // Set entire queue from context
-      const itemIndex = context.findIndex(i => i.id === item.id);
-      setQueueState(context);
+      // Set entire queue from context, ensure all items have unique queueIds
+      const queueWithIds = context.map(i => ({
+        ...i,
+        queueId: i.queueId || generateQueueId(i.id),
+      }));
+      const itemIndex = queueWithIds.findIndex(i => i.id === item.id);
+      setQueueState(queueWithIds);
       setCurrentIndex(itemIndex >= 0 ? itemIndex : 0);
     } else {
       // Play single item, clear queue
-      setQueueState([item]);
+      const queueItem = { ...item, queueId: item.queueId || generateQueueId(item.id) };
+      setQueueState([queueItem]);
       setCurrentIndex(0);
     }
     setIsPlaying(true);
   }, [pauseAllVideos]);
 
   const addToQueue = useCallback((item: FlightdeckItem) => {
-    setQueueState(prev => [...prev, item]);
+    // Always generate a new queueId so the same track can be added multiple times
+    const queueItem = { ...item, queueId: generateQueueId(item.id) };
+    setQueueState(prev => [...prev, queueItem]);
   }, []);
 
   const playNext = useCallback(() => {
@@ -144,7 +156,12 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setQueue = useCallback((items: FlightdeckItem[], startIndex: number = 0) => {
-    setQueueState(items);
+    // Ensure all items have unique queueIds
+    const queueWithIds = items.map(i => ({
+      ...i,
+      queueId: i.queueId || generateQueueId(i.id),
+    }));
+    setQueueState(queueWithIds);
     setCurrentIndex(startIndex);
     setIsPlaying(true);
   }, []);
@@ -179,8 +196,12 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off');
   }, []);
 
-  const removeFromQueue = useCallback((itemId: string) => {
-    const index = queue.findIndex(item => item.id === itemId);
+  const removeFromQueue = useCallback((queueIdOrId: string) => {
+    // First try to find by queueId, then by id
+    let index = queue.findIndex(item => item.queueId === queueIdOrId);
+    if (index === -1) {
+      index = queue.findIndex(item => item.id === queueIdOrId);
+    }
     if (index === -1) return;
     
     // Don't allow removing current playing item
@@ -191,7 +212,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
       setCurrentIndex(prev => prev - 1);
     }
     
-    setQueueState(prev => prev.filter(item => item.id !== itemId));
+    setQueueState(prev => prev.filter((item, i) => i !== index));
   }, [queue, currentIndex]);
 
   return (
