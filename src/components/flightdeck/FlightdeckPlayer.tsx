@@ -46,12 +46,20 @@ export function FlightdeckPlayer() {
   const currentItemIdRef = useRef<string | null>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  // Default to minimized (compact pill) - full bar only when expanded
-  const [isMinimized, setIsMinimized] = useState(true);
+  // Desktop: always show full bar, never minimized. Mobile: can minimize.
+  const [isMinimized, setIsMinimized] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
     return (localStorage.getItem('miniPlayerPosition') as MiniPlayerPosition) || 'bottom-right';
   });
+
+  // Debug helper for queue/player state
+  const dbg = (...args: unknown[]) => console.log("[PLAYER/QUEUE DBG]", ...args);
+
+  // Debug queue state changes
+  useEffect(() => {
+    dbg("Queue open state changed:", queueOpen);
+  }, [queueOpen]);
 
   // Calculate progress percentage for thin progress bar
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -255,11 +263,13 @@ export function FlightdeckPlayer() {
 
   return (
     <>
-      {/* Mobile Queue Drawer - shows queue list only */}
-      <FlightdeckQueueDrawer 
-        isOpen={queueOpen} 
-        onClose={() => setQueueOpen(false)}
-      />
+      {/* Mobile Queue Drawer - shows queue list only (MOBILE ONLY) */}
+      {isMobile && (
+        <FlightdeckQueueDrawer 
+          isOpen={queueOpen} 
+          onClose={() => setQueueOpen(false)}
+        />
+      )}
 
       {/* Hidden media elements - always present */}
       <audio
@@ -277,12 +287,13 @@ export function FlightdeckPlayer() {
         style={{ display: 'none' }}
       />
 
-      {/* Main Player Bar - Hidden when queue is open */}
+      {/* Main Player Bar - Always visible on desktop, mobile hides when queue open */}
       <div 
         ref={playerRef}
         className={cn(
           "fixed bottom-16 md:bottom-0 lg:bottom-0 left-0 right-0 z-[60] transition-all duration-300 pb-safe",
-          queueOpen && "opacity-0 pointer-events-none translate-y-full"
+          // Only hide on mobile when queue is open, desktop always shows
+          isMobile && queueOpen && "opacity-0 pointer-events-none translate-y-full"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -452,8 +463,11 @@ export function FlightdeckPlayer() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setQueueOpen(!queueOpen)}
-              className="h-8 w-8"
+              onClick={() => {
+                dbg("Queue button clicked, current state:", queueOpen);
+                setQueueOpen(!queueOpen);
+              }}
+              className="h-8 w-8 relative z-[100]"
             >
               <List className="h-4 w-4" />
             </Button>
@@ -466,12 +480,12 @@ export function FlightdeckPlayer() {
       </div>
       </div>
 
-      {/* Sleek Compact Mini-Player Pill - Default state */}
+      {/* Sleek Compact Mini-Player Pill - MOBILE ONLY (lg:hidden) */}
       {isMinimized && currentItem && !queueOpen && (
         <div 
           ref={miniPlayerRef}
           className={cn(
-            "fixed z-[60] group animate-fade-in",
+            "fixed z-[60] group animate-fade-in lg:hidden",
             positionClasses[miniPlayerPosition]
           )}
           onTouchStart={handleMiniTouchStart}
