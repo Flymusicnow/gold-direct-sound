@@ -287,12 +287,36 @@ export function FlightdeckPlayer() {
         style={{ display: 'none' }}
       />
 
-      {/* Main Player Bar - Always visible on desktop, mobile hides when queue open */}
+      {/* Desktop Restore Button - shows when minimized on desktop */}
+      {isMinimized && currentItem && !isMobile && (
+        <button
+          onClick={() => {
+            dbg("Restore button clicked");
+            setIsMinimized(false);
+          }}
+          className={cn(
+            "fixed right-4 z-[9999]",
+            queueOpen ? "bottom-[100px]" : "bottom-4", // Above player area or near bottom
+            "flex items-center gap-2 px-4 py-2",
+            "bg-primary text-primary-foreground",
+            "rounded-full shadow-lg",
+            "hover:bg-primary/90 transition-all",
+            "animate-fade-in"
+          )}
+        >
+          <ChevronUp className="h-4 w-4" />
+          <span className="text-sm font-medium">Show Player</span>
+        </button>
+      )}
+
+      {/* Main Player Bar - FIXED at bottom, always visible on desktop */}
       <div 
         ref={playerRef}
         className={cn(
-          "fixed bottom-16 md:bottom-0 lg:bottom-0 left-0 right-0 z-[60] transition-all duration-300 pb-safe",
-          // Only hide on mobile when queue is open, desktop always shows
+          "fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300",
+          // Desktop: hide if minimized, otherwise always show
+          !isMobile && isMinimized && "opacity-0 pointer-events-none translate-y-full",
+          // Mobile: hide when queue is open
           isMobile && queueOpen && "opacity-0 pointer-events-none translate-y-full"
         )}
         onMouseEnter={() => setIsHovered(true)}
