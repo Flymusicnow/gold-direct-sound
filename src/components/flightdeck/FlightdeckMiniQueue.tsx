@@ -28,7 +28,7 @@ interface FlightdeckMiniQueueProps {
 
 function QueueItem({ item, isCurrent }: { item: FlightdeckItem; isCurrent: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
-    id: item.id,
+    id: item.queueId || item.id,
   });
 
   const style = {
@@ -84,8 +84,8 @@ export function FlightdeckMiniQueue({ isExpanded, onToggle }: FlightdeckMiniQueu
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = queue.findIndex((item) => item.id === active.id);
-      const newIndex = queue.findIndex((item) => item.id === over.id);
+      const oldIndex = queue.findIndex((item) => (item.queueId || item.id) === active.id);
+      const newIndex = queue.findIndex((item) => (item.queueId || item.id) === over.id);
 
       if (oldIndex !== -1 && newIndex !== -1) {
         const newQueue = arrayMove(queue, oldIndex, newIndex);
@@ -126,10 +126,10 @@ export function FlightdeckMiniQueue({ isExpanded, onToggle }: FlightdeckMiniQueu
               collisionDetection={closestCenter}
               onDragEnd={handleDragEnd}
             >
-              <SortableContext items={queue.map((item) => item.id)} strategy={verticalListSortingStrategy}>
+              <SortableContext items={queue.map((item) => item.queueId || item.id)} strategy={verticalListSortingStrategy}>
                 {queue.map((item) => (
                   <QueueItem
-                    key={item.id}
+                    key={item.queueId || item.id}
                     item={item}
                     isCurrent={currentItem?.id === item.id}
                   />
