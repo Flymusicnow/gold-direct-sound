@@ -9,13 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings, User, CreditCard, Bell, Loader2, Pencil, Check, X, Globe, Mail } from "lucide-react";
+import { Settings, User, CreditCard, Bell, Loader2, Pencil, Check, X, Globe, Mail, Music } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 export default function StudioSettings() {
   const isMobile = useIsMobile();
@@ -271,9 +272,19 @@ export default function StudioSettings() {
                 )}
               </div>
 
-              <div>
-                <label className="text-sm text-muted-foreground">Role</label>
-                <p className="font-medium capitalize">{profile?.role || "—"}</p>
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Music className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-muted-foreground">{t('settings.accountType')}</label>
+                    <p className="font-medium">{t('settings.accountTypeDescription')}</p>
+                  </div>
+                </div>
+                <Badge variant="secondary" className="capitalize">
+                  Artist
+                </Badge>
               </div>
             </CardContent>
           </Card>
