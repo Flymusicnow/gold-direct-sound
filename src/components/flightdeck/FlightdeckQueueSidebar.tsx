@@ -130,21 +130,15 @@ function QueueItem({ item, isCurrent, isLiked, onToggleLike, onRemove }: QueueIt
   );
 }
 
-interface FlightdeckQueueSidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function FlightdeckQueueSidebar({ 
-  isOpen, 
-  onClose,
-}: FlightdeckQueueSidebarProps) {
+export function FlightdeckQueueSidebar() {
   const { 
     queue, 
     currentItem, 
     setQueue, 
     clearQueue,
     removeFromQueue,
+    queueOpen,
+    setQueueOpen,
   } = useFlightdeck();
 
   const { user } = useAuth();
@@ -208,17 +202,11 @@ export function FlightdeckQueueSidebar({
     }
   };
 
-  const formatTime = (time: number) => {
-    if (!isFinite(time)) return '0:00';
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
-  if (!isOpen) return null;
+  // Hidden on mobile and when closed
+  if (!queueOpen) return null;
 
   return (
-    <div className="hidden lg:flex fixed right-0 top-0 bottom-0 w-72 bg-card border-l border-border shadow-2xl z-[70] flex-col animate-fade-in">
+    <div className="hidden lg:flex w-[380px] flex-shrink-0 bg-card border-l border-border flex-col h-full">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>
@@ -230,7 +218,7 @@ export function FlightdeckQueueSidebar({
             />
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={() => setQueueOpen(false)}>
           <X className="h-4 w-4" />
         </Button>
       </div>

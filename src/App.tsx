@@ -15,7 +15,7 @@ import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { ReproModeProvider } from "@/contexts/ReproModeContext";
 import { VerificationModeProvider } from "@/contexts/VerificationModeContext";
 import { NavigationWrapper } from "@/components/NavigationWrapper";
-import { FlightdeckPlayer } from "@/components/flightdeck/FlightdeckPlayer";
+import { FlightdeckLayout } from "@/components/flightdeck/FlightdeckLayout";
 import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
 import { VerificationBanner } from "@/components/verification/VerificationBanner";
 import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
@@ -177,6 +177,7 @@ const App = () => (
               <VideoPlaybackProvider>
                 <FlightdeckProvider>
                   <SwipeBackProvider>
+                  <FlightdeckLayout>
                   <NavigationWrapper />
                 <Routes>
             <Route path="/" element={<Home />} />
@@ -451,7 +452,7 @@ const App = () => (
             } />
             <Route path="*" element={<NotFound />} />
           </Routes>
-              <FlightdeckPlayer />
+              </FlightdeckLayout>
               </SwipeBackProvider>
             </FlightdeckProvider>
             </VideoPlaybackProvider>

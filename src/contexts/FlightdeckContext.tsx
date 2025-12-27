@@ -36,8 +36,10 @@ interface FlightdeckContextType {
   duration: number;
   shuffleEnabled: boolean;
   repeatMode: RepeatMode;
+  queueOpen: boolean;
+  setQueueOpen: (open: boolean) => void;
   // Actions
-  playNow: (item: FlightdeckItem, context?: FlightdeckItem[]) => void;
+  playNow: (item: FlightdeckItem) => void;
   addToQueue: (item: FlightdeckItem) => void;
   playNext: () => void;
   playPrev: () => void;
@@ -64,6 +66,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   const [duration, setDuration] = useState(0);
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>('off');
+  const [queueOpen, setQueueOpen] = useState(false);
   const { updateSupportScore } = useSupportScore();
   const lastPlayedRef = useRef<string | null>(null);
   const { pauseAllVideos } = useVideoPlayback();
@@ -88,25 +91,15 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     }
   }, [currentItem, isPlaying, updateSupportScore]);
 
-  const playNow = useCallback((item: FlightdeckItem, context?: FlightdeckItem[]) => {
+  // Single track only - no auto-queue from context
+  const playNow = useCallback((item: FlightdeckItem) => {
     // Pause all videos when Flightdeck starts playing
     pauseAllVideos();
     
-    if (context && context.length > 0) {
-      // Set entire queue from context, ensure all items have unique queueIds
-      const queueWithIds = context.map(i => ({
-        ...i,
-        queueId: i.queueId || generateQueueId(i.id),
-      }));
-      const itemIndex = queueWithIds.findIndex(i => i.id === item.id);
-      setQueueState(queueWithIds);
-      setCurrentIndex(itemIndex >= 0 ? itemIndex : 0);
-    } else {
-      // Play single item, clear queue
-      const queueItem = { ...item, queueId: item.queueId || generateQueueId(item.id) };
-      setQueueState([queueItem]);
-      setCurrentIndex(0);
-    }
+    // Play single item only - queue remains empty unless explicitly added
+    const queueItem = { ...item, queueId: item.queueId || generateQueueId(item.id) };
+    setQueueState([queueItem]);
+    setCurrentIndex(0);
     setIsPlaying(true);
   }, [pauseAllVideos]);
 
@@ -226,6 +219,8 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
         duration,
         shuffleEnabled,
         repeatMode,
+        queueOpen,
+        setQueueOpen,
         playNow,
         addToQueue,
         playNext,

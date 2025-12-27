@@ -2,12 +2,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings, Shuffle, Repeat, Repeat1, Smartphone } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Shuffle, Repeat, Repeat1, Smartphone } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
-import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
 import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -34,6 +32,8 @@ export function FlightdeckPlayer() {
     repeatMode,
     toggleShuffle,
     cycleRepeat,
+    queueOpen,
+    setQueueOpen,
   } = useFlightdeck();
   
   const { pauseAllVideos } = useVideoPlayback();
@@ -46,7 +46,6 @@ export function FlightdeckPlayer() {
   const currentItemIdRef = useRef<string | null>(null);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [queueOpen, setQueueOpen] = useState(false);
   // Default to minimized (compact pill) - full bar only when expanded
   const [isMinimized, setIsMinimized] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -256,12 +255,6 @@ export function FlightdeckPlayer() {
 
   return (
     <>
-      {/* Desktop Queue Sidebar - shows queue list only */}
-      <FlightdeckQueueSidebar 
-        isOpen={queueOpen} 
-        onClose={() => setQueueOpen(false)}
-      />
-      
       {/* Mobile Queue Drawer - shows queue list only */}
       <FlightdeckQueueDrawer 
         isOpen={queueOpen} 
