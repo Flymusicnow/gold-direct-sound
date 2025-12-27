@@ -251,7 +251,7 @@ export function FlightdeckQueueDrawer({
   return (
     <div className="lg:hidden">
       <Drawer open={isOpen} onOpenChange={onClose}>
-        <DrawerContent className="h-[85vh] flex flex-col z-[70]">
+        <DrawerContent className="h-[50vh] flex flex-col z-[70]">
           <DrawerHeader className="flex-shrink-0 border-b border-border pb-2">
             <div className="flex items-center justify-between">
               <DrawerTitle>Now Playing</DrawerTitle>
