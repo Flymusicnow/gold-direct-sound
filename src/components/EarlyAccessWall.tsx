@@ -2,34 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { Card } from "@/components/ui/card";
-import { Music, Sparkles, TrendingUp, BarChart3, Mail, Headphones, Heart, Library, Bell } from "lucide-react";
+import { Mail, Headphones, Heart, Library, Bell } from "lucide-react";
+import fanHero from "@/assets/fan-hero-concert.png";
 
 interface EarlyAccessWallProps {
   onCodeRedeemed: () => void;
 }
-
-const artistBenefits = [
-  {
-    icon: Music,
-    title: "Build Your Artist Profile",
-    description: "Create your professional portfolio with tracks, videos, and exclusive content."
-  },
-  {
-    icon: Sparkles,
-    title: "Join FlyMusic Spotlight",
-    description: "Compete in fan-driven campaigns and gain visibility with rising artists."
-  },
-  {
-    icon: TrendingUp,
-    title: "Grow Real Supporters",
-    description: "Connect directly with fans who support your music through engagement and subscriptions."
-  },
-  {
-    icon: BarChart3,
-    title: "Get Analytics & Feedback",
-    description: "Track your growth with detailed insights on plays, likes, followers, and earnings."
-  }
-];
 
 const fanBenefits = [
   {
@@ -63,12 +41,19 @@ export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
     navigate('/role-selection');
   };
 
-  // Show both artist and fan benefits since role is chosen later
-  const benefits = artistBenefits;
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl mx-auto">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Full-screen background */}
+      <div className="absolute inset-0">
+        <img
+          src={fanHero}
+          alt="Concert crowd"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-black/70" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-8 space-y-4">
           <div className="flex justify-center mb-6">
@@ -85,12 +70,12 @@ export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
         {/* Two Column Layout */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {/* Left: Why FlyMusic */}
-          <Card className="p-6 md:p-8 bg-card border-border">
+          <Card className="p-6 md:p-8 bg-card/95 backdrop-blur-sm border-border">
             <h2 className="text-2xl font-bold text-foreground mb-6">
               Why FlyMusic?
             </h2>
             <div className="space-y-5">
-              {benefits.map((benefit, index) => (
+              {fanBenefits.map((benefit, index) => (
                 <div key={index} className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <benefit.icon className="h-5 w-5 text-primary" />
@@ -107,7 +92,7 @@ export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
           </Card>
 
           {/* Right: Beta Code Input */}
-          <Card className="p-6 md:p-8 bg-card border-primary/20 border-2">
+          <Card className="p-6 md:p-8 bg-card/95 backdrop-blur-sm border-primary/20 border-2">
             <h2 className="text-2xl font-bold text-foreground mb-6">
               Have a Beta Code?
             </h2>
