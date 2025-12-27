@@ -4,26 +4,46 @@ import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 
-const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
-  { icon: User, label: "Profile", path: "/studio/profile" },
-  { icon: Music, label: "Tracks", path: "/studio/tracks" },
-  { icon: Video, label: "Videos", path: "/studio/videos" },
-  { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
-  { icon: FileText, label: "Press Kit", path: "/studio/presskit" },
-  { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities" },
-  { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
-  { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
-  { icon: Radio, label: "Live", path: "/studio/live" },
-  { icon: Calendar, label: "Events", path: "/studio/events" },
-  { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
-  { icon: Link2, label: "Promo Hub", path: "/studio/promo" },
-  { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
-  { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
-  { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
-  { icon: Crown, label: "Membership", path: "/studio/subscription" },
-  { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
-  { icon: Settings, label: "Settings", path: "/studio/settings" },
+const navSections = [
+  {
+    title: "Content",
+    items: [
+      { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
+      { icon: User, label: "Profile", path: "/studio/profile" },
+      { icon: Music, label: "Tracks", path: "/studio/tracks" },
+      { icon: Video, label: "Videos", path: "/studio/videos" },
+      { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
+      { icon: FileText, label: "Press Kit", path: "/studio/presskit" },
+    ]
+  },
+  {
+    title: "Distribution",
+    items: [
+      { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
+      { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
+      { icon: Radio, label: "Live", path: "/studio/live" },
+      { icon: Calendar, label: "Events", path: "/studio/events" },
+    ]
+  },
+  {
+    title: "Engagement",
+    items: [
+      { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
+      { icon: Link2, label: "Promo Hub", path: "/studio/promo" },
+      { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
+      { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
+      { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
+    ]
+  },
+  {
+    title: "Business",
+    items: [
+      { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities" },
+      { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
+      { icon: Crown, label: "Membership", path: "/studio/subscription" },
+      { icon: Settings, label: "Settings", path: "/studio/settings" },
+    ]
+  }
 ];
 
 export function StudioSidebar() {
@@ -45,26 +65,36 @@ export function StudioSidebar() {
       </div>
 
       <nav className="space-y-1">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const Icon = item.icon;
+        {navSections.map((section, sectionIndex) => (
+          <div key={section.title}>
+            {sectionIndex > 0 && (
+              <div className="my-3 border-t border-border/30" />
+            )}
+            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
+              {section.title}
+            </p>
+            {section.items.map((item) => {
+              const isActive = location.pathname === item.path;
+              const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
-                isActive
-                  ? "border-primary bg-primary/10 text-primary font-semibold shadow-sm"
-                  : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground hover:border-muted"
-              )}
-            >
-              <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                    isActive
+                      ? "border-primary bg-primary/10 text-primary font-semibold shadow-sm"
+                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground hover:border-muted"
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
     </aside>
   );
