@@ -206,7 +206,19 @@ export function FlightdeckQueueSidebar() {
   if (!queueOpen) return null;
 
   return (
-    <div className="hidden lg:flex w-[380px] flex-shrink-0 bg-card border-l border-border flex-col h-full">
+    <div 
+      className={cn(
+        // FIXED position - independent of scroll
+        "hidden lg:flex fixed",
+        "top-0 right-0 bottom-[88px]", // Sits above player (88px height)
+        "w-[400px]",
+        "bg-card border-l border-border",
+        "flex-col",
+        "z-[50]", // Below player (z-60) but above content
+        "transition-transform duration-300",
+        queueOpen ? "translate-x-0" : "translate-x-full"
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <div>

@@ -3,40 +3,43 @@ import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
 import { FlightdeckPlayer } from './FlightdeckPlayer';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface FlightdeckLayoutProps {
   children: ReactNode;
 }
 
 /**
- * FlightdeckLayout provides a Spotify-style layout:
- * - Main content compresses when queue sidebar opens
- * - Player bar stays fixed at bottom
- * - Queue sidebar pushes content (not overlay)
+ * FlightdeckLayout provides a professional app shell:
+ * - h-screen overflow-hidden (no body scroll)
+ * - Main content scrolls internally
+ * - Queue sidebar is FIXED position (independent of scroll)
+ * - Player bar is FIXED at bottom
  */
 export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
   const { queueOpen, currentItem } = useFlightdeck();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Main layout with sidebar */}
-      <div className="flex flex-1 w-full">
-        {/* Main content area - shrinks when queue opens */}
-        <div 
-          className={cn(
-            "flex-1 min-w-0 transition-all duration-300",
-            // Add padding at bottom for player when it's visible
-            currentItem && "pb-28 lg:pb-24"
-          )}
-        >
-          {children}
-        </div>
+    <div className="h-screen overflow-hidden flex flex-col">
+      {/* Main content area - scrolls internally */}
+      <main 
+        className={cn(
+          "flex-1 overflow-y-auto",
+          // Padding at bottom for fixed player (88px)
+          currentItem && "pb-[88px]",
+          // Desktop: squeeze content when queue opens (400px sidebar)
+          !isMobile && queueOpen && "lg:mr-[400px]"
+        )}
+        style={{ transition: 'margin-right 300ms ease' }}
+      >
+        {children}
+      </main>
 
-        {/* Desktop Queue Sidebar - part of layout flow, not overlay */}
-        <FlightdeckQueueSidebar />
-      </div>
+      {/* Queue Sidebar - FIXED position, not part of layout flow */}
+      <FlightdeckQueueSidebar />
 
-      {/* Player bar - fixed at very bottom */}
+      {/* Player Bar - FIXED at very bottom */}
       <FlightdeckPlayer />
     </div>
   );
