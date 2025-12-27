@@ -2,12 +2,13 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Settings, Shuffle, Repeat, Repeat1, Smartphone } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
 import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
 import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -29,6 +30,10 @@ export function FlightdeckPlayer() {
     queue,
     currentIndex,
     clearQueue,
+    shuffleEnabled,
+    repeatMode,
+    toggleShuffle,
+    cycleRepeat,
   } = useFlightdeck();
   
   const { pauseAllVideos } = useVideoPlayback();
@@ -354,12 +359,34 @@ export function FlightdeckPlayer() {
           </Link>
 
           {/* Playback Controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2">
+            {/* Shuffle Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleShuffle}
+                    className={cn(
+                      "h-8 w-8 hidden sm:flex",
+                      shuffleEnabled && "text-primary"
+                    )}
+                  >
+                    <Shuffle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{shuffleEnabled ? 'Shuffle On' : 'Shuffle Off'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
             <Button
               variant="ghost"
               size="icon"
               onClick={playPrev}
-              disabled={currentIndex === 0}
+              disabled={currentIndex === 0 && repeatMode !== 'all'}
             >
               <SkipBack className="h-5 w-5" />
             </Button>
@@ -374,16 +401,61 @@ export function FlightdeckPlayer() {
               variant="ghost"
               size="icon"
               onClick={playNext}
-              disabled={currentIndex === queue.length - 1}
+              disabled={currentIndex === queue.length - 1 && repeatMode !== 'all'}
             >
               <SkipForward className="h-5 w-5" />
             </Button>
+            
+            {/* Repeat Button */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={cycleRepeat}
+                    className={cn(
+                      "h-8 w-8 hidden sm:flex",
+                      repeatMode !== 'off' && "text-primary"
+                    )}
+                  >
+                    {repeatMode === 'one' ? (
+                      <Repeat1 className="h-4 w-4" />
+                    ) : (
+                      <Repeat className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {repeatMode === 'off' && 'Repeat Off'}
+                    {repeatMode === 'all' && 'Repeat All'}
+                    {repeatMode === 'one' && 'Repeat One'}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           {/* Volume and Queue */}
-          <div className="flex items-center gap-4 flex-1 justify-end">
+          <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
+            {/* Mobile Volume Message */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="sm:hidden flex items-center gap-1 text-muted-foreground">
+                    <Smartphone className="h-4 w-4" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-[200px]">
+                  <p className="text-xs">Use your device's volume buttons to control playback volume</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            {/* Desktop Volume Control */}
             <div className="hidden sm:flex items-center gap-2 bg-muted/30 rounded-lg px-3 py-2">
-              <Button variant="ghost" size="icon" onClick={toggleMute}>
+              <Button variant="ghost" size="icon" onClick={toggleMute} className="h-8 w-8">
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
               </Button>
               <Slider
@@ -391,7 +463,7 @@ export function FlightdeckPlayer() {
                 max={1}
                 step={0.01}
                 onValueChange={handleVolumeChange}
-                className="w-32"
+                className="w-24 lg:w-32"
               />
             </div>
             <Button
@@ -402,7 +474,7 @@ export function FlightdeckPlayer() {
             >
               <List className="h-4 w-4" />
             </Button>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
               <span>{currentIndex + 1}/{queue.length}</span>
             </div>
           </div>

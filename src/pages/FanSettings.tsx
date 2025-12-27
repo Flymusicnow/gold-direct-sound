@@ -12,11 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CreditCard, Camera, Loader2 } from "lucide-react";
+import { CreditCard, Camera, Loader2, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Badge } from "@/components/ui/badge";
 
 export default function FanSettings() {
   const { user, profile, refreshProfile } = useAuth();
@@ -128,6 +129,22 @@ export default function FanSettings() {
           
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold mb-8">{t('settings.accountSettings')}</h1>
+
+            {/* Account Type Section */}
+            <Card className="p-6 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <UserCircle className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold">{t('settings.accountType')}</h3>
+                  <p className="text-sm text-muted-foreground">{t('settings.accountTypeDescription')}</p>
+                </div>
+                <Badge variant="secondary" className="capitalize">
+                  Fan
+                </Badge>
+              </div>
+            </Card>
 
             <Card className="p-6 mb-6">
               {/* Profile Picture Upload */}
