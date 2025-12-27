@@ -137,6 +137,7 @@ import BrandInbox from "./pages/brand/BrandInbox";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
+import { ScrollToTop } from "@/components/ScrollToTop";
 
 const queryClient = new QueryClient();
 
@@ -148,6 +149,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <RouteHistoryProvider>
         <ReproModeProvider>
         <AuthProvider>
