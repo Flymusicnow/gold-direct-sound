@@ -114,6 +114,7 @@ import TopArtists from "./pages/TopArtists";
 import NotFound from "./pages/NotFound";
 import RoleSelection from "./pages/RoleSelection";
 import Changelog from "./pages/Changelog";
+import FanGate from "./pages/FanGate";
 import StudioVerification from "./pages/studio/StudioVerification";
 import AdminVerifications from "./pages/admin/AdminVerifications";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
@@ -169,6 +170,7 @@ const App = () => (
             <Route path="/explore" element={<Explore />} />
             <Route path="/search" element={<Search />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/fan" element={<FanGate />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />

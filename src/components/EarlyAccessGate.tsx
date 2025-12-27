@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBetaAccess } from "@/hooks/useBetaAccess";
+import { useFanInviteAccess } from "@/hooks/useFanInviteAccess";
 import { EarlyAccessWall } from "./EarlyAccessWall";
 import { BetaLandingPage } from "./BetaLandingPage";
 
@@ -24,22 +25,54 @@ const PUBLIC_ROUTES = [
   '/changelog',
   '/trust',
   '/brands',
+  '/fan',
 ];
+
+// Fan invite-only routes
+const FAN_INVITE_ROUTES = ['/join/fan', '/signin/fan'];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   // ALL hooks must be called at the top, before any early returns
-  const { user, loading: authLoading, hasRole } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { hasBetaAccess, loading: betaLoading, refetch } = useBetaAccess();
+  const { hasInviteAccess, loading: inviteLoading } = useFanInviteAccess();
   const location = useLocation();
-
 
   // Check if current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
     location.pathname === route || location.pathname.startsWith('/auth')
   );
 
+  // Check if current route is a fan invite-only route
+  const isFanInviteRoute = FAN_INVITE_ROUTES.some(route => 
+    location.pathname === route
+  );
+
   // Allow public routes without gate
   if (isPublicRoute) {
+    return <>{children}</>;
+  }
+
+  // Handle fan invite-only routes (/join/fan, /signin/fan)
+  if (isFanInviteRoute) {
+    // Show loading while checking invite access
+    if (inviteLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center space-y-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground">Checking access...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // If no invite access, redirect to /fan
+    if (!hasInviteAccess) {
+      return <Navigate to="/fan" replace />;
+    }
+
+    // Has invite access - allow through
     return <>{children}</>;
   }
 
