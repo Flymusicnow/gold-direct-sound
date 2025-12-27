@@ -572,6 +572,18 @@ export const sv = {
     wrappedComingSoonDescription: 'Dina månatliga musiksammanfattningar är på väg!',
     noWrapsYet: 'Inga Wraps ännu',
     noWrapsYetDescription: 'Din första FlyWrapped genereras i slutet av månaden!',
+    // How to earn support points
+    howToEarnSupportPoints: 'Så tjänar du Support Points',
+    likeTracks: 'Gilla låtar',
+    likePointsValue: '+1 poäng per gillning',
+    playMusic: 'Spela musik',
+    playPointsValue: '+0.1 poäng per spelning',
+    comment: 'Kommentera',
+    commentPointsValue: '+2 poäng per kommentar',
+    voteInSpotlight: 'Rösta i Spotlight',
+    votePointsValue: '+3 poäng per röst',
+    share: 'Dela',
+    sharePointsValue: '+5 poäng per delning',
   },
   studio: {
     dashboard: 'Översikt',

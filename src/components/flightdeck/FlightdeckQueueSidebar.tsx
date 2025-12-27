@@ -284,7 +284,7 @@ export function FlightdeckQueueSidebar() {
 
       {/* Queue List */}
       <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
+        <div className="p-3 pb-8 space-y-2">
           {queue.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Music className="h-10 w-10 text-muted-foreground/50 mb-3" />
