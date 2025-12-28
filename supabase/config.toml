@@ -50,3 +50,6 @@ verify_jwt = true
 
 [functions.validate-invite-code]
 verify_jwt = false
+
+[functions.send-beta-invites]
+verify_jwt = true
