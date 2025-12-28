@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
-import { Headphones, Heart, Library, Bell, Sparkles } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { Headphones, Heart, Library, Bell, Sparkles, ArrowLeft } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
@@ -36,6 +36,7 @@ const fanBenefits = [
 ];
 
 export default function FanGate() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const reason = searchParams.get('reason');
@@ -72,7 +73,13 @@ export default function FanGate() {
       )}
 
       {/* Header */}
-      <div className="absolute top-6 left-6 z-20">
+      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="text-white/70 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <Link to="/">
           <FlyMusicLogo size="sm" />
         </Link>
