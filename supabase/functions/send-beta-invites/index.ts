@@ -322,8 +322,8 @@ serve(async (req) => {
           continue;
         }
 
-        // Build invite link
-        const inviteLink = `${baseUrl}/invite/${code}`;
+        // Build invite link with role and code params
+        const inviteLink = `${baseUrl}/early-access?role=${role}&code=${code}`;
 
         // Send email
         const subject = role === "artist" 
