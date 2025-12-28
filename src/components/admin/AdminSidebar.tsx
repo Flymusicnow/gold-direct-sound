@@ -7,6 +7,7 @@ import {
   Star,
   KeyRound,
   Flag,
+  Mail,
   Building2,
   Handshake,
   Activity,
@@ -63,6 +64,7 @@ const navSections = [
     title: "System",
     items: [
       { title: "Beta Codes", url: "/admin/beta-codes", icon: KeyRound },
+      { title: "Waitlist", url: "/admin/waitlist", icon: Mail },
       { title: "Feature Flags", url: "/admin/features", icon: Flag },
       { title: "Activity Log", url: "/admin/activity", icon: Activity },
       { title: "Payouts", url: "/admin/payouts", icon: CreditCard },
