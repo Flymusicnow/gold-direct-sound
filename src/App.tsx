@@ -169,7 +169,7 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/top-artists" element={<TopArtists />} />
             <Route path="/explore" element={<Explore />} />
-            <Route path="/search" element={<Search />} />
+            
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/fan" element={<FanGate />} />
             <Route path="/principles" element={<PrinciplesPage />} />
@@ -186,6 +186,7 @@ const App = () => (
                   <NavigationWrapper />
                 <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
