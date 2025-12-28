@@ -1,17 +1,30 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Music, Users, Zap, Mic2, Heart } from "lucide-react";
+import { Music, Users, Zap, Mic2, Heart, Key } from "lucide-react";
 import heroImage from "@/assets/hero-music.jpg";
 import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppMode } from "@/hooks/useAppMode";
+import { InviteCodeUnlock } from "@/components/fan/InviteCodeUnlock";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Home() {
   const navigate = useNavigate();
   const { user, userRoles, loading: authLoading } = useAuth();
+  const { mode, loading: modeLoading } = useAppMode();
   const [stats, setStats] = useState({ artists: 0, tracks: 0, fans: 0 });
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  
+  const isPrivateBeta = mode === 'PRIVATE_BETA';
 
   // Redirect logged-in users to their respective dashboards
   useEffect(() => {
@@ -96,32 +109,54 @@ export default function Home() {
               Explore Artists
             </Button>
             
-            {/* Two-track entry with visual distinction */}
-            <div className="flex flex-col sm:flex-row gap-4 mt-4">
-              {/* Artist Track - Premium animated gold ticket */}
-              <div className="gold-particle-aura">
-                <div 
-                  className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
-                  onClick={() => navigate('/auth?mode=artist')}
+            {/* Conditional CTAs based on app mode */}
+            {isPrivateBeta ? (
+              // PRIVATE_BETA: Show beta access paths
+              <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                <Button 
+                  variant="outline" 
+                  className="border-primary text-primary hover:bg-primary/10"
+                  onClick={() => navigate('/beta')}
                 >
-                  <Mic2 className="h-8 w-8 text-primary mb-2" />
-                  <span className="font-semibold text-primary text-lg">I'm an Artist</span>
-                  <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
+                  Request Beta Access
+                </Button>
+                <Button 
+                  variant="ghost"
+                  className="text-white/80 hover:text-white hover:bg-white/10"
+                  onClick={() => setShowInviteModal(true)}
+                >
+                  <Key className="h-4 w-4 mr-2" />
+                  Enter Invite Code
+                </Button>
+              </div>
+            ) : (
+              // PUBLIC_AUTH: Show normal auth buttons
+              <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                {/* Artist Track - Premium animated gold ticket */}
+                <div className="gold-particle-aura">
+                  <div 
+                    className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
+                    onClick={() => navigate('/auth?mode=artist')}
+                  >
+                    <Mic2 className="h-8 w-8 text-primary mb-2" />
+                    <span className="font-semibold text-primary text-lg">I'm an Artist</span>
+                    <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
+                  </div>
+                </div>
+                
+                {/* Fan Track - Premium animated gold ticket with sequential delay */}
+                <div className="gold-particle-aura particle-delay-sequential">
+                  <div 
+                    className="ticket-gold-animated shimmer-delay-sequential flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
+                    onClick={() => navigate('/auth?mode=fan')}
+                  >
+                    <Heart className="h-8 w-8 text-foreground/70 mb-2" />
+                    <span className="font-semibold text-lg">I'm a Fan</span>
+                    <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Fan Track - Premium animated gold ticket with sequential delay */}
-              <div className="gold-particle-aura particle-delay-sequential">
-                <div 
-                  className="ticket-gold-animated shimmer-delay-sequential flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
-                  onClick={() => navigate('/auth?mode=fan')}
-                >
-                  <Heart className="h-8 w-8 text-foreground/70 mb-2" />
-                  <span className="font-semibold text-lg">I'm a Fan</span>
-                  <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -205,14 +240,26 @@ export default function Home() {
           <Button 
             size="lg" 
             className="bg-gradient-gold text-lg px-8"
-            onClick={() => navigate('/auth')}
+            onClick={() => isPrivateBeta ? navigate('/beta') : navigate('/auth')}
           >
-            Get Started Now
+            {isPrivateBeta ? 'Request Beta Access' : 'Get Started Now'}
           </Button>
         </div>
       </section>
 
       <Footer />
+
+      {/* Invite Code Modal */}
+      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Enter Invite Code</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <InviteCodeUnlock />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
