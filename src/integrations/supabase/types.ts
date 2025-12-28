@@ -950,11 +950,63 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          email: string
+          id: string
+          last_error: string | null
+          redeemed_at: string | null
+          role: string
+          sent_at: string | null
+          status: string
+          waitlist_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          email: string
+          id?: string
+          last_error?: string | null
+          redeemed_at?: string | null
+          role: string
+          sent_at?: string | null
+          status?: string
+          waitlist_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          email?: string
+          id?: string
+          last_error?: string | null
+          redeemed_at?: string | null
+          role?: string
+          sent_at?: string | null
+          status?: string
+          waitlist_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "beta_invites_waitlist_id_fkey"
+            columns: ["waitlist_id"]
+            isOneToOne: false
+            referencedRelation: "beta_waitlist"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       beta_waitlist: {
         Row: {
           created_at: string
           email: string
           id: string
+          invited_at: string | null
+          invited_by: string | null
           message: string | null
           name: string | null
           status: string
@@ -964,6 +1016,8 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           message?: string | null
           name?: string | null
           status?: string
@@ -973,6 +1027,8 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          invited_at?: string | null
+          invited_by?: string | null
           message?: string | null
           name?: string | null
           status?: string
