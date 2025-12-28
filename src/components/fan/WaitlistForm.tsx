@@ -9,11 +9,12 @@ import { toast } from 'sonner';
 
 interface WaitlistFormProps {
   disabled?: boolean;
+  defaultArtist?: boolean;
 }
 
-export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
+export function WaitlistForm({ disabled = false, defaultArtist = false }: WaitlistFormProps) {
   const [email, setEmail] = useState('');
-  const [isArtist, setIsArtist] = useState(false);
+  const [isArtist, setIsArtist] = useState(defaultArtist);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
