@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Mail, Check, Loader2 } from 'lucide-react';
+import { Mail, Check, Loader2, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -11,6 +13,7 @@ interface WaitlistFormProps {
 
 export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
   const [email, setEmail] = useState('');
+  const [isArtist, setIsArtist] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -44,12 +47,12 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
         return;
       }
 
-      // Add to waitlist
+      // Add to waitlist with user_type based on checkbox
       const { error } = await supabase
         .from('beta_waitlist')
         .insert({
           email: trimmedEmail,
-          user_type: 'fan',
+          user_type: isArtist ? 'artist' : 'fan',
           status: 'pending'
         });
 
@@ -84,7 +87,7 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -108,6 +111,24 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
           )}
         </Button>
       </div>
+
+      {/* Artist/creator micro-signal checkbox */}
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="is-artist"
+          checked={isArtist}
+          onCheckedChange={(checked) => setIsArtist(checked === true)}
+          disabled={loading || disabled}
+        />
+        <Label 
+          htmlFor="is-artist" 
+          className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5"
+        >
+          <Music className="h-3.5 w-3.5" />
+          I'm an artist or creator
+        </Label>
+      </div>
+
       <p className="text-xs text-muted-foreground">
         We'll notify you when we're ready to welcome you.
       </p>

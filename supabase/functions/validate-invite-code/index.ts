@@ -47,18 +47,34 @@ serve(async (req) => {
       );
     }
 
+    // Look up the invite to get the role
+    let role = 'fan'; // default
+    const { data: inviteData } = await supabase
+      .from('beta_invites')
+      .select('role')
+      .eq('code', code.trim().toUpperCase())
+      .maybeSingle();
+    
+    if (inviteData?.role) {
+      role = inviteData.role;
+    }
+
     // Build response with httpOnly cookie
     const expiresAt = new Date(data.expires_at);
     const cookieHeader = `fan_invite_token=${data.token}; HttpOnly; Secure; SameSite=Strict; Path=/; Expires=${expiresAt.toUTCString()}`;
 
-    console.log('Invite code validated successfully:', { token: data.token.substring(0, 8) + '...' });
+    console.log('Invite code validated successfully:', { 
+      token: data.token.substring(0, 8) + '...', 
+      role 
+    });
 
     return new Response(
       JSON.stringify({
         valid: true,
         token: data.token,
         expires_at: data.expires_at,
-        badge_name: data.badge_name
+        badge_name: data.badge_name,
+        role: role
       }),
       {
         status: 200,
