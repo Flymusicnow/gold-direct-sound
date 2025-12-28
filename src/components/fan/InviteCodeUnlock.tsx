@@ -58,8 +58,10 @@ export function InviteCodeUnlock({ disabled = false }: InviteCodeUnlockProps) {
 
       toast.success('Invite code accepted!');
       
-      // Redirect to join page
-      navigate('/join/fan');
+      // Redirect based on invite role (default to fan)
+      const role = data.role || 'fan';
+      const redirectPath = role === 'artist' ? '/join/artist' : '/join/fan';
+      navigate(redirectPath);
     } catch (err) {
       console.error('Error validating code:', err);
       setError('Something went wrong. Please try again.');

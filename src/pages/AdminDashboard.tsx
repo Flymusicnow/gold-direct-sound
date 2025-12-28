@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Check, X, Users, Music, Star, Activity } from "lucide-react";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AppModeToggle } from "@/components/admin/AppModeToggle";
 
 interface PendingArtist {
   id: string;
@@ -113,6 +114,11 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title={t('admin.dashboard')} description={t('admin.platformOverview')}>
+      {/* App Mode Toggle */}
+      <div className="mb-8">
+        <AppModeToggle />
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate("/admin/users")}>

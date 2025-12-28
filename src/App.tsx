@@ -137,6 +137,7 @@ import BrandSettings from "./pages/brand/BrandSettings";
 import BrandAnalytics from "./pages/brand/BrandAnalytics";
 import BrandInbox from "./pages/brand/BrandInbox";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PrivateBetaGate } from "@/components/PrivateBetaGate";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
 import { ScrollToTop } from "@/components/ScrollToTop";
@@ -191,11 +192,27 @@ const App = () => (
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/join/artist" element={<JoinArtist />} />
-            <Route path="/join/fan" element={<JoinFan />} />
+            <Route path="/join/artist" element={
+              <PrivateBetaGate routeRole="artist">
+                <JoinArtist />
+              </PrivateBetaGate>
+            } />
+            <Route path="/join/fan" element={
+              <PrivateBetaGate routeRole="fan">
+                <JoinFan />
+              </PrivateBetaGate>
+            } />
             <Route path="/join/brand" element={<JoinBrand />} />
-            <Route path="/signin/artist" element={<SignInArtist />} />
-            <Route path="/signin/fan" element={<SignInFan />} />
+            <Route path="/signin/artist" element={
+              <PrivateBetaGate routeRole="artist">
+                <SignInArtist />
+              </PrivateBetaGate>
+            } />
+            <Route path="/signin/fan" element={
+              <PrivateBetaGate routeRole="fan">
+                <SignInFan />
+              </PrivateBetaGate>
+            } />
             <Route path="/signin/brand" element={<SignInBrand />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
