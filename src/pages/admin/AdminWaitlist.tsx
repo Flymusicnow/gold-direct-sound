@@ -243,6 +243,7 @@ export default function AdminWaitlist() {
 
   return (
     <AdminLayout title="Waitlist" description="View and manage beta waitlist signups">
+      <Badge variant="outline" className="mb-4 bg-yellow-500/20 text-yellow-600 border-yellow-500">BUILD 20251228</Badge>
       <div className="space-y-6">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
