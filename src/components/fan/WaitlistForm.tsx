@@ -34,20 +34,7 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
     setLoading(true);
 
     try {
-      // Check if already on waitlist
-      const { data: existing } = await supabase
-        .from('beta_waitlist')
-        .select('id, status')
-        .eq('email', trimmedEmail)
-        .maybeSingle();
-
-      if (existing) {
-        setSuccess(true);
-        toast.success("You're already on the list!");
-        return;
-      }
-
-      // Add to waitlist with user_type based on checkbox
+      // Attempt INSERT directly - no SELECT check needed (anon can't read anyway)
       const { error } = await supabase
         .from('beta_waitlist')
         .insert({
@@ -57,6 +44,13 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
         });
 
       if (error) {
+        // Handle duplicate key error (23505) as success
+        if (error.code === '23505') {
+          setSuccess(true);
+          toast.success("You're already on the list!");
+          return;
+        }
+        
         console.error('Waitlist error:', error);
         toast.error('Something went wrong. Please try again.');
         return;
