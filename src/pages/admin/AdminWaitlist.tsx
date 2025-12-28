@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import { Mail, Users } from 'lucide-react';
+import { Loader2, Mail, Users } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface WaitlistEntry {
   id: string;
@@ -23,6 +25,7 @@ export default function AdminWaitlist() {
   const [entries, setEntries] = useState<WaitlistEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchWaitlist();
@@ -47,6 +50,27 @@ export default function AdminWaitlist() {
       setEntries(data || []);
     }
     setLoading(false);
+  };
+
+  const updateEntryStatus = async (id: string, newStatus: 'contacted' | 'approved') => {
+    setActionLoading(id);
+    
+    const { error } = await supabase
+      .from('beta_waitlist')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      toast.error('Failed to update status');
+      console.error('Update error:', error);
+    } else {
+      toast.success(`Status updated to ${newStatus}`);
+      setEntries(prev => 
+        prev.map(e => e.id === id ? { ...e, status: newStatus } : e)
+      );
+    }
+    
+    setActionLoading(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -137,6 +161,7 @@ export default function AdminWaitlist() {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Signed Up</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -148,11 +173,12 @@ export default function AdminWaitlist() {
                       <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                     </TableRow>
                   ))
                 ) : entries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No waitlist entries found
                     </TableCell>
                   </TableRow>
@@ -165,6 +191,39 @@ export default function AdminWaitlist() {
                       <TableCell>{getStatusBadge(entry.status)}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                      </TableCell>
+                      <TableCell>
+                        {entry.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateEntryStatus(entry.id, 'contacted')}
+                              disabled={actionLoading === entry.id}
+                            >
+                              {actionLoading === entry.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Contacted'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => updateEntryStatus(entry.id, 'approved')}
+                              disabled={actionLoading === entry.id}
+                            >
+                              {actionLoading === entry.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Approve'}
+                            </Button>
+                          </div>
+                        )}
+                        {entry.status === 'contacted' && (
+                          <Button
+                            size="sm"
+                            onClick={() => updateEntryStatus(entry.id, 'approved')}
+                            disabled={actionLoading === entry.id}
+                          >
+                            {actionLoading === entry.id ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Approve'}
+                          </Button>
+                        )}
+                        {entry.status === 'approved' && (
+                          <Badge variant="default" className="bg-green-600">Approved</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
