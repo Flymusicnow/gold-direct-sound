@@ -85,6 +85,7 @@ import AdminInbox from "./pages/admin/AdminInbox";
 import AdminInboxDetail from "./pages/admin/AdminInboxDetail";
 import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
 import AdminOpportunities from "./pages/admin/AdminOpportunities";
+import AdminWaitlist from "./pages/admin/AdminWaitlist";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
@@ -344,6 +345,7 @@ const App = () => (
             <Route path="/admin/inbox" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInbox /></ProtectedRoute>} />
             <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
             <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
+            <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />

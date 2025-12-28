@@ -179,6 +179,7 @@ export const adminNavConfig: NavConfig = {
       title: "Platform",
       items: [
         { icon: Users, label: "Users", path: "/admin/users", i18nKey: "admin.users" },
+        { icon: Users, label: "Waitlist", path: "/admin/waitlist", i18nKey: "admin.waitlist" },
         { icon: KeyRound, label: "Beta Codes", path: "/admin/beta-codes", i18nKey: "admin.betaCodes" },
         { icon: Flag, label: "Feature Flags", path: "/admin/features", i18nKey: "admin.featureFlags" },
         { icon: Building2, label: "Collab Entities", path: "/admin/collab-entities", i18nKey: "admin.collabEntities" },
