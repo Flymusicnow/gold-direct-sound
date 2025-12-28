@@ -85,6 +85,27 @@ export type Database = {
           },
         ]
       }
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       artist_achievements: {
         Row: {
           achievement_type: string
@@ -4297,6 +4318,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: string
       }
+      get_app_mode: { Args: never; Returns: string }
       get_for_you_feed: {
         Args: { _limit?: number; _offset?: number; _user_id: string }
         Returns: {
@@ -4455,6 +4477,7 @@ export type Database = {
         Args: { _code: string; _user_id: string }
         Returns: Json
       }
+      set_app_mode: { Args: { _mode: string }; Returns: boolean }
       update_taste_profile: {
         Args: {
           _artist_id: string
