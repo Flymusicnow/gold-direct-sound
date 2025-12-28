@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Headphones, Heart, Library, Bell, Sparkles } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
+import { toast } from 'sonner';
 import fanHero from '@/assets/fan-hero-concert.png';
 
 const fanBenefits = [
@@ -34,8 +36,19 @@ const fanBenefits = [
 ];
 
 export default function FanGate() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
+  const reason = searchParams.get('reason');
+
+  // Show toast when redirected from /signin/fan without invite access
+  useEffect(() => {
+    if (reason === 'invite-required') {
+      toast.info('Sign in is invite-only. Enter an invite code to continue.');
+      // Clear the param to prevent repeat toasts on refresh
+      searchParams.delete('reason');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [reason, searchParams, setSearchParams]);
 
   return (
     <div className="min-h-screen relative">

@@ -50,7 +50,7 @@ export function WaitlistForm({ disabled = false }: WaitlistFormProps) {
         .insert({
           email: trimmedEmail,
           user_type: 'fan',
-          status: 'waitlist'
+          status: 'pending'
         });
 
       if (error) {

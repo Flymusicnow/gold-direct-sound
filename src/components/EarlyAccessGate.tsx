@@ -67,9 +67,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
       );
     }
 
-    // If no invite access, redirect to /fan
+    // If no invite access, redirect to /fan with reason param
     if (!hasInviteAccess) {
-      return <Navigate to="/fan" replace />;
+      return <Navigate to="/fan?reason=invite-required" replace />;
     }
 
     // Has invite access - allow through
