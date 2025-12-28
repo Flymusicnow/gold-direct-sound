@@ -9,14 +9,16 @@ import { toast } from 'sonner';
 
 interface InviteCodeUnlockProps {
   disabled?: boolean;
+  initialCode?: string;
+  autoShowInput?: boolean;
 }
 
-export function InviteCodeUnlock({ disabled = false }: InviteCodeUnlockProps) {
+export function InviteCodeUnlock({ disabled = false, initialCode = '', autoShowInput = false }: InviteCodeUnlockProps) {
   const navigate = useNavigate();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showInput, setShowInput] = useState(false);
+  const [showInput, setShowInput] = useState(autoShowInput || !!initialCode);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
