@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { Heart, Mic2 } from "lucide-react";
 import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -55,6 +55,10 @@ export function BetaLandingPage() {
             <Button size="lg" variant="outline" onClick={() => navigate("/fan")} className="w-full sm:w-auto min-w-[180px] border-pink-500/50 text-pink-400 hover:bg-pink-500/10">
               <Heart className="h-4 w-4 mr-1" />
               Join as Fan
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate("/artist")} className="w-full sm:w-auto min-w-[180px] border-primary text-primary hover:bg-primary/10">
+              <Mic2 className="h-4 w-4 mr-1" />
+              Join as Artist
             </Button>
           </div>
 
