@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { FlyMusicLogo } from "./FlyMusicLogo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -61,8 +62,24 @@ export function BetaLandingPage() {
             </Button>
           </div>
 
+          {/* Secondary Links */}
+          <div className="pt-6 flex flex-col items-center gap-2 text-sm text-muted-foreground">
+            <Link 
+              to="/early-access" 
+              className="hover:text-foreground transition-colors"
+            >
+              Have an invite code? <span className="underline">Enter Code</span>
+            </Link>
+            <Link 
+              to="/early-access" 
+              className="hover:text-foreground transition-colors"
+            >
+              Already a member? <span className="underline">Sign In</span>
+            </Link>
+          </div>
+
           {/* Footer Message */}
-          <div className="pt-8 text-sm text-muted-foreground">
+          <div className="pt-4 text-sm text-muted-foreground">
             <p>We'll email you if you're approved for early access.</p>
           </div>
         </div>
