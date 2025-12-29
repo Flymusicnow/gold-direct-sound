@@ -179,6 +179,8 @@ const App = () => (
             <Route path="/artist" element={<ArtistGate />} />
             <Route path="/early-access" element={<EarlyAccess />} />
             <Route path="/beta" element={<BetaEntry />} />
+            <Route path="/signin/fan" element={<SignInFan />} />
+            <Route path="/signin/artist" element={<SignInArtist />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />
@@ -209,8 +211,6 @@ const App = () => (
               </PrivateBetaGate>
             } />
             <Route path="/join/brand" element={<JoinBrand />} />
-            <Route path="/signin/artist" element={<SignInArtist />} />
-            <Route path="/signin/fan" element={<SignInFan />} />
             <Route path="/signin/brand" element={<SignInBrand />} />
             <Route path="/artist/:userId" element={<ArtistProfile />} />
             <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
