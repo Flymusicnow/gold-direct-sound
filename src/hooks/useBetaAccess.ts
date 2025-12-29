@@ -32,18 +32,33 @@ export function useBetaAccess(): BetaAccess {
 
     try {
       // Check artist_beta_access table
-      const { data, error } = await supabase
+      const { data: artistData, error: artistError } = await supabase
         .from('artist_beta_access')
         .select('badge_name')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error checking beta access:', error);
+      if (artistError && artistError.code !== 'PGRST116') {
+        console.error('Error checking artist beta access:', artistError);
       }
 
-      setHasBetaAccess(!!data);
-      setBadge(data?.badge_name || null);
+      // Check fan_beta_access table
+      const { data: fanData, error: fanError } = await supabase
+        .from('fan_beta_access')
+        .select('badge_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (fanError && fanError.code !== 'PGRST116') {
+        console.error('Error checking fan beta access:', fanError);
+      }
+
+      // User has access if they exist in either table
+      const hasAccess = !!artistData || !!fanData;
+      const badgeName = artistData?.badge_name || fanData?.badge_name || null;
+
+      setHasBetaAccess(hasAccess);
+      setBadge(badgeName);
     } catch (error) {
       console.error('Error in checkAccess:', error);
       setHasBetaAccess(false);

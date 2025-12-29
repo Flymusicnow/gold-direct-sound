@@ -59,6 +59,12 @@ export default function JoinFan() {
           role: 'fan',
         });
 
+        // Record permanent fan beta access in DB
+        await supabase.from('fan_beta_access').insert({
+          user_id: data.user.id,
+          badge_name: 'Early Supporter',
+        });
+
         // Consume invite token (mark as used)
         const inviteToken = localStorage.getItem(STORAGE_KEY);
         if (inviteToken) {
