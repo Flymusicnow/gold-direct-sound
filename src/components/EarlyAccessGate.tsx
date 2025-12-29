@@ -89,7 +89,8 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   if (isFanRoute) {
     // Fan routes require fan_beta_access
     if (!hasFanAccess) {
-      return <EarlyAccessWall onCodeRedeemed={refetch} />;
+      // Redirect to fan waitlist instead of generic wall - better UX
+      return <Navigate to="/fan?reason=no-access" replace />;
     }
     // Has access but not onboarded - redirect to onboarding
     if (!fanOnboarded && !location.pathname.includes('/onboarding')) {
@@ -98,7 +99,8 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   } else if (isStudioRoute) {
     // Studio routes require artist_beta_access
     if (!hasArtistAccess) {
-      return <EarlyAccessWall onCodeRedeemed={refetch} />;
+      // Redirect to artist waitlist instead of generic wall - better UX
+      return <Navigate to="/artist?reason=no-access" replace />;
     }
     // Has access but not onboarded - redirect to onboarding
     if (!artistOnboarded && !location.pathname.includes('/onboarding')) {
@@ -117,6 +119,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
       role === 'brand'; // Brands and admins pass through
     
     if (!hasRequiredAccess) {
+      // Redirect to appropriate waitlist based on role
+      if (isFan) return <Navigate to="/fan?reason=no-access" replace />;
+      if (isArtist) return <Navigate to="/artist?reason=no-access" replace />;
       return <EarlyAccessWall onCodeRedeemed={refetch} />;
     }
   }

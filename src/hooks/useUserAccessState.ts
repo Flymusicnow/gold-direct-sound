@@ -72,8 +72,13 @@ export function useUserAccessState(): UserAccessState {
           .maybeSingle(),
       ]);
 
-      setHasFanAccess(!!fanAccessResult.data);
-      setHasArtistAccess(!!artistAccessResult.data);
+      // Legacy fallback: if user has completed onboarding but lacks explicit beta access record,
+      // grant implicit access (handles users who registered before beta_access tables existed)
+      const hasImplicitFanAccess = fanOnboardingResult.data?.onboarding_completed && !fanAccessResult.data;
+      const hasImplicitArtistAccess = artistOnboardingResult.data?.onboarding_completed && !artistAccessResult.data;
+      
+      setHasFanAccess(!!fanAccessResult.data || hasImplicitFanAccess);
+      setHasArtistAccess(!!artistAccessResult.data || hasImplicitArtistAccess);
       setFanOnboarded(fanOnboardingResult.data?.onboarding_completed ?? false);
       setArtistOnboarded(artistOnboardingResult.data?.onboarding_completed ?? false);
     } catch (error) {

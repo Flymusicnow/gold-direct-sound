@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Music, Users, Zap, Mic2, Heart } from "lucide-react";
+import { Music, Users, Zap, Mic2, Heart, LogOut, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import heroImage from "@/assets/hero-music.jpg";
 import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,17 @@ import { Footer } from "@/components/Footer";
  */
 export default function Home() {
   const navigate = useNavigate();
+  const { user, hasRole, signOut } = useAuth();
   const [stats, setStats] = useState({ artists: 0, tracks: 0, fans: 0 });
+
+  // Determine dashboard path based on user role
+  const getDashboardPath = () => {
+    if (hasRole('admin')) return '/admin';
+    if (hasRole('brand')) return '/brand';
+    if (hasRole('artist')) return '/studio';
+    if (hasRole('fan')) return '/fan/feed';
+    return '/';
+  };
 
   useEffect(() => {
     async function fetchStats() {
@@ -62,52 +73,83 @@ export default function Home() {
             Where artists connect directly with superfans. No intermediaries. Just music, passion, and real connection.
           </p>
           
-          {/* Beta access paths - NO auto-redirects */}
-          <div className="flex flex-col items-center gap-6">
-            <p className="text-lg text-muted-foreground">
-              FlyMusic is currently in <span className="text-primary font-medium">invite-only beta</span>
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Fan path */}
-              <Button 
-                size="lg"
-                variant="outline"
-                className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500 min-w-[180px]"
-                onClick={() => navigate('/fan')}
-              >
-                <Heart className="h-5 w-5 mr-2" />
-                I'm a Fan
-              </Button>
+          {/* Show different content based on auth state */}
+          {user ? (
+            /* Authenticated user - show dashboard + sign out */
+            <div className="flex flex-col items-center gap-6">
+              <p className="text-lg text-muted-foreground">
+                Welcome back! You're signed in.
+              </p>
               
-              {/* Artist path */}
-              <Button 
-                size="lg"
-                className="bg-gradient-gold min-w-[180px]"
-                onClick={() => navigate('/artist')}
-              >
-                <Mic2 className="h-5 w-5 mr-2" />
-                I'm an Artist
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  size="lg"
+                  className="bg-gradient-gold min-w-[180px]"
+                  onClick={() => navigate(getDashboardPath())}
+                >
+                  <LayoutDashboard className="h-5 w-5 mr-2" />
+                  Go to Dashboard
+                </Button>
+                
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="min-w-[180px]"
+                  onClick={signOut}
+                >
+                  <LogOut className="h-5 w-5 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
-            
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <button 
-                onClick={() => navigate('/signin/fan')}
-                className="text-violet-400 hover:underline"
-              >
-                Sign in as Fan
-              </button>
-              {' · '}
-              <button 
-                onClick={() => navigate('/signin/artist')}
-                className="text-primary hover:underline"
-              >
-                Sign in as Artist
-              </button>
-            </p>
-          </div>
+          ) : (
+            /* Not authenticated - show beta access paths */
+            <div className="flex flex-col items-center gap-6">
+              <p className="text-lg text-muted-foreground">
+                FlyMusic is currently in <span className="text-primary font-medium">invite-only beta</span>
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Fan path */}
+                <Button 
+                  size="lg"
+                  variant="outline"
+                  className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500 min-w-[180px]"
+                  onClick={() => navigate('/fan')}
+                >
+                  <Heart className="h-5 w-5 mr-2" />
+                  I'm a Fan
+                </Button>
+                
+                {/* Artist path */}
+                <Button 
+                  size="lg" 
+                  className="bg-gradient-gold min-w-[180px]"
+                  onClick={() => navigate('/artist')}
+                >
+                  <Mic2 className="h-5 w-5 mr-2" />
+                  I'm an Artist
+                </Button>
+              </div>
+              
+              <p className="text-sm text-muted-foreground">
+                Already have an account?{' '}
+                <button 
+                  onClick={() => navigate('/signin/fan')}
+                  className="text-violet-400 hover:underline"
+                >
+                  Sign in as Fan
+                </button>
+                {' · '}
+                <button 
+                  onClick={() => navigate('/signin/artist')}
+                  className="text-primary hover:underline"
+                >
+                  Sign in as Artist
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
