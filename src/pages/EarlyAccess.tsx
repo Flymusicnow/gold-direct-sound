@@ -237,18 +237,6 @@ export default function EarlyAccess() {
             </div>
           </div>
 
-          {/* Already have account - Sign In */}
-          <div className="pt-2 text-sm text-muted-foreground">
-            <p>Already have an account?</p>
-            <Link
-              to={`/signin/${selectedRole}`}
-              className="text-foreground hover:underline inline-flex items-center gap-1 mt-1"
-            >
-              <Icon className="h-4 w-4" />
-              Sign in as {selectedRole === "artist" ? "Artist" : "Fan"}
-            </Link>
-          </div>
-
           {/* Back link */}
           <button
             onClick={() => navigate("/")}
