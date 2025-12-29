@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useBetaAccess } from "@/hooks/useBetaAccess";
+import { useRoleBetaAccess } from "@/hooks/useRoleBetaAccess";
 import { useFanInviteAccess } from "@/hooks/useFanInviteAccess";
 import { EarlyAccessWall } from "./EarlyAccessWall";
 import { BetaLandingPage } from "./BetaLandingPage";
@@ -33,10 +33,15 @@ const FAN_INVITE_ROUTES = ['/join/fan'];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   // ALL hooks must be called at the top, before any early returns
-  const { user, loading: authLoading } = useAuth();
-  const { hasBetaAccess, loading: betaLoading, refetch } = useBetaAccess();
+  const { user, loading: authLoading, hasRole } = useAuth();
+  const { hasAccess: hasFanBetaAccess, loading: fanBetaLoading, refetch: refetchFan } = useRoleBetaAccess('fan');
+  const { hasAccess: hasArtistBetaAccess, loading: artistBetaLoading, refetch: refetchArtist } = useRoleBetaAccess('artist');
   const { hasInviteAccess, loading: inviteLoading } = useFanInviteAccess();
   const location = useLocation();
+
+  // Determine route type
+  const isFanRoute = location.pathname.startsWith('/fan/');
+  const isStudioRoute = location.pathname.startsWith('/studio');
 
   // Check if current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
@@ -77,6 +82,7 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   }
 
   // Show loading while checking auth
+  const betaLoading = fanBetaLoading || artistBetaLoading;
   if (authLoading || betaLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -93,11 +99,36 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     return <BetaLandingPage />;
   }
 
-  // If user doesn't have beta access, show the wall (defensive check for null/false)
-  if (hasBetaAccess !== true) {
-    return <EarlyAccessWall onCodeRedeemed={refetch} />;
+  // Route-specific beta access checks
+  if (isFanRoute) {
+    // Fan routes require fan_beta_access
+    if (hasFanBetaAccess !== true) {
+      return <EarlyAccessWall onCodeRedeemed={refetchFan} />;
+    }
+  } else if (isStudioRoute) {
+    // Studio routes require artist_beta_access
+    if (hasArtistBetaAccess !== true) {
+      return <EarlyAccessWall onCodeRedeemed={refetchArtist} />;
+    }
+  } else {
+    // For other protected routes (like /brand), check if user has ANY beta access
+    // based on their roles
+    const isFan = hasRole('fan');
+    const isArtist = hasRole('artist');
+    
+    const hasRequiredAccess = 
+      (isFan && hasFanBetaAccess) || 
+      (isArtist && hasArtistBetaAccess) ||
+      (!isFan && !isArtist); // Users without fan/artist role (e.g. brand, admin) pass through
+    
+    if (!hasRequiredAccess) {
+      return <EarlyAccessWall onCodeRedeemed={() => {
+        refetchFan();
+        refetchArtist();
+      }} />;
+    }
   }
 
-  // User has beta access, render the app
+  // User has required beta access, render the app
   return <>{children}</>;
 }
