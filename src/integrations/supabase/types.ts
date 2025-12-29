@@ -1703,6 +1703,38 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_beta_access: {
+        Row: {
+          badge_name: string | null
+          code_id: string | null
+          id: string
+          redeemed_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badge_name?: string | null
+          code_id?: string | null
+          id?: string
+          redeemed_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badge_name?: string | null
+          code_id?: string | null
+          id?: string
+          redeemed_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_beta_access_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "beta_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fan_invite_sessions: {
         Row: {
           code_id: string | null

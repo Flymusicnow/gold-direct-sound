@@ -28,8 +28,8 @@ const PUBLIC_ROUTES = [
   '/fan',
 ];
 
-// Fan invite-only routes
-const FAN_INVITE_ROUTES = ['/join/fan', '/signin/fan'];
+// Fan invite-only routes (sign-in is NOT included - existing members can sign in freely)
+const FAN_INVITE_ROUTES = ['/join/fan'];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   // ALL hooks must be called at the top, before any early returns
