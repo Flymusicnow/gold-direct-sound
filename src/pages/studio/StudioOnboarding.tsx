@@ -46,7 +46,16 @@ export default function StudioOnboarding() {
 
   const progress = ((currentStep) / (STEPS.length - 1)) * 100;
 
-  const handleLegalComplete = () => {
+  const handleLegalComplete = async () => {
+    // Ensure onboarding progress record exists so we can track the user
+    if (user) {
+      await supabase
+        .from('artist_onboarding_progress')
+        .upsert({
+          user_id: user.id,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+    }
     setCurrentStep(1);
   };
 
@@ -103,9 +112,26 @@ export default function StudioOnboarding() {
     } else if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Complete onboarding
-      toast.success("You're all set! Welcome to My Studio");
-      navigate('/studio');
+      // Complete onboarding - PERSIST BEFORE NAVIGATION
+      setLoading(true);
+      try {
+        if (user) {
+          await supabase
+            .from('artist_onboarding_progress')
+            .upsert({
+              user_id: user.id,
+              onboarding_completed: true,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+        }
+        toast.success("You're all set! Welcome to My Studio");
+        navigate('/studio', { replace: true });
+      } catch (error) {
+        console.error('Error completing onboarding:', error);
+        toast.error("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -123,8 +149,17 @@ export default function StudioOnboarding() {
     }
   };
 
-  const handleSkipAll = () => {
-    navigate('/studio');
+  const handleSkipAll = async () => {
+    if (user) {
+      await supabase
+        .from('artist_onboarding_progress')
+        .upsert({
+          user_id: user.id,
+          onboarding_skipped: true,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+    }
+    navigate('/studio', { replace: true });
   };
 
   // Show legal flow for step 0

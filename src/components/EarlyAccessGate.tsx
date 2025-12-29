@@ -104,7 +104,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
       return <Navigate to="/artist?reason=no-access" replace />;
     }
     // Has access but not onboarded - redirect to onboarding
-    if (!artistOnboarded && !location.pathname.includes('/onboarding')) {
+    // Admins skip onboarding check - they can always enter
+    const isAdmin = role === 'admin';
+    if (!isAdmin && !artistOnboarded && !location.pathname.includes('/onboarding')) {
       return <Navigate to="/studio/onboarding" replace />;
     }
   } else {
