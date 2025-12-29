@@ -5,7 +5,7 @@ import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
 import { useAuth } from '@/contexts/AuthContext';
-import { useBetaAccess } from '@/hooks/useBetaAccess';
+import { useRoleBetaAccess } from '@/hooks/useRoleBetaAccess';
 import { toast } from 'sonner';
 import fanHero from '@/assets/fan-hero-concert.png';
 
@@ -44,15 +44,15 @@ export default function FanGate() {
   const reason = searchParams.get('reason');
   
   const { user, hasRole, loading: authLoading } = useAuth();
-  const { hasBetaAccess, loading: betaLoading } = useBetaAccess();
+  const { hasAccess: hasFanBetaAccess, loading: betaLoading } = useRoleBetaAccess('fan');
 
   // Redirect authenticated fans with beta access to their portal
   useEffect(() => {
     if (authLoading || betaLoading) return;
-    if (user && hasRole('fan') && hasBetaAccess) {
+    if (user && hasRole('fan') && hasFanBetaAccess) {
       navigate('/fan/feed', { replace: true });
     }
-  }, [user, hasRole, hasBetaAccess, authLoading, betaLoading, navigate]);
+  }, [user, hasRole, hasFanBetaAccess, authLoading, betaLoading, navigate]);
 
   // Show toast when redirected from /signin/fan without invite access
   useEffect(() => {

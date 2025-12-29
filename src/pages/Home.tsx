@@ -1,11 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Music, Users, Zap, Mic2, Heart, Key } from "lucide-react";
 import heroImage from "@/assets/hero-music.jpg";
 import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAppMode } from "@/hooks/useAppMode";
@@ -27,6 +26,7 @@ export default function Home() {
   const isPrivateBeta = mode === 'PRIVATE_BETA';
 
   // Redirect logged-in users to their respective dashboards
+  // Use role-specific beta access checks
   useEffect(() => {
     if (authLoading) return;
     
@@ -37,19 +37,56 @@ export default function Home() {
       if (userRoles.length === 0) {
         console.log('[Home] No roles found, redirecting to role selection');
         navigate('/role-selection', { replace: true });
-      } else if (userRoles.includes('artist')) {
-        console.log('[Home] Artist role found, redirecting to /studio');
-        navigate('/studio', { replace: true });
-      } else if (userRoles.includes('brand')) {
-        console.log('[Home] Brand role found, redirecting to /brand');
-        navigate('/brand', { replace: true });
-      } else if (userRoles.includes('fan')) {
-        console.log('[Home] Fan role found, redirecting to /fan');
-        navigate('/fan', { replace: true });
-      } else {
+        return;
+      }
+      
+      // Check role-specific access and redirect accordingly
+      const checkAccessAndRedirect = async () => {
+        if (userRoles.includes('artist')) {
+          // Check artist_beta_access
+          const { data: artistAccess } = await supabase
+            .from('artist_beta_access')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (artistAccess) {
+            console.log('[Home] Artist with beta access, redirecting to /studio');
+            navigate('/studio', { replace: true });
+            return;
+          }
+        }
+        
+        if (userRoles.includes('brand')) {
+          console.log('[Home] Brand role found, redirecting to /brand');
+          navigate('/brand', { replace: true });
+          return;
+        }
+        
+        if (userRoles.includes('fan')) {
+          // Check fan_beta_access
+          const { data: fanAccess } = await supabase
+            .from('fan_beta_access')
+            .select('id')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          
+          if (fanAccess) {
+            console.log('[Home] Fan with beta access, redirecting to /fan/feed');
+            navigate('/fan/feed', { replace: true });
+          } else {
+            console.log('[Home] Fan without beta access, redirecting to /fan (waitlist)');
+            navigate('/fan', { replace: true });
+          }
+          return;
+        }
+        
+        // Fallback for unknown roles
         console.log('[Home] Unknown roles, redirecting to role selection');
         navigate('/role-selection', { replace: true });
-      }
+      };
+      
+      checkAccessAndRedirect();
     }
   }, [user, userRoles, authLoading, navigate]);
 
