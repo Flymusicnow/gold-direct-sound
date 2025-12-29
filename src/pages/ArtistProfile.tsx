@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -28,6 +28,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SupportTierModal } from "@/components/supporter/SupportTierModal";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import { useMetaTags } from "@/hooks/useMetaTags";
+import { isValidUUID } from "@/lib/utils/validation";
 
 interface Artist {
   id: string;
@@ -92,6 +93,7 @@ export default function ArtistProfile() {
   const [hasBetaAccess, setHasBetaAccess] = useState(false);
   const [topSupporters, setTopSupporters] = useState<any[]>([]);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
+  const [error, setError] = useState<'invalid' | null>(null);
   
   // Get verification status for this artist
   const { isVerified } = useArtistVerification(artist?.user_id);
@@ -211,6 +213,14 @@ export default function ArtistProfile() {
 
   const fetchArtist = async () => {
     if (!userId) {
+      setLoading(false);
+      return;
+    }
+    
+    // Validate UUID format before any Supabase calls to prevent HTTP 400
+    if (!isValidUUID(userId)) {
+      console.error('[ArtistProfile] Invalid UUID format:', userId);
+      setError('invalid');
       setLoading(false);
       return;
     }
@@ -399,6 +409,40 @@ export default function ArtistProfile() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  // Invalid UUID error state - show before "not found" to prevent any API calls
+  if (error === 'invalid') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
+            <AlertTriangle className="h-10 w-10 text-destructive opacity-70" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Invalid artist link</h2>
+          <p className="text-muted-foreground mb-6">
+            This link appears to be malformed or incorrect.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => navigate('/explore')}
+              className="gap-2 bg-primary"
+            >
+              <Home className="h-4 w-4" />
+              Explore Artists
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
