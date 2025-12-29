@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -103,6 +103,15 @@ export const LegalAcceptanceModal = ({
               </DialogDescription>
             </div>
           </div>
+          <a 
+            href={documentPath} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs text-primary hover:underline flex items-center gap-1 mt-2"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Read full document in new tab
+          </a>
         </DialogHeader>
 
         <div className="flex-1 max-h-[50vh] overflow-y-auto border rounded-lg bg-muted/20">
