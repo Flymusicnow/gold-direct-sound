@@ -109,7 +109,7 @@ export default function SignInFan() {
 
       {/* Minimal header - logo + trust badge */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <Link to="/">
@@ -128,7 +128,7 @@ export default function SignInFan() {
                 <Heart className="h-8 w-8 text-accent" />
               </div>
               <CardTitle className="text-2xl">{t('auth.signInFanTitle')}</CardTitle>
-              <CardDescription>{t('auth.signInFanDescription')}</CardDescription>
+              <CardDescription>{t('auth.signInFanSubtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignIn} className="space-y-4">

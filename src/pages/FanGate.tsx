@@ -4,6 +4,8 @@ import { Headphones, Heart, Library, Bell, Sparkles, ArrowLeft } from 'lucide-re
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBetaAccess } from '@/hooks/useBetaAccess';
 import { toast } from 'sonner';
 import fanHero from '@/assets/fan-hero-concert.png';
 
@@ -40,6 +42,17 @@ export default function FanGate() {
   const [searchParams, setSearchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const reason = searchParams.get('reason');
+  
+  const { user, hasRole, loading: authLoading } = useAuth();
+  const { hasBetaAccess, loading: betaLoading } = useBetaAccess();
+
+  // Redirect authenticated fans with beta access to their portal
+  useEffect(() => {
+    if (authLoading || betaLoading) return;
+    if (user && hasRole('fan') && hasBetaAccess) {
+      navigate('/fan/feed', { replace: true });
+    }
+  }, [user, hasRole, hasBetaAccess, authLoading, betaLoading, navigate]);
 
   // Show toast when redirected from /signin/fan without invite access
   useEffect(() => {
@@ -75,7 +88,7 @@ export default function FanGate() {
       {/* Header */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
         <button 
-          onClick={() => navigate(-1)} 
+          onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} 
           className="text-white/70 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
