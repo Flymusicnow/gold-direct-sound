@@ -75,6 +75,12 @@ export default function JoinArtist() {
           role: 'artist',
         });
 
+        // Record permanent artist beta access in DB
+        await supabase.from('artist_beta_access').insert({
+          user_id: data.user.id,
+          badge_name: 'Early Creator',
+        });
+
         toast.success(t('auth.signUpSuccess'));
         navigate('/studio/onboarding');
       }
