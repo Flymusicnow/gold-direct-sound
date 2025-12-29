@@ -2258,6 +2258,42 @@ export type Database = {
         }
         Relationships: []
       }
+      legal_documents: {
+        Row: {
+          changelog: string | null
+          created_at: string | null
+          current_version: string
+          document_path: string
+          document_type: string
+          id: string
+          last_updated: string
+          requires_reaccept: boolean | null
+          title: string
+        }
+        Insert: {
+          changelog?: string | null
+          created_at?: string | null
+          current_version?: string
+          document_path: string
+          document_type: string
+          id?: string
+          last_updated?: string
+          requires_reaccept?: boolean | null
+          title: string
+        }
+        Update: {
+          changelog?: string | null
+          created_at?: string | null
+          current_version?: string
+          document_path?: string
+          document_type?: string
+          id?: string
+          last_updated?: string
+          requires_reaccept?: boolean | null
+          title?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string | null

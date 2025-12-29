@@ -2,18 +2,21 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Loader2, ExternalLink } from "lucide-react";
+import { FileText, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { DocumentType } from "@/hooks/useLegalAcceptance";
 
 interface LegalAcceptanceModalProps {
   open: boolean;
   onAccept: () => void;
-  documentType: "user_agreement" | "artist_agreement" | "privacy_policy" | "fan_terms";
+  documentType: DocumentType;
   title: string;
   documentPath: string;
+  currentVersion?: string;
+  changelog?: string | null;
+  isReaccept?: boolean;
 }
 
 export const LegalAcceptanceModal = ({
@@ -21,7 +24,10 @@ export const LegalAcceptanceModal = ({
   onAccept,
   documentType,
   title,
-  documentPath
+  documentPath,
+  currentVersion = "1.0",
+  changelog,
+  isReaccept = false
 }: LegalAcceptanceModalProps) => {
   const { user } = useAuth();
   const [content, setContent] = useState<string>("");
@@ -57,7 +63,7 @@ export const LegalAcceptanceModal = ({
       const { error } = await supabase.from("legal_acceptances").insert({
         user_id: user.id,
         document_type: documentType,
-        document_version: "1.0",
+        document_version: currentVersion,
         user_agent: navigator.userAgent
       });
 
@@ -73,15 +79,17 @@ export const LegalAcceptanceModal = ({
     }
   };
 
-  // Simple markdown rendering
+  // Simple markdown rendering with external link icons
   const renderMarkdown = (md: string) => {
+    const externalLinkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline ml-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+    
     return md
       .replace(/^### (.*$)/gim, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
       .replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold mt-6 mb-2 text-primary">$1</h2>')
       .replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold mt-4 mb-3 text-primary">$1</h1>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-primary hover:underline">$1</a>')
+      .replace(/\[(.*?)\]\((.*?)\)/g, `<a href="$2" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline inline-flex items-center">$1${externalLinkSvg}</a>`)
       .replace(/^---$/gim, '<hr class="my-4 border-border" />')
       .replace(/^- (.*$)/gim, '<li class="ml-4 mb-1">$1</li>')
       .replace(/\n\n/g, '</p><p class="mb-3 text-sm text-muted-foreground">')
@@ -99,7 +107,7 @@ export const LegalAcceptanceModal = ({
             <div>
               <DialogTitle>{title}</DialogTitle>
               <DialogDescription>
-                Please read and accept to continue
+                {isReaccept ? "This document has been updated. Please review and accept." : "Please read and accept to continue"}
               </DialogDescription>
             </div>
           </div>
@@ -113,6 +121,17 @@ export const LegalAcceptanceModal = ({
             Read full document in new tab
           </a>
         </DialogHeader>
+
+        {/* Changelog for re-acceptance */}
+        {isReaccept && changelog && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <h4 className="font-semibold text-sm">What's Changed</h4>
+            </div>
+            <p className="text-sm text-muted-foreground">{changelog}</p>
+          </div>
+        )}
 
         <div className="flex-1 max-h-[50vh] overflow-y-auto border rounded-lg bg-muted/20">
           <div className="p-4 pr-6">
