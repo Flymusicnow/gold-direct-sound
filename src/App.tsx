@@ -87,6 +87,7 @@ import AdminInboxDetail from "./pages/admin/AdminInboxDetail";
 import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
 import AdminOpportunities from "./pages/admin/AdminOpportunities";
 import AdminWaitlist from "./pages/admin/AdminWaitlist";
+import AdminFlightRecorder from "./pages/admin/AdminFlightRecorder";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
