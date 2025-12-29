@@ -238,7 +238,7 @@ export const Navigation = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-[hsl(0,0%,6%)] border-border">
               <DropdownMenuItem onClick={() => navigate('/explore')}>
-                {t('nav.exploreArtists')}
+                {t('nav.explore')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/search')}>
                 <Search className="h-4 w-4 mr-2" />
