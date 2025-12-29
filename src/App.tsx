@@ -31,6 +31,7 @@ import JoinBrand from "./pages/auth/JoinBrand";
 import SignInArtist from "./pages/auth/SignInArtist";
 import SignInFan from "./pages/auth/SignInFan";
 import SignInBrand from "./pages/auth/SignInBrand";
+import SignInAdmin from "./pages/auth/SignInAdmin";
 import Explore from "./pages/Explore";
 import ArtistProfile from "./pages/ArtistProfile";
 import StudioDashboard from "./pages/studio/StudioDashboard";
@@ -181,6 +182,7 @@ const App = () => (
             <Route path="/beta" element={<BetaEntry />} />
             <Route path="/signin/fan" element={<SignInFan />} />
             <Route path="/signin/artist" element={<SignInArtist />} />
+            <Route path="/signin/admin" element={<SignInAdmin />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />
