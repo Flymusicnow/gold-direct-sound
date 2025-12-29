@@ -170,6 +170,7 @@ const App = () => (
           <VerificationBanner />
           {/* Public routes - outside EarlyAccessGate */}
           <Routes>
+            <Route path="/" element={<Home />} />
             <Route path="/link/:slug" element={<PromoPreview />} />
             <Route path="/epk/:slug" element={<PublicPresskit />} />
             <Route path="/@:slug" element={<SmartLinkPage />} />
@@ -203,7 +204,6 @@ const App = () => (
                   <FlightdeckLayout>
                   <NavigationWrapper />
                 <Routes>
-            <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search />} />
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/changelog" element={<Changelog />} />
