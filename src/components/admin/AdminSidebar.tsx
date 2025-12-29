@@ -152,6 +152,12 @@ const navSections = [
     title: "System",
     items: [
       { 
+        title: "Flight Recorder", 
+        url: "/admin/flight-recorder", 
+        icon: Activity,
+        description: "End-to-end flow debugging. View telemetry, trace errors, and analyze user journeys"
+      },
+      { 
         title: "Beta Codes", 
         url: "/admin/beta-codes", 
         icon: KeyRound,

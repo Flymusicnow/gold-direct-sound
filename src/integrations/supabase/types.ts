@@ -3842,6 +3842,54 @@ export type Database = {
           },
         ]
       }
+      telemetry_events: {
+        Row: {
+          created_at: string | null
+          decoded_error: string | null
+          duration_ms: number | null
+          flow: string
+          id: string
+          location: string
+          meta: Json | null
+          session_id: string
+          status: string
+          step: string
+          timestamp: string
+          trace_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          decoded_error?: string | null
+          duration_ms?: number | null
+          flow: string
+          id?: string
+          location: string
+          meta?: Json | null
+          session_id: string
+          status: string
+          step: string
+          timestamp?: string
+          trace_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          decoded_error?: string | null
+          duration_ms?: number | null
+          flow?: string
+          id?: string
+          location?: string
+          meta?: Json | null
+          session_id?: string
+          status?: string
+          step?: string
+          timestamp?: string
+          trace_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       track_collaborators: {
         Row: {
           collaborator_artist_id: string
