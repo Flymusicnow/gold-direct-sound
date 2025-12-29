@@ -1,8 +1,6 @@
 import { ReactNode } from "react";
 import { useLocation, Navigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRoleBetaAccess } from "@/hooks/useRoleBetaAccess";
-import { useFanInviteAccess } from "@/hooks/useFanInviteAccess";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { EarlyAccessWall } from "./EarlyAccessWall";
 import { BetaLandingPage } from "./BetaLandingPage";
 
@@ -26,18 +24,26 @@ const PUBLIC_ROUTES = [
   '/trust',
   '/brands',
   '/fan',
+  '/signin',
+  '/join',
 ];
 
 // Fan invite-only routes (sign-in is NOT included - existing members can sign in freely)
 const FAN_INVITE_ROUTES = ['/join/fan'];
+const ARTIST_INVITE_ROUTES = ['/join/artist'];
 
 export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
-  // ALL hooks must be called at the top, before any early returns
-  const { user, loading: authLoading, hasRole } = useAuth();
-  const { hasAccess: hasFanBetaAccess, loading: fanBetaLoading, refetch: refetchFan } = useRoleBetaAccess('fan');
-  const { hasAccess: hasArtistBetaAccess, loading: artistBetaLoading, refetch: refetchArtist } = useRoleBetaAccess('artist');
-  const { hasInviteAccess, loading: inviteLoading } = useFanInviteAccess();
   const location = useLocation();
+  const {
+    authenticated,
+    role,
+    hasFanAccess,
+    hasArtistAccess,
+    fanOnboarded,
+    artistOnboarded,
+    loading,
+    refetch,
+  } = useUserAccessState();
 
   // Determine route type
   const isFanRoute = location.pathname.startsWith('/fan/');
@@ -45,45 +51,25 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
 
   // Check if current route is public
   const isPublicRoute = PUBLIC_ROUTES.some(route => 
-    location.pathname === route || location.pathname.startsWith('/auth')
+    location.pathname === route || 
+    location.pathname.startsWith('/auth') ||
+    location.pathname.startsWith('/signin') ||
+    location.pathname.startsWith('/join') ||
+    location.pathname.startsWith('/fan') && !location.pathname.startsWith('/fan/') ||
+    location.pathname.startsWith('/artist') && !location.pathname.startsWith('/artist/')
   );
 
-  // Check if current route is a fan invite-only route
-  const isFanInviteRoute = FAN_INVITE_ROUTES.some(route => 
-    location.pathname === route
-  );
+  // Check if current route is an invite-only route
+  const isFanInviteRoute = FAN_INVITE_ROUTES.some(route => location.pathname === route);
+  const isArtistInviteRoute = ARTIST_INVITE_ROUTES.some(route => location.pathname === route);
 
   // Allow public routes without gate
   if (isPublicRoute) {
     return <>{children}</>;
   }
 
-  // Handle fan invite-only routes (/join/fan, /signin/fan)
-  if (isFanInviteRoute) {
-    // Show loading while checking invite access
-    if (inviteLoading) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center space-y-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="text-muted-foreground">Checking access...</p>
-          </div>
-        </div>
-      );
-    }
-
-    // If no invite access, redirect to /fan with reason param
-    if (!hasInviteAccess) {
-      return <Navigate to="/fan?reason=invite-required" replace />;
-    }
-
-    // Has invite access - allow through
-    return <>{children}</>;
-  }
-
-  // Show loading while checking auth
-  const betaLoading = fanBetaLoading || artistBetaLoading;
-  if (authLoading || betaLoading) {
+  // Show loading while checking access state
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -95,37 +81,43 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
   }
 
   // If no user, show the beta landing page
-  if (!user) {
+  if (!authenticated) {
     return <BetaLandingPage />;
   }
 
-  // Route-specific beta access checks
+  // Route-specific beta access checks with onboarding awareness
   if (isFanRoute) {
     // Fan routes require fan_beta_access
-    if (hasFanBetaAccess !== true) {
-      return <EarlyAccessWall onCodeRedeemed={refetchFan} />;
+    if (!hasFanAccess) {
+      return <EarlyAccessWall onCodeRedeemed={refetch} />;
+    }
+    // Has access but not onboarded - redirect to onboarding
+    if (!fanOnboarded && !location.pathname.includes('/onboarding')) {
+      return <Navigate to="/fan/onboarding" replace />;
     }
   } else if (isStudioRoute) {
     // Studio routes require artist_beta_access
-    if (hasArtistBetaAccess !== true) {
-      return <EarlyAccessWall onCodeRedeemed={refetchArtist} />;
+    if (!hasArtistAccess) {
+      return <EarlyAccessWall onCodeRedeemed={refetch} />;
+    }
+    // Has access but not onboarded - redirect to onboarding
+    if (!artistOnboarded && !location.pathname.includes('/onboarding')) {
+      return <Navigate to="/studio/onboarding" replace />;
     }
   } else {
     // For other protected routes (like /brand), check if user has ANY beta access
     // based on their roles
-    const isFan = hasRole('fan');
-    const isArtist = hasRole('artist');
+    const isFan = role === 'fan';
+    const isArtist = role === 'artist';
     
     const hasRequiredAccess = 
-      (isFan && hasFanBetaAccess) || 
-      (isArtist && hasArtistBetaAccess) ||
-      (!isFan && !isArtist); // Users without fan/artist role (e.g. brand, admin) pass through
+      (isFan && hasFanAccess) || 
+      (isArtist && hasArtistAccess) ||
+      role === 'admin' ||
+      role === 'brand'; // Brands and admins pass through
     
     if (!hasRequiredAccess) {
-      return <EarlyAccessWall onCodeRedeemed={() => {
-        refetchFan();
-        refetchArtist();
-      }} />;
+      return <EarlyAccessWall onCodeRedeemed={refetch} />;
     }
   }
 

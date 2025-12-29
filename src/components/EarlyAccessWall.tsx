@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { Card } from "@/components/ui/card";
@@ -34,11 +34,24 @@ const fanBenefits = [
 
 export function EarlyAccessWall({ onCodeRedeemed }: EarlyAccessWallProps) {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleCodeSuccess = () => {
-    onCodeRedeemed();
-    // Redirect to role selection after successful code redemption
-    navigate('/role-selection');
+  const handleCodeSuccess = async () => {
+    // Call the refetch callback to update access state
+    await onCodeRedeemed();
+    
+    // Determine redirect based on current path
+    const isFanPath = location.pathname.startsWith('/fan');
+    const isStudioPath = location.pathname.startsWith('/studio');
+    
+    if (isFanPath) {
+      navigate('/fan/onboarding', { replace: true });
+    } else if (isStudioPath) {
+      navigate('/studio/onboarding', { replace: true });
+    } else {
+      // Default to role selection
+      navigate('/role-selection', { replace: true });
+    }
   };
 
   return (

@@ -4,8 +4,7 @@ import { Headphones, Heart, Library, Bell, Sparkles, ArrowLeft, Loader2 } from '
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRoleBetaAccess } from '@/hooks/useRoleBetaAccess';
+import { useUserAccessState } from '@/hooks/useUserAccessState';
 import { toast } from 'sonner';
 import fanHero from '@/assets/fan-hero-concert.png';
 
@@ -51,18 +50,21 @@ export default function FanGate() {
   const isPreview = searchParams.get('preview') === '1';
   const reason = searchParams.get('reason');
   
-  const { user, hasRole, loading: authLoading } = useAuth();
-  const { hasAccess: hasFanBetaAccess, loading: betaLoading } = useRoleBetaAccess('fan');
+  const { authenticated, hasFanAccess, fanOnboarded, loading } = useUserAccessState();
 
   // SUPER CARD: Activated fans skip this page entirely
   useEffect(() => {
-    if (authLoading || betaLoading) return;
+    if (loading) return;
     
-    if (user && hasRole('fan') && hasFanBetaAccess) {
+    if (authenticated && hasFanAccess) {
       // User is activated - never show gate visuals again
-      navigate('/fan/feed', { replace: true });
+      if (fanOnboarded) {
+        navigate('/fan/feed', { replace: true });
+      } else {
+        navigate('/fan/onboarding', { replace: true });
+      }
     }
-  }, [user, hasRole, hasFanBetaAccess, authLoading, betaLoading, navigate]);
+  }, [authenticated, hasFanAccess, fanOnboarded, loading, navigate]);
 
   // Show toast when redirected from signin without invite access
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function FanGate() {
   }, [reason, searchParams, setSearchParams]);
 
   // Show loading while checking auth status
-  if (authLoading || betaLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
