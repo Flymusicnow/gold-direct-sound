@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile Safari viewport fix - use dynamic viewport height */
+html {
+  height: -webkit-fill-available;
+}
+
+body {
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
+}
+
 /* Safe area support for mobile devices (notch, dynamic island) */
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
@@ -14,6 +24,19 @@
 
 .pb-safe {
   padding-bottom: max(1rem, var(--safe-area-bottom));
+}
+
+/* Dynamic viewport height utilities */
+@layer utilities {
+  .min-h-dvh {
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+  
+  .h-dvh {
+    height: 100dvh;
+    height: -webkit-fill-available;
+  }
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 

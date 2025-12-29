@@ -5,10 +5,14 @@ import { Card } from "@/components/ui/card";
 import { Heart, Music, Sparkles, CheckCircle2, Award, Trophy, Star, FileText } from "lucide-react";
 import { LegalFlow } from "@/components/legal/LegalFlow";
 import { useLegalAcceptance } from "@/hooks/useLegalAcceptance";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function FanOnboarding() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(0); // 0 = legal, 1 = features, 2 = complete
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
 
   // Check if legal documents are already accepted
@@ -25,16 +29,48 @@ export default function FanOnboarding() {
     setStep(1);
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (step === 1) {
       setStep(2);
     } else {
-      navigate('/fan/feed');
+      // Persist onboarding completion before navigation
+      if (user && !isSubmitting) {
+        setIsSubmitting(true);
+        try {
+          await supabase
+            .from('fan_onboarding_progress')
+            .upsert({
+              user_id: user.id,
+              onboarding_completed: true,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'user_id' });
+        } catch (error) {
+          console.error('Failed to save onboarding progress:', error);
+        }
+        setIsSubmitting(false);
+      }
+      navigate('/fan/feed', { replace: true });
     }
   };
 
-  const handleSkip = () => {
-    navigate('/fan/feed');
+  const handleSkip = async () => {
+    // Persist skip state before navigation
+    if (user && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await supabase
+          .from('fan_onboarding_progress')
+          .upsert({
+            user_id: user.id,
+            onboarding_skipped: true,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+      } catch (error) {
+        console.error('Failed to save onboarding skip:', error);
+      }
+      setIsSubmitting(false);
+    }
+    navigate('/fan/feed', { replace: true });
   };
 
   // Show legal flow
@@ -56,7 +92,7 @@ export default function FanOnboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-safe pb-safe overflow-y-auto">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
@@ -177,14 +213,15 @@ export default function FanOnboarding() {
 
           {/* Actions */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
-            <Button variant="ghost" onClick={handleSkip}>
+            <Button variant="ghost" onClick={handleSkip} disabled={isSubmitting}>
               Skip for now
             </Button>
             <Button
               onClick={handleContinue}
               className="bg-gradient-gold"
+              disabled={isSubmitting}
             >
-              {step === 1 ? "Continue" : "Start Exploring"}
+              {isSubmitting ? "Saving..." : step === 1 ? "Continue" : "Start Exploring"}
             </Button>
           </div>
         </Card>
