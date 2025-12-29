@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { isValidUUID } from "@/lib/utils/validation";
 
 export type AchievementType =
   | "first_track"
@@ -75,24 +76,62 @@ const ACHIEVEMENT_DEFINITIONS: Record<AchievementType, { name: string; descripti
   },
 };
 
-export function usePublicAchievements(userId: string | undefined) {
+export function usePublicAchievements(artistIdOrUserId: string | undefined) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (userId) {
-      fetchAchievements();
+    // Validate input before making requests
+    if (!artistIdOrUserId || !isValidUUID(artistIdOrUserId)) {
+      // Return empty achievements with all definitions (unlocked = false)
+      const allAchievements = Object.entries(ACHIEVEMENT_DEFINITIONS).map(
+        ([type, def]) => ({
+          type: type as AchievementType,
+          ...def,
+          unlocked: false,
+        })
+      );
+      setAchievements(allAchievements);
+      setLoading(false);
+      return;
     }
-  }, [userId]);
 
-  const fetchAchievements = async () => {
-    if (!userId) return;
+    resolveAndFetchAchievements();
+  }, [artistIdOrUserId]);
+
+  const resolveAndFetchAchievements = async () => {
+    if (!artistIdOrUserId) return;
 
     try {
+      // First, resolve the ID to get the correct user_id
+      // The param could be either user_id or artist_profiles.id
+      const { data: profile } = await supabase
+        .from("artist_profiles")
+        .select("user_id")
+        .or(`user_id.eq.${artistIdOrUserId},id.eq.${artistIdOrUserId}`)
+        .maybeSingle();
+
+      if (!profile) {
+        // No profile found - return empty achievements
+        const allAchievements = Object.entries(ACHIEVEMENT_DEFINITIONS).map(
+          ([type, def]) => ({
+            type: type as AchievementType,
+            ...def,
+            unlocked: false,
+          })
+        );
+        setAchievements(allAchievements);
+        setLoading(false);
+        return;
+      }
+
+      const resolvedUserId = profile.user_id;
+
+      // Now fetch achievements with the correct user_id
       const { data: unlockedData } = await supabase
         .from("artist_achievements")
         .select("achievement_type, unlocked_at")
-        .eq("user_id", userId);
+        .eq("user_id", resolvedUserId);
 
       const unlockedMap = new Map(
         unlockedData?.map((a) => [a.achievement_type, a.unlocked_at]) || []
@@ -110,6 +149,15 @@ export function usePublicAchievements(userId: string | undefined) {
       setAchievements(allAchievements);
     } catch (error) {
       console.error("Error fetching achievements:", error);
+      // On error, return empty achievements
+      const allAchievements = Object.entries(ACHIEVEMENT_DEFINITIONS).map(
+        ([type, def]) => ({
+          type: type as AchievementType,
+          ...def,
+          unlocked: false,
+        })
+      );
+      setAchievements(allAchievements);
     } finally {
       setLoading(false);
     }

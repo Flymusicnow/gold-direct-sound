@@ -27,6 +27,7 @@ import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { SupportTierModal } from "@/components/supporter/SupportTierModal";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface Artist {
   id: string;
@@ -94,6 +95,14 @@ export default function ArtistProfile() {
   
   // Get verification status for this artist
   const { isVerified } = useArtistVerification(artist?.user_id);
+
+  // Set Open Graph meta tags for social sharing
+  useMetaTags(artist ? {
+    title: `${artist.artist_name} | FlyMusic Gold`,
+    description: artist.bio || `Discover ${artist.artist_name}'s music on FlyMusic Gold`,
+    image: artist.avatar_url || '/flymusic-logo.png',
+    type: 'profile',
+  } : null);
 
   // Log page load in repro mode
   useEffect(() => {

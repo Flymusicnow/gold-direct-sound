@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Award, ArrowLeft, Share2 } from "lucide-react";
+import { Award, ArrowLeft, Share2, Home, Music2 } from "lucide-react";
 import { usePublicAchievements } from "@/hooks/usePublicAchievements";
 import { AchievementBadge } from "@/components/artist/AchievementBadge";
 import { Badge } from "@/components/ui/badge";
 import { ShareModal } from "@/components/ShareModal";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { isValidUUID } from "@/lib/utils/validation";
+import { useMetaTags } from "@/hooks/useMetaTags";
 
 interface Artist {
   id: string;
@@ -21,32 +23,84 @@ interface Artist {
   avatar_url: string | null;
 }
 
+type ErrorState = 'invalid' | 'not_found' | 'fetch' | null;
+
 export default function ArtistAchievements() {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [artist, setArtist] = useState<Artist | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<ErrorState>(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const { achievements, loading: achievementsLoading } = usePublicAchievements(userId);
 
+  // Calculate stats for meta tags
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const totalCount = achievements.length;
+  const progressPercentage = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+
+  // Set Open Graph meta tags for social sharing
+  useMetaTags(artist ? {
+    title: `${artist.artist_name}'s Achievements | FlyMusic Gold`,
+    description: `Check out ${artist.artist_name}'s ${unlockedCount} unlocked achievements on FlyMusic Gold. ${progressPercentage}% profile completion!`,
+    image: artist.avatar_url || '/flymusic-logo.png',
+    type: 'profile',
+  } : null);
+
   useEffect(() => {
-    if (userId) {
-      fetchArtist();
+    // Validate UUID before making any requests
+    if (!userId) {
+      setError('invalid');
+      setLoading(false);
+      return;
     }
+
+    if (!isValidUUID(userId)) {
+      setError('invalid');
+      setLoading(false);
+      return;
+    }
+
+    fetchArtist();
   }, [userId]);
 
   const fetchArtist = async () => {
-    const { data, error } = await supabase
-      .from('artist_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    if (!userId) return;
 
-    if (error) {
-      console.error('Error fetching artist:', error);
-    } else {
-      setArtist(data);
+    try {
+      // First try by user_id (the expected case)
+      let { data, error: queryError } = await supabase
+        .from('artist_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      // If not found by user_id, try by artist_profiles.id (for links using profile ID)
+      if (!data && !queryError) {
+        const result = await supabase
+          .from('artist_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+        data = result.data;
+        queryError = result.error;
+      }
+
+      if (queryError) {
+        console.error('Error fetching artist:', queryError);
+        setError('fetch');
+      } else if (!data) {
+        setError('not_found');
+      } else {
+        setArtist(data);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching artist:', err);
+      setError('fetch');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (loading) {
@@ -57,24 +111,113 @@ export default function ArtistAchievements() {
     );
   }
 
-  if (!artist) {
+  // Error: Invalid UUID format
+  if (error === 'invalid') {
     return (
-      <div className="min-h-screen pt-16 flex items-center justify-center">
-        <p className="text-muted-foreground">Artist not found</p>
+      <div className="min-h-screen pt-16 flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
+            <Music2 className="h-10 w-10 text-destructive opacity-50" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Invalid artist link</h2>
+          <p className="text-muted-foreground mb-6">
+            This link appears to be invalid. Please check the URL and try again.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => navigate('/explore')}
+              className="gap-2 bg-primary"
+            >
+              <Home className="h-4 w-4" />
+              Explore Artists
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const unlockedCount = achievements.filter((a) => a.unlocked).length;
-  const totalCount = achievements.length;
-  const progressPercentage = Math.round((unlockedCount / totalCount) * 100);
+  // Error: Artist not found
+  if (error === 'not_found' || !artist) {
+    return (
+      <div className="min-h-screen pt-16 flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted/50 flex items-center justify-center">
+            <Music2 className="h-10 w-10 text-muted-foreground opacity-50" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Artist not found</h2>
+          <p className="text-muted-foreground mb-6">
+            This artist may have been removed or the link is incorrect.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => navigate('/studio')}
+              className="gap-2"
+            >
+              <Music2 className="h-4 w-4" />
+              Go to My Studio
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error: Fetch error
+  if (error === 'fetch') {
+    return (
+      <div className="min-h-screen pt-16 flex flex-col items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
+            <Music2 className="h-10 w-10 text-destructive opacity-50" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Error loading artist</h2>
+          <p className="text-muted-foreground mb-6">
+            Something went wrong. Please try again.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate(-1)}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => window.location.reload()}
+              className="gap-2 bg-primary"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-16 pb-32">
       {/* Header Section */}
       <div className="bg-gradient-dark border-b border-border">
         <div className="container mx-auto px-4 py-8 max-w-6xl">
-          <Link to={`/artist/${userId}`}>
+          <Link to={`/artist/${artist.user_id}`}>
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Profile
