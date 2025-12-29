@@ -192,7 +192,7 @@ export type Database = {
       artist_beta_access: {
         Row: {
           badge_name: string | null
-          code_id: string
+          code_id: string | null
           code_used: string | null
           id: string
           redeemed_at: string | null
@@ -202,7 +202,7 @@ export type Database = {
         }
         Insert: {
           badge_name?: string | null
-          code_id: string
+          code_id?: string | null
           code_used?: string | null
           id?: string
           redeemed_at?: string | null
@@ -212,7 +212,7 @@ export type Database = {
         }
         Update: {
           badge_name?: string | null
-          code_id?: string
+          code_id?: string | null
           code_used?: string | null
           id?: string
           redeemed_at?: string | null
