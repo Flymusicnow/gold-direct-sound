@@ -10,9 +10,10 @@ import { toast } from 'sonner';
 interface WaitlistFormProps {
   disabled?: boolean;
   defaultArtist?: boolean;
+  hideRoleToggle?: boolean; // Hide the artist checkbox on role-specific pages
 }
 
-export function WaitlistForm({ disabled = false, defaultArtist = false }: WaitlistFormProps) {
+export function WaitlistForm({ disabled = false, defaultArtist = false, hideRoleToggle = false }: WaitlistFormProps) {
   const [email, setEmail] = useState('');
   const [isArtist, setIsArtist] = useState(defaultArtist);
   const [loading, setLoading] = useState(false);
@@ -107,22 +108,24 @@ export function WaitlistForm({ disabled = false, defaultArtist = false }: Waitli
         </Button>
       </div>
 
-      {/* Artist/creator micro-signal checkbox */}
-      <div className="flex items-center space-x-2">
-        <Checkbox
-          id="is-artist"
-          checked={isArtist}
-          onCheckedChange={(checked) => setIsArtist(checked === true)}
-          disabled={loading || disabled}
-        />
-        <Label 
-          htmlFor="is-artist" 
-          className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5"
-        >
-          <Music className="h-3.5 w-3.5" />
-          I'm an artist or creator
-        </Label>
-      </div>
+      {/* Artist/creator micro-signal checkbox - hidden on role-specific pages */}
+      {!hideRoleToggle && (
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="is-artist"
+            checked={isArtist}
+            onCheckedChange={(checked) => setIsArtist(checked === true)}
+            disabled={loading || disabled}
+          />
+          <Label 
+            htmlFor="is-artist" 
+            className="text-sm text-muted-foreground cursor-pointer flex items-center gap-1.5"
+          >
+            <Music className="h-3.5 w-3.5" />
+            I'm an artist or creator
+          </Label>
+        </div>
+      )}
 
       <p className="text-xs text-muted-foreground">
         We'll notify you when we're ready to welcome you.

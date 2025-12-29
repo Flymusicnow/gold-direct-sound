@@ -135,7 +135,9 @@ export default function JoinFan() {
                 <Heart className="h-8 w-8 text-accent" />
               </div>
               <CardTitle className="text-2xl">{t('auth.joinFanTitle')}</CardTitle>
-              <CardDescription>{t('auth.joinFanDescription')}</CardDescription>
+              <CardDescription>
+                You're joining as a <span className="text-accent font-medium">fan</span>. {t('auth.joinFanDescription')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp} className="space-y-4">

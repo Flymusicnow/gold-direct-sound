@@ -141,7 +141,7 @@ export default function FanGate() {
               Join the waitlist and we'll invite you when it's your turn.
             </p>
           </div>
-          <WaitlistForm disabled={isPreview} />
+          <WaitlistForm disabled={isPreview} hideRoleToggle />
         </div>
 
         {/* Secondary CTA: Invite code */}
