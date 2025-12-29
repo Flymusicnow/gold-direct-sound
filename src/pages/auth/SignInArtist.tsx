@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mic2, ArrowLeft } from "lucide-react";
+import { RequestBetaDialog } from "@/components/RequestBetaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ export default function SignInArtist() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showBetaDialog, setShowBetaDialog] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,16 @@ export default function SignInArtist() {
       });
 
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Account not found. Request a beta code to create an account.", {
+            action: {
+              label: "Request Code",
+              onClick: () => setShowBetaDialog(true),
+            },
+          });
+        } else {
+          toast.error(error.message);
+        }
         setLoading(false);
         return;
       }
@@ -139,10 +150,14 @@ export default function SignInArtist() {
 
               <div className="mt-6 text-center text-sm">
                 <p className="text-muted-foreground">
-                  {t('auth.dontHaveAccount')}{' '}
-                  <Link to="/join/artist" className="text-primary hover:underline">
-                    {t('auth.createArtistAccount')}
-                  </Link>
+                  No account yet?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setShowBetaDialog(true)}
+                    className="text-primary hover:underline"
+                  >
+                    Request Beta Code
+                  </button>
                 </p>
               </div>
             </CardContent>
@@ -159,6 +174,11 @@ export default function SignInArtist() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent" />
       </div>
+
+      <RequestBetaDialog 
+        open={showBetaDialog} 
+        onOpenChange={setShowBetaDialog} 
+      />
     </div>
   );
 }
