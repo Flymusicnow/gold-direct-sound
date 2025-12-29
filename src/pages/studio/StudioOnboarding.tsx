@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ const STEPS = [
 export default function StudioOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { artistOnboarded, loading: accessLoading } = useUserAccessState();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,6 +35,22 @@ export default function StudioOnboarding() {
     genre: "",
   });
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
+
+  // Guard: If already onboarded, redirect to studio immediately
+  useEffect(() => {
+    if (!accessLoading && artistOnboarded) {
+      navigate('/studio', { replace: true });
+    }
+  }, [accessLoading, artistOnboarded, navigate]);
+
+  // Show loading while checking onboarding status
+  if (accessLoading) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+      </div>
+    );
+  }
 
   // Check if legal documents are already accepted
   useEffect(() => {
