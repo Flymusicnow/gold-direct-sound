@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type DocumentType = "user_agreement" | "artist_agreement" | "privacy_policy" | "fan_terms" | "brand_portal_terms" | "risk_disclaimer";
+export type DocumentType = "user_agreement" | "artist_agreement" | "privacy_policy" | "fan_terms" | "brand_portal_terms" | "risk_disclaimer";
 
 interface LegalAcceptance {
   document_type: string;
@@ -10,9 +10,21 @@ interface LegalAcceptance {
   document_version: string;
 }
 
+interface LegalDocument {
+  id: string;
+  document_type: string;
+  current_version: string;
+  title: string;
+  document_path: string;
+  requires_reaccept: boolean;
+  changelog: string | null;
+  last_updated: string;
+}
+
 export const useLegalAcceptance = () => {
   const { user } = useAuth();
   const [acceptances, setAcceptances] = useState<LegalAcceptance[]>([]);
+  const [documents, setDocuments] = useState<LegalDocument[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAcceptances = useCallback(async () => {
@@ -37,13 +49,35 @@ export const useLegalAcceptance = () => {
     }
   }, [user]);
 
+  const fetchDocuments = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("legal_documents")
+        .select("*");
+
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (err) {
+      console.error("Failed to fetch legal documents:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchAcceptances();
-  }, [fetchAcceptances]);
+    fetchDocuments();
+  }, [fetchAcceptances, fetchDocuments]);
 
   const hasAccepted = useCallback((documentType: DocumentType): boolean => {
     return acceptances.some(a => a.document_type === documentType);
   }, [acceptances]);
+
+  const hasAcceptedCurrentVersion = useCallback((documentType: DocumentType): boolean => {
+    const acceptance = acceptances.find(a => a.document_type === documentType);
+    const document = documents.find(d => d.document_type === documentType);
+    
+    if (!acceptance || !document) return false;
+    return acceptance.document_version === document.current_version;
+  }, [acceptances, documents]);
 
   const getAcceptanceDate = useCallback((documentType: DocumentType): string | null => {
     const acceptance = acceptances.find(a => a.document_type === documentType);
@@ -54,17 +88,51 @@ export const useLegalAcceptance = () => {
     return requiredDocuments.every(doc => hasAccepted(doc));
   }, [hasAccepted]);
 
+  const hasAcceptedRequiredCurrentVersions = useCallback((requiredDocuments: DocumentType[]): boolean => {
+    return requiredDocuments.every(doc => hasAcceptedCurrentVersion(doc));
+  }, [hasAcceptedCurrentVersion]);
+
   const getMissingDocuments = useCallback((requiredDocuments: DocumentType[]): DocumentType[] => {
     return requiredDocuments.filter(doc => !hasAccepted(doc));
   }, [hasAccepted]);
 
+  const getDocumentsNeedingReaccept = useCallback((): LegalDocument[] => {
+    return documents.filter(doc => {
+      if (!doc.requires_reaccept) return false;
+      const acceptance = acceptances.find(a => a.document_type === doc.document_type);
+      if (!acceptance) return true;
+      return acceptance.document_version !== doc.current_version;
+    });
+  }, [acceptances, documents]);
+
+  const getDocumentInfo = useCallback((documentType: DocumentType): LegalDocument | undefined => {
+    return documents.find(d => d.document_type === documentType);
+  }, [documents]);
+
+  const getDocumentsForUserType = useCallback((userType: "fan" | "artist" | "brand"): LegalDocument[] => {
+    const typeMap: Record<string, DocumentType[]> = {
+      fan: ["user_agreement", "privacy_policy", "fan_terms"],
+      artist: ["user_agreement", "artist_agreement", "privacy_policy", "risk_disclaimer"],
+      brand: ["user_agreement", "privacy_policy", "brand_portal_terms"]
+    };
+
+    const requiredTypes = typeMap[userType] || [];
+    return documents.filter(d => requiredTypes.includes(d.document_type as DocumentType));
+  }, [documents]);
+
   return {
     acceptances,
+    documents,
     loading,
     hasAccepted,
+    hasAcceptedCurrentVersion,
     getAcceptanceDate,
     hasAcceptedRequired,
+    hasAcceptedRequiredCurrentVersions,
     getMissingDocuments,
+    getDocumentsNeedingReaccept,
+    getDocumentInfo,
+    getDocumentsForUserType,
     refetch: fetchAcceptances
   };
 };

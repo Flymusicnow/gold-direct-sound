@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Music, Upload, CheckCircle2, User, Image, Share2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Music, Upload, CheckCircle2, User, Image, Share2, ArrowLeft, ArrowRight, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { LegalFlow } from "@/components/legal/LegalFlow";
+import { useLegalAcceptance } from "@/hooks/useLegalAcceptance";
 
 const STEPS = [
+  { id: 0, title: "Terms", icon: FileText, description: "Accept terms" },
   { id: 1, title: "Basic Info", icon: User, description: "Tell us about yourself" },
   { id: 2, title: "Profile Picture", icon: Image, description: "Add a profile image" },
   { id: 3, title: "First Upload", icon: Upload, description: "Upload your first track" },
@@ -22,15 +25,30 @@ const STEPS = [
 export default function StudioOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     artistName: "",
     bio: "",
     genre: "",
   });
+  const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
 
-  const progress = (currentStep / STEPS.length) * 100;
+  // Check if legal documents are already accepted
+  useEffect(() => {
+    if (legalLoading) return;
+    
+    const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "artist_agreement", "privacy_policy"]);
+    if (allAccepted && currentStep === 0) {
+      setCurrentStep(1);
+    }
+  }, [hasAcceptedRequiredCurrentVersions, legalLoading, currentStep]);
+
+  const progress = ((currentStep) / (STEPS.length - 1)) * 100;
+
+  const handleLegalComplete = () => {
+    setCurrentStep(1);
+  };
 
   const handleNext = async () => {
     if (currentStep === 1) {
@@ -82,7 +100,7 @@ export default function StudioOnboarding() {
       } finally {
         setLoading(false);
       }
-    } else if (currentStep < STEPS.length) {
+    } else if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       // Complete onboarding
@@ -98,7 +116,7 @@ export default function StudioOnboarding() {
   };
 
   const handleSkip = () => {
-    if (currentStep < STEPS.length) {
+    if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       navigate('/studio');
@@ -108,6 +126,24 @@ export default function StudioOnboarding() {
   const handleSkipAll = () => {
     navigate('/studio');
   };
+
+  // Show legal flow for step 0
+  if (currentStep === 0) {
+    return (
+      <LegalFlow 
+        userType="artist"
+        onComplete={handleLegalComplete}
+      >
+        <Card className="w-full max-w-md p-8 text-center mb-6">
+          <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Welcome to My Studio</h1>
+          <p className="text-muted-foreground">
+            Before we continue, please review and accept our terms.
+          </p>
+        </Card>
+      </LegalFlow>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -119,7 +155,7 @@ export default function StudioOnboarding() {
             <h1 className="text-3xl font-bold">Welcome to My Studio</h1>
           </div>
           <p className="text-muted-foreground">
-            Complete your profile in {STEPS.length} easy steps
+            Complete your profile in {STEPS.length - 1} easy steps
           </p>
         </div>
 
@@ -127,7 +163,7 @@ export default function StudioOnboarding() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
-              Step {currentStep} of {STEPS.length}
+              Step {currentStep} of {STEPS.length - 1}
             </span>
             <span className="text-sm font-medium text-primary">
               {Math.round(progress)}% Complete
@@ -138,9 +174,10 @@ export default function StudioOnboarding() {
 
         {/* Step Indicators */}
         <div className="flex items-center justify-between mb-8 px-4">
-          {STEPS.map((step, index) => {
-            const isCompleted = currentStep > step.id;
-            const isCurrent = currentStep === step.id;
+          {STEPS.slice(1).map((step, index) => {
+            const actualId = step.id;
+            const isCompleted = currentStep > actualId;
+            const isCurrent = currentStep === actualId;
             const StepIcon = step.icon;
             
             return (
@@ -288,6 +325,10 @@ export default function StudioOnboarding() {
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    Terms accepted
+                  </li>
+                  <li className="flex items-center gap-2 text-sm">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
                     Basic profile information
                   </li>
                   <li className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -327,7 +368,7 @@ export default function StudioOnboarding() {
               </Button>
             </div>
             <div className="flex gap-2">
-              {currentStep > 1 && currentStep < STEPS.length && (
+              {currentStep > 1 && currentStep < STEPS.length - 1 && (
                 <Button variant="outline" onClick={handleSkip}>
                   Skip this step
                 </Button>
@@ -337,7 +378,7 @@ export default function StudioOnboarding() {
                 disabled={loading}
                 className="bg-gradient-gold"
               >
-                {loading ? "Saving..." : currentStep === STEPS.length ? (
+                {loading ? "Saving..." : currentStep === STEPS.length - 1 ? (
                   <>
                     Go to Studio
                     <ArrowRight className="h-4 w-4 ml-2" />

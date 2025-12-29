@@ -3,47 +3,25 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Heart, Music, Sparkles, CheckCircle2, Award, Trophy, Star, FileText } from "lucide-react";
-import { LegalAcceptanceModal } from "@/components/legal/LegalAcceptanceModal";
+import { LegalFlow } from "@/components/legal/LegalFlow";
 import { useLegalAcceptance } from "@/hooks/useLegalAcceptance";
 
 export default function FanOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0); // 0 = legal, 1 = features, 2 = complete
-  const [showUserAgreement, setShowUserAgreement] = useState(false);
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
-  const [legalStep, setLegalStep] = useState<"user_agreement" | "privacy_policy" | "done">("user_agreement");
-  
-  const { hasAccepted, loading: legalLoading, refetch } = useLegalAcceptance();
+  const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
 
   // Check if legal documents are already accepted
   useEffect(() => {
     if (legalLoading) return;
     
-    const userAccepted = hasAccepted("user_agreement");
-    const privacyAccepted = hasAccepted("privacy_policy");
-    
-    if (userAccepted && privacyAccepted) {
+    const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "privacy_policy"]);
+    if (allAccepted) {
       setStep(1);
-      setLegalStep("done");
-    } else if (userAccepted && !privacyAccepted) {
-      setLegalStep("privacy_policy");
-      setShowPrivacyPolicy(true);
-    } else if (!userAccepted) {
-      setShowUserAgreement(true);
     }
-  }, [hasAccepted, legalLoading]);
+  }, [hasAcceptedRequiredCurrentVersions, legalLoading]);
 
-  const handleUserAgreementAccept = () => {
-    setShowUserAgreement(false);
-    refetch();
-    setLegalStep("privacy_policy");
-    setShowPrivacyPolicy(true);
-  };
-
-  const handlePrivacyPolicyAccept = () => {
-    setShowPrivacyPolicy(false);
-    refetch();
-    setLegalStep("done");
+  const handleLegalComplete = () => {
     setStep(1);
   };
 
@@ -59,40 +37,21 @@ export default function FanOnboarding() {
     navigate('/fan/feed');
   };
 
-  // Show legal acceptance modals
-  if (step === 0 && legalStep !== "done") {
+  // Show legal flow
+  if (step === 0) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md p-8 text-center">
+      <LegalFlow 
+        userType="fan"
+        onComplete={handleLegalComplete}
+      >
+        <Card className="w-full max-w-md p-8 text-center mb-6">
           <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Welcome to FlyMusic</h1>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground">
             Before we continue, please review and accept our terms.
           </p>
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className={`w-2 h-2 rounded-full ${legalStep === "user_agreement" ? "bg-primary" : "bg-muted"}`} />
-            <span>User Agreement</span>
-            <div className={`w-2 h-2 rounded-full ${legalStep === "privacy_policy" ? "bg-primary" : "bg-muted"}`} />
-            <span>Privacy Policy</span>
-          </div>
         </Card>
-
-        <LegalAcceptanceModal
-          open={showUserAgreement}
-          onAccept={handleUserAgreementAccept}
-          documentType="user_agreement"
-          title="User Agreement"
-          documentPath="/legal/user-agreement.md"
-        />
-
-        <LegalAcceptanceModal
-          open={showPrivacyPolicy}
-          onAccept={handlePrivacyPolicyAccept}
-          documentType="privacy_policy"
-          title="Privacy Policy"
-          documentPath="/legal/privacy-policy.md"
-        />
-      </div>
+      </LegalFlow>
     );
   }
 
