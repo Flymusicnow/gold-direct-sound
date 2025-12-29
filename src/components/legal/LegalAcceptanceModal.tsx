@@ -105,18 +105,20 @@ export const LegalAcceptanceModal = ({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 max-h-[50vh] pr-4 border rounded-lg p-4 bg-muted/20">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
-          ) : (
-            <div 
-              className="prose prose-sm max-w-none text-sm"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
-            />
-          )}
-        </ScrollArea>
+        <div className="flex-1 max-h-[50vh] overflow-y-auto border rounded-lg bg-muted/20">
+          <div className="p-4 pr-6">
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div 
+                className="prose prose-sm max-w-none text-sm"
+                dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+              />
+            )}
+          </div>
+        </div>
 
         <div className="space-y-4 pt-4 border-t">
           <div className="flex items-start gap-3">
