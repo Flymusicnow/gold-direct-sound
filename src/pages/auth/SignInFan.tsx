@@ -56,35 +56,52 @@ export default function SignInFan() {
         const hasFan = roles?.some(r => r.role === 'fan');
         
         if (!hasFan) {
-          // User doesn't have fan role - show error with correct sign-in link
+          // User doesn't have fan role - WRONG ROLE, show clear error
           const hasArtist = roles?.some(r => r.role === 'artist');
           const hasBrand = roles?.some(r => r.role === 'brand');
           
           await supabase.auth.signOut();
           
-          if (hasBrand) {
-            toast.error(t('auth.wrongRoleBrand'), {
+          if (hasArtist) {
+            // Clear error: This area is for Fans
+            toast.error('This area is for Fans. You have an Artist account.', {
               action: {
-                label: t('auth.signInAsBrand'),
-                onClick: () => navigate('/signin/brand'),
-              },
-            });
-          } else if (hasArtist) {
-            toast.error(t('auth.wrongRoleArtist'), {
-              action: {
-                label: t('auth.signInAsArtist'),
+                label: 'Sign in as Artist',
                 onClick: () => navigate('/signin/artist'),
               },
+              duration: 6000,
+            });
+          } else if (hasBrand) {
+            toast.error('This area is for Fans. You have a Brand account.', {
+              action: {
+                label: 'Sign in as Brand',
+                onClick: () => navigate('/signin/brand'),
+              },
+              duration: 6000,
             });
           } else {
-            toast.error(t('auth.noFanAccount'));
+            toast.error('No Fan account found for this email.');
           }
           setLoading(false);
           return;
         }
 
+        // Fan role confirmed - check beta access and redirect
+        const { data: fanAccess } = await supabase
+          .from('fan_beta_access')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
         toast.success(t('auth.signInSuccess'));
-        navigate('/fan');
+        
+        if (fanAccess) {
+          // Has beta access - go to feed
+          navigate('/fan/feed', { replace: true });
+        } else {
+          // No beta access - go to gate/waitlist
+          navigate('/fan', { replace: true });
+        }
       }
     } catch (err) {
       console.error('Sign in error:', err);

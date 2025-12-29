@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Headphones, Heart, Library, Bell, Sparkles, ArrowLeft } from 'lucide-react';
+import { Headphones, Heart, Library, Bell, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
@@ -37,6 +37,14 @@ const fanBenefits = [
   }
 ];
 
+/**
+ * FanGate - Public entry point for fans
+ * 
+ * SUPER CARD RULES:
+ * - Activated fans (with beta access) NEVER see this page
+ * - Shows waitlist + invite code for non-activated users
+ * - First-time visual experience only
+ */
 export default function FanGate() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -46,23 +54,33 @@ export default function FanGate() {
   const { user, hasRole, loading: authLoading } = useAuth();
   const { hasAccess: hasFanBetaAccess, loading: betaLoading } = useRoleBetaAccess('fan');
 
-  // Redirect authenticated fans with beta access to their portal
+  // SUPER CARD: Activated fans skip this page entirely
   useEffect(() => {
     if (authLoading || betaLoading) return;
+    
     if (user && hasRole('fan') && hasFanBetaAccess) {
+      // User is activated - never show gate visuals again
       navigate('/fan/feed', { replace: true });
     }
   }, [user, hasRole, hasFanBetaAccess, authLoading, betaLoading, navigate]);
 
-  // Show toast when redirected from /signin/fan without invite access
+  // Show toast when redirected from signin without invite access
   useEffect(() => {
     if (reason === 'invite-required') {
       toast.info('Sign in is invite-only. Enter an invite code to continue.');
-      // Clear the param to prevent repeat toasts on refresh
       searchParams.delete('reason');
       setSearchParams(searchParams, { replace: true });
     }
   }, [reason, searchParams, setSearchParams]);
+
+  // Show loading while checking auth status
+  if (authLoading || betaLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
