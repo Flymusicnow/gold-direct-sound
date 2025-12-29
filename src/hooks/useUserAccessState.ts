@@ -62,12 +62,12 @@ export function useUserAccessState(): UserAccessState {
           .maybeSingle(),
         supabase
           .from('fan_onboarding_progress')
-          .select('onboarding_completed')
+          .select('onboarding_completed, onboarding_skipped')
           .eq('user_id', user.id)
           .maybeSingle(),
         supabase
           .from('artist_onboarding_progress')
-          .select('onboarding_completed')
+          .select('onboarding_completed, onboarding_skipped')
           .eq('user_id', user.id)
           .maybeSingle(),
       ]);
@@ -79,8 +79,17 @@ export function useUserAccessState(): UserAccessState {
       
       setHasFanAccess(!!fanAccessResult.data || hasImplicitFanAccess);
       setHasArtistAccess(!!artistAccessResult.data || hasImplicitArtistAccess);
-      setFanOnboarded(fanOnboardingResult.data?.onboarding_completed ?? false);
-      setArtistOnboarded(artistOnboardingResult.data?.onboarding_completed ?? false);
+      // Treat both completed and skipped as "onboarded" for gate purposes
+      setFanOnboarded(
+        fanOnboardingResult.data?.onboarding_completed || 
+        fanOnboardingResult.data?.onboarding_skipped || 
+        false
+      );
+      setArtistOnboarded(
+        artistOnboardingResult.data?.onboarding_completed || 
+        artistOnboardingResult.data?.onboarding_skipped || 
+        false
+      );
     } catch (error) {
       console.error('Error checking access state:', error);
     } finally {
