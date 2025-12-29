@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { Heart, Mic2, Key, Loader2, AlertCircle } from "lucide-react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,8 @@ const roleConfig = {
     subtext:
       "Join a community of music lovers discovering amazing independent artists before anyone else.",
     badge: "FAN ACCESS",
-    badgeColor: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-    buttonColor: "bg-pink-500 hover:bg-pink-600",
+    badgeColor: "bg-violet-500/20 text-violet-400 border-violet-500/30",
+    buttonColor: "bg-violet-500 hover:bg-violet-600",
     icon: Heart,
   },
   artist: {
@@ -163,8 +163,8 @@ export default function EarlyAccess() {
                 onClick={() => setSelectedRole("fan")}
                 className={
                   selectedRole === "fan"
-                    ? "bg-pink-500 hover:bg-pink-600"
-                    : "border-pink-500/50 text-pink-400"
+                    ? "bg-violet-500 hover:bg-violet-600"
+                    : "border-violet-500/50 text-violet-400"
                 }
               >
                 <Heart className="h-4 w-4 mr-1" />
@@ -235,6 +235,18 @@ export default function EarlyAccess() {
                 </Button>
               </form>
             </div>
+          </div>
+
+          {/* Already have account - Sign In */}
+          <div className="pt-2 text-sm text-muted-foreground">
+            <p>Already have an account?</p>
+            <Link
+              to={`/signin/${selectedRole}`}
+              className="text-foreground hover:underline inline-flex items-center gap-1 mt-1"
+            >
+              <Icon className="h-4 w-4" />
+              Sign in as {selectedRole === "artist" ? "Artist" : "Fan"}
+            </Link>
           </div>
 
           {/* Back link */}
