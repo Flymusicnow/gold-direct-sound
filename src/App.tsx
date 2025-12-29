@@ -59,6 +59,8 @@ import PublicPresskit from "./pages/PublicPresskit";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
 import FanOnboarding from "./pages/fan/FanOnboarding";
+import FanInvite from "./pages/fan/FanInvite";
+import ArtistInvite from "./pages/studio/ArtistInvite";
 import FanFeed from "./pages/FanFeed";
 import FanArtists from "./pages/FanArtists";
 import FanActivity from "./pages/FanActivity";
@@ -180,7 +182,9 @@ const App = () => (
             
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/fan" element={<FanGate />} />
+            <Route path="/fan/invite" element={<FanInvite />} />
             <Route path="/artist" element={<ArtistGate />} />
+            <Route path="/artist/invite" element={<ArtistInvite />} />
             <Route path="/early-access" element={<EarlyAccess />} />
             <Route path="/beta" element={<BetaEntry />} />
             <Route path="/signin/fan" element={<SignInFan />} />

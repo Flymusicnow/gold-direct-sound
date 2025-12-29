@@ -56,35 +56,52 @@ export default function SignInArtist() {
         const hasArtist = roles?.some(r => r.role === 'artist');
         
         if (!hasArtist) {
-          // User doesn't have artist role - show error with correct sign-in link
+          // User doesn't have artist role - WRONG ROLE, show clear error
           const hasFan = roles?.some(r => r.role === 'fan');
           const hasBrand = roles?.some(r => r.role === 'brand');
           
           await supabase.auth.signOut();
           
-          if (hasBrand) {
-            toast.error(t('auth.wrongRoleBrand'), {
+          if (hasFan) {
+            // Clear error: This area is for Artists
+            toast.error('This area is for Artists. You have a Fan account.', {
               action: {
-                label: t('auth.signInAsBrand'),
-                onClick: () => navigate('/signin/brand'),
-              },
-            });
-          } else if (hasFan) {
-            toast.error(t('auth.wrongRoleFan'), {
-              action: {
-                label: t('auth.signInAsFan'),
+                label: 'Sign in as Fan',
                 onClick: () => navigate('/signin/fan'),
               },
+              duration: 6000,
+            });
+          } else if (hasBrand) {
+            toast.error('This area is for Artists. You have a Brand account.', {
+              action: {
+                label: 'Sign in as Brand',
+                onClick: () => navigate('/signin/brand'),
+              },
+              duration: 6000,
             });
           } else {
-            toast.error(t('auth.noArtistAccount'));
+            toast.error('No Artist account found for this email.');
           }
           setLoading(false);
           return;
         }
 
+        // Artist role confirmed - check beta access and redirect
+        const { data: artistAccess } = await supabase
+          .from('artist_beta_access')
+          .select('id')
+          .eq('user_id', data.user.id)
+          .maybeSingle();
+
         toast.success(t('auth.signInSuccess'));
-        navigate('/studio');
+        
+        if (artistAccess) {
+          // Has beta access - go to studio
+          navigate('/studio', { replace: true });
+        } else {
+          // No beta access - go to gate/waitlist
+          navigate('/artist', { replace: true });
+        }
       }
     } catch (err) {
       console.error('Sign in error:', err);

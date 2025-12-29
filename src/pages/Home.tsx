@@ -1,109 +1,34 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Music, Users, Zap, Mic2, Heart, Key } from "lucide-react";
+import { Music, Users, Zap, Mic2, Heart } from "lucide-react";
 import heroImage from "@/assets/hero-music.jpg";
 import { StatsCounter } from "@/components/StatsCounter";
 import { supabase } from "@/integrations/supabase/client";
 import { Footer } from "@/components/Footer";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAppMode } from "@/hooks/useAppMode";
-import { InviteCodeUnlock } from "@/components/fan/InviteCodeUnlock";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
+/**
+ * Home.tsx - SUPER CARD compliant
+ * 
+ * NO auto-redirects for logged-in users.
+ * Shows beta-info with clear paths: Fan | Artist
+ * flymusic.se is NOT used for beta entry - just info.
+ */
 export default function Home() {
   const navigate = useNavigate();
-  const { user, userRoles, loading: authLoading } = useAuth();
-  const { mode, loading: modeLoading } = useAppMode();
   const [stats, setStats] = useState({ artists: 0, tracks: 0, fans: 0 });
-  const [showInviteModal, setShowInviteModal] = useState(false);
-  
-  const isPrivateBeta = mode === 'PRIVATE_BETA';
-
-  // Redirect logged-in users to their respective dashboards
-  // Use role-specific beta access checks
-  useEffect(() => {
-    if (authLoading) return;
-    
-    if (user) {
-      console.log('[Home] User logged in, checking roles:', userRoles);
-      
-      // Determine where to redirect based on role
-      if (userRoles.length === 0) {
-        console.log('[Home] No roles found, redirecting to role selection');
-        navigate('/role-selection', { replace: true });
-        return;
-      }
-      
-      // Check role-specific access and redirect accordingly
-      const checkAccessAndRedirect = async () => {
-        if (userRoles.includes('artist')) {
-          // Check artist_beta_access
-          const { data: artistAccess } = await supabase
-            .from('artist_beta_access')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (artistAccess) {
-            console.log('[Home] Artist with beta access, redirecting to /studio');
-            navigate('/studio', { replace: true });
-            return;
-          }
-        }
-        
-        if (userRoles.includes('brand')) {
-          console.log('[Home] Brand role found, redirecting to /brand');
-          navigate('/brand', { replace: true });
-          return;
-        }
-        
-        if (userRoles.includes('fan')) {
-          // Check fan_beta_access
-          const { data: fanAccess } = await supabase
-            .from('fan_beta_access')
-            .select('id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          
-          if (fanAccess) {
-            console.log('[Home] Fan with beta access, redirecting to /fan/feed');
-            navigate('/fan/feed', { replace: true });
-          } else {
-            console.log('[Home] Fan without beta access, redirecting to /fan (waitlist)');
-            navigate('/fan', { replace: true });
-          }
-          return;
-        }
-        
-        // Fallback for unknown roles
-        console.log('[Home] Unknown roles, redirecting to role selection');
-        navigate('/role-selection', { replace: true });
-      };
-      
-      checkAccessAndRedirect();
-    }
-  }, [user, userRoles, authLoading, navigate]);
 
   useEffect(() => {
     async function fetchStats() {
-      // Fetch approved artists count
       const { count: artistCount } = await supabase
         .from("artist_profiles")
         .select("*", { count: "exact", head: true })
         .eq("status", "approved");
 
-      // Fetch tracks count
       const { count: trackCount } = await supabase
         .from("tracks")
         .select("*", { count: "exact", head: true });
 
-      // Fetch fans count from user_roles
       const { count: fanCount } = await supabase
         .from("user_roles")
         .select("*", { count: "exact", head: true })
@@ -136,64 +61,52 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
             Where artists connect directly with superfans. No intermediaries. Just music, passion, and real connection.
           </p>
+          
+          {/* Beta access paths - NO auto-redirects */}
           <div className="flex flex-col items-center gap-6">
-            {/* Primary CTA */}
-            <Button 
-              size="lg" 
-              className="btn-gold-premium text-lg px-8 rounded-lg"
-              onClick={() => navigate('/explore')}
-            >
-              Explore Artists
-            </Button>
+            <p className="text-lg text-muted-foreground">
+              FlyMusic is currently in <span className="text-primary font-medium">invite-only beta</span>
+            </p>
             
-            {/* Conditional CTAs based on app mode */}
-            {isPrivateBeta ? (
-              // PRIVATE_BETA: Show beta access paths
-              <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                <Button 
-                  variant="outline" 
-                  className="border-primary text-primary hover:bg-primary/10"
-                  onClick={() => navigate('/beta')}
-                >
-                  Request Beta Access
-                </Button>
-                <Button 
-                  variant="ghost"
-                  className="text-white/80 hover:text-white hover:bg-white/10"
-                  onClick={() => setShowInviteModal(true)}
-                >
-                  <Key className="h-4 w-4 mr-2" />
-                  Enter Invite Code
-                </Button>
-              </div>
-            ) : (
-              // PUBLIC_AUTH: Show normal auth buttons
-              <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                {/* Artist Track - Premium animated gold ticket */}
-                <div className="gold-particle-aura">
-                  <div 
-                    className="ticket-gold-animated flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
-                    onClick={() => navigate('/auth?mode=artist')}
-                  >
-                    <Mic2 className="h-8 w-8 text-primary mb-2" />
-                    <span className="font-semibold text-primary text-lg">I'm an Artist</span>
-                    <span className="text-xs text-muted-foreground mt-1">Upload & share music</span>
-                  </div>
-                </div>
-                
-                {/* Fan Track - Premium animated gold ticket with sequential delay */}
-                <div className="gold-particle-aura particle-delay-sequential">
-                  <div 
-                    className="ticket-gold-animated shimmer-delay-sequential flex flex-col items-center p-6 rounded-xl cursor-pointer min-w-[200px]"
-                    onClick={() => navigate('/auth?mode=fan')}
-                  >
-                    <Heart className="h-8 w-8 text-foreground/70 mb-2" />
-                    <span className="font-semibold text-lg">I'm a Fan</span>
-                    <span className="text-xs text-muted-foreground mt-1">Discover & support</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Fan path */}
+              <Button 
+                size="lg"
+                variant="outline"
+                className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500 min-w-[180px]"
+                onClick={() => navigate('/fan')}
+              >
+                <Heart className="h-5 w-5 mr-2" />
+                I'm a Fan
+              </Button>
+              
+              {/* Artist path */}
+              <Button 
+                size="lg"
+                className="bg-gradient-gold min-w-[180px]"
+                onClick={() => navigate('/artist')}
+              >
+                <Mic2 className="h-5 w-5 mr-2" />
+                I'm an Artist
+              </Button>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <button 
+                onClick={() => navigate('/signin/fan')}
+                className="text-violet-400 hover:underline"
+              >
+                Sign in as Fan
+              </button>
+              {' · '}
+              <button 
+                onClick={() => navigate('/signin/artist')}
+                className="text-primary hover:underline"
+              >
+                Sign in as Artist
+              </button>
+            </p>
           </div>
         </div>
       </section>
@@ -274,29 +187,27 @@ export default function Home() {
           <p className="text-xl text-muted-foreground mb-8">
             Whether you're an artist or a superfan, FlyMusic is your platform.
           </p>
-          <Button 
-            size="lg" 
-            className="bg-gradient-gold text-lg px-8"
-            onClick={() => isPrivateBeta ? navigate('/beta') : navigate('/auth')}
-          >
-            {isPrivateBeta ? 'Request Beta Access' : 'Get Started Now'}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button 
+              size="lg" 
+              variant="outline"
+              className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
+              onClick={() => navigate('/fan')}
+            >
+              Join as Fan
+            </Button>
+            <Button 
+              size="lg" 
+              className="bg-gradient-gold"
+              onClick={() => navigate('/artist')}
+            >
+              Join as Artist
+            </Button>
+          </div>
         </div>
       </section>
 
       <Footer />
-
-      {/* Invite Code Modal */}
-      <Dialog open={showInviteModal} onOpenChange={setShowInviteModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Enter Invite Code</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <InviteCodeUnlock />
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

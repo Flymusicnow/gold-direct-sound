@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Upload, Users, TrendingUp, Sparkles, DollarSign, ArrowLeft } from 'lucide-react';
+import { Upload, Users, TrendingUp, Sparkles, DollarSign, ArrowLeft, Loader2 } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRoleBetaAccess } from '@/hooks/useRoleBetaAccess';
 import { toast } from 'sonner';
 import authHero from '@/assets/auth-hero-concert.png';
 
@@ -35,21 +37,50 @@ const artistBenefits = [
   }
 ];
 
+/**
+ * ArtistGate - Public entry point for artists
+ * 
+ * SUPER CARD RULES:
+ * - Activated artists (with beta access) NEVER see this page
+ * - Shows waitlist + invite code for non-activated users
+ * - First-time visual experience only
+ */
 export default function ArtistGate() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
   const reason = searchParams.get('reason');
 
-  // Show toast when redirected from /signin/artist without invite access
+  const { user, hasRole, loading: authLoading } = useAuth();
+  const { hasAccess: hasArtistBetaAccess, loading: betaLoading } = useRoleBetaAccess('artist');
+
+  // SUPER CARD: Activated artists skip this page entirely
+  useEffect(() => {
+    if (authLoading || betaLoading) return;
+    
+    if (user && hasRole('artist') && hasArtistBetaAccess) {
+      // User is activated - never show gate visuals again
+      navigate('/studio', { replace: true });
+    }
+  }, [user, hasRole, hasArtistBetaAccess, authLoading, betaLoading, navigate]);
+
+  // Show toast when redirected from signin without invite access
   useEffect(() => {
     if (reason === 'invite-required') {
       toast.info('Sign in is invite-only. Enter an invite code to continue.');
-      // Clear the param to prevent repeat toasts on refresh
       searchParams.delete('reason');
       setSearchParams(searchParams, { replace: true });
     }
   }, [reason, searchParams, setSearchParams]);
+
+  // Show loading while checking auth status
+  if (authLoading || betaLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen relative">
