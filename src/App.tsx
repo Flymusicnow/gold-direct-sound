@@ -129,6 +129,7 @@ import AdminVerifications from "./pages/admin/AdminVerifications";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
 import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 import ArtistAchievements from "./pages/ArtistAchievements";
+import { ArtistErrorBoundary } from "./components/artist/ArtistErrorBoundary";
 import UserAgreement from "./pages/legal/UserAgreement";
 import ArtistAgreement from "./pages/legal/ArtistAgreement";
 import FanTerms from "./pages/legal/FanTerms";
@@ -221,8 +222,16 @@ const App = () => (
             } />
             <Route path="/join/brand" element={<JoinBrand />} />
             <Route path="/signin/brand" element={<SignInBrand />} />
-            <Route path="/artist/:userId" element={<ArtistProfile />} />
-            <Route path="/artist/:userId/achievements" element={<ArtistAchievements />} />
+            <Route path="/artist/:userId" element={
+              <ArtistErrorBoundary>
+                <ArtistProfile />
+              </ArtistErrorBoundary>
+            } />
+            <Route path="/artist/:userId/achievements" element={
+              <ArtistErrorBoundary>
+                <ArtistAchievements />
+              </ArtistErrorBoundary>
+            } />
             <Route path="/studio/onboarding" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioOnboarding />
