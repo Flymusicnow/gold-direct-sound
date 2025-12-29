@@ -70,12 +70,22 @@ export function BetaLandingPage() {
             >
               Have an invite code? <span className="underline">Enter Code</span>
             </Link>
-            <Link 
-              to="/early-access" 
-              className="hover:text-foreground transition-colors"
-            >
-              Already a member? <span className="underline">Sign In</span>
-            </Link>
+            <div className="flex items-center gap-1">
+              <span>Already a member?</span>
+              <Link 
+                to="/signin/fan" 
+                className="underline hover:text-foreground transition-colors"
+              >
+                Fan
+              </Link>
+              <span>or</span>
+              <Link 
+                to="/signin/artist" 
+                className="underline hover:text-foreground transition-colors"
+              >
+                Artist
+              </Link>
+            </div>
           </div>
 
           {/* Footer Message */}
