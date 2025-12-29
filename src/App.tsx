@@ -368,11 +368,6 @@ const App = () => (
             <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
             <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
             <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
-            <Route path="/fan" element={
-              <ProtectedRoute allowedRoles={['fan']}>
-                <FanPortal />
-              </ProtectedRoute>
-            } />
             <Route path="/fan/feed" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanFeed />
