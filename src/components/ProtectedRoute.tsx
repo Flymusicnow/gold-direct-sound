@@ -25,6 +25,8 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
         navigate('/signin/fan');
       } else if (primaryRole === 'brand') {
         navigate('/signin/brand');
+      } else if (primaryRole === 'admin' || primaryRole === 'super_admin') {
+        navigate('/signin/admin');
       } else {
         navigate('/');
       }
