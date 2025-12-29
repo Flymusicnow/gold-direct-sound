@@ -86,7 +86,7 @@ export default function SignInFan() {
           return;
         }
 
-        // Fan role confirmed - check beta access and redirect
+        // Fan role confirmed - check beta access and onboarding status
         const { data: fanAccess } = await supabase
           .from('fan_beta_access')
           .select('id')
@@ -96,8 +96,18 @@ export default function SignInFan() {
         toast.success(t('auth.signInSuccess'));
         
         if (fanAccess) {
-          // Has beta access - go to feed
-          navigate('/fan/feed', { replace: true });
+          // Has beta access - check onboarding status
+          const { data: onboarding } = await supabase
+            .from('fan_onboarding_progress')
+            .select('onboarding_completed')
+            .eq('user_id', data.user.id)
+            .maybeSingle();
+          
+          if (onboarding?.onboarding_completed) {
+            navigate('/fan/feed', { replace: true });
+          } else {
+            navigate('/fan/onboarding', { replace: true });
+          }
         } else {
           // No beta access - go to gate/waitlist
           navigate('/fan', { replace: true });

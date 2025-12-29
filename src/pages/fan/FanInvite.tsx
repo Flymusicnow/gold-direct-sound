@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Headphones, Sparkles, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Headphones, Sparkles, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import fanHero from '@/assets/fan-hero-concert.png';
+import { useUserAccessState } from '@/hooks/useUserAccessState';
 
 /**
  * /fan/invite - Dedicated invite redemption page for fans.
  * Visual: Audience perspective looking at stage (fan POV)
  * Flow: Validate code → Create session → Redirect to /join/fan
+ * 
+ * SUPER CARD: Onboarded fans should NEVER see this page
  */
 export default function FanInvite() {
   const navigate = useNavigate();
@@ -22,13 +25,28 @@ export default function FanInvite() {
   const [code, setCode] = useState(codeFromUrl);
   const [loading, setLoading] = useState(false);
   const [validated, setValidated] = useState(false);
+  
+  const { authenticated, hasFanAccess, fanOnboarded, loading: accessLoading } = useUserAccessState();
 
-  // Auto-validate if code is in URL
+  // SUPER CARD: Redirect authenticated & onboarded fans away
   useEffect(() => {
-    if (codeFromUrl && !validated) {
+    if (accessLoading) return;
+    
+    if (authenticated && hasFanAccess) {
+      if (fanOnboarded) {
+        navigate('/fan/feed', { replace: true });
+      } else {
+        navigate('/fan/onboarding', { replace: true });
+      }
+    }
+  }, [authenticated, hasFanAccess, fanOnboarded, accessLoading, navigate]);
+
+  // Auto-validate if code is in URL (only if not already authenticated with access)
+  useEffect(() => {
+    if (codeFromUrl && !validated && !accessLoading && !(authenticated && hasFanAccess)) {
       handleValidate(codeFromUrl);
     }
-  }, [codeFromUrl]);
+  }, [codeFromUrl, validated, accessLoading, authenticated, hasFanAccess]);
 
   const handleValidate = async (inviteCode: string) => {
     if (!inviteCode.trim()) {

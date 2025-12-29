@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { Mic2, Sparkles, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mic2, Sparkles, ArrowLeft, CheckCircle, Loader2 } from 'lucide-react';
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,14 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import authHero from '@/assets/hero-artist-spotlight.png';
+import { useUserAccessState } from '@/hooks/useUserAccessState';
 
 /**
  * /artist/invite - Dedicated invite redemption page for artists.
  * Visual: On stage looking out at audience (artist POV)
  * Flow: Validate code → Create session → Redirect to /join/artist
+ * 
+ * SUPER CARD: Onboarded artists should NEVER see this page
  */
 export default function ArtistInvite() {
   const navigate = useNavigate();
@@ -22,13 +25,28 @@ export default function ArtistInvite() {
   const [code, setCode] = useState(codeFromUrl);
   const [loading, setLoading] = useState(false);
   const [validated, setValidated] = useState(false);
+  
+  const { authenticated, hasArtistAccess, artistOnboarded, loading: accessLoading } = useUserAccessState();
 
-  // Auto-validate if code is in URL
+  // SUPER CARD: Redirect authenticated & onboarded artists away
   useEffect(() => {
-    if (codeFromUrl && !validated) {
+    if (accessLoading) return;
+    
+    if (authenticated && hasArtistAccess) {
+      if (artistOnboarded) {
+        navigate('/studio', { replace: true });
+      } else {
+        navigate('/studio/onboarding', { replace: true });
+      }
+    }
+  }, [authenticated, hasArtistAccess, artistOnboarded, accessLoading, navigate]);
+
+  // Auto-validate if code is in URL (only if not already authenticated with access)
+  useEffect(() => {
+    if (codeFromUrl && !validated && !accessLoading && !(authenticated && hasArtistAccess)) {
       handleValidate(codeFromUrl);
     }
-  }, [codeFromUrl]);
+  }, [codeFromUrl, validated, accessLoading, authenticated, hasArtistAccess]);
 
   const handleValidate = async (inviteCode: string) => {
     if (!inviteCode.trim()) {

@@ -12,6 +12,7 @@ import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
 import { consumeInviteToken } from "@/hooks/useFanInviteAccess";
 import fanHero from "@/assets/fan-hero-concert.png";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
 
 const STORAGE_KEY = 'fan_invite_token';
 
@@ -22,6 +23,24 @@ export default function JoinFan() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const { authenticated, hasFanAccess, fanOnboarded, loading: accessLoading } = useUserAccessState();
+  
+  // Auth guard: Redirect authenticated users away from join page
+  useEffect(() => {
+    if (accessLoading) return;
+    
+    if (authenticated) {
+      if (hasFanAccess && fanOnboarded) {
+        navigate('/fan/feed', { replace: true });
+      } else if (hasFanAccess) {
+        navigate('/fan/onboarding', { replace: true });
+      } else {
+        // User is logged in but no fan beta access - send to waitlist
+        navigate('/fan', { replace: true });
+      }
+    }
+  }, [authenticated, hasFanAccess, fanOnboarded, accessLoading, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

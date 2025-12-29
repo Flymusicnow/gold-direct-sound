@@ -86,7 +86,7 @@ export default function SignInArtist() {
           return;
         }
 
-        // Artist role confirmed - check beta access and redirect
+        // Artist role confirmed - check beta access and onboarding status
         const { data: artistAccess } = await supabase
           .from('artist_beta_access')
           .select('id')
@@ -96,8 +96,18 @@ export default function SignInArtist() {
         toast.success(t('auth.signInSuccess'));
         
         if (artistAccess) {
-          // Has beta access - go to studio
-          navigate('/studio', { replace: true });
+          // Has beta access - check onboarding status
+          const { data: onboarding } = await supabase
+            .from('artist_onboarding_progress')
+            .select('onboarding_completed')
+            .eq('user_id', data.user.id)
+            .maybeSingle();
+          
+          if (onboarding?.onboarding_completed) {
+            navigate('/studio', { replace: true });
+          } else {
+            navigate('/studio/onboarding', { replace: true });
+          }
         } else {
           // No beta access - go to gate/waitlist
           navigate('/artist', { replace: true });

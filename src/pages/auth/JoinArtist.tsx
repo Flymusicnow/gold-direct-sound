@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mic2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
 import authHero from "@/assets/auth-hero-concert.png";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
 
 export default function JoinArtist() {
   const { t } = useLanguage();
@@ -19,6 +20,24 @@ export default function JoinArtist() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const { authenticated, hasArtistAccess, artistOnboarded, loading: accessLoading } = useUserAccessState();
+  
+  // Auth guard: Redirect authenticated users away from join page
+  useEffect(() => {
+    if (accessLoading) return;
+    
+    if (authenticated) {
+      if (hasArtistAccess && artistOnboarded) {
+        navigate('/studio', { replace: true });
+      } else if (hasArtistAccess) {
+        navigate('/studio/onboarding', { replace: true });
+      } else {
+        // User is logged in but no artist beta access - send to waitlist
+        navigate('/artist', { replace: true });
+      }
+    }
+  }, [authenticated, hasArtistAccess, artistOnboarded, accessLoading, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

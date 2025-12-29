@@ -4,8 +4,7 @@ import { Upload, Users, TrendingUp, Sparkles, DollarSign, ArrowLeft, Loader2 } f
 import { FlyMusicLogo } from '@/components/FlyMusicLogo';
 import { WaitlistForm } from '@/components/fan/WaitlistForm';
 import { InviteCodeUnlock } from '@/components/fan/InviteCodeUnlock';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRoleBetaAccess } from '@/hooks/useRoleBetaAccess';
+import { useUserAccessState } from '@/hooks/useUserAccessState';
 import { toast } from 'sonner';
 import authHero from '@/assets/auth-hero-concert.png';
 
@@ -51,18 +50,21 @@ export default function ArtistGate() {
   const isPreview = searchParams.get('preview') === '1';
   const reason = searchParams.get('reason');
 
-  const { user, hasRole, loading: authLoading } = useAuth();
-  const { hasAccess: hasArtistBetaAccess, loading: betaLoading } = useRoleBetaAccess('artist');
+  const { authenticated, hasArtistAccess, artistOnboarded, loading } = useUserAccessState();
 
   // SUPER CARD: Activated artists skip this page entirely
   useEffect(() => {
-    if (authLoading || betaLoading) return;
+    if (loading) return;
     
-    if (user && hasRole('artist') && hasArtistBetaAccess) {
+    if (authenticated && hasArtistAccess) {
       // User is activated - never show gate visuals again
-      navigate('/studio', { replace: true });
+      if (artistOnboarded) {
+        navigate('/studio', { replace: true });
+      } else {
+        navigate('/studio/onboarding', { replace: true });
+      }
     }
-  }, [user, hasRole, hasArtistBetaAccess, authLoading, betaLoading, navigate]);
+  }, [authenticated, hasArtistAccess, artistOnboarded, loading, navigate]);
 
   // Show toast when redirected from signin without invite access
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function ArtistGate() {
   }, [reason, searchParams, setSearchParams]);
 
   // Show loading while checking auth status
-  if (authLoading || betaLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
