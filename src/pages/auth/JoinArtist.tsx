@@ -76,10 +76,11 @@ export default function JoinArtist() {
         });
 
         // Record permanent artist beta access in DB
+        // Note: code_id is now nullable after migration
         await supabase.from('artist_beta_access').insert({
           user_id: data.user.id,
           badge_name: 'Early Creator',
-        });
+        } as any);
 
         toast.success(t('auth.signUpSuccess'));
         navigate('/studio/onboarding');
