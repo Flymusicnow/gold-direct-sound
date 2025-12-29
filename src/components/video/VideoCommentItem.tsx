@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -7,6 +8,7 @@ import { Heart, Reply, Trash2, CheckCircle2, ChevronDown, ChevronUp } from "luci
 import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { getDisplayName } from "@/lib/displayName";
 import { formatDate } from "@/lib/dateFormat";
+import { getCommentAuthorInfo } from "@/lib/utils/commentAuthor";
 
 function DeleteButton({ commentUserId, onDelete }: { commentUserId: string; onDelete: () => void }) {
   const [canDelete, setCanDelete] = useState(false);
@@ -53,6 +55,8 @@ interface VideoCommentItemProps {
   onReply: () => void;
   depth?: number;
   supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
+  isCommenterArtist?: boolean;
+  commenterArtistId?: string | null;
 }
 
 export function VideoCommentItem({
@@ -63,6 +67,8 @@ export function VideoCommentItem({
   onReply,
   depth = 0,
   supporterLevel = 'none',
+  isCommenterArtist = false,
+  commenterArtistId = null,
 }: VideoCommentItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -73,22 +79,28 @@ export function VideoCommentItem({
   const { toast } = useToast();
 
   const replies = allComments.filter(c => c.parent_comment_id === comment.id);
-  const displayName = getDisplayName(comment.profiles);
 
-  // Check if commenter is the artist
-  const [isArtist, setIsArtist] = useState(false);
+  // Get author info using centralized utility
+  const authorInfo = getCommentAuthorInfo(
+    comment.profiles,
+    isCommenterArtist,
+    commenterArtistId
+  );
+
+  // Check if commenter is THE page artist (for badge display)
+  const [isPageArtist, setIsPageArtist] = useState(false);
 
   useEffect(() => {
-    const checkIfArtist = async () => {
+    const checkIfPageArtist = async () => {
       const { data } = await supabase
         .from('artist_profiles')
         .select('user_id')
         .eq('id', artistId)
-        .single();
+        .maybeSingle();
       
-      setIsArtist(data?.user_id === comment.user_id);
+      setIsPageArtist(data?.user_id === comment.user_id);
     };
-    checkIfArtist();
+    checkIfPageArtist();
   }, [artistId, comment.user_id]);
 
   useEffect(() => {
@@ -206,13 +218,29 @@ export function VideoCommentItem({
       <div className="flex gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium">{displayName}</span>
-            {isArtist && (
+            {authorInfo.isNavigable && authorInfo.targetPath ? (
+              <Link 
+                to={authorInfo.targetPath}
+                className="font-medium hover:text-primary transition-colors"
+                onClick={() => {
+                  console.log('[VideoComment] Author click:', {
+                    authorType: authorInfo.authorType,
+                    targetPath: authorInfo.targetPath,
+                    commentId: comment.id,
+                  });
+                }}
+              >
+                {authorInfo.displayName}
+              </Link>
+            ) : (
+              <span className="font-medium">{authorInfo.displayName}</span>
+            )}
+            {isPageArtist && (
               <span title="Artist">
                 <CheckCircle2 className="w-4 h-4 text-primary" />
               </span>
             )}
-            {!isArtist && supporterLevel && supporterLevel !== 'none' && (
+            {!isPageArtist && supporterLevel && supporterLevel !== 'none' && (
               <SupporterBadge level={supporterLevel} variant="mini" />
             )}
             <span className="text-xs text-muted-foreground">

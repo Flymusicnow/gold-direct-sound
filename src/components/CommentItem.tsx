@@ -12,6 +12,7 @@ import { EmojiPicker } from "@/components/ui/emoji-picker";
 import { z } from "zod";
 import { getDisplayName, getAvatarFallback } from "@/lib/displayName";
 import { formatDate } from "@/lib/dateFormat";
+import { getCommentAuthorInfo } from "@/lib/utils/commentAuthor";
 
 const commentSchema = z.object({
   text: z.string()
@@ -208,18 +209,37 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            {isCommenterArtist && commenterArtistId ? (
-              <Link 
-                to={`/artist/${commenterArtistId}`}
-                className="font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                {displayName}
-              </Link>
-            ) : (
-              <span className="font-semibold text-foreground">
-                {displayName}
-              </span>
-            )}
+            {(() => {
+              const authorInfo = getCommentAuthorInfo(
+                comment.profiles,
+                isCommenterArtist,
+                commenterArtistId
+              );
+              
+              if (authorInfo.isNavigable && authorInfo.targetPath) {
+                return (
+                  <Link 
+                    to={authorInfo.targetPath}
+                    className="font-semibold text-foreground hover:text-primary transition-colors"
+                    onClick={() => {
+                      console.log('[Comment] Author click:', {
+                        authorType: authorInfo.authorType,
+                        targetPath: authorInfo.targetPath,
+                        commentId: comment.id,
+                      });
+                    }}
+                  >
+                    {authorInfo.displayName}
+                  </Link>
+                );
+              }
+              
+              return (
+                <span className="font-semibold text-foreground">
+                  {authorInfo.displayName}
+                </span>
+              );
+            })()}
             {isArtistComment && (
               <BadgeCheck className="w-4 h-4 text-primary fill-primary" />
             )}

@@ -39,6 +39,10 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
   const { updateSupportScore } = useSupportScore();
 
   useEffect(() => {
+    // Reset state immediately when videoId changes to prevent stale data
+    setComments([]);
+    setVisibleCount(INITIAL_COMMENTS);
+    
     fetchComments();
     
     // Subscribe to real-time updates
@@ -76,28 +80,37 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
       // Fetch user profiles separately
       if (commentsData && commentsData.length > 0) {
         const userIds = [...new Set(commentsData.map(c => c.user_id))];
-        const { data: profilesData } = await supabase
-          .from('profiles')
-          .select('id, full_name, email')
-          .in('id', userIds);
-
-        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
         
-        // Fetch supporter levels
-        const { data: supportScores } = await supabase
-          .from('fan_support_scores')
-          .select('fan_user_id, level')
-          .eq('artist_id', artistId)
-          .in('fan_user_id', userIds);
+        // Fetch profiles, artist profiles, and supporter levels in parallel
+        const [profilesResult, artistProfilesResult, supportScoresResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('id, full_name, email')
+            .in('id', userIds),
+          supabase
+            .from('artist_profiles')
+            .select('id, user_id')
+            .in('user_id', userIds)
+            .eq('status', 'approved'),
+          supabase
+            .from('fan_support_scores')
+            .select('fan_user_id, level')
+            .eq('artist_id', artistId)
+            .in('fan_user_id', userIds),
+        ]);
 
+        const profilesMap = new Map(profilesResult.data?.map(p => [p.id, p]) || []);
+        const artistMap = new Map(artistProfilesResult.data?.map(a => [a.user_id, a.id]) || []);
         const supporterLevels = new Map(
-          supportScores?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
+          supportScoresResult.data?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
         );
 
         const commentsWithProfiles = commentsData.map(comment => ({
           ...comment,
           profiles: profilesMap.get(comment.user_id),
           supporterLevel: supporterLevels.get(comment.user_id) || 'none',
+          isCommenterArtist: artistMap.has(comment.user_id),
+          commenterArtistId: artistMap.get(comment.user_id) || null,
         }));
         setComments(commentsWithProfiles);
       } else {
@@ -205,6 +218,8 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
                 videoId={videoId}
                 onReply={fetchComments}
                 supporterLevel={(comment as any).supporterLevel || 'none'}
+                isCommenterArtist={(comment as any).isCommenterArtist || false}
+                commenterArtistId={(comment as any).commenterArtistId || null}
               />
             ))}
 

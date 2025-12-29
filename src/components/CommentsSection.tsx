@@ -59,11 +59,15 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
+    // Reset state immediately when artistId changes to prevent stale data
+    setComments([]);
+    setVisibleCount(INITIAL_COMMENTS);
+    
     fetchComments();
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel("comments-channel")
+      .channel(`comments-channel-${artistId}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "comments", filter: `artist_id=eq.${artistId}` },
