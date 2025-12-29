@@ -12,6 +12,7 @@ import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
+import { FlightRecorderProvider } from "@/contexts/FlightRecorderContext";
 import { ReproModeProvider } from "@/contexts/ReproModeContext";
 import { VerificationModeProvider } from "@/contexts/VerificationModeContext";
 import { NavigationWrapper } from "@/components/NavigationWrapper";
@@ -161,6 +162,7 @@ const App = () => (
         <RouteHistoryProvider>
         <ReproModeProvider>
         <AuthProvider>
+        <FlightRecorderProvider>
         <VerificationModeProvider>
           <ReproDebugPanel />
           <VerificationBanner />
@@ -365,6 +367,7 @@ const App = () => (
             <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
             <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
             <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
+            <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
             <Route path="/fan" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanPortal />
@@ -486,6 +489,7 @@ const App = () => (
             } />
           </Routes>
         </VerificationModeProvider>
+        </FlightRecorderProvider>
         </AuthProvider>
         </ReproModeProvider>
         </RouteHistoryProvider>
