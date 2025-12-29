@@ -175,15 +175,30 @@ export default function SignInArtist() {
                 </Button>
               </form>
 
-              <div className="mt-6 text-center text-sm">
-                <p className="text-muted-foreground">
-                  No account yet?{' '}
+              {/* Create Account Section */}
+              <div className="mt-6 space-y-4">
+                <div className="p-4 bg-muted/50 rounded-lg text-center">
+                  <p className="text-foreground font-medium mb-2">New to FlyMusic?</p>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Got a beta code? Create your artist account.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/artist/invite')}
+                    className="w-full"
+                  >
+                    Create Account (Beta)
+                  </Button>
+                </div>
+                <p className="text-center text-sm text-muted-foreground">
+                  No code yet?{' '}
                   <button
                     type="button"
                     onClick={() => setShowBetaDialog(true)}
                     className="text-primary hover:underline"
                   >
-                    Request Beta Code
+                    Request Beta Access
                   </button>
                 </p>
               </div>
@@ -204,7 +219,8 @@ export default function SignInArtist() {
 
       <RequestBetaDialog 
         open={showBetaDialog} 
-        onOpenChange={setShowBetaDialog} 
+        onOpenChange={setShowBetaDialog}
+        fixedRole="artist"
       />
     </div>
   );

@@ -17,13 +17,14 @@ import { Loader2, CheckCircle2, Music, Heart } from "lucide-react";
 interface RequestBetaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  fixedRole?: 'fan' | 'artist'; // Pre-lock role on role-specific pages
 }
 
-export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps) {
+export function RequestBetaDialog({ open, onOpenChange, fixedRole }: RequestBetaDialogProps) {
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [role, setRole] = useState<"artist" | "fan" | null>(null);
+  const [role, setRole] = useState<"artist" | "fan" | null>(fixedRole || null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -94,7 +95,7 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
     setTimeout(() => {
       setEmail("");
       setName("");
-      setRole(null);
+      setRole(fixedRole || null); // Reset to fixed role or null
       setMessage("");
       setSuccess(false);
     }, 300);
@@ -156,34 +157,40 @@ export function RequestBetaDialog({ open, onOpenChange }: RequestBetaDialogProps
               />
             </div>
 
-            {/* Role Selector */}
-            <div className="space-y-2">
-              <Label>
-                I am a... <span className="text-destructive">*</span>
-              </Label>
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant={role === "artist" ? "default" : "outline"}
-                  onClick={() => setRole("artist")}
-                  className="w-full"
-                  disabled={loading}
-                >
-                  <Music className="mr-2 h-4 w-4" />
-                  Artist
-                </Button>
-                <Button
-                  type="button"
-                  variant={role === "fan" ? "default" : "outline"}
-                  onClick={() => setRole("fan")}
-                  className="w-full"
-                  disabled={loading}
-                >
-                  <Heart className="mr-2 h-4 w-4" />
-                  Fan
-                </Button>
+            {/* Role Selector - hidden when role is pre-locked */}
+            {fixedRole ? (
+              <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
+                You're joining as a <span className="text-foreground font-medium">{fixedRole === 'fan' ? 'Fan' : 'Artist'}</span>.
               </div>
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>
+                  I am a... <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant={role === "artist" ? "default" : "outline"}
+                    onClick={() => setRole("artist")}
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    <Music className="mr-2 h-4 w-4" />
+                    Artist
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={role === "fan" ? "default" : "outline"}
+                    onClick={() => setRole("fan")}
+                    className="w-full"
+                    disabled={loading}
+                  >
+                    <Heart className="mr-2 h-4 w-4" />
+                    Fan
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Message */}
             <div className="space-y-2">

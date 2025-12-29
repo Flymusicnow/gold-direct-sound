@@ -3,8 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
-import { Search } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Search, ArrowLeft } from "lucide-react";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -23,7 +23,19 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const isMobile = useIsMobile();
+
+  // Smart back navigation - go to previous fan page or default to /fan/feed
+  const handleBack = () => {
+    // Check if we can go back in history and came from a fan route
+    const referrer = document.referrer;
+    if (referrer && (referrer.includes('/fan') || window.history.length > 1)) {
+      navigate(-1);
+    } else {
+      navigate('/fan/feed');
+    }
+  };
 
   useEffect(() => {
     fetchArtists();
@@ -60,6 +72,17 @@ export default function Explore() {
   return (
     <>
       <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
+      {/* Back button header */}
+      <div className="fixed top-6 left-6 z-20">
+        <button 
+          onClick={handleBack}
+          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+
       <div className="container mx-auto max-w-6xl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-4">

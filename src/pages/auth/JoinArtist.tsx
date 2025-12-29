@@ -116,7 +116,9 @@ export default function JoinArtist() {
                 <Mic2 className="h-8 w-8 text-primary" />
               </div>
               <CardTitle className="text-2xl">{t('auth.joinArtistTitle')}</CardTitle>
-              <CardDescription>{t('auth.joinArtistDescription')}</CardDescription>
+              <CardDescription>
+                You're joining as an <span className="text-primary font-medium">artist</span>. {t('auth.joinArtistDescription')}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp} className="space-y-4">
