@@ -96,7 +96,30 @@ All colors MUST be HSL.
     --timing-slow: 350ms;
     --timing-ceremonial: 500ms;
     --easing-elegant: cubic-bezier(0.4, 0, 0.2, 1);
-    --easing-soft: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --easing-soft: cubic-bezier(0.25, 0.1, 0.25, 1);
+  }
+
+  /* Animated gradient overlay for auth backgrounds */
+  @keyframes gradient-shift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .auth-gradient-animated {
+    background: linear-gradient(
+      135deg,
+      hsla(0, 0%, 0%, 0.7) 0%,
+      hsla(45, 82%, 51%, 0.1) 25%,
+      hsla(0, 0%, 0%, 0.5) 50%,
+      hsla(45, 82%, 51%, 0.15) 75%,
+      hsla(0, 0%, 0%, 0.7) 100%
+    );
+    background-size: 400% 400%;
+    animation: gradient-shift 8s ease infinite;
   }
 }
 
