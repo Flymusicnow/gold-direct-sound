@@ -1569,7 +1569,11 @@ export type Database = {
           artist_id: string
           created_at: string | null
           id: string
+          is_hidden: boolean | null
+          is_pinned: boolean | null
           parent_comment_id: string | null
+          reported_at: string | null
+          reported_by: string | null
           text: string
           updated_at: string | null
           user_id: string
@@ -1578,7 +1582,11 @@ export type Database = {
           artist_id: string
           created_at?: string | null
           id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
           text: string
           updated_at?: string | null
           user_id: string
@@ -1587,7 +1595,11 @@ export type Database = {
           artist_id?: string
           created_at?: string | null
           id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
           text?: string
           updated_at?: string | null
           user_id?: string
@@ -4295,7 +4307,11 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_hidden: boolean | null
+          is_pinned: boolean | null
           parent_comment_id: string | null
+          reported_at: string | null
+          reported_by: string | null
           text: string
           updated_at: string | null
           user_id: string
@@ -4304,7 +4320,11 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
           text: string
           updated_at?: string | null
           user_id: string
@@ -4313,7 +4333,11 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
+          reported_at?: string | null
+          reported_by?: string | null
           text?: string
           updated_at?: string | null
           user_id?: string
