@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { useLocation, Navigate } from "react-router-dom";
 import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { EarlyAccessWall } from "./EarlyAccessWall";
-import { BetaLandingPage } from "./BetaLandingPage";
 
 interface EarlyAccessGateProps {
   children: ReactNode;
@@ -83,9 +82,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     );
   }
 
-  // If no user, show the beta landing page
+  // If no user, redirect to home page which handles beta entry paths
   if (!authenticated) {
-    return <BetaLandingPage />;
+    return <Navigate to="/" replace />;
   }
 
   // Route-specific beta access checks with onboarding awareness
