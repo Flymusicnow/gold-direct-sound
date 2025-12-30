@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Heart, ArrowLeft, Loader2 } from "lucide-react";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { RequestBetaDialog } from "@/components/RequestBetaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +34,9 @@ export default function SignInFan() {
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast.error("Account not found. Request a beta code to create an account.", {
+          toast.error(t('auth.accountNotFound'), {
             action: {
-              label: "Request Code",
+              label: t('auth.requestCode'),
               onClick: () => setShowBetaDialog(true),
             },
           });
@@ -64,23 +65,23 @@ export default function SignInFan() {
           
           if (hasArtist) {
             // Clear error: This area is for Fans
-            toast.error('This area is for Fans. You have an Artist account.', {
+            toast.error(t('auth.wrongRoleFan'), {
               action: {
-                label: 'Sign in as Artist',
+                label: t('auth.signInAsArtist'),
                 onClick: () => navigate('/signin/artist'),
               },
               duration: 6000,
             });
           } else if (hasBrand) {
-            toast.error('This area is for Fans. You have a Brand account.', {
+            toast.error(t('auth.wrongRoleFan'), {
               action: {
-                label: 'Sign in as Brand',
+                label: t('auth.signInAsBrand'),
                 onClick: () => navigate('/signin/brand'),
               },
               duration: 6000,
             });
           } else {
-            toast.error('No Fan account found for this email.');
+            toast.error(t('auth.noFanAccount'));
           }
           setLoading(false);
           return;
@@ -134,15 +135,18 @@ export default function SignInFan() {
         <div className="absolute inset-0 bg-black/60 lg:bg-gradient-to-r lg:from-background lg:via-background/50 lg:to-transparent" />
       </div>
 
-      {/* Minimal header - logo + trust badge */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
-        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Link to="/">
-          <FlyMusicLogo size="sm" />
-        </Link>
-        <TrustBadge />
+      {/* Minimal header - logo + trust badge + language toggle */}
+      <div className="absolute top-6 left-6 right-6 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/')} className="text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Link to="/">
+            <FlyMusicLogo size="sm" />
+          </Link>
+          <TrustBadge />
+        </div>
+        <LanguageToggle />
       </div>
 
       {/* Form container */}
@@ -193,7 +197,7 @@ export default function SignInFan() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Signing in...
+                      {t('auth.signingIn')}
                     </>
                   ) : (
                     t('auth.signInAsFan')
@@ -204,9 +208,9 @@ export default function SignInFan() {
               {/* Create Account Section */}
               <div className="mt-6 space-y-4">
                 <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-foreground font-medium mb-2">New to FlyMusic?</p>
+                  <p className="text-foreground font-medium mb-2">{t('auth.newToFlyMusic')}</p>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Got a beta code? Create your fan account.
+                    {t('auth.gotBetaCodeFan')}
                   </p>
                   <Button
                     type="button"
@@ -214,17 +218,17 @@ export default function SignInFan() {
                     onClick={() => navigate('/fan/invite')}
                     className="w-full"
                   >
-                    Create Account (Beta)
+                    {t('auth.createAccountBeta')}
                   </Button>
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
-                  No code yet?{' '}
+                  {t('auth.noCodeYet')}{' '}
                   <button
                     type="button"
                     onClick={() => setShowBetaDialog(true)}
                     className="text-primary hover:underline"
                   >
-                    Request Beta Access
+                    {t('auth.requestBetaAccess')}
                   </button>
                 </p>
               </div>
