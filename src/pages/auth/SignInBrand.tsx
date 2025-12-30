@@ -157,7 +157,8 @@ export default function SignInBrand() {
           alt="Brand collaboration"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent" />
+        <div className="absolute inset-0 auth-gradient-animated" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
       </div>
     </div>
   );
