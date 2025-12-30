@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mic2, ArrowLeft, Loader2 } from "lucide-react";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { RequestBetaDialog } from "@/components/RequestBetaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,9 +34,9 @@ export default function SignInArtist() {
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast.error("Account not found. Request a beta code to create an account.", {
+          toast.error(t('auth.accountNotFound'), {
             action: {
-              label: "Request Code",
+              label: t('auth.requestCode'),
               onClick: () => setShowBetaDialog(true),
             },
           });
@@ -64,23 +65,23 @@ export default function SignInArtist() {
           
           if (hasFan) {
             // Clear error: This area is for Artists
-            toast.error('This area is for Artists. You have a Fan account.', {
+            toast.error(t('auth.wrongRoleArtist'), {
               action: {
-                label: 'Sign in as Fan',
+                label: t('auth.signInAsFan'),
                 onClick: () => navigate('/signin/fan'),
               },
               duration: 6000,
             });
           } else if (hasBrand) {
-            toast.error('This area is for Artists. You have a Brand account.', {
+            toast.error(t('auth.wrongRoleArtist'), {
               action: {
-                label: 'Sign in as Brand',
+                label: t('auth.signInAsBrand'),
                 onClick: () => navigate('/signin/brand'),
               },
               duration: 6000,
             });
           } else {
-            toast.error('No Artist account found for this email.');
+            toast.error(t('auth.noArtistAccount'));
           }
           setLoading(false);
           return;
@@ -133,15 +134,18 @@ export default function SignInArtist() {
         <div className="absolute inset-0 bg-black/60 lg:bg-gradient-to-r lg:from-background lg:via-background/50 lg:to-transparent" />
       </div>
 
-      {/* Minimal header - logo + trust badge */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Link to="/">
-          <FlyMusicLogo size="sm" />
-        </Link>
-        <TrustBadge />
+      {/* Minimal header - logo + trust badge + language toggle */}
+      <div className="absolute top-6 left-6 right-6 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Link to="/">
+            <FlyMusicLogo size="sm" />
+          </Link>
+          <TrustBadge />
+        </div>
+        <LanguageToggle />
       </div>
 
       {/* Left side - Form */}
@@ -192,7 +196,7 @@ export default function SignInArtist() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Signing in...
+                      {t('auth.signingIn')}
                     </>
                   ) : (
                     t('auth.signInAsArtist')
@@ -203,9 +207,9 @@ export default function SignInArtist() {
               {/* Create Account Section */}
               <div className="mt-6 space-y-4">
                 <div className="p-4 bg-muted/50 rounded-lg text-center">
-                  <p className="text-foreground font-medium mb-2">New to FlyMusic?</p>
+                  <p className="text-foreground font-medium mb-2">{t('auth.newToFlyMusic')}</p>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Got a beta code? Create your artist account.
+                    {t('auth.gotBetaCodeArtist')}
                   </p>
                   <Button
                     type="button"
@@ -213,17 +217,17 @@ export default function SignInArtist() {
                     onClick={() => navigate('/artist/invite')}
                     className="w-full"
                   >
-                    Create Account (Beta)
+                    {t('auth.createAccountBeta')}
                   </Button>
                 </div>
                 <p className="text-center text-sm text-muted-foreground">
-                  No code yet?{' '}
+                  {t('auth.noCodeYet')}{' '}
                   <button
                     type="button"
                     onClick={() => setShowBetaDialog(true)}
                     className="text-primary hover:underline"
                   >
-                    Request Beta Access
+                    {t('auth.requestBetaAccess')}
                   </button>
                 </p>
               </div>

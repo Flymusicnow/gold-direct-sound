@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Briefcase, ArrowLeft } from "lucide-react";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,15 +86,18 @@ export default function SignInBrand() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Minimal header - logo + trust badge (desktop only) */}
-      <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <Link to="/">
-          <FlyMusicLogo size="sm" />
-        </Link>
-        <TrustBadge />
+      {/* Minimal header - logo + trust badge + language toggle */}
+      <div className="absolute top-6 left-6 right-6 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <Link to="/">
+            <FlyMusicLogo size="sm" />
+          </Link>
+          <TrustBadge />
+        </div>
+        <LanguageToggle />
       </div>
 
       {/* Left side - Form */}
@@ -106,7 +110,7 @@ export default function SignInBrand() {
                 <Briefcase className="h-8 w-8 text-secondary-foreground" />
               </div>
               <CardTitle className="text-2xl">{t('auth.signInBrandTitle')}</CardTitle>
-              <CardDescription>{t('auth.signInBrandDescription')}</CardDescription>
+              <CardDescription>{t('auth.signInBrandSubtitle')}</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignIn} className="space-y-4">
