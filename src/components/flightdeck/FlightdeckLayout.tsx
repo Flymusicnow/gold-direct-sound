@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { FlightdeckQueueSidebar } from './FlightdeckQueueSidebar';
 import { FlightdeckPlayer } from './FlightdeckPlayer';
+import { VideoMiniPlayer } from '@/components/video/VideoMiniPlayer';
+import { VideoSessionModal } from '@/components/video/VideoSessionModal';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -15,6 +17,8 @@ interface FlightdeckLayoutProps {
  * - Main content scrolls internally
  * - Queue sidebar is FIXED position (independent of scroll)
  * - Player bar is FIXED at bottom
+ * - Video mini player floats above player
+ * - Video session modal for expanded view
  */
 export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
   const { queueOpen, currentItem } = useFlightdeck();
@@ -41,6 +45,12 @@ export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
 
       {/* Player Bar - FIXED at very bottom */}
       <FlightdeckPlayer />
+
+      {/* Video Mini Player - floats above player bar */}
+      <VideoMiniPlayer />
+
+      {/* Video Session Modal - for expanded video view */}
+      <VideoSessionModal />
     </div>
   );
 }

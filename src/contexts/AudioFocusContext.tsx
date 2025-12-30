@@ -100,6 +100,7 @@ export function AudioFocusProvider({ children }: { children: ReactNode }) {
    * Called when music starts playing
    * - Pauses any active video
    * - Clears active video state
+   * - Also closes any video session (mini player)
    */
   const onMusicPlay = useCallback(() => {
     console.log('[AudioFocus] onMusicPlay, activeVideoId:', activeVideoIdRef.current);
@@ -112,6 +113,15 @@ export function AudioFocusProvider({ children }: { children: ReactNode }) {
       setMusicWasPlayingBeforeVideo(false);
       musicWasPlayingRef.current = false;
     }
+    
+    // Also close any video session (import dynamically to avoid circular deps)
+    import('./VideoSessionContext').then(({ videoSessionRef }) => {
+      if (videoSessionRef.closeVideo) {
+        videoSessionRef.closeVideo();
+      }
+    }).catch(() => {
+      // VideoSessionContext might not be loaded yet
+    });
   }, [pauseVideoById]);
 
   return (

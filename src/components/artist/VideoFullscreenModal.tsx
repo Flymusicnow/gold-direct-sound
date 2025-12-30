@@ -1,7 +1,9 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface VideoFullscreenModalProps {
   isOpen: boolean;
@@ -20,17 +22,28 @@ export function VideoFullscreenModal({
   currentIndex,
   onNavigate,
 }: VideoFullscreenModalProps) {
+  const { t } = useLanguage();
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < videos.length - 1;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 border-primary/20">
+      <DialogContent 
+        className="max-w-7xl w-full h-[90vh] p-0 bg-black/95 border-primary/20"
+        aria-describedby={undefined}
+      >
+        {/* Visually hidden title for accessibility */}
+        <VisuallyHidden>
+          <DialogTitle>
+            {videos[currentIndex]?.caption || t('videoPlayer.video')}
+          </DialogTitle>
+        </VisuallyHidden>
+
         {/* Close Button */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-4 right-4 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white"
+          className="absolute top-4 right-4 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
           onClick={onClose}
         >
           <X className="h-6 w-6" />
@@ -41,7 +54,7 @@ export function VideoFullscreenModal({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
             onClick={() => onNavigate("prev")}
           >
             <ChevronLeft className="h-8 w-8" />
@@ -52,23 +65,23 @@ export function VideoFullscreenModal({
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-50 rounded-full bg-black/50 hover:bg-black/70 text-white pointer-events-auto"
             onClick={() => onNavigate("next")}
           >
             <ChevronRight className="h-8 w-8" />
           </Button>
         )}
 
-        {/* Video Player */}
-        <div className="w-full h-full flex items-center justify-center p-4">
-          <div className="w-full max-w-5xl">
+        {/* Video Player - pointer-events-auto ensures clicks work */}
+        <div className="w-full h-full flex items-center justify-center p-4 pointer-events-auto">
+          <div className="w-full max-w-5xl pointer-events-auto">
             <PremiumVideoPlayer
               videoUrl={currentVideoUrl}
-              autoPlay
+              autoPlay={false}
               loop
               showFrame={false}
             />
-            {videos[currentIndex].caption && (
+            {videos[currentIndex]?.caption && (
               <p className="text-center text-white/80 mt-4 text-lg">
                 {videos[currentIndex].caption}
               </p>
@@ -77,7 +90,7 @@ export function VideoFullscreenModal({
         </div>
 
         {/* Video Counter */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/60 text-sm pointer-events-none">
           {currentIndex + 1} / {videos.length}
         </div>
       </DialogContent>
