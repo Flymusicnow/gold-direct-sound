@@ -4,6 +4,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { fanNavConfig } from "@/config/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 export function FanSidebar() {
   const location = useLocation();
@@ -20,9 +21,12 @@ export function FanSidebar() {
               {t(fanNavConfig.portalNameI18nKey) || fanNavConfig.portalName}
             </h2>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <LanguageToggle className="h-8 w-8" />
+            <NotificationBell />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground ml-10">Your music journey</p>
+        <p className="text-xs text-muted-foreground ml-10">{t('fan.portalSubtitle')}</p>
       </div>
 
       {/* Menu - SCROLLABLE ONLY IF OVERFLOW */}

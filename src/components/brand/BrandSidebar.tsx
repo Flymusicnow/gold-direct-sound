@@ -3,6 +3,7 @@ import { LayoutDashboard, Users, Briefcase, Inbox, BarChart3, Settings, Building
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
@@ -28,7 +29,10 @@ export function BrandSidebar() {
               Brand Portal
             </h2>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <LanguageToggle className="h-8 w-8" />
+            <NotificationBell />
+          </div>
         </div>
         <p className="text-xs text-muted-foreground ml-10">Partner Dashboard</p>
       </div>
