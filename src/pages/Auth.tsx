@@ -10,6 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePromoFunnel } from "@/hooks/usePromoFunnel";
 import { Music, Mic2, Heart, ArrowLeft, Building2 } from "lucide-react";
 import authHeroImage from "@/assets/auth-hero-concert.png";
+import brandAuthImage from "@/assets/brand-auth-vip.png";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
 
@@ -382,7 +383,7 @@ export default function Auth() {
 
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${authHeroImage})` }}
+        style={{ backgroundImage: `url(${mode === 'brand' ? brandAuthImage : authHeroImage})` }}
       >
         <div className="absolute inset-0 bg-black/60" />
       </div>

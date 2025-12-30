@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
-import authHero from "@/assets/auth-hero-concert.png";
+import brandAuthHero from "@/assets/brand-auth-vip.png";
 
 export default function SignInBrand() {
   const { t } = useLanguage();
@@ -153,7 +153,7 @@ export default function SignInBrand() {
       {/* Right side - Hero image */}
       <div className="hidden lg:block lg:w-1/2 relative">
         <img
-          src={authHero}
+          src={brandAuthHero}
           alt="Brand collaboration"
           className="absolute inset-0 w-full h-full object-cover"
         />
