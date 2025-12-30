@@ -24,6 +24,7 @@ interface VideoCardProps {
   video: VideoPost;
   index: number;
   artistId: string;
+  autoplayEnabled?: boolean;
   onOpenFullscreen: (index: number) => void;
   onShare: (video: VideoPost) => void;
   onUnlock: () => void;
@@ -33,6 +34,7 @@ export function VideoCard({
   video,
   index,
   artistId,
+  autoplayEnabled = true,
   onOpenFullscreen,
   onShare,
   onUnlock,

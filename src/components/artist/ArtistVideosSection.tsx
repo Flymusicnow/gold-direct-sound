@@ -32,9 +32,11 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
     url: string;
   } | null>(null);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
+  const [autoplayEnabled, setAutoplayEnabled] = useState(true);
 
   useEffect(() => {
     fetchVideos();
+    fetchArtistSettings();
   }, [artistId]);
 
   const fetchVideos = async () => {
@@ -48,6 +50,16 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
       setVideos(data);
     }
     setLoading(false);
+  };
+
+  const fetchArtistSettings = async () => {
+    const { data } = await supabase
+      .from("artist_profiles")
+      .select("video_autoplay_enabled")
+      .eq("id", artistId)
+      .maybeSingle();
+    
+    setAutoplayEnabled(data?.video_autoplay_enabled ?? true);
   };
 
   const handleOpenFullscreen = (index: number) => {
@@ -97,6 +109,7 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
             video={video}
             index={index}
             artistId={artistId}
+            autoplayEnabled={autoplayEnabled}
             onOpenFullscreen={handleOpenFullscreen}
             onShare={setShareVideo}
             onUnlock={() => setShowSupporterModal(true)}
