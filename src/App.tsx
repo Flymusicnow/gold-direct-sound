@@ -94,6 +94,7 @@ import AdminSmartLinks from "./pages/admin/AdminSmartLinks";
 import AdminOpportunities from "./pages/admin/AdminOpportunities";
 import AdminWaitlist from "./pages/admin/AdminWaitlist";
 import AdminFlightRecorder from "./pages/admin/AdminFlightRecorder";
+import AdminStripeTierRepair from "./pages/admin/AdminStripeTierRepair";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
@@ -387,6 +388,7 @@ const App = () => (
             <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
             <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
             <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
+            <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
             <Route path="/fan/feed" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanFeed />

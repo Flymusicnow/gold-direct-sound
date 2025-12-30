@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.send-beta-invites]
 verify_jwt = true
+
+[functions.create-supporter-tier-price]
+verify_jwt = true
+
+[functions.repair-supporter-tiers]
+verify_jwt = true

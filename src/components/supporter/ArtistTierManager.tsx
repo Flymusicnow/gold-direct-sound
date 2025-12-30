@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, GripVertical, Loader2, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, GripVertical, Loader2, Check, CheckCircle2, AlertTriangle, Wrench } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +28,11 @@ interface Tier {
   features: string[];
   sort_order: number;
   is_active: boolean;
+  stripe_price_id: string | null;
+  stripe_product_id: string | null;
 }
+
+type StripeStatus = 'configured' | 'missing' | 'checking';
 
 export function ArtistTierManager() {
   const { user } = useAuth();
@@ -37,6 +42,7 @@ export function ArtistTierManager() {
   const [editingTier, setEditingTier] = useState<Tier | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fixingTierId, setFixingTierId] = useState<string | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -72,7 +78,7 @@ export function ArtistTierManager() {
 
       setArtistId(artist.id);
 
-      // Fetch tiers
+      // Fetch tiers including stripe fields
       const { data: tiersData, error } = await supabase
         .from('supporter_tiers')
         .select('*')
@@ -86,6 +92,8 @@ export function ArtistTierManager() {
         features: Array.isArray(t.features) 
           ? (t.features as unknown[]).map(f => String(f))
           : [],
+        stripe_price_id: t.stripe_price_id || null,
+        stripe_product_id: t.stripe_product_id || null,
       })) || []);
     } catch (err) {
       console.error('Error fetching tiers:', err);
@@ -127,38 +135,26 @@ export function ArtistTierManager() {
     try {
       setSaving(true);
 
-      const slug = formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const features = formData.features.split('\n').filter(f => f.trim());
 
-      const tierData = {
-        artist_id: artistId,
-        name: formData.name,
-        slug,
-        price_cents: Math.round(parseFloat(formData.price) * 100),
-        currency: 'SEK',
-        description: formData.description || null,
-        features,
-        is_active: formData.is_active,
-        sort_order: editingTier ? editingTier.sort_order : tiers.length,
-      };
+      // Call edge function to create tier with Stripe product/price
+      const { data, error } = await supabase.functions.invoke('create-supporter-tier-price', {
+        body: {
+          tier_id: editingTier?.id || undefined,
+          name: formData.name,
+          price_cents: Math.round(parseFloat(formData.price) * 100),
+          currency: 'SEK',
+          description: formData.description || null,
+          features,
+          is_active: formData.is_active,
+          sort_order: editingTier ? editingTier.sort_order : tiers.length,
+        },
+      });
 
-      if (editingTier) {
-        const { error } = await supabase
-          .from('supporter_tiers')
-          .update(tierData)
-          .eq('id', editingTier.id);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-        if (error) throw error;
-        toast.success('Tier updated');
-      } else {
-        const { error } = await supabase
-          .from('supporter_tiers')
-          .insert(tierData);
-
-        if (error) throw error;
-        toast.success('Tier created');
-      }
-
+      toast.success(editingTier ? 'Tier updated' : 'Tier created');
       setIsDialogOpen(false);
       fetchArtistAndTiers();
     } catch (err) {
@@ -166,6 +162,36 @@ export function ArtistTierManager() {
       toast.error(err instanceof Error ? err.message : 'Failed to save tier');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFixStripe = async (tier: Tier) => {
+    setFixingTierId(tier.id);
+    try {
+      // Re-save the tier through the edge function to create Stripe objects
+      const { data, error } = await supabase.functions.invoke('create-supporter-tier-price', {
+        body: {
+          tier_id: tier.id,
+          name: tier.name,
+          price_cents: tier.price_cents,
+          currency: tier.currency,
+          description: tier.description,
+          features: tier.features,
+          is_active: tier.is_active,
+          sort_order: tier.sort_order,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success('Stripe configuration fixed');
+      fetchArtistAndTiers();
+    } catch (err) {
+      console.error('Error fixing Stripe:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to fix Stripe configuration');
+    } finally {
+      setFixingTierId(null);
     }
   };
 
@@ -186,6 +212,31 @@ export function ArtistTierManager() {
       console.error('Error deleting tier:', err);
       toast.error('Failed to delete tier');
     }
+  };
+
+  const getStripeStatus = (tier: Tier): StripeStatus => {
+    if (tier.stripe_price_id) return 'configured';
+    return 'missing';
+  };
+
+  const renderStripeStatusBadge = (tier: Tier) => {
+    const status = getStripeStatus(tier);
+    
+    if (status === 'configured') {
+      return (
+        <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Payments ready
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/30">
+        <AlertTriangle className="h-3 w-3 mr-1" />
+        Missing price
+      </Badge>
+    );
   };
 
   if (loading) {
@@ -231,11 +282,12 @@ export function ArtistTierManager() {
                   <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
                   
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="font-medium truncate">{tier.name}</h4>
                       {!tier.is_active && (
                         <span className="text-xs text-muted-foreground">(Inactive)</span>
                       )}
+                      {renderStripeStatusBadge(tier)}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {(tier.price_cents / 100).toFixed(0)} {tier.currency}/month
@@ -243,6 +295,22 @@ export function ArtistTierManager() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {getStripeStatus(tier) === 'missing' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleFixStripe(tier)}
+                        disabled={fixingTierId === tier.id}
+                        className="text-yellow-500 border-yellow-500/30 hover:bg-yellow-500/10"
+                      >
+                        {fixingTierId === tier.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Wrench className="h-3 w-3" />
+                        )}
+                        <span className="ml-1">Fix</span>
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
