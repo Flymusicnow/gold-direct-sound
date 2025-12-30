@@ -183,12 +183,12 @@ export default function StudioDashboard() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16 pb-16 md:pb-0">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
         {!isMobile && <MobileStudioNav />}
         <ArtistOnboardingDialog />
       
-      <main className="flex-1 p-4 md:p-8">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-16 md:pb-8">
         <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="relative">

@@ -190,11 +190,11 @@ export default function StudioSubscription() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
         <MobileStudioNav />
 
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">

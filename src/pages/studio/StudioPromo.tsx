@@ -244,10 +244,10 @@ export default function StudioPromo() {
   const isSuspended = smartLinkPage?.status === 'suspended';
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
+    <div className="h-screen overflow-hidden bg-background">
+      <div className="h-full flex">
         <StudioSidebar />
-        <main className="flex-1 p-4 md:p-8 pb-32 md:pb-28">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-32 md:pb-28">
           <div className="max-w-4xl mx-auto">
             <div className="flex flex-col gap-4 mb-8">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

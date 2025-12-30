@@ -237,9 +237,9 @@ export default function StudioProfile() {
 
   if (!artistProfile) {
     return (
-      <div className="flex min-h-screen pt-16">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-8">
           <div className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold mb-8">{t('studio.createProfile')}</h1>
             <Card className="p-6">
@@ -279,9 +279,9 @@ export default function StudioProfile() {
 
   if (artistProfile.status === 'pending') {
     return (
-      <div className="flex min-h-screen pt-16">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
-        <main className="flex-1 flex items-center justify-center p-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide flex items-center justify-center p-8">
           <div className="text-center">
             <Music className="h-16 w-16 text-primary mx-auto mb-4" />
             <h2 className="text-2xl font-bold mb-2">{t('studio.profilePending')}</h2>
@@ -296,11 +296,11 @@ export default function StudioProfile() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
         <MobileStudioNav />
         
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
