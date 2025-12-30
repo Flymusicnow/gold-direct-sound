@@ -43,6 +43,16 @@ export default function StudioOnboarding() {
     }
   }, [accessLoading, artistOnboarded, navigate]);
 
+  // Check if legal documents are already accepted (must be before early return)
+  useEffect(() => {
+    if (legalLoading || accessLoading) return;
+    
+    const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "artist_agreement", "privacy_policy"]);
+    if (allAccepted && currentStep === 0) {
+      setCurrentStep(1);
+    }
+  }, [hasAcceptedRequiredCurrentVersions, legalLoading, currentStep, accessLoading]);
+
   // Show loading while checking onboarding status
   if (accessLoading) {
     return (
@@ -51,16 +61,6 @@ export default function StudioOnboarding() {
       </div>
     );
   }
-
-  // Check if legal documents are already accepted
-  useEffect(() => {
-    if (legalLoading) return;
-    
-    const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "artist_agreement", "privacy_policy"]);
-    if (allAccepted && currentStep === 0) {
-      setCurrentStep(1);
-    }
-  }, [hasAcceptedRequiredCurrentVersions, legalLoading, currentStep]);
 
   const progress = ((currentStep) / (STEPS.length - 1)) * 100;
 
