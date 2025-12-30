@@ -888,6 +888,7 @@ export const en = {
     signInAsFan: 'Sign in as Fan',
     goToYourDashboard: 'Go to your dashboard',
     wrongRoleError: 'Your account is not registered as this role. Please sign in with the correct account.',
+    signInSuccess: 'Signed in successfully!',
   },
   empty: {
     noData: 'No data available',

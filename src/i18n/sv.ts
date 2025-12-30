@@ -868,6 +868,7 @@ export const sv = {
     signInAsFan: 'Logga in som fan',
     goToYourDashboard: 'Gå till din översikt',
     wrongRoleError: 'Ditt konto är inte registrerat för denna roll. Logga in med rätt konto.',
+    signInSuccess: 'Inloggning lyckades!',
   },
   empty: {
     noData: 'Ingen data tillgänglig',
