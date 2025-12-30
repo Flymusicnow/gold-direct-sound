@@ -9,6 +9,7 @@ import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePreviewMode } from "@/hooks/usePreviewMode";
 import { PreviewModeBanner } from "@/components/preview/PreviewModeBanner";
+import { PreviewWatermark } from "@/components/preview/PreviewWatermark";
 
 interface Artist {
   id: string;
@@ -72,8 +73,13 @@ export default function Explore() {
 
   return (
     <>
-      {/* Preview mode banner for non-beta users */}
-      {isPreviewMode && <PreviewModeBanner variant="sticky" />}
+      {/* Preview mode banner and watermark for non-beta users */}
+      {isPreviewMode && (
+        <>
+          <PreviewModeBanner variant="sticky" pageName="explore" />
+          <PreviewWatermark />
+        </>
+      )}
 
       <div className={`min-h-screen py-24 px-4 pb-32 md:pb-28 ${isPreviewMode ? 'pt-32' : ''}`}>
         {/* Back button header */}

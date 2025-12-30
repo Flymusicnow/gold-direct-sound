@@ -3,10 +3,27 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { RequestBetaDialog } from "@/components/RequestBetaDialog";
+import { usePreviewAnalytics } from "@/hooks/usePreviewAnalytics";
 
-export function PreviewGateCTA() {
+interface PreviewGateCTAProps {
+  pageName?: string;
+}
+
+export function PreviewGateCTA({ pageName = 'artist_profile' }: PreviewGateCTAProps) {
   const navigate = useNavigate();
   const [showBetaDialog, setShowBetaDialog] = useState(false);
+  const { trackCTAClick, trackConversionAttempt } = usePreviewAnalytics(pageName);
+
+  const handleRequestAccessClick = () => {
+    trackCTAClick('request_access');
+    trackConversionAttempt();
+    setShowBetaDialog(true);
+  };
+
+  const handleSignInClick = () => {
+    trackCTAClick('sign_in');
+    navigate('/signin/fan');
+  };
 
   return (
     <>
@@ -47,14 +64,14 @@ export function PreviewGateCTA() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button 
               size="lg"
-              onClick={() => setShowBetaDialog(true)}
+              onClick={handleRequestAccessClick}
             >
               Request Beta Access
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              onClick={() => navigate('/signin/fan')}
+              onClick={handleSignInClick}
             >
               Already have access? Sign In
             </Button>
