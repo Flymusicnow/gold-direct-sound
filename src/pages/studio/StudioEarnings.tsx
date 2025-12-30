@@ -89,11 +89,11 @@ export default function StudioEarnings() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
         <MobileStudioNav />
 
-        <main className="flex-1 p-4 md:p-8 pb-32 md:pb-28">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-32 md:pb-28">
           <div className="max-w-7xl mx-auto space-y-8">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('studio.earnings')}</h1>

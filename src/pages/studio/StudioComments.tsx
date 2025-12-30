@@ -174,11 +174,11 @@ export default function StudioComments() {
 
   return (
     <>
-      <div className="flex min-h-screen pt-16 lg:ml-64">
+      <div className="h-screen overflow-hidden flex">
         <StudioSidebar />
         <MobileStudioNav />
         
-        <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
             {/* Header */}
             <div className="flex items-center gap-3 mb-2">

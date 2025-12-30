@@ -10,8 +10,9 @@ export function FanSidebar() {
   const { t } = useLanguage();
 
   return (
-    <aside className="w-64 sticky top-16 h-[calc(100vh-64px)] bg-[hsl(0,0%,5%)] border-r border-border/50 p-6 overflow-y-auto shadow-elegant z-40 hidden md:block">
-      <div className="mb-8 pb-6 border-b border-border/30">
+    <aside className="w-64 h-screen overflow-hidden bg-[hsl(0,0%,5%)] border-r border-border/50 flex flex-col shadow-elegant z-40 hidden md:flex">
+      {/* Header - FIXED */}
+      <div className="flex-shrink-0 p-6 pb-6 border-b border-border/30">
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <FlyMusicLogo size="sm" />
@@ -24,7 +25,8 @@ export function FanSidebar() {
         <p className="text-xs text-muted-foreground ml-10">Your music journey</p>
       </div>
 
-      <nav className="space-y-1">
+      {/* Menu - SCROLLABLE ONLY IF OVERFLOW */}
+      <nav className="flex-1 min-h-0 overflow-y-auto p-6 pt-4 space-y-1 scrollbar-auto-hide">
         {fanNavConfig.sections.map((section, sectionIndex) => (
           <div key={section.title}>
             {sectionIndex > 0 && (

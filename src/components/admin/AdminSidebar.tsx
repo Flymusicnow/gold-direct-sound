@@ -258,7 +258,7 @@ export function AdminSidebar() {
     <TooltipProvider delayDuration={300}>
       <aside
         className={cn(
-          "min-h-screen bg-card border-r border-border flex flex-col transition-all duration-300",
+          "h-screen overflow-hidden bg-card border-r border-border flex flex-col transition-all duration-300",
           collapsed ? "w-16" : "w-64"
         )}
       >
@@ -288,7 +288,7 @@ export function AdminSidebar() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 overflow-y-auto">
+        <nav className="flex-1 min-h-0 p-2 overflow-y-auto scrollbar-auto-hide">
           {navSections.map((section, sectionIndex) => (
             <div key={section.title}>
               {/* Section divider (except first section) */}

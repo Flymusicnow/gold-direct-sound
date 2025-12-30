@@ -453,11 +453,11 @@ export default function StudioVideos() {
 
   return (
     <>
-      <div className="min-h-screen flex w-full">
+      <div className="h-screen overflow-hidden flex w-full">
         <StudioSidebar />
         <MobileStudioNav />
 
-        <main className="flex-1 p-4 md:p-8 pt-20 md:pt-8 pb-20 md:pb-8">
+        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pt-20 md:pt-8 pb-20 md:pb-8">
         <div className="max-w-5xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center gap-3">

@@ -170,10 +170,10 @@ export default function StudioLiveStreams() {
 
   return (
     <>
-      <div className="flex min-h-screen w-full">
+      <div className="h-screen overflow-hidden flex w-full">
         <StudioSidebar />
         <MobileStudioNav />
-        <div className="flex-1 pt-20 md:pt-0 lg:ml-64">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide pt-20 md:pt-0">
           <div className="p-4 md:p-8 pb-20 md:pb-8">
           <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
