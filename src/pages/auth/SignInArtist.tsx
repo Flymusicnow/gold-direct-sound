@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
-import authHero from "@/assets/auth-hero-concert.png";
+import artistHero from "@/assets/hero-artist-spotlight.png";
 
 export default function SignInArtist() {
   const { t } = useLanguage();
@@ -122,8 +122,18 @@ export default function SignInArtist() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Minimal header - logo + trust badge (desktop only) */}
+    <div className="min-h-screen flex relative">
+      {/* Mobile-first full-screen background */}
+      <div className="absolute inset-0 lg:relative lg:w-1/2 lg:order-2">
+        <img
+          src={artistHero}
+          alt="Artist performing"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-black/60 lg:bg-gradient-to-r lg:from-background lg:via-background/50 lg:to-transparent" />
+      </div>
+
+      {/* Minimal header - logo + trust badge */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
         <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-5 w-5" />
@@ -135,7 +145,7 @@ export default function SignInArtist() {
       </div>
 
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 pt-20">
+      <div className="relative z-10 flex-1 flex items-center justify-center p-8 pt-20 lg:order-1">
         <div className="w-full max-w-md space-y-8">
 
           <Card className="border-primary/20 animate-fade-in">
@@ -222,15 +232,6 @@ export default function SignInArtist() {
         </div>
       </div>
 
-      {/* Right side - Hero image */}
-      <div className="hidden lg:block lg:w-1/2 relative">
-        <img
-          src={authHero}
-          alt="Artist performing"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent" />
-      </div>
 
       <RequestBetaDialog 
         open={showBetaDialog} 
