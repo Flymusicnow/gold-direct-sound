@@ -236,6 +236,13 @@ export const en = {
     comments: 'comments',
     shares: 'shares',
   },
+  videoPlayer: {
+    video: 'Video',
+    untitled: 'Video',
+    expand: 'Expand',
+    minimize: 'Minimize',
+    miniPlayer: 'Mini Player',
+  },
   admin: {
     backToAdmin: 'Back to Admin',
     platformOverview: 'Platform Overview',
