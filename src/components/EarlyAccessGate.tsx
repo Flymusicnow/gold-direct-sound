@@ -26,6 +26,7 @@ const PUBLIC_ROUTES = [
   '/fan',
   '/signin',
   '/join',
+  '/legal',
 ];
 
 // Fan invite-only routes (sign-in is NOT included - existing members can sign in freely)
@@ -55,6 +56,7 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     location.pathname.startsWith('/auth') ||
     location.pathname.startsWith('/signin') ||
     location.pathname.startsWith('/join') ||
+    location.pathname.startsWith('/legal') ||
     location.pathname.startsWith('/fan') && !location.pathname.startsWith('/fan/') ||
     location.pathname.startsWith('/artist') && !location.pathname.startsWith('/artist/')
   );
