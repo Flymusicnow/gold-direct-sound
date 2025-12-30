@@ -236,6 +236,13 @@ export const sv = {
     comments: 'kommentarer',
     shares: 'delningar',
   },
+  videoPlayer: {
+    video: 'Video',
+    untitled: 'Video',
+    expand: 'Expandera',
+    minimize: 'Minimera',
+    miniPlayer: 'Minispelare',
+  },
   admin: {
     backToAdmin: 'Tillbaka till admin',
     platformOverview: 'Plattformsöversikt',
