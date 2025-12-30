@@ -23,6 +23,7 @@ import { toast } from "@/hooks/use-toast";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { Link } from "react-router-dom";
 import { z } from "zod";
+import brandStageHero from "@/assets/brand-portal-stage.png";
 
 const contactSchema = z.object({
   company_name: z.string().trim().min(1, "Company name is required").max(100),
@@ -148,10 +149,20 @@ export default function BrandPortal() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="outline" className="mb-6 border-primary/50 text-primary">
+      {/* Hero Section with Background Image */}
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[70vh] flex items-center">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src={brandStageHero}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/80 to-background" />
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto text-center w-full">
+          <Badge variant="outline" className="mb-6 border-primary/50 text-primary bg-background/50 backdrop-blur-sm">
             <Building2 className="w-3 h-3 mr-1" />
             Brand Portal
           </Badge>
@@ -166,12 +177,12 @@ export default function BrandPortal() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <a href="#contact">
-                Start Partnership
+                Request Brand Beta Access
                 <ArrowRight className="ml-2 w-4 h-4" />
               </a>
             </Button>
-            <Button asChild variant="outline" size="lg">
-              <a href="#how-it-works">Learn More</a>
+            <Button asChild variant="outline" size="lg" className="bg-background/50 backdrop-blur-sm">
+              <Link to="/auth?mode=brand">Log in as Brand</Link>
             </Button>
           </div>
         </div>

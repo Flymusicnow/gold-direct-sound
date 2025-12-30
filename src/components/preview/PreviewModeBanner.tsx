@@ -3,18 +3,32 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { RequestBetaDialog } from "@/components/RequestBetaDialog";
+import { usePreviewAnalytics } from "@/hooks/usePreviewAnalytics";
 
 interface PreviewModeBannerProps {
   variant?: 'sticky' | 'inline';
+  pageName?: string;
 }
 
-export function PreviewModeBanner({ variant = 'sticky' }: PreviewModeBannerProps) {
+export function PreviewModeBanner({ variant = 'sticky', pageName = 'unknown' }: PreviewModeBannerProps) {
   const navigate = useNavigate();
   const [showBetaDialog, setShowBetaDialog] = useState(false);
+  const { trackCTAClick, trackConversionAttempt } = usePreviewAnalytics(pageName);
 
   const baseClasses = "bg-primary/10 border border-primary/20 backdrop-blur-sm";
   const stickyClasses = "fixed top-0 left-0 right-0 z-50 py-3 px-4";
   const inlineClasses = "rounded-lg py-4 px-6 mb-6";
+
+  const handleSignInClick = () => {
+    trackCTAClick('sign_in');
+    navigate('/signin/fan');
+  };
+
+  const handleRequestAccessClick = () => {
+    trackCTAClick('request_access');
+    trackConversionAttempt();
+    setShowBetaDialog(true);
+  };
 
   return (
     <>
@@ -31,13 +45,13 @@ export function PreviewModeBanner({ variant = 'sticky' }: PreviewModeBannerProps
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => navigate('/signin/fan')}
+              onClick={handleSignInClick}
             >
               Sign In
             </Button>
             <Button 
               size="sm"
-              onClick={() => setShowBetaDialog(true)}
+              onClick={handleRequestAccessClick}
             >
               Request Access
             </Button>

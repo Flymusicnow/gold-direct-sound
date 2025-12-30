@@ -7,6 +7,7 @@ import { useVoiceSearch } from '@/hooks/useVoiceSearch';
 import { useSearch } from '@/hooks/useSearch';
 import { useSearchHistory } from '@/hooks/useSearchHistory';
 import { useReproMode } from '@/contexts/ReproModeContext';
+import { usePreviewMode } from '@/hooks/usePreviewMode';
 import { SearchArtistCard } from '@/components/search/SearchArtistCard';
 import { SearchTrackCard } from '@/components/search/SearchTrackCard';
 import { SearchVideoCard } from '@/components/search/SearchVideoCard';
@@ -20,6 +21,8 @@ import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { InfoTooltip } from '@/components/ui/info-tooltip';
+import { PreviewModeBanner } from '@/components/preview/PreviewModeBanner';
+import { PreviewWatermark } from '@/components/preview/PreviewWatermark';
 
 type Category = 'all' | 'tracks' | 'artists' | 'videos' | 'spotlight' | 'stacks';
 
@@ -28,6 +31,7 @@ export default function Search() {
   const { playNow } = useFlightdeck();
   const { reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
+  const { isPreviewMode } = usePreviewMode();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlQuery = searchParams.get('q') || '';
   
@@ -160,7 +164,15 @@ export default function Search() {
 
   return (
     <>
-      <div className="min-h-screen pb-32 md:pb-28">
+      {/* Preview mode banner and watermark for non-beta users */}
+      {isPreviewMode && (
+        <>
+          <PreviewModeBanner variant="sticky" pageName="search" />
+          <PreviewWatermark />
+        </>
+      )}
+      
+      <div className={`min-h-screen pb-32 md:pb-28 ${isPreviewMode ? 'pt-12' : ''}`}>
         {/* Sticky Search Header */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border pt-24 pb-4">
           <div className="container mx-auto max-w-6xl px-4">
