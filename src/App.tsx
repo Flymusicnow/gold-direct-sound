@@ -492,6 +492,7 @@ const App = () => (
           </Routes>
               </FlightdeckLayout>
               </SwipeBackProvider>
+              </AudioFocusProvider>
             </FlightdeckProvider>
             </VideoPlaybackProvider>
           </FanTasteProvider>
