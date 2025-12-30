@@ -29,6 +29,11 @@ export function NavigationWrapper() {
       location.pathname === '/culture') {
     return null;
   }
+
+  // Hide global navigation on legal pages (they have their own minimal header)
+  if (location.pathname.startsWith('/legal')) {
+    return null;
+  }
   
   return <Navigation />;
 }

@@ -1,28 +1,12 @@
 import { LegalDocumentViewer } from "@/components/legal/LegalDocumentViewer";
-import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { LegalNavigation } from "@/components/legal/LegalNavigation";
 
 export default function UserAgreement() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Sticky back button */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="max-w-4xl mx-auto px-4 py-3">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)} 
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </div>
+      <LegalNavigation />
       
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto px-4 py-8 pt-24">
         <LegalDocumentViewer
           documentPath="/legal/user-agreement.md"
           title="User Agreement"
