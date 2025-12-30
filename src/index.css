@@ -3,42 +3,54 @@
 @tailwind utilities;
 
 /* ============================================
-   FlyMusic Gold Scrollbar Styling (Desktop)
+   FlyMusic Scrollbar - Subtle Transparent Gold with Auto-Hide
    ============================================ */
 
-/* Firefox scrollbar styling */
+/* Firefox scrollbar styling - subtle transparent gold */
 * {
   scrollbar-width: thin;
-  scrollbar-color: hsl(45 82% 51% / 0.7) hsl(0 0% 100% / 0.06);
+  scrollbar-color: hsl(45 82% 51% / 0.15) transparent;
 }
 
 /* Chrome, Edge, Safari (webkit) scrollbar styling */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: hsl(0 0% 100% / 0.06);
-  border-radius: 999px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(
-    180deg,
-    hsl(45 82% 51% / 0.85) 0%,
-    hsl(45 82% 51% / 0.55) 100%
-  );
+  background: hsl(45 82% 51% / 0.2);
   border-radius: 999px;
-  border: 2px solid hsl(0 0% 0% / 0.35);
+  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(
-    180deg,
-    hsl(45 82% 51% / 1) 0%,
-    hsl(45 82% 51% / 0.75) 100%
-  );
+  background: hsl(45 82% 51% / 0.45);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: hsl(45 82% 51% / 0.55);
+}
+
+/* Auto-hide scrollbar container */
+.scrollbar-auto-hide {
+  scrollbar-color: hsl(45 82% 51% / 0.1) transparent;
+}
+
+.scrollbar-auto-hide:hover {
+  scrollbar-color: hsl(45 82% 51% / 0.35) transparent;
+}
+
+.scrollbar-auto-hide::-webkit-scrollbar-thumb {
+  background: hsl(45 82% 51% / 0.1);
+}
+
+.scrollbar-auto-hide:hover::-webkit-scrollbar-thumb {
+  background: hsl(45 82% 51% / 0.35);
 }
 
 /* Hide scrollbar utility */
