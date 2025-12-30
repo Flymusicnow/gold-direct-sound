@@ -108,7 +108,7 @@ export default function FanInvite() {
       {/* Header */}
       <div className="absolute top-6 left-6 z-20 flex items-center gap-4">
         <button 
-          onClick={() => navigate('/fan')} 
+          onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/signin/fan')} 
           className="text-white/70 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />

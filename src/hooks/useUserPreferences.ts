@@ -42,7 +42,15 @@ export function useUserPreferences() {
         .eq('user_id', user.id)
         .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        // Handle case where table doesn't exist yet
+        if (error.code === '42P01') {
+          console.warn('user_preferences table does not exist yet');
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
       
       if (data) {
         setPreferences(data as UserPreferences);

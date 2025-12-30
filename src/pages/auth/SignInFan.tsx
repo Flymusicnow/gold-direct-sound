@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Heart, ArrowLeft } from "lucide-react";
+import { Heart, ArrowLeft, Loader2 } from "lucide-react";
 import { RequestBetaDialog } from "@/components/RequestBetaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,8 +181,23 @@ export default function SignInFan() {
                     required
                   />
                 </div>
+                <div className="flex justify-end">
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {t('auth.forgotPassword')}
+                  </Link>
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? t('common.loading') : t('auth.signInAsFan')}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    t('auth.signInAsFan')
+                  )}
                 </Button>
               </form>
 
