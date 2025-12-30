@@ -9,6 +9,7 @@ import { Check, X, Users, Music, Star, Activity } from "lucide-react";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AppModeToggle } from "@/components/admin/AppModeToggle";
+import { PreviewConversionFunnel } from "@/components/admin/PreviewConversionFunnel";
 
 interface PendingArtist {
   id: string;
@@ -173,6 +174,11 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Preview Conversion Funnel */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <PreviewConversionFunnel />
       </div>
 
       {/* Pending Approvals */}
