@@ -20,6 +20,7 @@ import { NavigationWrapper } from "@/components/NavigationWrapper";
 import { FlightdeckLayout } from "@/components/flightdeck/FlightdeckLayout";
 import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
 import { VerificationBanner } from "@/components/verification/VerificationBanner";
+import { PreferencesSync } from "@/components/settings/PreferencesSync";
 import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
 import Home from "./pages/Home";
 
@@ -203,6 +204,7 @@ const App = () => (
               <VideoPlaybackProvider>
                 <FlightdeckProvider>
                   <AudioFocusProvider>
+                  <PreferencesSync />
                   <SwipeBackProvider>
                   <FlightdeckLayout>
                   <NavigationWrapper />

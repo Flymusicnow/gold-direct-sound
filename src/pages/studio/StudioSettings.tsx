@@ -9,10 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Settings, User, CreditCard, Bell, Loader2, Pencil, Check, X, Globe, Mail, Music } from "lucide-react";
+import { Settings, User, CreditCard, Bell, Loader2, Pencil, Check, X, Globe, Mail, Music, Video, Volume2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export default function StudioSettings() {
   const { profile, user, refreshProfile } = useAuth();
   const { t } = useLanguage();
   const { isSupported, isSubscribed, isLoading, subscribe, unsubscribe } = usePushNotifications();
+  const { pauseMusicOnVideo, pipEnabled, updatePreference, loading: prefsLoading } = useUserPreferences();
 
   // Name editing state
   const [editingName, setEditingName] = useState(false);
@@ -37,6 +39,10 @@ export default function StudioSettings() {
   // Changelog subscription state
   const [changelogSubscribed, setChangelogSubscribed] = useState(false);
   const [loadingChangelog, setLoadingChangelog] = useState(true);
+
+  // Video autoplay state (artist-specific)
+  const [videoAutoplayEnabled, setVideoAutoplayEnabled] = useState(true);
+  const [loadingAutoplay, setLoadingAutoplay] = useState(true);
 
   // Sync name when profile loads
   useEffect(() => {
@@ -61,6 +67,24 @@ export default function StudioSettings() {
     };
 
     loadChangelogSubscription();
+  }, [user]);
+
+  // Load video autoplay setting from artist_profiles
+  useEffect(() => {
+    const loadVideoAutoplay = async () => {
+      if (!user) return;
+      
+      const { data } = await supabase
+        .from('artist_profiles')
+        .select('video_autoplay_enabled')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      setVideoAutoplayEnabled(data?.video_autoplay_enabled ?? true);
+      setLoadingAutoplay(false);
+    };
+
+    loadVideoAutoplay();
   }, [user]);
 
   const handlePushToggle = async (enabled: boolean) => {
@@ -152,6 +176,27 @@ export default function StudioSettings() {
     }
     
     setLoadingChangelog(false);
+  };
+
+  const handleVideoAutoplayToggle = async (enabled: boolean) => {
+    if (!user) return;
+    
+    setLoadingAutoplay(true);
+    setVideoAutoplayEnabled(enabled);
+    
+    const { error } = await supabase
+      .from('artist_profiles')
+      .update({ video_autoplay_enabled: enabled })
+      .eq('user_id', user.id);
+    
+    if (error) {
+      toast.error('Failed to update video autoplay setting');
+      setVideoAutoplayEnabled(!enabled); // Revert on error
+    } else {
+      toast.success(enabled ? 'Video autoplay enabled' : 'Video autoplay disabled');
+    }
+    
+    setLoadingAutoplay(false);
   };
 
   return (
@@ -347,6 +392,82 @@ export default function StudioSettings() {
                     id="changelog-updates"
                     checked={changelogSubscribed}
                     onCheckedChange={handleChangelogToggle}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Video Preferences (Artist-specific) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-primary" />
+                Video Preferences
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="video-autoplay">Autoplay Profile Videos</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Videos will automatically play when fans scroll to them on your profile
+                  </p>
+                </div>
+                {loadingAutoplay ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Switch
+                    id="video-autoplay"
+                    checked={videoAutoplayEnabled}
+                    onCheckedChange={handleVideoAutoplayToggle}
+                  />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Playback Preferences */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Volume2 className="h-5 w-5 text-primary" />
+                Playback
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="pause-music-video">Pause music when playing video</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically pause music when you start watching a video
+                  </p>
+                </div>
+                {prefsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Switch
+                    id="pause-music-video"
+                    checked={pauseMusicOnVideo}
+                    onCheckedChange={(checked) => updatePreference('pause_music_on_video', checked)}
+                  />
+                )}
+              </div>
+              
+              <div className="flex items-center justify-between pt-2 border-t">
+                <div className="space-y-0.5">
+                  <Label htmlFor="pip-enabled">Picture-in-Picture</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Continue watching videos in a mini player while browsing
+                  </p>
+                </div>
+                {prefsLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Switch
+                    id="pip-enabled"
+                    checked={pipEnabled}
+                    onCheckedChange={(checked) => updatePreference('pip_enabled', checked)}
                   />
                 )}
               </div>
