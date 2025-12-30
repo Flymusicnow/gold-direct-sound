@@ -1,36 +1,38 @@
 import { Link } from "react-router-dom";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import { useAppMode } from "@/hooks/useAppMode";
+import { Badge } from "@/components/ui/badge";
 
 export const Footer = () => {
+  const { mode } = useAppMode();
+  const isPrivateBeta = mode === 'PRIVATE_BETA';
+
   return (
     <footer className="border-t border-border bg-background/95 py-12 px-4">
       <div className="container mx-auto max-w-6xl">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <FlyMusicLogo size="sm" />
+            <div className="flex items-center gap-2">
+              <FlyMusicLogo size="sm" />
+              {isPrivateBeta && (
+                <Badge variant="outline" className="text-xs border-primary/30 text-primary">
+                  Private Beta
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">
               The new era of music. Direct artist-to-fan connection.
             </p>
           </div>
 
-          {/* Platform */}
+          {/* Platform - Limited in beta */}
           <div>
             <h4 className="font-semibold mb-4">Platform</h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
-                  How It Works
-                </Link>
-              </li>
-              <li>
                 <Link to="/explore" className="text-muted-foreground hover:text-primary transition-colors">
                   Explore Artists
-                </Link>
-              </li>
-              <li>
-                <Link to="/top-artists" className="text-muted-foreground hover:text-primary transition-colors">
-                  Top Artists
                 </Link>
               </li>
               <li>
@@ -38,20 +40,35 @@ export const Footer = () => {
                   Search
                 </Link>
               </li>
-              <li>
-                <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link to="/changelog" className="text-muted-foreground hover:text-primary transition-colors">
-                  Changelog
-                </Link>
-              </li>
+              {/* Hide these links in PRIVATE_BETA mode */}
+              {!isPrivateBeta && (
+                <>
+                  <li>
+                    <Link to="/how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
+                      How It Works
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/top-artists" className="text-muted-foreground hover:text-primary transition-colors">
+                      Top Artists
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+                      Pricing
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/changelog" className="text-muted-foreground hover:text-primary transition-colors">
+                      Changelog
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </div>
 
-          {/* Trust */}
+          {/* Trust - Always visible */}
           <div>
             <h4 className="font-semibold mb-4">Trust</h4>
             <ul className="space-y-2 text-sm">
@@ -85,7 +102,7 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Legal - Always visible */}
           <div>
             <h4 className="font-semibold mb-4">Legal</h4>
             <ul className="space-y-2 text-sm">

@@ -29,6 +29,11 @@ import { SupportTierModal } from "@/components/supporter/SupportTierModal";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import { useMetaTags } from "@/hooks/useMetaTags";
 import { isValidUUID } from "@/lib/utils/validation";
+import { usePreviewMode } from "@/hooks/usePreviewMode";
+import { PreviewModeBanner } from "@/components/preview/PreviewModeBanner";
+import { PreviewGateCTA } from "@/components/preview/PreviewGateCTA";
+import { PreviewTrackList } from "@/components/artist/PreviewTrackList";
+import { PreviewVideoGrid } from "@/components/artist/PreviewVideoGrid";
 
 interface Artist {
   id: string;
@@ -75,6 +80,7 @@ export default function ArtistProfile() {
   const { playNow, addToQueue, setQueue } = useFlightdeck();
   const { isReproMode, issueId, reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
+  const { isPreviewMode } = usePreviewMode();
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -495,7 +501,10 @@ export default function ArtistProfile() {
 
   return (
     <>
-      <div className="min-h-screen pt-16 pb-32 md:pb-28">
+      {/* Preview mode banner for non-beta users */}
+      {isPreviewMode && <PreviewModeBanner variant="sticky" />}
+
+      <div className={`min-h-screen pb-32 md:pb-28 ${isPreviewMode ? 'pt-24' : 'pt-16'}`}>
       {/* "Viewing as Fan" Banner for artists viewing their own profile */}
       {isViewingOwnProfile && (
         <div className="bg-primary/10 border-b border-primary/20">
@@ -536,9 +545,16 @@ export default function ArtistProfile() {
         isFollowing={isFollowing}
         hasBetaAccess={hasBetaAccess}
         isVerified={isVerified}
-        onFollow={handleFollow}
+        onFollow={isPreviewMode ? undefined : handleFollow}
         onShare={() => setShowShareModal(true)}
       />
+
+      {/* Preview Mode CTA - shown after hero for non-beta users */}
+      {isPreviewMode && (
+        <div className="container mx-auto px-4 max-w-6xl">
+          <PreviewGateCTA />
+        </div>
+      )}
 
       {/* Main Content Area with Tabs */}
       <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -584,10 +600,13 @@ export default function ArtistProfile() {
                     title="No Tracks Yet"
                     description="This artist is working on new music. Follow them to get notified when they release!"
                     ctaText={isFollowing ? "Explore More Artists" : "Follow Artist"}
-                    onCtaClick={isFollowing ? undefined : handleFollow}
+                    onCtaClick={isFollowing || isPreviewMode ? undefined : handleFollow}
                     ctaPath={isFollowing ? "/explore" : undefined}
                     variant="gold"
                   />
+                ) : isPreviewMode ? (
+                  /* Preview Mode: Show limited track list */
+                  <PreviewTrackList tracks={tracks.map(t => ({ id: t.id, title: t.title, cover_url: t.cover_url }))} />
                 ) : (
                   <div className="space-y-6">
                     {/* Play All Button */}

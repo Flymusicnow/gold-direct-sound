@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Search, ArrowLeft } from "lucide-react";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { usePreviewMode } from "@/hooks/usePreviewMode";
+import { PreviewModeBanner } from "@/components/preview/PreviewModeBanner";
 
 interface Artist {
   id: string;
@@ -23,12 +25,11 @@ export default function Explore() {
   const [loading, setLoading] = useState(true);
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const location = useLocation();
   const isMobile = useIsMobile();
+  const { isPreviewMode } = usePreviewMode();
 
   // Smart back navigation - go to previous fan page or default to /fan/feed
   const handleBack = () => {
-    // Check if we can go back in history and came from a fan route
     const referrer = document.referrer;
     if (referrer && (referrer.includes('/fan') || window.history.length > 1)) {
       navigate(-1);
@@ -71,79 +72,84 @@ export default function Explore() {
 
   return (
     <>
-      <div className="min-h-screen py-24 px-4 pb-32 md:pb-28">
-      {/* Back button header */}
-      <div className="fixed top-6 left-6 z-20">
-        <button 
-          onClick={handleBack}
-          className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="text-sm font-medium">Back</span>
-        </button>
-      </div>
+      {/* Preview mode banner for non-beta users */}
+      {isPreviewMode && <PreviewModeBanner variant="sticky" />}
 
-      <div className="container mx-auto max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">
-            {t('discover.title')} <span className="text-primary">{t('discover.artists')}</span>
-          </h1>
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder={t('discover.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+      <div className={`min-h-screen py-24 px-4 pb-32 md:pb-28 ${isPreviewMode ? 'pt-32' : ''}`}>
+        {/* Back button header */}
+        <div className={`fixed ${isPreviewMode ? 'top-20' : 'top-6'} left-6 z-20`}>
+          <button 
+            onClick={handleBack}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="text-sm font-medium">Back</span>
+          </button>
         </div>
 
-        {filteredArtists.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">{t('discover.noArtistsFound')}</p>
+        <div className="container mx-auto max-w-6xl">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-4">
+              {t('discover.title')} <span className="text-primary">{t('discover.artists')}</span>
+            </h1>
+            <div className="relative max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder={t('discover.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredArtists.map((artist) => (
-              <Card
-                key={artist.id}
-                className="p-6 hover:border-primary/50 transition-all cursor-pointer"
-                onClick={() => navigate(`/artist/${artist.user_id}`)}
-              >
-                <div className="flex items-center gap-4 mb-4">
-                  {artist.avatar_url ? (
-                    <img
-                      src={artist.avatar_url}
-                      alt={artist.artist_name}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-2xl text-primary font-bold">
-                        {artist.artist_name[0]}
-                      </span>
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-lg">{artist.artist_name}</h3>
-                    {artist.genre && (
-                      <p className="text-sm text-muted-foreground">{artist.genre}</p>
+
+          {filteredArtists.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">{t('discover.noArtistsFound')}</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredArtists.map((artist) => (
+                <Card
+                  key={artist.id}
+                  className="p-6 hover:border-primary/50 transition-all cursor-pointer"
+                  onClick={() => navigate(`/artist/${artist.user_id}`)}
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    {artist.avatar_url ? (
+                      <img
+                        src={artist.avatar_url}
+                        alt={artist.artist_name}
+                        className="w-16 h-16 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-2xl text-primary font-bold">
+                          {artist.artist_name[0]}
+                        </span>
+                      </div>
                     )}
+                    <div>
+                      <h3 className="font-semibold text-lg">{artist.artist_name}</h3>
+                      {artist.genre && (
+                        <p className="text-sm text-muted-foreground">{artist.genre}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-                {artist.bio && (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {artist.bio}
-                  </p>
-                )}
-              </Card>
-            ))}
-          </div>
-        )}
+                  {artist.bio && (
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {artist.bio}
+                    </p>
+                  )}
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      </div>
-      {isMobile && <BottomNavBarFan />}
+
+      {/* Hide bottom nav in preview mode */}
+      {isMobile && !isPreviewMode && <BottomNavBarFan />}
     </>
   );
 }
