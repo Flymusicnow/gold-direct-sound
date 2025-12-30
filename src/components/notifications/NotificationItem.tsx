@@ -45,6 +45,8 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
         return <Heart className="h-4 w-4 text-primary" />;
       case 'comment_reply':
         return <MessageSquare className="h-4 w-4 text-primary" />;
+      case 'new_comment':
+        return <MessageSquare className="h-4 w-4 text-primary" />;
       case 'new_video':
         return <Video className="h-4 w-4 text-primary" />;
       case 'spotlight_entry':
