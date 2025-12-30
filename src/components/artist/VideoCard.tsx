@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Share2, Play, Heart } from "lucide-react";
 import { PremiumVideoPlayer } from "@/components/video/PremiumVideoPlayer";
@@ -7,6 +7,8 @@ import { LockedContentOverlay } from "@/components/supporter/LockedContentOverla
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVideoPlayback } from "@/contexts/VideoPlaybackContext";
+import { useAudioFocus } from "@/contexts/AudioFocusContext";
 import { toast } from "sonner";
 
 interface VideoPost {
@@ -35,16 +37,31 @@ export function VideoCard({
   onShare,
   onUnlock,
 }: VideoCardProps) {
+  const videoId = useId();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
+  const { registerVideo, unregisterVideo, setCurrentVideo, pauseAllVideos } = useVideoPlayback();
+  const { onVideoPlay, onVideoPauseOrEnd } = useAudioFocus();
   
   const { hasAccess, loading: accessLoading } = useSupporterAccess(
     artistId,
     video.is_supporter_only ? video.required_tier : null
   );
+
+  // Register this video with global video coordination
+  useEffect(() => {
+    const pauseThisVideo = () => {
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+      }
+    };
+    
+    registerVideo(videoId, pauseThisVideo);
+    return () => unregisterVideo(videoId);
+  }, [videoId, registerVideo, unregisterVideo]);
 
   // Check if user has liked this video (using video_id in a video_likes table or similar)
   // For now, we'll use a local state approach since video_likes table may not exist
@@ -78,6 +95,10 @@ export function VideoCard({
     
     // Start playing inline or open fullscreen
     if (videoRef.current) {
+      pauseAllVideos();
+      setCurrentVideo(videoId);
+      onVideoPlay(videoId);
+      
       videoRef.current.play().then(() => {
         setIsPlaying(true);
       }).catch((err) => {
@@ -88,6 +109,17 @@ export function VideoCard({
     } else {
       onOpenFullscreen(index);
     }
+  };
+
+  // Handle video pause/end events
+  const handleVideoPause = () => {
+    setIsPlaying(false);
+    onVideoPauseOrEnd(videoId);
+  };
+
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+    onVideoPauseOrEnd(videoId);
   };
 
   // iOS Safari touch handler
@@ -129,7 +161,8 @@ export function VideoCard({
           loop
           preload="metadata"
           onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPause={handleVideoPause}
+          onEnded={handleVideoEnded}
         />
 
         {/* Play button overlay - always visible when not playing */}

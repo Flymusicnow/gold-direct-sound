@@ -5,7 +5,7 @@ import { FanActionBar } from '@/components/fan/FanActionBar';
 import { DiscoverFeedItem } from '@/hooks/useDiscoverFeed';
 import { useLikeTrack } from '@/hooks/useLikeTrack';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
-import { useFlightdeck } from '@/contexts/FlightdeckContext';
+import { useAudioFocus } from '@/contexts/AudioFocusContext';
 
 interface DiscoverVideoCardProps {
   item: DiscoverFeedItem;
@@ -23,8 +23,8 @@ export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVid
     item.artist_id,
     false // Will be fetched on mount
   );
-  const { registerVideo, unregisterVideo, setCurrentVideo } = useVideoPlayback();
-  const { setIsPlaying: pauseFlightdeck } = useFlightdeck();
+  const { registerVideo, unregisterVideo, setCurrentVideo, pauseAllVideos } = useVideoPlayback();
+  const { onVideoPlay, onVideoPauseOrEnd } = useAudioFocus();
 
   // Register this video with global video coordination
   useEffect(() => {
@@ -42,13 +42,18 @@ export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVid
     if (!videoRef.current) return;
 
     if (isInView && !isPlaying) {
+      pauseAllVideos();
+      setCurrentVideo(videoId);
+      onVideoPlay(videoId);
+      
       videoRef.current.play().catch(() => {});
       setIsPlaying(true);
     } else if (!isInView && isPlaying) {
       videoRef.current.pause();
       setIsPlaying(false);
+      onVideoPauseOrEnd(videoId);
     }
-  }, [isInView]);
+  }, [isInView, isPlaying, videoId, pauseAllVideos, setCurrentVideo, onVideoPlay, onVideoPauseOrEnd]);
 
   const handleVideoClick = () => {
     if (!videoRef.current) return;
@@ -57,10 +62,12 @@ export function DiscoverVideoCard({ item, isInView, onOpenOverlay }: DiscoverVid
       videoRef.current.pause();
       setIsPlaying(false);
       setCurrentVideo(null);
+      onVideoPauseOrEnd(videoId);
     } else {
-      // Pause Flightdeck and other videos when this video plays
-      pauseFlightdeck(false);
+      // Pause other videos when this video plays
+      pauseAllVideos();
       setCurrentVideo(videoId);
+      onVideoPlay(videoId);
       videoRef.current.play().catch(() => {});
       setIsPlaying(true);
     }

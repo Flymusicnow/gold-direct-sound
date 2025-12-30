@@ -54,6 +54,8 @@ interface FlightdeckContextType {
   toggleShuffle: () => void;
   cycleRepeat: () => void;
   removeFromQueue: (itemId: string) => void;
+  // Audio focus integration
+  resumeMusic: () => void;
 }
 
 const FlightdeckContext = createContext<FlightdeckContextType | undefined>(undefined);
@@ -208,6 +210,14 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     setQueueState(prev => prev.filter((item, i) => i !== index));
   }, [queue, currentIndex]);
 
+  // Resume music playback (called by AudioFocusContext when video ends)
+  const resumeMusic = useCallback(() => {
+    if (currentItem && !isPlaying) {
+      pauseAllVideos();
+      setIsPlaying(true);
+    }
+  }, [currentItem, isPlaying, pauseAllVideos]);
+
   return (
     <FlightdeckContext.Provider
       value={{
@@ -236,6 +246,7 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
         toggleShuffle,
         cycleRepeat,
         removeFromQueue,
+        resumeMusic,
       }}
     >
       {children}

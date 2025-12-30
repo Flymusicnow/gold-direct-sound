@@ -629,6 +629,7 @@ export type Database = {
           twitter_url: string | null
           updated_at: string | null
           user_id: string
+          video_autoplay_enabled: boolean | null
           website_url: string | null
           youtube_url: string | null
         }
@@ -647,6 +648,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string | null
           user_id: string
+          video_autoplay_enabled?: boolean | null
           website_url?: string | null
           youtube_url?: string | null
         }
@@ -665,6 +667,7 @@ export type Database = {
           twitter_url?: string | null
           updated_at?: string | null
           user_id?: string
+          video_autoplay_enabled?: boolean | null
           website_url?: string | null
           youtube_url?: string | null
         }
@@ -4119,6 +4122,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          created_at: string | null
+          id: string
+          pause_music_on_video: boolean | null
+          pip_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          pause_music_on_video?: boolean | null
+          pip_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          pause_music_on_video?: boolean | null
+          pip_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
