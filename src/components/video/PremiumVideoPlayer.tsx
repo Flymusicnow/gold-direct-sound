@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useId, useCallback } from "react";
-import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2 } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, PictureInPicture2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { useVideoPlayback } from "@/contexts/VideoPlaybackContext";
+import { useAudioFocus } from "@/contexts/AudioFocusContext";
 
 interface PremiumVideoPlayerProps {
   videoUrl: string;
@@ -34,9 +34,16 @@ export function PremiumVideoPlayer({
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [autoplayBlocked, setAutoplayBlocked] = useState(false);
+  const [isPiPActive, setIsPiPActive] = useState(false);
+  const [isPiPSupported, setIsPiPSupported] = useState(false);
   
-  const { setIsPlaying: pauseFlightdeck } = useFlightdeck();
   const { registerVideo, unregisterVideo, setCurrentVideo, currentVideoId, pauseAllVideos } = useVideoPlayback();
+  const { onVideoPlay, onVideoPauseOrEnd, pipEnabled } = useAudioFocus();
+
+  // Check PiP support on mount
+  useEffect(() => {
+    setIsPiPSupported('pictureInPictureEnabled' in document && document.pictureInPictureEnabled);
+  }, []);
 
   // Video event listeners
   useEffect(() => {
@@ -47,27 +54,44 @@ export function PremiumVideoPlayer({
     const handleLoadedMetadata = () => {
       setDuration(video.duration);
     };
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handlePlay = () => {
+      setIsPlaying(true);
+      onVideoPlay(videoId);
+    };
+    const handlePause = () => {
+      setIsPlaying(false);
+      onVideoPauseOrEnd(videoId);
+    };
+    const handleEnded = () => {
+      onVideoPauseOrEnd(videoId);
+    };
     const handleError = () => {
       setHasError(true);
       onError?.();
     };
+    const handleEnterPiP = () => setIsPiPActive(true);
+    const handleLeavePiP = () => setIsPiPActive(false);
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
+    video.addEventListener("ended", handleEnded);
     video.addEventListener("error", handleError);
+    video.addEventListener("enterpictureinpicture", handleEnterPiP);
+    video.addEventListener("leavepictureinpicture", handleLeavePiP);
 
     return () => {
       video.removeEventListener("timeupdate", handleTimeUpdate);
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
+      video.removeEventListener("ended", handleEnded);
       video.removeEventListener("error", handleError);
+      video.removeEventListener("enterpictureinpicture", handleEnterPiP);
+      video.removeEventListener("leavepictureinpicture", handleLeavePiP);
     };
-  }, [onError]);
+  }, [onError, videoId, onVideoPlay, onVideoPauseOrEnd]);
 
   // Pause this video when another video becomes current
   useEffect(() => {
@@ -88,7 +112,6 @@ export function PremiumVideoPlayer({
             if (videoRef.current && videoRef.current.paused) {
               pauseAllVideos();
               setCurrentVideo(videoId);
-              pauseFlightdeck(false);
               
               const playPromise = videoRef.current.play();
               if (playPromise !== undefined) {
@@ -120,7 +143,7 @@ export function PremiumVideoPlayer({
     return () => {
       observer.disconnect();
     };
-  }, [enableVisibilityAutoplay, videoId, pauseAllVideos, setCurrentVideo, pauseFlightdeck, currentVideoId]);
+  }, [enableVisibilityAutoplay, videoId, pauseAllVideos, setCurrentVideo, currentVideoId]);
 
   const togglePlayPause = useCallback(() => {
     if (!videoRef.current) return;
@@ -131,24 +154,33 @@ export function PremiumVideoPlayer({
       setCurrentVideo(null);
     } else {
       pauseAllVideos();
-      pauseFlightdeck(false);
       setCurrentVideo(videoId);
       videoRef.current.play().catch(() => {
         setAutoplayBlocked(true);
       });
     }
-  }, [isPlaying, pauseAllVideos, pauseFlightdeck, setCurrentVideo, videoId]);
+  }, [isPlaying, pauseAllVideos, setCurrentVideo, videoId]);
 
   const toggleMute = useCallback(() => {
     if (!videoRef.current) return;
     const newMutedState = !isMuted;
     videoRef.current.muted = newMutedState;
     setIsMuted(newMutedState);
+  }, [isMuted]);
+
+  const togglePiP = useCallback(async () => {
+    if (!videoRef.current || !isPiPSupported || !pipEnabled) return;
     
-    if (!newMutedState && isPlaying) {
-      pauseFlightdeck(false);
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (videoRef.current.requestPictureInPicture) {
+        await videoRef.current.requestPictureInPicture();
+      }
+    } catch (error) {
+      console.error("PiP error:", error);
     }
-  }, [isMuted, isPlaying, pauseFlightdeck]);
+  }, [isPiPSupported, pipEnabled]);
 
   const handleSeek = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (!videoRef.current) return;
@@ -287,6 +319,20 @@ export function PremiumVideoPlayer({
         >
           {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
         </button>
+
+        {/* PiP button - only show if supported and enabled */}
+        {isPiPSupported && pipEnabled && (
+          <button
+            onClick={togglePiP}
+            className={cn(
+              "text-white hover:text-primary transition-colors p-2 min-w-[44px] min-h-[44px] flex items-center justify-center",
+              isPiPActive && "text-primary"
+            )}
+            aria-label={isPiPActive ? "Exit Picture-in-Picture" : "Picture-in-Picture"}
+          >
+            <PictureInPicture2 className="h-5 w-5" />
+          </button>
+        )}
 
         <button
           onClick={toggleFullscreen}

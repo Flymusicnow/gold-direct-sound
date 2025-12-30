@@ -6,6 +6,7 @@ interface VideoPlaybackContextType {
   unregisterVideo: (id: string) => void;
   setCurrentVideo: (id: string | null) => void;
   pauseAllVideos: () => void;
+  pauseVideoById: (id: string) => void;
 }
 
 const VideoPlaybackContext = createContext<VideoPlaybackContextType | undefined>(undefined);
@@ -27,6 +28,16 @@ export function VideoPlaybackProvider({ children }: { children: ReactNode }) {
     setCurrentVideoId(null);
   }, [videoRefs]);
 
+  const pauseVideoById = useCallback((id: string) => {
+    const pauseFn = videoRefs.get(id);
+    if (pauseFn) {
+      pauseFn();
+    }
+    if (currentVideoId === id) {
+      setCurrentVideoId(null);
+    }
+  }, [videoRefs, currentVideoId]);
+
   const setCurrentVideo = useCallback((id: string | null) => {
     // Pause all other videos before setting current (mutual exclusion)
     if (id !== null) {
@@ -47,6 +58,7 @@ export function VideoPlaybackProvider({ children }: { children: ReactNode }) {
         unregisterVideo,
         setCurrentVideo,
         pauseAllVideos,
+        pauseVideoById,
       }}
     >
       {children}

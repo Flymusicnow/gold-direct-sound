@@ -5,6 +5,7 @@ import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Shuffle, Repeat, Repeat1, Smartphone } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
+import { useAudioFocus } from '@/contexts/AudioFocusContext';
 import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ export function FlightdeckPlayer() {
   } = useFlightdeck();
   
   const { pauseAllVideos } = useVideoPlayback();
+  const { onMusicPlay } = useAudioFocus();
   const isMobile = useIsMobile();
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -155,13 +157,14 @@ export function FlightdeckPlayer() {
     if (!mediaElement) return;
 
     if (isPlaying) {
-      // Pause all videos when Flightdeck starts playing
+      // Pause all videos and notify AudioFocusContext when music plays
       pauseAllVideos();
+      onMusicPlay();
       mediaElement.play().catch(console.error);
     } else {
       mediaElement.pause();
     }
-  }, [isPlaying, currentItem, pauseAllVideos]);
+  }, [isPlaying, currentItem, pauseAllVideos, onMusicPlay]);
 
   // Handle volume changes
   useEffect(() => {

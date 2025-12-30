@@ -10,6 +10,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { FanTasteProvider } from "@/contexts/FanTasteContext";
 import { FlightdeckProvider } from "@/contexts/FlightdeckContext";
 import { VideoPlaybackProvider } from "@/contexts/VideoPlaybackContext";
+import { AudioFocusProvider } from "@/contexts/AudioFocusContext";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { FlightRecorderProvider } from "@/contexts/FlightRecorderContext";
@@ -201,6 +202,7 @@ const App = () => (
             <FanTasteProvider>
               <VideoPlaybackProvider>
                 <FlightdeckProvider>
+                  <AudioFocusProvider>
                   <SwipeBackProvider>
                   <FlightdeckLayout>
                   <NavigationWrapper />
