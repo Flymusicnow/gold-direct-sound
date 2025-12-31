@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { ShieldX, Mic2, Heart, Briefcase, Home } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ShieldX, Mic2, Heart, Briefcase, Home, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,7 +12,17 @@ interface WrongRoleMessageProps {
 
 export function WrongRoleMessage({ requiredRole }: WrongRoleMessageProps) {
   const { t } = useLanguage();
-  const { hasRole } = useAuth();
+  const { hasRole, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSwitchAccount = async () => {
+    await signOut();
+    if (requiredRole === 'admin') {
+      navigate('/signin/admin');
+    } else {
+      navigate(`/signin/${requiredRole}`);
+    }
+  };
 
   // Determine user's actual role
   const getUserRole = () => {
@@ -95,25 +105,25 @@ export function WrongRoleMessage({ requiredRole }: WrongRoleMessageProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Option 1: Sign in with correct role */}
-            {requiredRole !== 'admin' && (
-              <Button asChild className="w-full" variant="default">
-                <Link to={getSignInPath()}>
-                  <RequiredIcon className="mr-2 h-4 w-4" />
-                  {t('auth.signInAs').replace('{role}', getRoleDisplayName(requiredRole))}
-                </Link>
-              </Button>
-            )}
-
-            {/* Option 2: Go to user's dashboard */}
+            {/* Option 1: Go to user's dashboard */}
             {userRole && (
-              <Button asChild variant="outline" className="w-full">
+              <Button asChild variant="default" className="w-full">
                 <Link to={getDashboardPath()}>
                   <Home className="mr-2 h-4 w-4" />
                   {t('auth.goToYourDashboard')}
                 </Link>
               </Button>
             )}
+
+            {/* Option 2: Switch account (explicit user action - no auto logout) */}
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleSwitchAccount}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Switch Account
+            </Button>
 
             {/* Option 3: Go home if not logged in */}
             {!userRole && (

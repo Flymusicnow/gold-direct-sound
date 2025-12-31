@@ -96,6 +96,7 @@ import AdminWaitlist from "./pages/admin/AdminWaitlist";
 import AdminFlightRecorder from "./pages/admin/AdminFlightRecorder";
 import AdminStripeTierRepair from "./pages/admin/AdminStripeTierRepair";
 import AdminEdgeFunctions from "./pages/admin/AdminEdgeFunctions";
+import AdminAccessDenied from "./pages/admin/AdminAccessDenied";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
 import TrustPage from "./pages/trust/TrustPage";
@@ -197,6 +198,7 @@ const App = () => (
             <Route path="/signin/fan" element={<SignInFan />} />
             <Route path="/signin/artist" element={<SignInArtist />} />
             <Route path="/signin/admin" element={<SignInAdmin />} />
+            <Route path="/admin/access-denied" element={<AdminAccessDenied />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />
