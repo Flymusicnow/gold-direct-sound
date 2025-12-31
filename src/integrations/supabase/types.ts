@@ -4684,6 +4684,7 @@ export type Database = {
             Returns: string
           }
       validate_fan_invite_code: { Args: { _code: string }; Returns: Json }
+      validate_invite_code_universal: { Args: { _code: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "artist" | "fan" | "brand" | "super_admin"

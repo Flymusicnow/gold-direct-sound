@@ -81,10 +81,28 @@ export default function JoinFan() {
         // Record permanent fan beta access in DB
         await supabase.from('fan_beta_access').insert({
           user_id: data.user.id,
-          badge_name: 'Early Supporter',
+          badge_name: localStorage.getItem('fan_invite_badge') || 'Early Supporter',
         });
 
-        // Consume invite token (mark as used)
+        // Mark invite as redeemed
+        const inviteId = localStorage.getItem('fan_invite_id');
+        if (inviteId) {
+          await supabase
+            .from('beta_invites')
+            .update({ 
+              status: 'redeemed',
+              redeemed_at: new Date().toISOString()
+            })
+            .eq('id', inviteId);
+          
+          // Clean up localStorage
+          localStorage.removeItem('fan_invite_id');
+          localStorage.removeItem('fan_invite_token');
+          localStorage.removeItem('fan_invite_expires');
+          localStorage.removeItem('fan_invite_badge');
+        }
+
+        // Consume invite token (mark session as used)
         const inviteToken = localStorage.getItem(STORAGE_KEY);
         if (inviteToken) {
           await consumeInviteToken(inviteToken);
