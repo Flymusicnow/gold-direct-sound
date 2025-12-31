@@ -7,9 +7,6 @@ import { useVideoMilestones } from "@/hooks/useVideoMilestones";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { StatCard } from "@/components/StatCard";
-import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { VideoEngagementHeatmap } from "@/components/video/VideoEngagementHeatmap";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
@@ -250,15 +247,10 @@ export default function StudioAnalytics() {
             <h1 className="text-2xl md:text-3xl font-bold">{t('studio.analytics')}</h1>
             <p className="text-sm text-muted-foreground">{t('studio.analyticsDescription')}</p>
           </div>
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">{t('studio.analytics')}</h1>
-              <p className="text-sm text-muted-foreground">{t('studio.analyticsDescription')}</p>
-            </div>
-          </div>
+        </div>
 
-          {/* Summary KPIs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Summary KPIs */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card className="p-6">
               <div className="space-y-2">
                 <div className="flex items-center gap-1.5">
@@ -287,12 +279,12 @@ export default function StudioAnalytics() {
                 <p className="text-xs text-primary">+{stats.plays30d} {t('studio.last30Days')}</p>
               </div>
             </Card>
-            <StatCard label={t('studio.totalLikes')} value={stats.totalLikes} icon={Heart} />
-            <StatCard label={t('studio.totalComments')} value={stats.totalComments} icon={MessageSquare} />
-          </div>
+          <StatCard label={t('studio.totalLikes')} value={stats.totalLikes} icon={Heart} />
+          <StatCard label={t('studio.totalComments')} value={stats.totalComments} icon={MessageSquare} />
+        </div>
 
-          {/* Top Tracks */}
-          <Card className="p-6">
+        {/* Top Tracks */}
+        <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">{t('studio.topTracks')}</h2>
             {topTracks.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">
@@ -403,10 +395,9 @@ export default function StudioAnalytics() {
                 </div>
                 <p className="text-2xl font-bold mb-1">{stats.likes7d}</p>
                 <p className="text-sm text-muted-foreground">Last 7 days</p>
-              </div>
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </div>
     </StudioLayout>
   );

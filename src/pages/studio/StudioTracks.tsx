@@ -8,9 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
@@ -340,13 +337,8 @@ export default function StudioTracks() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-        
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
-        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+    <StudioLayout>
+      <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -587,7 +579,6 @@ export default function StudioTracks() {
             )}
           </Card>
         </div>
-      </main>
 
       {/* Locked Feature Modal */}
       <LockedFeatureModal
@@ -656,9 +647,7 @@ export default function StudioTracks() {
           onSuccess={fetchData}
         />
       )}
-      </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }
 

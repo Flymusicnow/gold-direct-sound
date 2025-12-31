@@ -7,9 +7,6 @@ import { useCommentsAnalytics } from "@/hooks/useCommentsAnalytics";
 import { useCommentModeration } from "@/hooks/useCommentModeration";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useCommentModeration } from "@/hooks/useCommentModeration";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -438,8 +435,6 @@ export default function StudioComments() {
                 )}
               </TabsContent>
             </Tabs>
-          </div>
-        </div>
       </div>
     </StudioLayout>
   );
