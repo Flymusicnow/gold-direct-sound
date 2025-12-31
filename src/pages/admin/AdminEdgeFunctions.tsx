@@ -122,7 +122,7 @@ export default function AdminEdgeFunctions() {
   };
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Edge Function Monitor" description="Real-time logs, health metrics, and correlation ID tracing">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
