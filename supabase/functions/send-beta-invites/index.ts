@@ -156,17 +156,26 @@ async function sendEmailViaResend(
 }
 
 serve(async (req) => {
+  const correlationId = crypto.randomUUID();
+  const startTime = Date.now();
+  
+  const log = (step: string, details?: Record<string, unknown>) => {
+    console.log(`[SEND-BETA-INVITES][${correlationId}] ${step}`, details ? JSON.stringify(details) : '');
+  };
+
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    log('REQUEST_RECEIVED');
+    
     // Get authorization header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No authorization header");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      log('AUTH_ERROR', { reason: 'no_header' });
+      return new Response(JSON.stringify({ error: "Unauthorized", correlation_id: correlationId }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -182,8 +191,8 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !user) {
-      console.error("User verification failed:", userError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      log('AUTH_ERROR', { reason: 'user_verification_failed', error: userError?.message });
+      return new Response(JSON.stringify({ error: "Unauthorized", correlation_id: correlationId }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -197,19 +206,22 @@ serve(async (req) => {
       .single();
 
     if (profileError || profile?.role !== "admin") {
-      console.error("Admin check failed:", profileError, "Role:", profile?.role);
-      return new Response(JSON.stringify({ error: "Admin access required" }), {
+      log('AUTH_ERROR', { reason: 'not_admin', role: profile?.role });
+      return new Response(JSON.stringify({ error: "Admin access required", correlation_id: correlationId }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    log('ADMIN_VERIFIED', { userId: user.id });
 
     // Parse request body
     const payload: InvitePayload = await req.json();
     const { invites } = payload;
 
     if (!invites || !Array.isArray(invites) || invites.length === 0) {
-      return new Response(JSON.stringify({ error: "No invites provided" }), {
+      log('VALIDATION_ERROR', { reason: 'no_invites' });
+      return new Response(JSON.stringify({ error: "No invites provided", correlation_id: correlationId }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -217,7 +229,8 @@ serve(async (req) => {
 
     // Limit batch size
     if (invites.length > 25) {
-      return new Response(JSON.stringify({ error: "Maximum 25 invites per request" }), {
+      log('VALIDATION_ERROR', { reason: 'batch_too_large', count: invites.length });
+      return new Response(JSON.stringify({ error: "Maximum 25 invites per request", correlation_id: correlationId }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -226,8 +239,8 @@ serve(async (req) => {
     // Get Resend API key
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {
-      console.error("RESEND_API_KEY not configured");
-      return new Response(JSON.stringify({ error: "Email service not configured" }), {
+      log('CONFIG_ERROR', { reason: 'missing_resend_key' });
+      return new Response(JSON.stringify({ error: "Email service not configured", correlation_id: correlationId }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -238,7 +251,7 @@ serve(async (req) => {
     const failed: Array<{ email: string; error: string }> = [];
     const skipped: Array<{ email: string; reason: string }> = [];
 
-    console.log(`Processing ${invites.length} invites from admin ${user.id}`);
+    log('PROCESSING_INVITES', { count: invites.length, adminId: user.id });
 
     for (const invite of invites) {
       const { email, role, waitlistId } = invite;
@@ -317,7 +330,7 @@ serve(async (req) => {
           .single();
 
         if (insertError) {
-          console.error("Failed to create invite record:", insertError);
+          log('DB_ERROR', { email, error: insertError.message });
           failed.push({ email, error: "Database error" });
           continue;
         }
@@ -337,7 +350,7 @@ serve(async (req) => {
         const emailResult = await sendEmailViaResend(resendApiKey, email, subject, html);
 
         if (!emailResult.success) {
-          console.error(`Email failed for ${email}:`, emailResult.error);
+          log('EMAIL_ERROR', { email, error: emailResult.error });
           
           // Update invite status to failed
           await supabaseClient
@@ -352,7 +365,7 @@ serve(async (req) => {
           continue;
         }
 
-        console.log(`Email sent to ${email}`);
+        log('EMAIL_SENT', { email, role, code: code.substring(0, 4) + '...' });
 
         // Update beta_invites to sent
         await supabaseClient
@@ -391,7 +404,7 @@ serve(async (req) => {
         await delay(200);
 
       } catch (error) {
-        console.error(`Error processing invite for ${email}:`, error);
+        log('INVITE_ERROR', { email, error: error instanceof Error ? error.message : String(error) });
         
         // Try to update invite record with error
         await supabaseClient
@@ -407,10 +420,28 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Invite sending complete. Sent: ${sent.length}, Failed: ${failed.length}, Skipped: ${skipped.length}`);
+    log('COMPLETE', { 
+      sent: sent.length, 
+      failed: failed.length, 
+      skipped: skipped.length,
+      execution_time_ms: Date.now() - startTime
+    });
+
+    // Persist summary log
+    await supabaseClient.from('edge_function_logs').insert({
+      correlation_id: correlationId,
+      function_name: 'send-beta-invites',
+      step: 'COMPLETE',
+      level: failed.length > 0 ? 'warn' : 'info',
+      message: `Sent ${sent.length}, failed ${failed.length}, skipped ${skipped.length}`,
+      details: { sent: sent.length, failed: failed.length, skipped: skipped.length },
+      execution_time_ms: Date.now() - startTime,
+      status_code: 200,
+      user_id: user.id
+    });
 
     return new Response(
-      JSON.stringify({ sent, failed, skipped }),
+      JSON.stringify({ sent, failed, skipped, correlation_id: correlationId }),
       {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -418,9 +449,9 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Error in send-beta-invites:", error);
+    log('UNHANDLED_ERROR', { error: error instanceof Error ? error.message : String(error) });
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Internal error" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "Internal error", correlation_id: correlationId }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

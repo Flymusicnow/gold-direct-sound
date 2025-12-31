@@ -7,11 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: Record<string, unknown>) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[REPAIR-SUPPORTER-TIERS] ${step}${detailsStr}`);
-};
-
 interface TierRepairResult {
   tier_id: string;
   tier_name: string;
@@ -23,12 +18,19 @@ interface TierRepairResult {
 }
 
 serve(async (req) => {
+  const correlationId = crypto.randomUUID();
+  const startTime = Date.now();
+  
+  const log = (step: string, details?: Record<string, unknown>) => {
+    console.log(`[REPAIR-SUPPORTER-TIERS][${correlationId}] ${step}`, details ? JSON.stringify(details) : '');
+  };
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    logStep("Function started");
+    log('STARTING');
 
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
@@ -38,14 +40,20 @@ serve(async (req) => {
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header");
+    if (!authHeader) {
+      log('AUTH_ERROR', { reason: 'no_header' });
+      throw new Error("No authorization header");
+    }
     
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError || !userData.user) throw new Error("Authentication failed");
+    if (userError || !userData.user) {
+      log('AUTH_ERROR', { reason: 'user_verification_failed', error: userError?.message });
+      throw new Error("Authentication failed");
+    }
     
     const userId = userData.user.id;
-    logStep("User authenticated", { userId });
+    log('USER_AUTHENTICATED', { userId });
 
     // Admin check (user can have multiple roles)
     const { data: adminRoles, error: roleError } = await supabaseClient
@@ -55,9 +63,9 @@ serve(async (req) => {
       .in("role", ["admin", "super_admin"]);
 
     if (roleError) {
-      console.error("Role check failed", { userId, error: roleError });
+      log('AUTH_ERROR', { reason: 'role_check_failed', error: roleError.message });
       return new Response(
-        JSON.stringify({ error: "Admin access required" }),
+        JSON.stringify({ error: "Admin access required", correlation_id: correlationId }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -65,23 +73,26 @@ serve(async (req) => {
     const isAdmin = (adminRoles?.length ?? 0) > 0;
 
     if (!isAdmin) {
-      console.warn("Non-admin access attempt", { userId });
+      log('AUTH_ERROR', { reason: 'not_admin', userId });
       return new Response(
-        JSON.stringify({ error: "Admin access required" }),
+        JSON.stringify({ error: "Admin access required", correlation_id: correlationId }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    logStep("Admin access verified");
+    log('ADMIN_VERIFIED');
 
     // Parse request body
     const body = await req.json().catch(() => ({}));
     const { tier_id, mode = "scan" } = body; // mode: "scan" | "repair" | "repair_single"
 
-    logStep("Request parsed", { mode, tier_id });
+    log('REQUEST_PARSED', { mode, tier_id });
 
     // Initialize Stripe
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY not configured");
+    if (!stripeKey) {
+      log('CONFIG_ERROR', { reason: 'missing_stripe_key' });
+      throw new Error("STRIPE_SECRET_KEY not configured");
+    }
     
     const stripe = new Stripe(stripeKey, { apiVersion: "2023-10-16" });
 
@@ -110,8 +121,11 @@ serve(async (req) => {
 
     const { data: tiers, error: tiersError } = await query;
 
-    if (tiersError) throw new Error(`Failed to fetch tiers: ${tiersError.message}`);
-    logStep("Tiers fetched", { count: tiers?.length || 0 });
+    if (tiersError) {
+      log('DB_ERROR', { reason: 'fetch_tiers_failed', error: tiersError.message });
+      throw new Error(`Failed to fetch tiers: ${tiersError.message}`);
+    }
+    log('TIERS_FETCHED', { count: tiers?.length || 0 });
 
     if (!tiers || tiers.length === 0) {
       return new Response(
@@ -120,6 +134,7 @@ serve(async (req) => {
           message: "No tiers to process",
           results: [],
           summary: { total: 0, ok: 0, repaired: 0, created: 0, errors: 0 },
+          correlation_id: correlationId,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
@@ -149,7 +164,7 @@ serve(async (req) => {
             });
             continue;
           } catch {
-            logStep("Stripe price invalid", { tierId: tier.id, priceId: tier.stripe_price_id });
+            log('STRIPE_PRICE_INVALID', { tierId: tier.id, priceId: tier.stripe_price_id });
           }
         }
 
@@ -178,7 +193,7 @@ serve(async (req) => {
         }
 
         // REPAIR MODE: Try to recover existing Stripe objects first
-        logStep("Attempting repair for tier", { tierId: tier.id, tierName: tier.name });
+        log('REPAIRING_TIER', { tierId: tier.id, tierName: tier.name });
 
         let product: Stripe.Product | null = null;
         let price: Stripe.Price | null = null;
@@ -190,7 +205,7 @@ serve(async (req) => {
 
         if (existingProducts.data.length > 0) {
           product = existingProducts.data[0];
-          logStep("Found existing product", { productId: product.id });
+          log('FOUND_EXISTING_PRODUCT', { productId: product.id });
 
           // Find active price for this product
           const existingPricesResult = await stripe.prices.list({
@@ -205,7 +220,7 @@ serve(async (req) => {
 
           if (matchingPrice) {
             price = matchingPrice;
-            logStep("Found existing price", { priceId: price.id });
+            log('FOUND_EXISTING_PRICE', { priceId: price.id });
           }
         }
 
@@ -223,7 +238,7 @@ serve(async (req) => {
           }, {
             idempotencyKey: `repair-product-${tier.id}`,
           });
-          logStep("Created new product", { productId: product.id });
+          log('CREATED_PRODUCT', { productId: product.id });
         }
 
         // Create price if not found
@@ -240,7 +255,7 @@ serve(async (req) => {
           }, {
             idempotencyKey: `repair-price-${tier.id}-${tier.price_cents}`,
           });
-          logStep("Created new price", { priceId: price.id });
+          log('CREATED_PRICE', { priceId: price.id });
         }
 
         // Update database
@@ -270,7 +285,7 @@ serve(async (req) => {
 
       } catch (tierError) {
         const errorMsg = tierError instanceof Error ? tierError.message : String(tierError);
-        logStep("Error processing tier", { tierId: tier.id, error: errorMsg });
+        log('TIER_ERROR', { tierId: tier.id, error: errorMsg });
         results.push({
           tier_id: tier.id,
           tier_name: tier.name,
@@ -289,7 +304,20 @@ serve(async (req) => {
       errors: results.filter((r) => r.status === "error").length,
     };
 
-    logStep("Repair complete", summary);
+    log('COMPLETE', { ...summary, execution_time_ms: Date.now() - startTime });
+
+    // Persist log
+    await supabaseClient.from('edge_function_logs').insert({
+      correlation_id: correlationId,
+      function_name: 'repair-supporter-tiers',
+      step: 'COMPLETE',
+      level: summary.errors > 0 ? 'warn' : 'info',
+      message: `Processed ${summary.total} tiers: ${summary.ok} ok, ${summary.repaired} repaired, ${summary.created} created, ${summary.errors} errors`,
+      details: summary,
+      execution_time_ms: Date.now() - startTime,
+      status_code: 200,
+      user_id: userId
+    });
 
     return new Response(
       JSON.stringify({
@@ -297,15 +325,16 @@ serve(async (req) => {
         mode,
         results,
         summary,
+        correlation_id: correlationId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    logStep("ERROR", { message: errorMessage });
+    log('UNHANDLED_ERROR', { error: errorMessage });
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, correlation_id: correlationId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }

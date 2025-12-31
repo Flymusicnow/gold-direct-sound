@@ -11,14 +11,17 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
 );
 
-const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[STRIPE-WEBHOOK] ${step}${detailsStr}`);
-};
-
 serve(async (req) => {
+  const correlationId = crypto.randomUUID();
+  const startTime = Date.now();
+  
+  const log = (step: string, details?: Record<string, unknown>) => {
+    console.log(`[STRIPE-WEBHOOK][${correlationId}] ${step}`, details ? JSON.stringify(details) : '');
+  };
+
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
+    log('ERROR', { reason: 'no_signature' });
     return new Response("No signature", { status: 400 });
   }
 
@@ -28,13 +31,13 @@ serve(async (req) => {
     
     const event = stripe.webhooks.constructEvent(body, signature, webhookSecret!);
 
-    logStep("Webhook received", { type: event.type });
+    log('WEBHOOK_RECEIVED', { type: event.type });
 
     switch (event.type) {
       // Handle Stripe Connect account updates
       case "account.updated": {
         const account = event.data.object as Stripe.Account;
-        logStep("Account updated", { accountId: account.id });
+        log('ACCOUNT_UPDATED', { accountId: account.id });
 
         // Find the artist with this Stripe account
         const { data: stripeAccount } = await supabaseAdmin
@@ -64,7 +67,7 @@ serve(async (req) => {
             })
             .eq('id', stripeAccount.id);
 
-          logStep("Artist Stripe account updated", { 
+          log('ARTIST_STRIPE_UPDATED', { 
             artistId: stripeAccount.artist_id, 
             status,
             payoutsEnabled: account.payouts_enabled 
@@ -82,11 +85,11 @@ serve(async (req) => {
           const { user_id, plan_key, billing_interval } = metadata;
           
           if (!user_id || !plan_key) {
-            console.error("Missing metadata in platform subscription checkout");
+            log('ERROR', { reason: 'missing_metadata', metadata });
             break;
           }
           
-          logStep("Processing platform subscription", { user_id, plan_key, billing_interval });
+          log('PROCESSING_PLATFORM_SUBSCRIPTION', { user_id, plan_key, billing_interval });
           
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string
@@ -121,7 +124,7 @@ serve(async (req) => {
             link: plan_key.startsWith('fan') ? '/fan/settings' : '/studio/settings'
           });
           
-          logStep("Platform subscription created", { user_id, plan_key });
+          log('PLATFORM_SUBSCRIPTION_CREATED', { user_id, plan_key });
           break;
         }
         
@@ -129,18 +132,18 @@ serve(async (req) => {
         const { fan_user_id, artist_id, tier, tier_id } = metadata;
 
         if (!fan_user_id || !artist_id || !tier) {
-          console.error("Missing metadata in checkout session");
+          log('ERROR', { reason: 'missing_metadata', metadata });
           break;
         }
 
-        logStep("Processing checkout", { fan_user_id, artist_id, tier, tier_id });
+        log('PROCESSING_CHECKOUT', { fan_user_id, artist_id, tier, tier_id });
 
         const subscription = await stripe.subscriptions.retrieve(
           session.subscription as string
         );
 
         // Create subscription record with tier_id if present
-        const subscriptionData: any = {
+        const subscriptionData: Record<string, unknown> = {
           fan_user_id,
           artist_id,
           tier,
@@ -163,7 +166,7 @@ serve(async (req) => {
           .single();
 
         if (subError) {
-          console.error("Error creating subscription:", subError);
+          log('ERROR', { reason: 'subscription_insert_failed', error: subError.message });
         }
 
         // Log initial payment to supporter_payments
@@ -211,10 +214,10 @@ serve(async (req) => {
                 onConflict: 'artist_user_id'
               });
 
-            logStep("Manual payout tracked", { artistUserId: artist.user_id, amount });
+            log('MANUAL_PAYOUT_TRACKED', { artistUserId: artist.user_id, amount });
           }
         } else {
-          logStep("Stripe Connect handles payout automatically");
+          log('STRIPE_CONNECT_HANDLES_PAYOUT');
         }
 
         // Award XP bonus to fan_support_scores
@@ -237,7 +240,7 @@ serve(async (req) => {
             onConflict: 'fan_user_id,artist_id'
           });
 
-        logStep("Subscription created", { fan_user_id, artist_id, xpBonus });
+        log('SUBSCRIPTION_CREATED', { fan_user_id, artist_id, xpBonus });
         break;
       }
 
@@ -255,7 +258,7 @@ serve(async (req) => {
 
         if (!subscription) break;
 
-        logStep("Processing invoice", { subscriptionId, amount: invoice.amount_paid });
+        log('PROCESSING_INVOICE', { subscriptionId, amount: invoice.amount_paid });
 
         // Log payment with full details
         await supabaseAdmin.from("supporter_payments").insert({
@@ -331,7 +334,7 @@ serve(async (req) => {
           }
         }
 
-        logStep("Invoice processed", { subscriptionId });
+        log('INVOICE_PROCESSED', { subscriptionId });
         break;
       }
 
@@ -348,7 +351,7 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscriptionId);
 
-        logStep("Payment failed", { subscriptionId });
+        log('PAYMENT_FAILED', { subscriptionId });
         break;
       }
 
@@ -364,7 +367,7 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscription.id);
 
-        logStep("Subscription updated", { subscriptionId: subscription.id, status: subscription.status });
+        log('SUBSCRIPTION_UPDATED', { subscriptionId: subscription.id, status: subscription.status });
         break;
       }
 
@@ -378,19 +381,31 @@ serve(async (req) => {
           })
           .eq("stripe_subscription_id", subscription.id);
 
-        logStep("Subscription canceled", { subscriptionId: subscription.id });
+        log('SUBSCRIPTION_CANCELED', { subscriptionId: subscription.id });
         break;
       }
     }
 
-    return new Response(JSON.stringify({ received: true }), {
+    // Persist log
+    await supabaseAdmin.from('edge_function_logs').insert({
+      correlation_id: correlationId,
+      function_name: 'stripe-webhook',
+      step: event.type,
+      level: 'info',
+      message: `Processed ${event.type}`,
+      details: { event_id: event.id },
+      execution_time_ms: Date.now() - startTime,
+      status_code: 200
+    });
+
+    return new Response(JSON.stringify({ received: true, correlation_id: correlationId }), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Webhook error:", error);
+    log('ERROR', { error: error instanceof Error ? error.message : String(error) });
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: errorMessage, correlation_id: correlationId }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
