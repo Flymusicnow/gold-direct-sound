@@ -7,9 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, TrendingUp, Clock } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
-import { DollarSign, TrendingUp, Clock } from "lucide-react";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
 import { ArtistTierManager } from "@/components/supporter/ArtistTierManager";
 import { useLanguage } from "@/contexts/LanguageContext";
 

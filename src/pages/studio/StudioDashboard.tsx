@@ -8,8 +8,6 @@ import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
 import { StatCard } from "@/components/StatCard";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { RecentFanActivity } from "@/components/artist/RecentFanActivity";
 import { LatestReleases } from "@/components/artist/LatestReleases";
 import { QuickActions } from "@/components/artist/QuickActions";
