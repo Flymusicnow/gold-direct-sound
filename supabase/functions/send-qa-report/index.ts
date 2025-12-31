@@ -25,11 +25,18 @@ interface ActivityLogCheck {
 }
 
 serve(async (req) => {
+  const correlationId = crypto.randomUUID();
+  const startTime = Date.now();
+  
+  const log = (step: string, details?: Record<string, unknown>) => {
+    console.log(`[SEND-QA-REPORT][${correlationId}] ${step}`, details ? JSON.stringify(details) : '');
+  };
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("[send-qa-report] Starting QA report generation...");
+  log('STARTING');
 
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -52,14 +59,14 @@ serve(async (req) => {
       .filter(Boolean) as string[];
 
     if (adminEmails.length === 0) {
-      console.log("[send-qa-report] No admin emails found");
+      log('ERROR', { reason: 'no_admin_emails' });
       return new Response(
-        JSON.stringify({ error: "No admin emails found" }),
+        JSON.stringify({ error: "No admin emails found", correlation_id: correlationId }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[send-qa-report] Found ${adminEmails.length} admin emails`);
+    log('ADMINS_FOUND', { count: adminEmails.length });
 
     // 2. Run database health checks
     const dbTables = [
@@ -162,6 +169,8 @@ serve(async (req) => {
     const dbTotal = dbChecks.length;
     const overallPassed = dbPassed === dbTotal && activityCheck.passed;
 
+    log('CHECKS_COMPLETE', { dbPassed, dbTotal, activityPassed: activityCheck.passed, errorsLast24h });
+
     // 6. Generate HTML email
     const now = new Date();
     const timestamp = now.toISOString().replace("T", " ").slice(0, 19) + " UTC";
@@ -249,9 +258,9 @@ serve(async (req) => {
 
     // 7. Send email via Resend
     if (!RESEND_API_KEY) {
-      console.error("[send-qa-report] RESEND_API_KEY not configured");
+      log('CONFIG_ERROR', { reason: 'missing_resend_key' });
       return new Response(
-        JSON.stringify({ error: "RESEND_API_KEY not configured" }),
+        JSON.stringify({ error: "RESEND_API_KEY not configured", correlation_id: correlationId }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -272,31 +281,30 @@ serve(async (req) => {
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
-      let errorDetails: any = { raw: errorText };
+      let errorDetails: Record<string, unknown> = { raw: errorText };
       try {
         errorDetails = JSON.parse(errorText);
       } catch {
         // Keep raw text if not JSON
       }
       
-      console.error("[send-qa-report] Resend API error:", {
-        status: emailResponse.status,
-        statusText: emailResponse.statusText,
-        body: errorDetails
-      });
+      log('EMAIL_ERROR', { status: emailResponse.status, body: errorDetails });
       
       return new Response(
         JSON.stringify({
           ok: false,
-          error: errorDetails.message || errorDetails.name || `Resend API error (${emailResponse.status})`,
+          error: (errorDetails as { message?: string; name?: string }).message || 
+                 (errorDetails as { message?: string; name?: string }).name || 
+                 `Resend API error (${emailResponse.status})`,
           details: errorDetails,
-          statusCode: emailResponse.status
+          statusCode: emailResponse.status,
+          correlation_id: correlationId
         }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[send-qa-report] Email sent successfully to:", adminEmails);
+    log('EMAIL_SENT', { recipients: adminEmails.length });
 
     // 8. Log the report run
     await supabase.from("qa_report_runs").insert({
@@ -310,6 +318,20 @@ serve(async (req) => {
       report_sent_to: adminEmails,
     });
 
+    log('COMPLETE', { overallPassed, execution_time_ms: Date.now() - startTime });
+
+    // Persist log
+    await supabase.from('edge_function_logs').insert({
+      correlation_id: correlationId,
+      function_name: 'send-qa-report',
+      step: 'COMPLETE',
+      level: overallPassed ? 'info' : 'warn',
+      message: `QA report sent to ${adminEmails.length} admins`,
+      details: { overallPassed, dbPassed, dbTotal, errorsLast24h },
+      execution_time_ms: Date.now() - startTime,
+      status_code: 200
+    });
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -318,16 +340,18 @@ serve(async (req) => {
         sentTo: adminEmails,
         dbChecks: `${dbPassed}/${dbTotal}`,
         errors24h: errorsLast24h,
+        correlation_id: correlationId,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error: any) {
-    console.error("[send-qa-report] Unhandled error:", error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log('UNHANDLED_ERROR', { error: errorMessage });
     return new Response(
       JSON.stringify({ 
         ok: false, 
-        error: error?.message || String(error),
-        details: { stack: error?.stack }
+        error: errorMessage,
+        correlation_id: correlationId
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

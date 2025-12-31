@@ -14,6 +14,13 @@ interface AnomalyResult {
 }
 
 Deno.serve(async (req) => {
+  const correlationId = crypto.randomUUID();
+  const startTime = Date.now();
+  
+  const log = (step: string, details?: Record<string, unknown>) => {
+    console.log(`[DETECT-SMART-LINK-ANOMALIES][${correlationId}] ${step}`, details ? JSON.stringify(details) : '');
+  };
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -24,7 +31,7 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('[detect-smart-link-anomalies] Starting anomaly detection scan...');
+    log('STARTING');
 
     const anomalies: AnomalyResult[] = [];
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -37,7 +44,7 @@ Deno.serve(async (req) => {
       .gte('created_at', oneHourAgo);
 
     if (ipError) {
-      console.error('[detect-smart-link-anomalies] Error fetching click data:', ipError);
+      log('ERROR', { step: 'fetch_ip_data', error: ipError.message });
     } else if (ipAbuseData) {
       // Group by IP hash
       const ipCounts: Record<string, { count: number; links: Set<string> }> = {};
@@ -68,7 +75,7 @@ Deno.serve(async (req) => {
               },
             });
           }
-          console.log(`[detect-smart-link-anomalies] IP abuse detected: ${ipHash} with ${data.count} clicks`);
+          log('IP_ABUSE_DETECTED', { ipHash: ipHash.substring(0, 8) + '...', clickCount: data.count });
         }
       }
     }
@@ -80,7 +87,7 @@ Deno.serve(async (req) => {
       .gte('created_at', fiveMinutesAgo);
 
     if (burstError) {
-      console.error('[detect-smart-link-anomalies] Error fetching burst data:', burstError);
+      log('ERROR', { step: 'fetch_burst_data', error: burstError.message });
     } else if (burstData) {
       // Group by link ID
       const linkCounts: Record<string, number> = {};
@@ -101,7 +108,7 @@ Deno.serve(async (req) => {
               time_window: '5 minutes',
             },
           });
-          console.log(`[detect-smart-link-anomalies] Burst traffic detected: ${linkId} with ${count} clicks in 5 min`);
+          log('BURST_TRAFFIC_DETECTED', { linkId: linkId.substring(0, 8) + '...', clickCount: count });
         }
       }
     }
@@ -114,7 +121,7 @@ Deno.serve(async (req) => {
       .order('created_at', { ascending: true });
 
     if (botError) {
-      console.error('[detect-smart-link-anomalies] Error fetching bot pattern data:', botError);
+      log('ERROR', { step: 'fetch_bot_data', error: botError.message });
     } else if (botPatternData) {
       // Group by IP and link, then check for regular intervals
       const ipLinkClicks: Record<string, Date[]> = {};
@@ -157,14 +164,14 @@ Deno.serve(async (req) => {
               pattern: 'Regular interval clicking detected',
             },
           });
-          console.log(`[detect-smart-link-anomalies] Bot pattern detected: ${key} with ${avgInterval}ms avg interval`);
+          log('BOT_PATTERN_DETECTED', { key: key.substring(0, 16) + '...', avgIntervalMs: avgInterval });
         }
       }
     }
 
     // 4. Store detected anomalies and notify admins
     if (anomalies.length > 0) {
-      console.log(`[detect-smart-link-anomalies] Found ${anomalies.length} anomalies`);
+      log('ANOMALIES_FOUND', { count: anomalies.length });
 
       // Get link-to-page mapping for affected links
       const linkIds = [...new Set(anomalies.map(a => a.linkId).filter(Boolean))];
@@ -234,14 +241,30 @@ Deno.serve(async (req) => {
       }
     }
 
+    log('COMPLETE', { 
+      anomaliesDetected: anomalies.length,
+      execution_time_ms: Date.now() - startTime
+    });
+
+    // Persist log
+    await supabase.from('edge_function_logs').insert({
+      correlation_id: correlationId,
+      function_name: 'detect-smart-link-anomalies',
+      step: 'COMPLETE',
+      level: anomalies.length > 0 ? 'warn' : 'info',
+      message: `Detected ${anomalies.length} anomalies`,
+      details: { anomalies_detected: anomalies.length },
+      execution_time_ms: Date.now() - startTime,
+      status_code: 200
+    });
+
     const response = {
       success: true,
       anomalies_detected: anomalies.length,
       scan_time: new Date().toISOString(),
       details: anomalies,
+      correlation_id: correlationId,
     };
-
-    console.log(`[detect-smart-link-anomalies] Scan complete. ${anomalies.length} anomalies detected.`);
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -249,8 +272,8 @@ Deno.serve(async (req) => {
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[detect-smart-link-anomalies] Error:', errorMessage);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    log('UNHANDLED_ERROR', { error: errorMessage });
+    return new Response(JSON.stringify({ error: errorMessage, correlation_id: correlationId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });

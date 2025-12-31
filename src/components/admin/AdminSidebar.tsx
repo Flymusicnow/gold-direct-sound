@@ -23,6 +23,7 @@ import {
   Bell,
   LogOut,
   Wrench,
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -157,6 +158,12 @@ const navSections = [
         url: "/admin/flight-recorder", 
         icon: Activity,
         description: "End-to-end flow debugging. View telemetry, trace errors, and analyze user journeys"
+      },
+      { 
+        title: "Edge Functions", 
+        url: "/admin/edge-functions", 
+        icon: Zap,
+        description: "Monitor edge function execution, view logs, and trace errors with correlation IDs"
       },
       { 
         title: "Beta Codes", 

@@ -1694,6 +1694,48 @@ export type Database = {
           },
         ]
       }
+      edge_function_logs: {
+        Row: {
+          correlation_id: string
+          created_at: string | null
+          details: Json | null
+          execution_time_ms: number | null
+          function_name: string
+          id: string
+          level: string
+          message: string | null
+          status_code: number | null
+          step: string
+          user_id: string | null
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string | null
+          details?: Json | null
+          execution_time_ms?: number | null
+          function_name: string
+          id?: string
+          level?: string
+          message?: string | null
+          status_code?: number | null
+          step: string
+          user_id?: string | null
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string | null
+          details?: Json | null
+          execution_time_ms?: number | null
+          function_name?: string
+          id?: string
+          level?: string
+          message?: string | null
+          status_code?: number | null
+          step?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       fan_achievements: {
         Row: {
           achievement_key: string
