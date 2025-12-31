@@ -47,16 +47,29 @@ serve(async (req) => {
     const userId = userData.user.id;
     logStep("User authenticated", { userId });
 
-    // Check if user is admin
-    const { data: userRole } = await supabaseClient
+    // Admin check (user can have multiple roles)
+    const { data: adminRoles, error: roleError } = await supabaseClient
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
+      .in("role", ["admin", "super_admin"]);
 
-    const isAdmin = userRole?.role === "admin" || userRole?.role === "super_admin";
+    if (roleError) {
+      console.error("Role check failed", { userId, error: roleError });
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const isAdmin = (adminRoles?.length ?? 0) > 0;
+
     if (!isAdmin) {
-      throw new Error("Admin access required");
+      console.warn("Non-admin access attempt", { userId });
+      return new Response(
+        JSON.stringify({ error: "Admin access required" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
     logStep("Admin access verified");
 
