@@ -66,12 +66,15 @@ export default function ArtistInvite() {
         return;
       }
 
-      // Store token in localStorage as fallback
+      // Store token and invite_id in localStorage for account creation
       if (data.token) {
         localStorage.setItem('artist_invite_token', data.token);
         localStorage.setItem('artist_invite_expires', data.expires_at);
         if (data.badge_name) {
           localStorage.setItem('artist_invite_badge', data.badge_name);
+        }
+        if (data.invite_id) {
+          localStorage.setItem('artist_invite_id', data.invite_id);
         }
       }
 

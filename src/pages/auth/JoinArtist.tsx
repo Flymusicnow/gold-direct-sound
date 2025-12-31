@@ -76,11 +76,28 @@ export default function JoinArtist() {
         });
 
         // Record permanent artist beta access in DB
-        // Note: code_id is now nullable after migration
         await supabase.from('artist_beta_access').insert({
           user_id: data.user.id,
-          badge_name: 'Early Creator',
+          badge_name: localStorage.getItem('artist_invite_badge') || 'Early Creator',
         } as any);
+
+        // Mark invite as redeemed
+        const inviteId = localStorage.getItem('artist_invite_id');
+        if (inviteId) {
+          await supabase
+            .from('beta_invites')
+            .update({ 
+              status: 'redeemed',
+              redeemed_at: new Date().toISOString()
+            })
+            .eq('id', inviteId);
+          
+          // Clean up localStorage
+          localStorage.removeItem('artist_invite_id');
+          localStorage.removeItem('artist_invite_token');
+          localStorage.removeItem('artist_invite_expires');
+          localStorage.removeItem('artist_invite_badge');
+        }
 
         toast.success(t('auth.signUpSuccess'));
         navigate('/studio/onboarding');

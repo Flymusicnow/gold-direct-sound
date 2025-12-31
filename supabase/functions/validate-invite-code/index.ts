@@ -27,8 +27,16 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Call the RPC function to validate code and create session
-    const { data, error } = await supabase.rpc('validate_fan_invite_code', {
+    // Normalize code: trim, uppercase, remove hyphens and spaces
+    const normalizedCode = code.trim().toUpperCase().replace(/-/g, '').replace(/\s/g, '');
+    
+    console.log('Validating invite code:', { 
+      original: code, 
+      normalized: normalizedCode 
+    });
+
+    // Call the universal RPC function that searches beta_invites table
+    const { data, error } = await supabase.rpc('validate_invite_code_universal', {
       _code: code.trim()
     });
 
@@ -41,22 +49,11 @@ serve(async (req) => {
     }
 
     if (!data.valid) {
+      console.log('Code validation failed:', data.error);
       return new Response(
         JSON.stringify({ valid: false, error: data.error || 'Invalid invite code' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Look up the invite to get the role
-    let role = 'fan'; // default
-    const { data: inviteData } = await supabase
-      .from('beta_invites')
-      .select('role')
-      .eq('code', code.trim().toUpperCase())
-      .maybeSingle();
-    
-    if (inviteData?.role) {
-      role = inviteData.role;
     }
 
     // Build response with httpOnly cookie
@@ -65,7 +62,8 @@ serve(async (req) => {
 
     console.log('Invite code validated successfully:', { 
       token: data.token.substring(0, 8) + '...', 
-      role 
+      role: data.role,
+      invite_id: data.invite_id
     });
 
     return new Response(
@@ -74,7 +72,9 @@ serve(async (req) => {
         token: data.token,
         expires_at: data.expires_at,
         badge_name: data.badge_name,
-        role: role
+        role: data.role,
+        email: data.email,
+        invite_id: data.invite_id
       }),
       {
         status: 200,
