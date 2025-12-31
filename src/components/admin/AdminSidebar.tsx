@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Bell,
   LogOut,
+  Wrench,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -186,6 +187,12 @@ const navSections = [
         url: "/admin/payouts", 
         icon: CreditCard,
         description: "Hantera utbetalningar till artister. Se saldo, historik och initiera betalningar"
+      },
+      { 
+        title: "Stripe Tier Repair", 
+        url: "/admin/stripe-tier-repair", 
+        icon: Wrench,
+        description: "Skanna och reparera Stripe-konfiguration för supporter tiers. Fixa saknade produkter och priser"
       },
       { 
         title: "Roles", 
