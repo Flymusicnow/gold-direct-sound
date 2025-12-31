@@ -6,12 +6,8 @@ import { AddMerchDialog } from "@/components/artist/AddMerchDialog";
 import { EditMerchDialog } from "@/components/artist/EditMerchDialog";
 import { useToast } from "@/hooks/use-toast";
 import { ShoppingBag } from "lucide-react";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-
 interface MerchProduct {
   id: string;
   name: string;
@@ -31,8 +27,6 @@ export default function StudioMerch() {
   const [artistId, setArtistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [editingProduct, setEditingProduct] = useState<MerchProduct | null>(null);
-  const isMobile = useIsMobile();
-
   useEffect(() => {
     if (user) {
       fetchArtistProfile();
@@ -114,13 +108,8 @@ export default function StudioMerch() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex w-full">
-        <StudioSidebar />
-        <MobileStudioNav />
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide pt-20 md:pt-0">
-          <div className="p-4 md:p-8 pb-20 md:pb-8">
-          <div className="max-w-7xl mx-auto space-y-8">
+    <StudioLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -183,11 +172,7 @@ export default function StudioMerch() {
             ))}
           </div>
         )}
-          </div>
-        </div>
       </div>
-      </div>
-      {isMobile && <BottomNavBarStudio />}
       
       {/* Edit Merch Dialog */}
       {editingProduct && (
@@ -200,6 +185,6 @@ export default function StudioMerch() {
           }}
         />
       )}
-    </>
+    </StudioLayout>
   );
 }

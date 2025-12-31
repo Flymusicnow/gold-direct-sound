@@ -50,7 +50,7 @@ export function StudioSidebar() {
   const location = useLocation();
 
   return (
-    <aside className="w-64 h-screen overflow-hidden bg-[hsl(0,0%,5%)] border-r border-border/50 flex flex-col shadow-elegant z-40 hidden md:flex">
+    <aside className="w-64 h-[calc(100vh-64px)] overflow-hidden bg-[hsl(0,0%,5%)] border-r border-border/50 flex flex-col shadow-elegant z-40 hidden md:flex">
       {/* Header - FIXED */}
       <div className="flex-shrink-0 p-6 pb-6 border-b border-border/30">
         <div className="flex items-center justify-between mb-1">

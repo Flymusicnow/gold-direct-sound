@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DollarSign, TrendingUp, Clock } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
 import { DollarSign, TrendingUp, Clock } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { StripeConnectSetup } from "@/components/supporter/StripeConnectSetup";
@@ -24,7 +24,6 @@ interface Payout {
 export default function StudioEarnings() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState({ total: 0, pending: 0, lastPayout: null as string | null });
@@ -88,17 +87,12 @@ export default function StudioEarnings() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-32 md:pb-28">
-          <div className="max-w-7xl mx-auto space-y-8">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('studio.earnings')}</h1>
-              <p className="text-muted-foreground">{t('studio.earningsDescription')}</p>
-            </div>
+    <StudioLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{t('studio.earnings')}</h1>
+          <p className="text-muted-foreground">{t('studio.earningsDescription')}</p>
+        </div>
 
             <div className="grid gap-4 md:grid-cols-3">
               <Card className="border-primary/20">
@@ -197,11 +191,8 @@ export default function StudioEarnings() {
                   <li>• {t('studio.payoutBullet4')}</li>
                 </ul>
               </CardContent>
-            </Card>
-          </div>
-        </main>
+        </Card>
       </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }

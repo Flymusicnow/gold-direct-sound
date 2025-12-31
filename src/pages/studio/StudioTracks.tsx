@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { sanitizeFileName } from "@/lib/utils";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,7 +81,6 @@ export default function StudioTracks() {
   const [editAlbumBatch, setEditAlbumBatch] = useState<TrackBatch | null>(null);
   const [editAlbumInfo, setEditAlbumInfo] = useState<{ album: Album | null; batch: TrackBatch } | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
-  const isMobile = useIsMobile();
 
   // Drag & drop sensors
   const sensors = useSensors(
