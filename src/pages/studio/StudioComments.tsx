@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { useCommentsAnalytics } from "@/hooks/useCommentsAnalytics";
+import { useCommentModeration } from "@/hooks/useCommentModeration";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useCommentModeration } from "@/hooks/useCommentModeration";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,8 +55,6 @@ export default function StudioComments() {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const isMobile = useIsMobile();
-  
   const { analytics, loading: analyticsLoading, refetch: refetchAnalytics } = useCommentsAnalytics(artistProfile?.id);
   const { pinComment, hideComment, reportComment } = useCommentModeration();
 
@@ -173,33 +171,28 @@ export default function StudioComments() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-        
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
-          <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                <MessageSquare className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-2xl md:text-3xl font-bold">Comments</h1>
-                  {analytics && analytics.totalComments > 0 && (
-                    <Badge variant="secondary" className="bg-primary/20 text-primary">
-                      {analytics.totalComments}
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">Engage with your fans and manage feedback</p>
-              </div>
+    <StudioLayout>
+      <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+            <MessageSquare className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-bold">Comments</h1>
+              {analytics && analytics.totalComments > 0 && (
+                <Badge variant="secondary" className="bg-primary/20 text-primary">
+                  {analytics.totalComments}
+                </Badge>
+              )}
             </div>
+            <p className="text-sm text-muted-foreground">Engage with your fans and manage feedback</p>
+          </div>
+        </div>
 
-            {/* Analytics Cards */}
-            {analytics && (
+        {/* Analytics Cards */}
+        {analytics && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card className="p-4">
                   <div className="flex items-center justify-between mb-2">
@@ -446,9 +439,8 @@ export default function StudioComments() {
               </TabsContent>
             </Tabs>
           </div>
-        </main>
+        </div>
       </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }

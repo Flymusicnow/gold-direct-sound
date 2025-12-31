@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
@@ -46,7 +46,6 @@ export default function StudioEvents() {
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [ticketUrl, setTicketUrl] = useState("");
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!user) {
@@ -147,25 +146,20 @@ export default function StudioEvents() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-        
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
-        <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-          {/* Premium Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                <Calendar className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Events</h1>
-                <p className="text-sm text-muted-foreground">Schedule and manage your live events</p>
-              </div>
+    <StudioLayout>
+      <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+        {/* Premium Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Calendar className="h-5 w-5 text-primary" />
             </div>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Events</h1>
+              <p className="text-sm text-muted-foreground">Schedule and manage your live events</p>
+            </div>
+          </div>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
@@ -339,9 +333,6 @@ export default function StudioEvents() {
             </Card>
           )}
         </div>
-      </main>
-      </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }

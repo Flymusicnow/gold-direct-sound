@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { useVideoMilestones } from "@/hooks/useVideoMilestones";
+import { Card } from "@/components/ui/card";
+import { StatCard } from "@/components/StatCard";
+import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { StatCard } from "@/components/StatCard";
 import { Users, Play, Heart, MessageSquare, TrendingUp, BarChart3, Video } from "lucide-react";
@@ -52,7 +52,6 @@ export default function StudioAnalytics() {
     avgCompletionRate: 0,
   });
   const [topVideos, setTopVideos] = useState<VideoAnalytics[]>([]);
-  const isMobile = useIsMobile();
   const { t } = useLanguage();
   
   // Track milestone achievements
@@ -240,17 +239,17 @@ export default function StudioAnalytics() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-        
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-          {/* Premium Header */}
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-              <BarChart3 className="h-5 w-5 text-primary" />
+    <StudioLayout>
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+        {/* Premium Header */}
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+            <BarChart3 className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">{t('studio.analytics')}</h1>
+            <p className="text-sm text-muted-foreground">{t('studio.analyticsDescription')}</p>
+          </div>
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">{t('studio.analytics')}</h1>
@@ -408,9 +407,7 @@ export default function StudioAnalytics() {
             </div>
           </Card>
         </div>
-      </main>
       </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }

@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { CollapsibleStatCard } from "@/components/mobile/CollapsibleStatCard";
 import { StatCard } from "@/components/StatCard";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { RecentFanActivity } from "@/components/artist/RecentFanActivity";
@@ -182,57 +182,52 @@ export default function StudioDashboard() {
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        {!isMobile && <MobileStudioNav />}
-        <ArtistOnboardingDialog />
-      
-      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-16 md:pb-8">
-        <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
-          {/* Premium Header */}
-          <div className="relative">
-            <div className="flex items-center justify-between gap-3 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
-                  <Sparkles className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                      {t('studio.controlRoom')}
-                    </h1>
-                    {isVerified && <VerifiedBadge size="lg" />}
-                  </div>
-                  <p className="text-sm md:text-base text-muted-foreground min-w-0">
-                    <span className="truncate">
-                      {t('studio.welcomeBack')}{artistProfile?.artist_name ? `, ${artistProfile.artist_name}` : ''}
-                    </span>
-                    {' '}
-                    <Link to="/learn?tab=artist" className="text-primary hover:underline whitespace-nowrap">
-                      {t('studio.learnFlyMusic')} →
-                    </Link>
-                  </p>
-                </div>
+    <StudioLayout>
+      <ArtistOnboardingDialog />
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+        {/* Premium Header */}
+        <div className="relative">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-gold flex items-center justify-center shadow-gold">
+                <Sparkles className="h-6 w-6 text-primary-foreground" />
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => window.open(`/artist/${user?.id}`, '_blank')}
-                  className="hidden md:flex"
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  {t('studio.previewAsFan')}
-                  <ExternalLink className="h-3 w-3 ml-1" />
-                </Button>
-                {hasBetaAccess && <EarlyAccessBadge />}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                    {t('studio.controlRoom')}
+                  </h1>
+                  {isVerified && <VerifiedBadge size="lg" />}
+                </div>
+                <p className="text-sm md:text-base text-muted-foreground min-w-0">
+                  <span className="truncate">
+                    {t('studio.welcomeBack')}{artistProfile?.artist_name ? `, ${artistProfile.artist_name}` : ''}
+                  </span>
+                  {' '}
+                  <Link to="/learn?tab=artist" className="text-primary hover:underline whitespace-nowrap">
+                    {t('studio.learnFlyMusic')} →
+                  </Link>
+                </p>
               </div>
             </div>
-            <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
-              {t('studio.trackImpact')}
-            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/artist/${user?.id}`, '_blank')}
+                className="hidden md:flex"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                {t('studio.previewAsFan')}
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </Button>
+              {hasBetaAccess && <EarlyAccessBadge />}
+            </div>
           </div>
+          <p className="text-xs md:text-sm text-muted-foreground/80 ml-15">
+            {t('studio.trackImpact')}
+          </p>
+        </div>
 
           {/* Spotlight Stats - Show if artist has active entry */}
           {hasActiveSpotlightEntry && (
@@ -298,12 +293,9 @@ export default function StudioDashboard() {
             <RecentPosts artistId={artistProfile.id} refreshTrigger={refreshPosts} />
           </div>
 
-          {/* Post Update Form */}
-          <PostUpdateForm artistId={artistProfile.id} onPostCreated={() => setRefreshPosts(prev => prev + 1)} />
-        </div>
-      </main>
+        {/* Post Update Form */}
+        <PostUpdateForm artistId={artistProfile.id} onPostCreated={() => setRefreshPosts(prev => prev + 1)} />
       </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }
