@@ -38,18 +38,25 @@ export default function SignInAdmin() {
       }
 
       if (data.user) {
-        // Check if user has admin role
-        const { data: roles } = await supabase
+        // Check if user has admin role using multi-role safe query
+        const { data: adminRoles, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', data.user.id);
+          .eq('user_id', data.user.id)
+          .in('role', ['admin', 'super_admin']);
         
-        const hasAdmin = roles?.some(r => r.role === 'admin' || r.role === 'super_admin');
-        
-        if (!hasAdmin) {
-          await supabase.auth.signOut();
-          toast.error("Access denied. This login is for administrators only.");
+        if (roleError) {
+          console.error('Role check error:', roleError);
+          toast.error("Authorization check failed. Please try again.");
           setLoading(false);
+          return;
+        }
+
+        const isAdmin = (adminRoles?.length ?? 0) > 0;
+        
+        if (!isAdmin) {
+          // DO NOT sign out - just navigate to access denied page
+          navigate('/admin/access-denied');
           return;
         }
 

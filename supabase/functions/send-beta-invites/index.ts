@@ -198,15 +198,24 @@ serve(async (req) => {
       });
     }
 
-    // Check if user is admin
-    const { data: profile, error: profileError } = await supabaseClient
-      .from("profiles")
+    // Check if user has admin role using multi-role safe query (user may have multiple roles)
+    const { data: adminRoles, error: roleError } = await supabaseClient
+      .from("user_roles")
       .select("role")
-      .eq("id", user.id)
-      .single();
+      .eq("user_id", user.id)
+      .in("role", ["admin", "super_admin"]);
 
-    if (profileError || profile?.role !== "admin") {
-      log('AUTH_ERROR', { reason: 'not_admin', role: profile?.role });
+    if (roleError) {
+      log('AUTH_ERROR', { reason: 'role_check_failed', error: roleError.message });
+      return new Response(JSON.stringify({ error: "Authorization check failed", correlation_id: correlationId }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const isAdmin = (adminRoles?.length ?? 0) > 0;
+    if (!isAdmin) {
+      log('AUTH_ERROR', { reason: 'not_admin', userId: user.id });
       return new Response(JSON.stringify({ error: "Admin access required", correlation_id: correlationId }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
