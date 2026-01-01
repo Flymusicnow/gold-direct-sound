@@ -1,32 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useArtistProfile } from "@/hooks/useArtistProfile";
+import { useFanProfile } from "@/hooks/useFanProfile";
 import { sanitizeFileName } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarUploadProgress } from "@/components/ui/avatar-upload-progress";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, Camera, Save } from "lucide-react";
-
-interface ArtistProfile {
-  id: string;
-  artist_name: string;
-  bio: string | null;
-  genre: string | null;
-  city: string | null;
-  country: string | null;
-  status: string;
-  avatar_url: string | null;
-  instagram_url: string | null;
-  tiktok_url: string | null;
-  youtube_url: string | null;
-  twitter_url: string | null;
-  website_url: string | null;
-}
+import { Upload, Trash2, Save, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 interface Track {
   id: string;
@@ -39,16 +25,33 @@ interface Track {
 export default function MyStudio() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
-  const [artistProfile, setArtistProfile] = useState<ArtistProfile | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [loading, setLoading] = useState(true);
   
+  // Use unified artist profile hook
+  const {
+    profile: artistProfile,
+    loading,
+    saving,
+    createProfile,
+    updateProfile,
+    avatarUploader,
+    nameAvailability,
+    hasProfile,
+    isApproved,
+  } = useArtistProfile();
+
   // Track upload form
   const [trackTitle, setTrackTitle] = useState("");
   const [trackDescription, setTrackDescription] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  // Create profile form state
+  const [artistName, setArtistName] = useState("");
+  const [bio, setBio] = useState("");
+  const [genre, setGenre] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("");
 
   // Edit profile form
   const [editBio, setEditBio] = useState("");
@@ -60,7 +63,6 @@ export default function MyStudio() {
   const [editYoutube, setEditYoutube] = useState("");
   const [editTwitter, setEditTwitter] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
-  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -71,119 +73,62 @@ export default function MyStudio() {
       navigate('/');
       return;
     }
-    fetchArtistProfile();
-    fetchTracks();
   }, [user, profile, navigate]);
 
-  const fetchArtistProfile = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('artist_profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching artist profile:', error);
-    } else if (data) {
-      setArtistProfile(data);
-      // Populate edit form with current data
-      setEditBio(data.bio || "");
-      setEditGenre(data.genre || "");
-      setEditCity(data.city || "");
-      setEditCountry(data.country || "");
-      setEditInstagram(data.instagram_url || "");
-      setEditTiktok(data.tiktok_url || "");
-      setEditYoutube(data.youtube_url || "");
-      setEditTwitter(data.twitter_url || "");
-      setEditWebsite(data.website_url || "");
+  // Populate edit form when profile loads
+  useEffect(() => {
+    if (artistProfile) {
+      setEditBio(artistProfile.bio || "");
+      setEditGenre(artistProfile.genre || "");
+      setEditCity(artistProfile.city || "");
+      setEditCountry(artistProfile.country || "");
+      setEditInstagram(artistProfile.instagram_url || "");
+      setEditTiktok(artistProfile.tiktok_url || "");
+      setEditYoutube(artistProfile.youtube_url || "");
+      setEditTwitter(artistProfile.twitter_url || "");
+      setEditWebsite(artistProfile.website_url || "");
+      fetchTracks();
     }
-    setLoading(false);
-  };
+  }, [artistProfile]);
 
   const fetchTracks = async () => {
-    if (!user) return;
+    if (!artistProfile) return;
 
-    const { data: artistData } = await supabase
-      .from('artist_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
+    const { data } = await supabase
+      .from('tracks')
+      .select('*')
+      .eq('artist_id', artistProfile.id)
+      .order('created_at', { ascending: false });
 
-    if (artistData) {
-      const { data } = await supabase
-        .from('tracks')
-        .select('*')
-        .eq('artist_id', artistData.id)
-        .order('created_at', { ascending: false });
+    if (data) setTracks(data);
+  };
 
-      if (data) setTracks(data);
-    }
+  const handleArtistNameChange = (value: string) => {
+    setArtistName(value);
+    nameAvailability.checkAvailability(value);
   };
 
   const handleCreateProfile = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) return;
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-
-    const { error } = await supabase.from('artist_profiles').insert({
-      user_id: user.id,
-      artist_name: formData.get('artist_name') as string,
-      bio: formData.get('bio') as string,
-      genre: formData.get('genre') as string,
-      city: formData.get('city') as string,
-      country: formData.get('country') as string,
-    });
-
-    if (error) {
-      toast.error("Error creating profile");
-      console.error(error);
-    } else {
-      toast.success("Profile created! Awaiting approval.");
-      fetchArtistProfile();
-    }
-  };
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0] || !user || !artistProfile) return;
-
-    const file = e.target.files[0];
-
-    if (!file.type.startsWith('image/')) {
-      toast.error("Please select an image file");
+    
+    if (nameAvailability.isAvailable === false) {
+      toast.error("This artist name is already taken");
       return;
     }
 
-    setUploadingAvatar(true);
+    const result = await createProfile({
+      artistName,
+      bio,
+      genre,
+      city,
+      country,
+    });
 
-    try {
-      const avatarPath = `${user.id}/${Date.now()}_${sanitizeFileName(file.name)}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(avatarPath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(avatarPath);
-
-      const { error: updateError } = await supabase
-        .from('artist_profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', artistProfile.id);
-
-      if (updateError) throw updateError;
-
-      toast.success("Profile image updated!");
-      fetchArtistProfile();
-    } catch (error: any) {
-      toast.error(error.message || "Error uploading avatar");
-    } finally {
-      setUploadingAvatar(false);
+    if (result.success) {
+      toast.success("Profile created – welcome to your studio!");
+      navigate('/studio', { replace: true });
+    } else {
+      toast.error(result.error || "Error creating profile");
     }
   };
 
@@ -268,34 +213,22 @@ export default function MyStudio() {
   };
 
   const handleSaveProfile = async () => {
-    if (!artistProfile) return;
+    const result = await updateProfile({
+      bio: editBio,
+      genre: editGenre,
+      city: editCity,
+      country: editCountry,
+      instagramUrl: editInstagram,
+      tiktokUrl: editTiktok,
+      youtubeUrl: editYoutube,
+      twitterUrl: editTwitter,
+      websiteUrl: editWebsite,
+    });
 
-    setSavingProfile(true);
-
-    try {
-      const { error } = await supabase
-        .from('artist_profiles')
-        .update({
-          bio: editBio || null,
-          genre: editGenre || null,
-          city: editCity || null,
-          country: editCountry || null,
-          instagram_url: editInstagram || null,
-          tiktok_url: editTiktok || null,
-          youtube_url: editYoutube || null,
-          twitter_url: editTwitter || null,
-          website_url: editWebsite || null,
-        })
-        .eq('id', artistProfile.id);
-
-      if (error) throw error;
-
+    if (result.success) {
       toast.success("Profile updated successfully!");
-      fetchArtistProfile();
-    } catch (error: any) {
-      toast.error(error.message || "Error updating profile");
-    } finally {
-      setSavingProfile(false);
+    } else {
+      toast.error(result.error || "Error updating profile");
     }
   };
 
@@ -307,7 +240,8 @@ export default function MyStudio() {
     );
   }
 
-  if (!artistProfile) {
+  // Create profile form (no pending screen anymore)
+  if (!hasProfile) {
     return (
       <div className="min-h-screen py-24 px-4">
         <div className="container mx-auto max-w-2xl">
@@ -316,28 +250,71 @@ export default function MyStudio() {
             <form onSubmit={handleCreateProfile} className="space-y-4">
               <div>
                 <Label htmlFor="artist_name">Artist Name *</Label>
-                <Input id="artist_name" name="artist_name" required />
+                <div className="relative">
+                  <Input 
+                    id="artist_name" 
+                    value={artistName}
+                    onChange={(e) => handleArtistNameChange(e.target.value)}
+                    required 
+                    className="pr-10"
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {nameAvailability.isChecking && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                    {!nameAvailability.isChecking && nameAvailability.isAvailable === true && artistName.length >= 2 && (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    )}
+                    {!nameAvailability.isChecking && nameAvailability.isAvailable === false && (
+                      <XCircle className="h-4 w-4 text-destructive" />
+                    )}
+                  </div>
+                </div>
+                {nameAvailability.isAvailable === false && (
+                  <p className="text-sm text-destructive mt-1">This artist name is already taken</p>
+                )}
               </div>
               <div>
                 <Label htmlFor="bio">Bio</Label>
-                <Textarea id="bio" name="bio" rows={4} />
+                <Textarea 
+                  id="bio" 
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={4} 
+                />
               </div>
               <div>
                 <Label htmlFor="genre">Genre</Label>
-                <Input id="genre" name="genre" />
+                <Input 
+                  id="genre" 
+                  value={genre}
+                  onChange={(e) => setGenre(e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="city">City</Label>
-                  <Input id="city" name="city" />
+                  <Input 
+                    id="city" 
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="country">Country</Label>
-                  <Input id="country" name="country" />
+                  <Input 
+                    id="country" 
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                  />
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-gradient-gold">
-                Create Profile
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-gold"
+                disabled={saving || nameAvailability.isAvailable === false}
+              >
+                {saving ? "Creating..." : "Create Profile"}
               </Button>
             </form>
           </Card>
@@ -346,66 +323,32 @@ export default function MyStudio() {
     );
   }
 
-  if (artistProfile.status === 'pending') {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center">
-          <Music className="h-16 w-16 text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Profile Pending Approval</h2>
-          <p className="text-muted-foreground">
-            Your artist profile is being reviewed. You'll be able to upload tracks once approved.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (artistProfile.status === 'rejected') {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Profile Not Approved</h2>
-          <p className="text-muted-foreground">
-            Your artist profile was not approved. Please contact support for more information.
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // Removed pending/rejected screens - artists are always approved on creation
 
   return (
     <div className="min-h-screen py-24 px-4">
       <div className="container mx-auto max-w-4xl">
         <h1 className="text-3xl font-bold mb-8">My Studio</h1>
 
-        {/* Profile Image */}
+        {/* Profile Image with Progress Upload */}
         <Card className="p-6 mb-8">
           <h2 className="text-xl font-semibold mb-4">Profile Image</h2>
           <div className="flex items-center gap-6">
-            <Avatar className="h-32 w-32 border-2 border-primary">
-              <AvatarImage src={artistProfile.avatar_url || undefined} alt={artistProfile.artist_name} />
-              <AvatarFallback className="text-2xl">
-                {artistProfile.artist_name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <AvatarUploadProgress
+              currentUrl={artistProfile?.avatar_url}
+              fallback={artistProfile?.artist_name?.charAt(0).toUpperCase() || "A"}
+              size="xl"
+              uploading={avatarUploader.uploading}
+              progress={avatarUploader.progress}
+              onFileSelect={avatarUploader.handleFileSelect}
+            />
             <div>
-              <Label htmlFor="avatar" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 bg-secondary hover:bg-secondary/80 rounded-md transition-colors">
-                  <Camera className="h-4 w-4" />
-                  <span>{uploadingAvatar ? "Uploading..." : "Upload New Image"}</span>
-                </div>
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleAvatarUpload}
-                  disabled={uploadingAvatar}
-                />
-              </Label>
-              <p className="text-sm text-muted-foreground mt-2">
+              <p className="text-sm text-muted-foreground mb-2">
                 Your profile image appears on your public artist page
               </p>
+              {avatarUploader.uploading && (
+                <p className="text-sm text-primary">Uploading... {avatarUploader.progress}%</p>
+              )}
             </div>
           </div>
         </Card>
@@ -485,11 +428,11 @@ export default function MyStudio() {
             </div>
             <Button
               onClick={handleSaveProfile}
-              disabled={savingProfile}
+              disabled={saving}
               className="bg-gradient-gold"
             >
               <Save className="mr-2 h-4 w-4" />
-              {savingProfile ? "Saving..." : "Save Profile"}
+              {saving ? "Saving..." : "Save Profile"}
             </Button>
           </div>
         </Card>
@@ -499,35 +442,41 @@ export default function MyStudio() {
           <h2 className="text-xl font-semibold mb-4">Upload New Track</h2>
           <form onSubmit={handleTrackUpload} className="space-y-4">
             <div>
-              <Label htmlFor="title">Track Title *</Label>
+              <Label htmlFor="track_title">Track Title *</Label>
               <Input
-                id="title"
+                id="track_title"
                 value={trackTitle}
                 onChange={(e) => setTrackTitle(e.target.value)}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="track_description">Description</Label>
               <Textarea
-                id="description"
+                id="track_description"
                 value={trackDescription}
                 onChange={(e) => setTrackDescription(e.target.value)}
                 rows={3}
               />
             </div>
             <div>
-              <Label htmlFor="cover">Cover Image (Optional)</Label>
+              <Label htmlFor="audio">Audio File *</Label>
+              <Input
+                id="audio"
+                name="audio"
+                type="file"
+                accept="audio/*"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="cover">Cover Image</Label>
               <Input
                 id="cover"
                 type="file"
                 accept="image/*"
                 onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
               />
-            </div>
-            <div>
-              <Label htmlFor="audio">Audio File *</Label>
-              <Input id="audio" name="audio" type="file" accept="audio/*" required />
             </div>
             <Button type="submit" disabled={uploading} className="bg-gradient-gold">
               <Upload className="mr-2 h-4 w-4" />
@@ -536,46 +485,34 @@ export default function MyStudio() {
           </form>
         </Card>
 
-        {/* Tracks List */}
-        <div>
+        {/* Track List */}
+        <Card className="p-6">
           <h2 className="text-xl font-semibold mb-4">Your Tracks</h2>
           {tracks.length === 0 ? (
-            <p className="text-muted-foreground">No tracks uploaded yet.</p>
+            <p className="text-muted-foreground">No tracks uploaded yet</p>
           ) : (
             <div className="space-y-4">
               {tracks.map((track) => (
-                <Card key={track.id} className="p-4">
-                  <div className="flex items-center gap-4">
-                    {track.cover_url ? (
-                      <img
-                        src={track.cover_url}
-                        alt={track.title}
-                        className="h-12 w-12 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="h-12 w-12 rounded bg-secondary flex items-center justify-center">
-                        <Music className="h-6 w-6 text-muted-foreground" />
-                      </div>
+                <div key={track.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
+                  <div>
+                    <h3 className="font-medium">{track.title}</h3>
+                    {track.description && (
+                      <p className="text-sm text-muted-foreground">{track.description}</p>
                     )}
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{track.title}</h3>
-                      {track.description && (
-                        <p className="text-sm text-muted-foreground">{track.description}</p>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteTrack(track.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
                   </div>
-                </Card>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteTrack(track.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );
