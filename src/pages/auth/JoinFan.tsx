@@ -154,7 +154,7 @@ export default function JoinFan() {
               </div>
               <CardTitle className="text-2xl">{t('auth.joinFanTitle')}</CardTitle>
               <CardDescription>
-                You're joining as a <span className="text-accent font-medium">fan</span>. {t('auth.joinFanDescription')}
+                {t('auth.joinFanDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>

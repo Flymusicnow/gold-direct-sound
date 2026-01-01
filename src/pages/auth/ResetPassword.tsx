@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import { Music, CheckCircle, ArrowLeft } from "lucide-react";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import TrustBadge from "@/components/trust/TrustBadge";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function ResetPassword() {
+  const { t } = useLanguage();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,12 +22,12 @@ export default function ResetPassword() {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t('auth.resetPasswordPage.passwordsDoNotMatch'));
       return;
     }
 
     if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+      toast.error(t('auth.resetPasswordPage.passwordTooShort'));
       return;
     }
 
@@ -39,10 +41,10 @@ export default function ResetPassword() {
       if (error) throw error;
 
       setSuccess(true);
-      toast.success("Your password has been updated!");
+      toast.success(t('auth.resetPasswordPage.updateSuccess'));
     } catch (error: any) {
       console.error("Password update error:", error);
-      toast.error("Could not update password. Please try again.");
+      toast.error(t('auth.resetPasswordPage.updateError'));
     } finally {
       setLoading(false);
     }
@@ -69,9 +71,9 @@ export default function ResetPassword() {
           
           <div className="mb-8">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Password Updated!</h2>
+            <h2 className="text-2xl font-semibold mb-2">{t('auth.resetPasswordPage.successTitle')}</h2>
             <p className="text-muted-foreground">
-              Your password has been updated. You can now sign in with your new password.
+              {t('auth.resetPasswordPage.successMessage')}
             </p>
           </div>
 
@@ -79,7 +81,7 @@ export default function ResetPassword() {
             onClick={() => navigate('/auth')} 
             className="w-full bg-gradient-gold"
           >
-            Go to Sign In
+            {t('auth.resetPasswordPage.goToSignIn')}
           </Button>
         </div>
       </div>
@@ -105,43 +107,43 @@ export default function ResetPassword() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <Music className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-gold bg-clip-text text-transparent">
-              Create New Password
+              {t('auth.resetPasswordPage.title')}
             </h1>
           </div>
           <p className="text-muted-foreground">
-            Enter your new password below.
+            {t('auth.resetPasswordPage.subtitle')}
           </p>
         </div>
 
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <div>
-            <Label htmlFor="password">New Password</Label>
+            <Label htmlFor="password">{t('auth.resetPasswordPage.newPassword')}</Label>
             <Input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="At least 6 characters"
+              placeholder={t('auth.resetPasswordPage.passwordPlaceholder')}
               minLength={6}
             />
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{t('auth.resetPasswordPage.confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              placeholder="Enter password again"
+              placeholder={t('auth.resetPasswordPage.confirmPlaceholder')}
               minLength={6}
             />
           </div>
 
           <Button type="submit" className="w-full bg-gradient-gold" disabled={loading}>
-            {loading ? "Saving..." : "Save New Password"}
+            {loading ? t('auth.resetPasswordPage.saving') : t('auth.resetPasswordPage.saveButton')}
           </Button>
         </form>
       </div>

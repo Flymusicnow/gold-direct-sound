@@ -7,8 +7,10 @@ import { LegalFlow } from "@/components/legal/LegalFlow";
 import { useLegalAcceptance } from "@/hooks/useLegalAcceptance";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function FanOnboarding() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [step, setStep] = useState(0); // 0 = legal, 1 = features, 2 = complete
@@ -82,9 +84,9 @@ export default function FanOnboarding() {
       >
         <Card className="w-full max-w-md p-8 text-center mb-6">
           <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Welcome to FlyMusic</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('fan.onboarding.welcome')}</h1>
           <p className="text-muted-foreground">
-            Before we continue, please review and accept our terms.
+            {t('fan.onboarding.legalIntro')}
           </p>
         </Card>
       </LegalFlow>
@@ -98,10 +100,10 @@ export default function FanOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Heart className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Welcome to FlyMusic</h1>
+            <h1 className="text-3xl font-bold">{t('fan.onboarding.welcome')}</h1>
           </div>
           <p className="text-muted-foreground">
-            Discover music and support artists directly
+            {t('fan.onboarding.discoverSubtitle')}
           </p>
         </div>
 
@@ -120,8 +122,8 @@ export default function FanOnboarding() {
                   <Music className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">What You Can Do</h2>
-                  <p className="text-sm text-muted-foreground">Explore FlyMusic features</p>
+                  <h2 className="text-xl font-bold">{t('fan.onboarding.whatYouCanDo')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('fan.onboarding.exploreFeatures')}</p>
                 </div>
               </div>
 
@@ -129,9 +131,9 @@ export default function FanOnboarding() {
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30">
                   <Music className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Discover New Music</h3>
+                    <h3 className="font-semibold mb-1">{t('fan.onboarding.discoverNewMusic')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Find tracks from emerging artists and trending content
+                      {t('fan.onboarding.discoverDescription')}
                     </p>
                   </div>
                 </div>
@@ -139,9 +141,9 @@ export default function FanOnboarding() {
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30">
                   <Heart className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Follow & Support Artists</h3>
+                    <h3 className="font-semibold mb-1">{t('fan.onboarding.followSupport')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Build your library and earn XP by supporting your favorites
+                      {t('fan.onboarding.followDescription')}
                     </p>
                   </div>
                 </div>
@@ -149,9 +151,9 @@ export default function FanOnboarding() {
                 <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/30">
                   <Sparkles className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
-                    <h3 className="font-semibold mb-1">Vote in Spotlight</h3>
+                    <h3 className="font-semibold mb-1">{t('fan.onboarding.voteSpotlight')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      Help artists rise by voting in community-driven campaigns
+                      {t('fan.onboarding.voteDescription')}
                     </p>
                   </div>
                 </div>
@@ -166,8 +168,8 @@ export default function FanOnboarding() {
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">You're All Set!</h2>
-                  <p className="text-sm text-muted-foreground">Start exploring now</p>
+                  <h2 className="text-xl font-bold">{t('fan.onboarding.youreAllSet')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('fan.onboarding.startExploringNow')}</p>
                 </div>
               </div>
 
@@ -176,12 +178,12 @@ export default function FanOnboarding() {
                   <div className="flex items-start gap-3">
                     <Heart className="h-5 w-5 text-primary mt-0.5" />
                     <div>
-                      <h3 className="font-semibold mb-1">Get Started:</h3>
+                      <h3 className="font-semibold mb-1">{t('fan.onboarding.getStarted')}</h3>
                       <ul className="text-sm text-muted-foreground space-y-2">
-                        <li>• Browse the Discover feed for personalized recommendations</li>
-                        <li>• Follow your first artist to unlock achievements</li>
-                        <li>• Create stacks (playlists) to organize your favorite tracks</li>
-                        <li>• Vote in active Spotlight campaigns</li>
+                        <li>• {t('fan.onboarding.browseDiscover')}</li>
+                        <li>• {t('fan.onboarding.followFirst')}</li>
+                        <li>• {t('fan.onboarding.createStacks')}</li>
+                        <li>• {t('fan.onboarding.voteActive')}</li>
                       </ul>
                     </div>
                   </div>
@@ -190,20 +192,20 @@ export default function FanOnboarding() {
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Award className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold text-sm">Unlock Achievements</h3>
+                    <h3 className="font-semibold text-sm">{t('fan.onboarding.unlockAchievements')}</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
                       <Trophy className="h-4 w-4 text-primary" />
-                      <span className="text-xs text-muted-foreground text-center">First Follow</span>
+                      <span className="text-xs text-muted-foreground text-center">{t('fan.onboarding.firstFollow')}</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
                       <Star className="h-4 w-4 text-primary" />
-                      <span className="text-xs text-muted-foreground text-center">First Vote</span>
+                      <span className="text-xs text-muted-foreground text-center">{t('fan.onboarding.firstVote')}</span>
                     </div>
                     <div className="flex flex-col items-center gap-1 p-2 rounded bg-background/50">
                       <Music className="h-4 w-4 text-primary" />
-                      <span className="text-xs text-muted-foreground text-center">First Stack</span>
+                      <span className="text-xs text-muted-foreground text-center">{t('fan.onboarding.firstStack')}</span>
                     </div>
                   </div>
                 </div>
@@ -214,14 +216,14 @@ export default function FanOnboarding() {
           {/* Actions */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
             <Button variant="ghost" onClick={handleSkip} disabled={isSubmitting}>
-              Skip for now
+              {t('fan.onboarding.skipForNow')}
             </Button>
             <Button
               onClick={handleContinue}
               className="bg-gradient-gold"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Saving..." : step === 1 ? "Continue" : "Start Exploring"}
+              {isSubmitting ? t('fan.onboarding.saving') : step === 1 ? t('fan.onboarding.continue') : t('fan.onboarding.startExploring')}
             </Button>
           </div>
         </Card>
