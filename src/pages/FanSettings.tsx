@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFanProfile } from "@/hooks/useFanProfile";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AvatarUploadProgress } from "@/components/ui/avatar-upload-progress";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CreditCard, Camera, Loader2, UserCircle } from "lucide-react";
+import { CreditCard, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
@@ -20,102 +20,40 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
 
 export default function FanSettings() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile: authProfile } = useAuth();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const [fullName, setFullName] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const isMobile = useIsMobile();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Use unified fan profile hook
+  const {
+    profile,
+    saving,
+    avatarUploader,
+    updateProfile,
+  } = useFanProfile();
+
+  const [fullName, setFullName] = useState("");
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    if (profile?.full_name) {
-      setFullName(profile.full_name);
+    if (authProfile?.full_name) {
+      setFullName(authProfile.full_name);
     }
-    if ((profile as any)?.avatar_url) {
-      setAvatarUrl((profile as any).avatar_url);
-    }
-  }, [user, profile, navigate]);
-
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      toast.error("Please select a valid image (JPEG, PNG, or WebP)");
-      return;
-    }
-
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
-      return;
-    }
-
-    setUploadingAvatar(true);
-    try {
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/${Date.now()}_avatar.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Update profile with new avatar URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl } as any)
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      await refreshProfile();
-      toast.success("Profile picture updated");
-    } catch (error: any) {
-      console.error('Error uploading avatar:', error);
-      toast.error(error.message || "Failed to upload profile picture");
-    } finally {
-      setUploadingAvatar(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-    }
-  };
+  }, [user, authProfile, navigate]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ full_name: fullName })
-        .eq('id', user.id);
-
-      if (error) throw error;
-
-      await refreshProfile();
+    
+    const result = await updateProfile({ fullName });
+    
+    if (result.success) {
       toast.success("Settings updated successfully");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update settings");
-    } finally {
-      setLoading(false);
+    } else {
+      toast.error(result.error || "Failed to update settings");
     }
   };
 
@@ -147,38 +85,23 @@ export default function FanSettings() {
             </Card>
 
             <Card className="p-6 mb-6">
-              {/* Profile Picture Upload */}
+              {/* Profile Picture Upload with Progress */}
               <div className="flex items-center gap-6 mb-6 pb-6 border-b border-border">
-                <div className="relative">
-                  <Avatar className="h-20 w-20">
-                    <AvatarImage src={avatarUrl || undefined} alt="Profile" />
-                    <AvatarFallback className="text-2xl bg-primary/20 text-primary">
-                      {fullName?.[0]?.toUpperCase() || profile?.email?.[0]?.toUpperCase() || "U"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingAvatar}
-                    className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 hover:bg-primary/90 transition-colors"
-                  >
-                    {uploadingAvatar ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Camera className="h-4 w-4" />
-                    )}
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                </div>
+                <AvatarUploadProgress
+                  currentUrl={(authProfile as any)?.avatar_url}
+                  fallback={fullName?.[0]?.toUpperCase() || authProfile?.email?.[0]?.toUpperCase() || "U"}
+                  size="md"
+                  uploading={avatarUploader.uploading}
+                  progress={avatarUploader.progress}
+                  onFileSelect={avatarUploader.handleFileSelect}
+                />
                 <div>
                   <h3 className="font-semibold">{t('settings.profilePicture')}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {t('settings.clickCameraToUpload')}
+                    {avatarUploader.uploading 
+                      ? `Uploading... ${avatarUploader.progress}%`
+                      : t('settings.clickCameraToUpload')
+                    }
                   </p>
                 </div>
               </div>
@@ -189,7 +112,7 @@ export default function FanSettings() {
                   <Input
                     id="email"
                     type="email"
-                    value={profile?.email || ""}
+                    value={authProfile?.email || ""}
                     disabled
                     className="bg-muted"
                   />
@@ -222,8 +145,8 @@ export default function FanSettings() {
                   </ul>
                 </div>
 
-                <Button type="submit" disabled={loading} className="bg-gradient-gold">
-                  {loading ? t('common.saving') : t('common.saveChanges')}
+                <Button type="submit" disabled={saving} className="bg-gradient-gold">
+                  {saving ? t('common.saving') : t('common.saveChanges')}
                 </Button>
               </form>
             </Card>

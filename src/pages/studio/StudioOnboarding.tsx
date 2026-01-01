@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserAccessState } from "@/hooks/useUserAccessState";
+import { useArtistNameAvailability } from "@/hooks/useArtistNameAvailability";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Music, Upload, CheckCircle2, User, Image, Share2, ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { Music, Upload, CheckCircle2, User, Image, Share2, ArrowLeft, ArrowRight, FileText, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { LegalFlow } from "@/components/legal/LegalFlow";
@@ -35,6 +36,7 @@ export default function StudioOnboarding() {
     genre: "",
   });
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
+  const nameAvailability = useArtistNameAvailability(user?.id);
 
   // Guard: If already onboarded, redirect to studio immediately
   useEffect(() => {
@@ -277,13 +279,32 @@ export default function StudioOnboarding() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="artistName">Artist Name *</Label>
-                  <Input
-                    id="artistName"
-                    value={formData.artistName}
-                    onChange={(e) => setFormData({ ...formData, artistName: e.target.value })}
-                    placeholder="Your stage name"
-                    className="mt-2"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="artistName"
+                      value={formData.artistName}
+                      onChange={(e) => {
+                        setFormData({ ...formData, artistName: e.target.value });
+                        nameAvailability.checkAvailability(e.target.value);
+                      }}
+                      placeholder="Your stage name"
+                      className="mt-2 pr-10"
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 mt-1">
+                      {nameAvailability.isChecking && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      )}
+                      {!nameAvailability.isChecking && nameAvailability.isAvailable === true && formData.artistName.length >= 2 && (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      )}
+                      {!nameAvailability.isChecking && nameAvailability.isAvailable === false && (
+                        <XCircle className="h-4 w-4 text-destructive" />
+                      )}
+                    </div>
+                  </div>
+                  {nameAvailability.isAvailable === false && (
+                    <p className="text-sm text-destructive mt-1">This artist name is already taken</p>
+                  )}
                 </div>
 
                 <div>
