@@ -278,17 +278,37 @@ serve(async (req) => {
       }
 
       try {
-        // Check if already sent (idempotency)
+        // Check for existing active invite (not redeemed or replaced)
         const { data: existingInvite } = await supabaseClient
           .from("beta_invites")
-          .select("id, status")
+          .select("id, status, code")
           .eq("email", email)
-          .eq("status", "sent")
+          .eq("role", role)
+          .is("replaced_by", null)
+          .not("status", "in", '("redeemed","replaced")')
           .maybeSingle();
 
+        let rotatingCode = false;
+        let oldInviteId: string | null = null;
+
         if (existingInvite) {
-          skipped.push({ email, reason: "Already invited" });
-          continue;
+          if (existingInvite.status === "sent") {
+            // Mark old invite as replaced (code rotation)
+            await supabaseClient
+              .from("beta_invites")
+              .update({ 
+                status: "replaced",
+                replaced_at: new Date().toISOString()
+              })
+              .eq("id", existingInvite.id);
+            
+            rotatingCode = true;
+            oldInviteId = existingInvite.id;
+            log('INVITE_ROTATING', { email, old_code: existingInvite.code.substring(0, 4) + '...' });
+          } else {
+            skipped.push({ email, reason: "Already has pending invite" });
+            continue;
+          }
         }
 
         // Check waitlist status if waitlistId provided
@@ -377,13 +397,25 @@ serve(async (req) => {
         log('EMAIL_SENT', { email, role, code: code.substring(0, 4) + '...' });
 
         // Update beta_invites to sent
-        await supabaseClient
+        const { data: newInvite } = await supabaseClient
           .from("beta_invites")
           .update({
             status: "sent",
             sent_at: new Date().toISOString(),
           })
-          .eq("id", inviteRecord.id);
+          .eq("id", inviteRecord.id)
+          .select()
+          .single();
+
+        // If rotating, link the old invite to the new one
+        if (rotatingCode && oldInviteId && newInvite) {
+          await supabaseClient
+            .from("beta_invites")
+            .update({ replaced_by: newInvite.id })
+            .eq("id", oldInviteId);
+          
+          log('INVITE_ROTATED', { email, new_code: code.substring(0, 4) + '...' });
+        }
 
         // Update waitlist entry if exists
         if (waitlistId) {

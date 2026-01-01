@@ -77,11 +77,26 @@ serve(async (req) => {
         statusCode = 409; // Conflict - already used
       } else if (errorMessage.includes('not yet active') || errorMessage.includes('pending')) {
         statusCode = 410; // Gone - not active
+      } else if (errorMessage.includes('replaced')) {
+        statusCode = 410; // Gone - replaced by new code
       }
       
       return new Response(
         JSON.stringify({ valid: false, error: errorMessage, correlation_id: correlationId }),
         { status: statusCode, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if the invite was replaced (additional check in case RPC doesn't handle it)
+    if (data.status === 'replaced') {
+      log('CODE_REPLACED', { code: code?.substring?.(0, 4) + '...' });
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          error: 'This code was replaced. Please check your email for a new invite code.',
+          correlation_id: correlationId 
+        }),
+        { status: 410, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
