@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type DocumentType = "user_agreement" | "artist_agreement" | "privacy_policy" | "fan_terms" | "brand_portal_terms" | "risk_disclaimer";
+export type DocumentType = "user_agreement" | "artist_agreement" | "privacy_policy" | "fan_terms" | "brand_portal_terms" | "risk_disclaimer" | "beta_terms";
 
 interface LegalAcceptance {
   document_type: string;
@@ -110,10 +110,12 @@ export const useLegalAcceptance = () => {
   }, [documents]);
 
   const getDocumentsForUserType = useCallback((userType: "fan" | "artist" | "brand"): LegalDocument[] => {
+    // For beta: All user types require beta_terms only
+    // This includes the NDA and all required legal agreements for beta
     const typeMap: Record<string, DocumentType[]> = {
-      fan: ["user_agreement", "privacy_policy", "fan_terms"],
-      artist: ["user_agreement", "artist_agreement", "privacy_policy", "risk_disclaimer"],
-      brand: ["user_agreement", "privacy_policy", "brand_portal_terms"]
+      fan: ["beta_terms"],
+      artist: ["beta_terms"],
+      brand: ["beta_terms"]
     };
 
     const requiredTypes = typeMap[userType] || [];

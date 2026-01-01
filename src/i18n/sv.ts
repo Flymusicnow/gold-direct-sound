@@ -1149,4 +1149,18 @@ export const sv = {
       createOpportunity: 'Skapa & slutför',
     },
   },
+  legal: {
+    acceptAndContinue: 'Godkänn & Fortsätt',
+    iHaveReadAndAccept: 'Jag har läst och godkänner',
+    pleaseReadAndAccept: 'Läs och godkänn för att fortsätta',
+    documentUpdated: 'Detta dokument har uppdaterats. Läs igenom och godkänn.',
+    readFullDocument: 'Läs hela dokumentet i ny flik',
+    whatsChanged: 'Vad som ändrats',
+    termsAndConditionsBeta: 'Användarvillkor (Beta)',
+    languagePrecedence: 'Vid tolkningsskillnader har den engelska versionen företräde.',
+    accepted: 'Villkor accepterade',
+    acceptFailed: 'Kunde inte registrera godkännande. Försök igen.',
+    version: 'Version',
+    processing: 'Bearbetar...',
+  },
 };
