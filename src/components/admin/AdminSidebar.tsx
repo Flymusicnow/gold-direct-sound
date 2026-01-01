@@ -35,6 +35,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const navSections = [
   {
@@ -284,21 +285,24 @@ export function AdminSidebar() {
               <span className="font-semibold text-primary">Admin</span>
             </div>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setCollapsed(!collapsed)}
-                className="h-8 w-8"
-              >
-                {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              <p>{collapsed ? "Expandera sidopanelen" : "Minimera sidopanelen"}</p>
-            </TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-1">
+            {!collapsed && <LanguageToggle className="h-8 w-8 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setCollapsed(!collapsed)}
+                  className="h-8 w-8"
+                >
+                  {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                <p>{collapsed ? "Expandera sidopanelen" : "Minimera sidopanelen"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
 
         {/* Navigation */}
