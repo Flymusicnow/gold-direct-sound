@@ -98,6 +98,8 @@ export const sv = {
     featured: 'Utvald',
     recommended: 'Rekommenderad',
     backToDashboard: 'Tillbaka till översikten',
+    moreOptions: 'Fler alternativ',
+    searchMenu: 'Sök i meny...',
   },
   nav: {
     explore: 'Utforska artister',
