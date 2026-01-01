@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useBrandPendingCount } from "@/hooks/useBrandPendingCount";
 import { useBrandMessages } from "@/hooks/useBrandMessages";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const mainNavItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/brand" },
@@ -22,6 +24,7 @@ const moreNavItems = [
 
 export function BottomNavBarBrand() {
   const location = useLocation();
+  const { t } = useLanguage();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { pendingCount } = useBrandPendingCount();
   const { unreadCount } = useBrandMessages();
@@ -73,6 +76,10 @@ export function BottomNavBarBrand() {
             </button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-auto">
+            <div className="flex items-center justify-between py-4 border-b border-border/30 mb-2">
+              <span className="text-lg font-semibold">{t('common.moreOptions')}</span>
+              <LanguageToggle className="h-9 w-9 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
+            </div>
             <div className="py-4 space-y-2">
               {moreNavItems.map((item) => {
                 const Icon = item.icon;

@@ -3,6 +3,8 @@ import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Spark
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const navSections = [
   {
@@ -48,6 +50,7 @@ const navSections = [
 
 export function StudioSidebar() {
   const location = useLocation();
+  const { t } = useLanguage();
 
   return (
     <aside className="w-64 h-[calc(100vh-64px)] overflow-hidden bg-[hsl(0,0%,5%)] border-r border-border/50 flex flex-col shadow-elegant z-40 hidden md:flex">
@@ -57,12 +60,15 @@ export function StudioSidebar() {
           <div className="flex items-center gap-2">
             <FlyMusicLogo size="sm" />
             <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Studio
+              {t('nav.myStudio')}
             </h2>
           </div>
-          <NotificationBell />
+          <div className="flex items-center gap-1">
+            <LanguageToggle className="h-8 w-8 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
+            <NotificationBell />
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground ml-10">Creator Control Room</p>
+        <p className="text-xs text-muted-foreground ml-10">{t('studio.creatorControlRoom')}</p>
       </div>
 
       {/* Menu - SCROLLABLE ONLY IF OVERFLOW */}

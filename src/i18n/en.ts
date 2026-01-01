@@ -98,6 +98,8 @@ export const en = {
     featured: 'Featured',
     recommended: 'Recommended',
     backToDashboard: 'Back to Dashboard',
+    moreOptions: 'More Options',
+    searchMenu: 'Search menu...',
   },
   nav: {
     explore: 'Explore Artists',

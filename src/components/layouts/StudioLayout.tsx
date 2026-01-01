@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useScrollRestoration } from "@/hooks/useScrollRestoration";
 
 interface StudioLayoutProps {
   children: ReactNode;
@@ -10,13 +11,20 @@ interface StudioLayoutProps {
 
 export function StudioLayout({ children }: StudioLayoutProps) {
   const isMobile = useIsMobile();
+  const mainRef = useRef<HTMLElement>(null);
+  
+  // Enable scroll position preservation
+  useScrollRestoration(mainRef);
 
   return (
     <>
       <div className="h-screen overflow-hidden flex w-full pt-16">
         <StudioSidebar />
         <MobileStudioNav />
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
+        <main 
+          ref={mainRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8"
+        >
           {children}
         </main>
       </div>

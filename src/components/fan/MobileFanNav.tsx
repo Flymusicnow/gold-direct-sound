@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { LanguageToggle } from "@/components/LanguageToggle";
 
 const navSections = [
   {
@@ -136,13 +137,16 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
     return (
       <div className="flex flex-col h-full max-h-[65vh]">
         <div className="flex-shrink-0 space-y-4 pb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
-              <Home className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
+                <Home className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Fan Portal
+              </h2>
             </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Fan Portal
-            </h2>
+            <LanguageToggle className="h-9 w-9 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
           </div>
 
           <div className="relative">
@@ -192,13 +196,16 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="mb-6 pb-4 border-b border-border/30">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-              <Home className="h-4 w-4 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
+                <Home className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                Fan Portal
+              </SheetTitle>
             </div>
-            <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Fan Portal
-            </SheetTitle>
+            <LanguageToggle className="h-8 w-8 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
           </div>
         </SheetHeader>
 

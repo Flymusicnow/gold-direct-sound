@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/sheet";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { motion } from "framer-motion";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const navSections = [
   {
@@ -72,6 +74,7 @@ interface MobileStudioNavProps {
 
 export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNavProps = {}) {
   const location = useLocation();
+  const { t } = useLanguage();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -185,13 +188,16 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
     return (
       <div className="flex flex-col h-full min-h-0">
         <div className="flex-shrink-0 pb-4 space-y-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
-              <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-lg bg-gradient-gold flex items-center justify-center flex-shrink-0">
+                <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+              </div>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {t('nav.myStudio')}
+              </h2>
             </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Studio
-            </h2>
+            <LanguageToggle className="h-9 w-9 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
           </div>
 
           <div className="relative">
@@ -249,13 +255,16 @@ export function MobileStudioNav({ inSheet = false, onNavigate }: MobileStudioNav
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="mb-6 pb-4 border-b border-border/30">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
-              <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-gold flex items-center justify-center">
+                <LayoutDashboard className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                {t('nav.myStudio')}
+              </SheetTitle>
             </div>
-            <SheetTitle className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              My Studio
-            </SheetTitle>
+            <LanguageToggle className="h-8 w-8 border border-border/50 hover:border-primary/50 hover:bg-primary/10" />
           </div>
         </SheetHeader>
 
