@@ -2288,6 +2288,7 @@ export type Database = {
       legal_acceptances: {
         Row: {
           accepted_at: string
+          accepted_language: string | null
           document_type: string
           document_version: string
           id: string
@@ -2297,6 +2298,7 @@ export type Database = {
         }
         Insert: {
           accepted_at?: string
+          accepted_language?: string | null
           document_type: string
           document_version?: string
           id?: string
@@ -2306,6 +2308,7 @@ export type Database = {
         }
         Update: {
           accepted_at?: string
+          accepted_language?: string | null
           document_type?: string
           document_version?: string
           id?: string

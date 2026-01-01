@@ -1149,4 +1149,18 @@ export const en = {
     createAccount: 'Create Account',
     signIn: 'Already have an account? Sign In',
   },
+  legal: {
+    acceptAndContinue: 'Accept & Continue',
+    iHaveReadAndAccept: 'I have read and accept the',
+    pleaseReadAndAccept: 'Please read and accept to continue',
+    documentUpdated: 'This document has been updated. Please review and accept.',
+    readFullDocument: 'Read full document in new tab',
+    whatsChanged: "What's Changed",
+    termsAndConditionsBeta: 'Terms & Conditions (Beta)',
+    languagePrecedence: 'In case of discrepancies, the English version shall prevail.',
+    accepted: 'Terms accepted',
+    acceptFailed: 'Failed to record acceptance. Please try again.',
+    version: 'Version',
+    processing: 'Processing...',
+  },
 };
