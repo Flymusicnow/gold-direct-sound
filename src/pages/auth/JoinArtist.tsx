@@ -134,7 +134,7 @@ export default function JoinArtist() {
               </div>
               <CardTitle className="text-2xl">{t('auth.joinArtistTitle')}</CardTitle>
               <CardDescription>
-                You're joining as an <span className="text-primary font-medium">artist</span>. {t('auth.joinArtistDescription')}
+                {t('auth.joinArtistDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent>

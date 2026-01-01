@@ -15,16 +15,10 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { LegalFlow } from "@/components/legal/LegalFlow";
 import { useLegalAcceptance } from "@/hooks/useLegalAcceptance";
-
-const STEPS = [
-  { id: 0, title: "Terms", icon: FileText, description: "Accept terms" },
-  { id: 1, title: "Basic Info", icon: User, description: "Tell us about yourself" },
-  { id: 2, title: "Profile Picture", icon: Image, description: "Add a profile image" },
-  { id: 3, title: "First Upload", icon: Upload, description: "Upload your first track" },
-  { id: 4, title: "Go Live!", icon: Share2, description: "Preview & publish" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function StudioOnboarding() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { artistOnboarded, loading: accessLoading } = useUserAccessState();
@@ -37,6 +31,14 @@ export default function StudioOnboarding() {
   });
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
   const nameAvailability = useArtistNameAvailability(user?.id);
+
+  const STEPS = [
+    { id: 0, title: t('studio.onboarding.steps.terms'), icon: FileText, description: t('studio.onboarding.steps.termsDesc') },
+    { id: 1, title: t('studio.onboarding.steps.basicInfo'), icon: User, description: t('studio.onboarding.steps.basicInfoDesc') },
+    { id: 2, title: t('studio.onboarding.steps.profilePicture'), icon: Image, description: t('studio.onboarding.steps.profilePictureDesc') },
+    { id: 3, title: t('studio.onboarding.steps.firstUpload'), icon: Upload, description: t('studio.onboarding.steps.firstUploadDesc') },
+    { id: 4, title: t('studio.onboarding.steps.goLive'), icon: Share2, description: t('studio.onboarding.steps.goLiveDesc') },
+  ];
 
   // Guard: If already onboarded, redirect to studio immediately
   useEffect(() => {
@@ -82,7 +84,7 @@ export default function StudioOnboarding() {
   const handleNext = async () => {
     if (currentStep === 1) {
       if (!formData.artistName) {
-        toast.error("Please enter your artist name");
+        toast.error(t('studio.onboarding.enterArtistName'));
         return;
       }
       
@@ -125,7 +127,7 @@ export default function StudioOnboarding() {
         setCurrentStep(2);
       } catch (error: any) {
         console.error('Error saving profile:', error);
-        toast.error(error.message || "Failed to save profile");
+        toast.error(error.message || t('studio.onboarding.saveProfileError'));
       } finally {
         setLoading(false);
       }
@@ -144,11 +146,11 @@ export default function StudioOnboarding() {
               updated_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
         }
-        toast.success("You're all set! Welcome to My Studio");
+        toast.success(t('studio.onboarding.welcomeSuccess'));
         navigate('/studio', { replace: true });
       } catch (error) {
         console.error('Error completing onboarding:', error);
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t('studio.onboarding.saveError'));
       } finally {
         setLoading(false);
       }
@@ -191,9 +193,9 @@ export default function StudioOnboarding() {
       >
         <Card className="w-full max-w-md p-8 text-center mb-6">
           <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h1 className="text-2xl font-bold mb-2">Welcome to My Studio</h1>
+          <h1 className="text-2xl font-bold mb-2">{t('studio.onboarding.welcome')}</h1>
           <p className="text-muted-foreground">
-            Before we continue, please review and accept our terms.
+            {t('studio.onboarding.legalIntro')}
           </p>
         </Card>
       </LegalFlow>
@@ -207,10 +209,10 @@ export default function StudioOnboarding() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Music className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Welcome to My Studio</h1>
+            <h1 className="text-3xl font-bold">{t('studio.onboarding.welcome')}</h1>
           </div>
           <p className="text-muted-foreground">
-            Complete your profile in {STEPS.length - 1} easy steps
+            {t('studio.onboarding.completeProfile').replace('{count}', String(STEPS.length - 1))}
           </p>
         </div>
 
@@ -218,10 +220,10 @@ export default function StudioOnboarding() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">
-              Step {currentStep} of {STEPS.length - 1}
+              {t('studio.onboarding.stepOf').replace('{current}', String(currentStep)).replace('{total}', String(STEPS.length - 1))}
             </span>
             <span className="text-sm font-medium text-primary">
-              {Math.round(progress)}% Complete
+              {t('studio.onboarding.percentComplete').replace('{percent}', String(Math.round(progress)))}
             </span>
           </div>
           <Progress value={progress} className="h-2" />
@@ -271,14 +273,14 @@ export default function StudioOnboarding() {
                   <User className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Basic Information</h2>
-                  <p className="text-sm text-muted-foreground">Tell fans about yourself</p>
+                  <h2 className="text-xl font-bold">{t('studio.onboarding.basicInformation')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('studio.onboarding.tellFans')}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="artistName">Artist Name *</Label>
+                  <Label htmlFor="artistName">{t('studio.onboarding.artistNameLabel')}</Label>
                   <div className="relative">
                     <Input
                       id="artistName"
@@ -287,7 +289,7 @@ export default function StudioOnboarding() {
                         setFormData({ ...formData, artistName: e.target.value });
                         nameAvailability.checkAvailability(e.target.value);
                       }}
-                      placeholder="Your stage name"
+                      placeholder={t('studio.onboarding.artistNamePlaceholder')}
                       className="mt-2 pr-10"
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 mt-1">
@@ -303,28 +305,28 @@ export default function StudioOnboarding() {
                     </div>
                   </div>
                   {nameAvailability.isAvailable === false && (
-                    <p className="text-sm text-destructive mt-1">This artist name is already taken</p>
+                    <p className="text-sm text-destructive mt-1">{t('studio.onboarding.artistNameTaken')}</p>
                   )}
                 </div>
 
                 <div>
-                  <Label htmlFor="genre">Genre</Label>
+                  <Label htmlFor="genre">{t('studio.onboarding.genreLabel')}</Label>
                   <Input
                     id="genre"
                     value={formData.genre}
                     onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                    placeholder="Hip Hop, Pop, Rock, etc."
+                    placeholder={t('studio.onboarding.genrePlaceholder')}
                     className="mt-2"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="bio">Bio</Label>
+                  <Label htmlFor="bio">{t('studio.onboarding.bioLabel')}</Label>
                   <Textarea
                     id="bio"
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Tell your story..."
+                    placeholder={t('studio.onboarding.bioPlaceholder')}
                     className="mt-2 min-h-24"
                   />
                 </div>
@@ -339,8 +341,8 @@ export default function StudioOnboarding() {
                   <Image className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Profile Picture</h2>
-                  <p className="text-sm text-muted-foreground">Add a photo so fans can recognize you</p>
+                  <h2 className="text-xl font-bold">{t('studio.onboarding.profilePictureTitle')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('studio.onboarding.addPhoto')}</p>
                 </div>
               </div>
 
@@ -349,10 +351,10 @@ export default function StudioOnboarding() {
                   <User className="h-12 w-12 text-muted-foreground" />
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  You can add a profile picture later from your profile settings
+                  {t('studio.onboarding.addLater')}
                 </p>
                 <Button variant="outline" onClick={() => navigate('/studio/profile')}>
-                  Go to Profile Settings
+                  {t('studio.onboarding.goToProfile')}
                 </Button>
               </div>
             </div>
@@ -365,18 +367,18 @@ export default function StudioOnboarding() {
                   <Upload className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Upload Your First Track</h2>
-                  <p className="text-sm text-muted-foreground">Share your music with the world</p>
+                  <h2 className="text-xl font-bold">{t('studio.onboarding.uploadFirstTrack')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('studio.onboarding.shareMusic')}</p>
                 </div>
               </div>
 
               <div className="bg-muted/30 rounded-lg p-6 text-center">
                 <Music className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground mb-4">
-                  Ready to upload your first track? You can also do this later from the Tracks page.
+                  {t('studio.onboarding.readyUpload')}
                 </p>
                 <Button variant="outline" onClick={() => navigate('/studio/tracks')}>
-                  Go to Tracks
+                  {t('studio.onboarding.goToTracks')}
                 </Button>
               </div>
             </div>
@@ -389,39 +391,39 @@ export default function StudioOnboarding() {
                   <CheckCircle2 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">You're All Set!</h2>
-                  <p className="text-sm text-muted-foreground">Your profile is ready to go live</p>
+                  <h2 className="text-xl font-bold">{t('studio.onboarding.youreAllSet')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('studio.onboarding.profileReady')}</p>
                 </div>
               </div>
 
               <div className="bg-muted/30 rounded-lg p-6 space-y-4">
-                <h3 className="font-semibold">Onboarding Checklist:</h3>
+                <h3 className="font-semibold">{t('studio.onboarding.onboardingChecklist')}</h3>
                 <ul className="space-y-2">
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Terms accepted
+                    {t('studio.onboarding.termsAccepted')}
                   </li>
                   <li className="flex items-center gap-2 text-sm">
                     <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    Basic profile information
+                    {t('studio.onboarding.basicProfileInfo')}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="h-4 w-4 rounded-full border border-muted-foreground" />
-                    Profile picture (optional)
+                    {t('studio.onboarding.profilePictureOptional')}
                   </li>
                   <li className="flex items-center gap-2 text-sm text-muted-foreground">
                     <div className="h-4 w-4 rounded-full border border-muted-foreground" />
-                    First track upload (optional)
+                    {t('studio.onboarding.firstTrackOptional')}
                   </li>
                 </ul>
                 
                 <div className="pt-4 border-t">
-                  <h4 className="font-medium mb-2">Next Steps:</h4>
+                  <h4 className="font-medium mb-2">{t('studio.onboarding.nextSteps')}</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• Upload tracks and videos</li>
-                    <li>• Customize your profile</li>
-                    <li>• Share your page with fans</li>
-                    <li>• Apply for verification</li>
+                    <li>• {t('studio.onboarding.uploadTracksVideos')}</li>
+                    <li>• {t('studio.onboarding.customizeProfile')}</li>
+                    <li>• {t('studio.onboarding.shareWithFans')}</li>
+                    <li>• {t('studio.onboarding.applyVerification')}</li>
                   </ul>
                 </div>
               </div>
@@ -434,35 +436,27 @@ export default function StudioOnboarding() {
               {currentStep > 1 && (
                 <Button variant="ghost" onClick={handleBack}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back
+                  {t('studio.onboarding.back')}
                 </Button>
               )}
               <Button variant="ghost" onClick={handleSkipAll} className="text-muted-foreground">
-                Skip all
+                {t('studio.onboarding.skipAll')}
               </Button>
             </div>
             <div className="flex gap-2">
               {currentStep > 1 && currentStep < STEPS.length - 1 && (
                 <Button variant="outline" onClick={handleSkip}>
-                  Skip this step
+                  {t('studio.onboarding.skipStep')}
                 </Button>
               )}
               <Button
                 onClick={handleNext}
-                disabled={loading}
                 className="bg-gradient-gold"
+                disabled={loading || (currentStep === 1 && nameAvailability.isAvailable === false)}
               >
-                {loading ? "Saving..." : currentStep === STEPS.length - 1 ? (
-                  <>
-                    Go to Studio
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                ) : (
-                  <>
-                    Continue
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
+                {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {loading ? t('studio.onboarding.saving') : currentStep === STEPS.length - 1 ? t('studio.onboarding.goToStudio') : t('studio.onboarding.next')}
+                {!loading && currentStep < STEPS.length - 1 && <ArrowRight className="h-4 w-4 ml-2" />}
               </Button>
             </div>
           </div>
