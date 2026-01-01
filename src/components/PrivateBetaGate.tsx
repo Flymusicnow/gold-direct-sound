@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppMode } from '@/hooks/useAppMode';
-import { useFanInviteAccess } from '@/hooks/useFanInviteAccess';
+import { useInviteAccess } from '@/hooks/useInviteAccess';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface PrivateBetaGateProps {
@@ -23,7 +23,7 @@ export function PrivateBetaGate({ children, routeRole = 'fan' }: PrivateBetaGate
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, loading: modeLoading } = useAppMode();
-  const { hasInviteAccess, loading: inviteLoading } = useFanInviteAccess();
+  const { hasInviteAccess, loading: inviteLoading } = useInviteAccess(routeRole);
   const { hasRole } = useAuth();
 
   // Admins always have access
@@ -41,8 +41,8 @@ export function PrivateBetaGate({ children, routeRole = 'fan' }: PrivateBetaGate
 
     // In PRIVATE_BETA, check invite access
     if (mode === 'PRIVATE_BETA' && !hasInviteAccess) {
-      // Redirect to /fan with reason param
-      const redirectPath = routeRole === 'artist' ? '/fan' : '/fan';
+      // Redirect to appropriate entry page with reason param
+      const redirectPath = routeRole === 'artist' ? '/artist' : '/fan';
       navigate(`${redirectPath}?reason=invite-required`, { replace: true });
     }
   }, [mode, modeLoading, hasInviteAccess, inviteLoading, isAdmin, navigate, routeRole]);

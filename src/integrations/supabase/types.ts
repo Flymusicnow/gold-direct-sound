@@ -983,6 +983,8 @@ export type Database = {
           id: string
           last_error: string | null
           redeemed_at: string | null
+          replaced_at: string | null
+          replaced_by: string | null
           role: string
           sent_at: string | null
           status: string
@@ -996,6 +998,8 @@ export type Database = {
           id?: string
           last_error?: string | null
           redeemed_at?: string | null
+          replaced_at?: string | null
+          replaced_by?: string | null
           role: string
           sent_at?: string | null
           status?: string
@@ -1009,6 +1013,8 @@ export type Database = {
           id?: string
           last_error?: string | null
           redeemed_at?: string | null
+          replaced_at?: string | null
+          replaced_by?: string | null
           role?: string
           sent_at?: string | null
           status?: string
@@ -1020,6 +1026,13 @@ export type Database = {
             columns: ["waitlist_id"]
             isOneToOne: false
             referencedRelation: "beta_waitlist"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_beta_invites_replaced_by"
+            columns: ["replaced_by"]
+            isOneToOne: false
+            referencedRelation: "beta_invites"
             referencedColumns: ["id"]
           },
         ]
