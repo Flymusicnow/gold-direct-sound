@@ -929,6 +929,48 @@ export type Database = {
           },
         ]
       }
+      auth_email_events: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          email_hash: string
+          error_code: string | null
+          event: string
+          id: string
+          locale: string
+          provider: string
+          provider_message_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string
+          email_hash: string
+          error_code?: string | null
+          event: string
+          id?: string
+          locale?: string
+          provider?: string
+          provider_message_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          email_hash?: string
+          error_code?: string | null
+          event?: string
+          id?: string
+          locale?: string
+          provider?: string
+          provider_message_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       beta_access_codes: {
         Row: {
           badge_name: string
