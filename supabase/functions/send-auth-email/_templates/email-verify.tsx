@@ -14,18 +14,18 @@ import React from "https://esm.sh/react@18.3.1";
 import { type Locale, getTranslation } from "./_shared/translations.ts";
 import * as styles from "./_shared/styles.ts";
 
-interface PasswordRecoveryEmailProps {
+interface EmailVerifyProps {
   userName: string;
   confirmationUrl: string;
   locale: Locale;
 }
 
-export const PasswordRecoveryEmail = ({ 
+export const EmailVerifyEmail = ({ 
   userName, 
   confirmationUrl, 
   locale = 'en' 
-}: PasswordRecoveryEmailProps) => {
-  const t = getTranslation('PASSWORD_RECOVERY', locale);
+}: EmailVerifyProps) => {
+  const t = getTranslation('EMAIL_VERIFY', locale);
   
   return (
     <Html>
@@ -68,4 +68,4 @@ export const PasswordRecoveryEmail = ({
   );
 };
 
-export default PasswordRecoveryEmail;
+export default EmailVerifyEmail;

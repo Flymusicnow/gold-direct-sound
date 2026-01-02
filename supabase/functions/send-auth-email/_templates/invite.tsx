@@ -5,7 +5,6 @@ import {
   Head,
   Heading,
   Html,
-  Link,
   Preview,
   Section,
   Text,
@@ -14,18 +13,20 @@ import React from "https://esm.sh/react@18.3.1";
 import { type Locale, getTranslation } from "./_shared/translations.ts";
 import * as styles from "./_shared/styles.ts";
 
-interface PasswordRecoveryEmailProps {
+interface InviteEmailProps {
   userName: string;
   confirmationUrl: string;
+  inviteCode: string;
   locale: Locale;
 }
 
-export const PasswordRecoveryEmail = ({ 
+export const InviteEmail = ({ 
   userName, 
-  confirmationUrl, 
+  confirmationUrl,
+  inviteCode,
   locale = 'en' 
-}: PasswordRecoveryEmailProps) => {
-  const t = getTranslation('PASSWORD_RECOVERY', locale);
+}: InviteEmailProps) => {
+  const t = getTranslation('INVITE', locale);
   
   return (
     <Html>
@@ -52,9 +53,7 @@ export const PasswordRecoveryEmail = ({
           </Section>
           
           <Text style={styles.linkText}>{t.backupText}</Text>
-          <Link href={confirmationUrl} style={styles.linkUrl}>
-            {confirmationUrl}
-          </Link>
+          <Text style={styles.code}>{inviteCode}</Text>
           
           <Text style={styles.warningText}>{t.safetyLine}</Text>
           
@@ -68,4 +67,4 @@ export const PasswordRecoveryEmail = ({
   );
 };
 
-export default PasswordRecoveryEmail;
+export default InviteEmail;
