@@ -1084,6 +1084,10 @@ export const en = {
       passwordTooShort: 'Password must be at least 6 characters',
       updateSuccess: 'Your password has been updated!',
       updateError: 'Could not update password. Please try again.',
+      verifyingLink: 'Verifying reset link...',
+      invalidResetLink: 'Invalid or Expired Link',
+      linkExpiredMessage: 'This password reset link is invalid or has expired. Please request a new one.',
+      requestNewLink: 'Request New Link',
     },
   },
   empty: {

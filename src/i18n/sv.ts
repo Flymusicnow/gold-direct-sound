@@ -1053,6 +1053,10 @@ export const sv = {
       passwordTooShort: 'Lösenordet måste vara minst 6 tecken',
       updateSuccess: 'Ditt lösenord har uppdaterats!',
       updateError: 'Kunde inte uppdatera lösenordet. Försök igen.',
+      verifyingLink: 'Verifierar återställningslänk...',
+      invalidResetLink: 'Ogiltig eller utgången länk',
+      linkExpiredMessage: 'Denna länk för lösenordsåterställning är ogiltig eller har gått ut. Begär en ny.',
+      requestNewLink: 'Begär ny länk',
     },
   },
   empty: {
