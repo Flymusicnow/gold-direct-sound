@@ -34,10 +34,11 @@ export default function SignInArtist() {
 
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
-          toast.error(t('auth.accountNotFound'), {
+          toast.error(t('auth.invalidCredentials'), {
+            description: t('auth.invalidCredentialsDescription'),
             action: {
-              label: t('auth.requestCode'),
-              onClick: () => setShowBetaDialog(true),
+              label: t('auth.forgotPassword'),
+              onClick: () => navigate('/forgot-password'),
             },
           });
         } else {

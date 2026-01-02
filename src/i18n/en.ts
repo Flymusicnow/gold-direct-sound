@@ -958,6 +958,7 @@ export const en = {
     privacyPolicy: 'Privacy Policy',
     and: 'and',
     invalidCredentials: 'Invalid email or password',
+    invalidCredentialsDescription: 'Please check your credentials or reset your password if you forgot it.',
     emailRequired: 'Email is required',
     passwordRequired: 'Password is required',
     passwordTooShort: 'Password must be at least 8 characters',

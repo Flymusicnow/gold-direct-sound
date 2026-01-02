@@ -927,6 +927,7 @@ export const sv = {
     privacyPolicy: 'Integritetspolicy',
     and: 'och',
     invalidCredentials: 'Ogiltig e-post eller lösenord',
+    invalidCredentialsDescription: 'Kontrollera dina uppgifter eller återställ ditt lösenord om du glömt det.',
     emailRequired: 'E-post krävs',
     passwordRequired: 'Lösenord krävs',
     passwordTooShort: 'Lösenordet måste vara minst 8 tecken',
