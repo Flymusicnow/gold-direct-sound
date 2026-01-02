@@ -28,7 +28,7 @@ import Home from "./pages/Home";
 // Initialize network error tracking
 initNetworkErrorTracker();
 import Auth from "./pages/Auth";
-import ResetPassword from "./pages/auth/ResetPassword";
+import Recovery from "./pages/auth/Recovery";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import JoinArtist from "./pages/auth/JoinArtist";
 import JoinFan from "./pages/auth/JoinFan";
@@ -221,7 +221,7 @@ const App = () => (
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/recovery" element={<Recovery />} />
             <Route path="/join/artist" element={
               <PrivateBetaGate routeRole="artist">
                 <JoinArtist />
