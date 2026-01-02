@@ -6,6 +6,7 @@ import { RequestBetaDialog } from "@/components/RequestBetaDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +21,7 @@ export default function SignInFan() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(false);
   const [showBetaDialog, setShowBetaDialog] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -186,7 +188,17 @@ export default function SignInFan() {
                     required
                   />
                 </div>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="remember" 
+                      checked={rememberDevice}
+                      onCheckedChange={(checked) => setRememberDevice(checked as boolean)}
+                    />
+                    <Label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+                      {t('auth.rememberDevice')}
+                    </Label>
+                  </div>
                   <Link 
                     to="/forgot-password" 
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"

@@ -29,6 +29,7 @@ import Home from "./pages/Home";
 initNetworkErrorTracker();
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/auth/ResetPassword";
+import ForgotPassword from "./pages/auth/ForgotPassword";
 import JoinArtist from "./pages/auth/JoinArtist";
 import JoinFan from "./pages/auth/JoinFan";
 import JoinBrand from "./pages/auth/JoinBrand";
@@ -198,6 +199,7 @@ const App = () => (
             <Route path="/signin/fan" element={<SignInFan />} />
             <Route path="/signin/artist" element={<SignInArtist />} />
             <Route path="/signin/admin" element={<SignInAdmin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/admin/access-denied" element={<AdminAccessDenied />} />
             <Route path="/principles" element={<PrinciplesPage />} />
             <Route path="/culture" element={<CulturePage />} />
