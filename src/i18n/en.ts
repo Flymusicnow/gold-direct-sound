@@ -1301,4 +1301,14 @@ export const en = {
     version: 'Version',
     processing: 'Processing...',
   },
+  emails: {
+    confirmationSent: 'Confirmation email sent!',
+    checkInbox: 'Check your inbox to confirm your email',
+    magicLinkSent: 'Magic link sent!',
+    magicLinkCheck: 'Check your inbox for the login link',
+    passwordResetSent: 'Password reset email sent!',
+    passwordResetCheck: 'Check your inbox for the reset link',
+    emailChangeSent: 'Email change confirmation sent!',
+    emailChangeCheck: 'Check your new inbox to confirm',
+  },
 };

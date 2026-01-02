@@ -1301,4 +1301,14 @@ export const sv = {
     version: 'Version',
     processing: 'Bearbetar...',
   },
+  emails: {
+    confirmationSent: 'Bekräftelsemail skickat!',
+    checkInbox: 'Kolla din inkorg för att bekräfta din e-post',
+    magicLinkSent: 'Inloggningslänk skickad!',
+    magicLinkCheck: 'Kolla din inkorg för inloggningslänken',
+    passwordResetSent: 'E-post för lösenordsåterställning skickad!',
+    passwordResetCheck: 'Kolla din inkorg för återställningslänken',
+    emailChangeSent: 'Bekräftelse för e-postbyte skickad!',
+    emailChangeCheck: 'Kolla din nya inkorg för att bekräfta',
+  },
 };
