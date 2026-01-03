@@ -872,6 +872,11 @@ export const en = {
       welcomeSuccess: "You're all set! Welcome to My Studio",
       saveError: 'Something went wrong. Please try again.',
       saveProfileError: 'Failed to save profile',
+      backToOnboarding: 'Back to onboarding',
+      inMiddleOfSetup: "You're in the middle of your studio setup",
+      continueSetup: 'Continue setup',
+      stepOfTotal: 'Step {current} of {total}',
+      setupProgress: 'Setup',
     },
   },
   discover: {

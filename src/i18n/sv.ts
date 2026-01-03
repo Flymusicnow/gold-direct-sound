@@ -841,6 +841,11 @@ export const sv = {
       welcomeSuccess: 'Du är redo! Välkommen till Min studio',
       saveError: 'Något gick fel. Försök igen.',
       saveProfileError: 'Kunde inte spara profilen',
+      backToOnboarding: 'Tillbaka till onboarding',
+      inMiddleOfSetup: 'Du är mitt i din studio-uppsättning',
+      continueSetup: 'Fortsätt setup',
+      stepOfTotal: 'Steg {current} av {total}',
+      setupProgress: 'Setup',
     },
   },
   discover: {
