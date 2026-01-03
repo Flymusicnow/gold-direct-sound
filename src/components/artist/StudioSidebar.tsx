@@ -1,10 +1,13 @@
-import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2, Settings, FileText, Briefcase } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2, Settings, FileText, Briefcase, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 const navSections = [
   {
@@ -48,6 +51,47 @@ const navSections = [
   }
 ];
 
+// Onboarding progress banner component
+function OnboardingProgressBanner() {
+  const { artistOnboarded } = useUserAccessState();
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  
+  // If already onboarded, don't show the banner
+  if (artistOnboarded) return null;
+  
+  // Get step from sessionStorage
+  const savedStep = sessionStorage.getItem('studio-onboarding-step');
+  const currentStep = savedStep ? parseInt(savedStep, 10) : 0;
+  const totalSteps = 4;
+  const progress = Math.round((currentStep / totalSteps) * 100);
+  
+  return (
+    <div className="mx-4 mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
+      <div className="flex items-center gap-2 mb-2">
+        <CheckCircle2 className="h-4 w-4 text-primary" />
+        <span className="text-xs font-medium text-primary">
+          {t('studio.onboarding.setupProgress')}
+        </span>
+      </div>
+      <Progress value={progress} className="h-1.5 mb-2" />
+      <p className="text-xs text-muted-foreground">
+        {t('studio.onboarding.stepOfTotal')
+          .replace('{current}', String(currentStep))
+          .replace('{total}', String(totalSteps))}
+      </p>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="w-full mt-2 text-xs h-7"
+        onClick={() => navigate('/studio/onboarding')}
+      >
+        {t('studio.onboarding.continueSetup')}
+      </Button>
+    </div>
+  );
+}
+
 export function StudioSidebar() {
   const location = useLocation();
   const { t } = useLanguage();
@@ -70,6 +114,9 @@ export function StudioSidebar() {
         </div>
         <p className="text-xs text-muted-foreground ml-10">{t('studio.creatorControlRoom')}</p>
       </div>
+
+      {/* Onboarding Progress Banner */}
+      <OnboardingProgressBanner />
 
       {/* Menu - SCROLLABLE ONLY IF OVERFLOW */}
       <nav className="flex-1 min-h-0 overflow-y-auto p-6 pt-4 space-y-1 scrollbar-auto-hide">

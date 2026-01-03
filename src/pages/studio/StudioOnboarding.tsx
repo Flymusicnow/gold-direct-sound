@@ -22,7 +22,17 @@ export default function StudioOnboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { artistOnboarded, loading: accessLoading } = useUserAccessState();
-  const [currentStep, setCurrentStep] = useState(0);
+  // Initialize currentStep directly from sessionStorage to prevent race condition
+  const [currentStep, setCurrentStep] = useState(() => {
+    const saved = sessionStorage.getItem('studio-onboarding-step');
+    if (saved) {
+      const step = parseInt(saved, 10);
+      if (!isNaN(step) && step > 0) {
+        return step;
+      }
+    }
+    return 0;
+  });
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState(() => {
     const saved = sessionStorage.getItem('studio-onboarding-draft');
@@ -53,21 +63,13 @@ export default function StudioOnboarding() {
     }
   }, [accessLoading, artistOnboarded, navigate]);
 
-  // Check if legal documents are already accepted (must be before early return)
+  // Check if legal documents are already accepted - only advance to step 1 if on step 0
   useEffect(() => {
     if (legalLoading || accessLoading) return;
     
     const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "artist_agreement", "privacy_policy"]);
+    // Only advance if we're still on legal step (0) and legal is already accepted
     if (allAccepted && currentStep === 0) {
-      // Restore saved step if exists
-      const savedStep = sessionStorage.getItem('studio-onboarding-step');
-      if (savedStep) {
-        const step = parseInt(savedStep, 10);
-        if (!isNaN(step) && step > 0) {
-          setCurrentStep(step);
-          return;
-        }
-      }
       setCurrentStep(1);
     }
   }, [hasAcceptedRequiredCurrentVersions, legalLoading, currentStep, accessLoading]);
@@ -462,28 +464,29 @@ export default function StudioOnboarding() {
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t">
-            <div className="flex gap-2">
+          {/* Actions - Responsive layout for mobile */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mt-8 pt-6 border-t">
+            <div className="flex flex-wrap gap-2 justify-start">
               {currentStep > 1 && (
-                <Button variant="ghost" onClick={handleBack}>
+                <Button variant="ghost" onClick={handleBack} size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   {t('studio.onboarding.back')}
                 </Button>
               )}
-              <Button variant="ghost" onClick={handleSkipAll} className="text-muted-foreground">
+              <Button variant="ghost" onClick={handleSkipAll} className="text-muted-foreground" size="sm">
                 {t('studio.onboarding.skipAll')}
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 justify-end">
               {currentStep > 1 && currentStep < STEPS.length - 1 && (
-                <Button variant="outline" onClick={handleSkip}>
+                <Button variant="outline" onClick={handleSkip} size="sm">
                   {t('studio.onboarding.skipStep')}
                 </Button>
               )}
               <Button
                 onClick={handleNext}
                 className="bg-gradient-gold"
+                size="sm"
                 disabled={loading || (currentStep === 1 && nameAvailability.isAvailable === false)}
               >
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

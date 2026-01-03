@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserAccessState } from "@/hooks/useUserAccessState";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { sanitizeFileName } from "@/lib/utils";
 import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { EmptyStateCard } from "@/components/artist/EmptyStateCard";
 import { toast } from "sonner";
-import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, ChevronRight, Camera, Disc, Pencil, GripVertical } from "lucide-react";
+import { Upload, Music, Trash2, UserPlus, Lock, Crown, FolderUp, ChevronDown, ChevronRight, Camera, Disc, Pencil, GripVertical, ArrowLeft, CheckCircle } from "lucide-react";
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { EditTrackCoverDialog } from "@/components/artist/EditTrackCoverDialog";
@@ -59,6 +61,8 @@ interface TrackBatch {
 export default function StudioTracks() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { artistOnboarded } = useUserAccessState();
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [batches, setBatches] = useState<TrackBatch[]>([]);
@@ -339,6 +343,29 @@ export default function StudioTracks() {
   return (
     <StudioLayout>
       <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
+          {/* Onboarding Banner - shown when user is in the middle of setup */}
+          {!artistOnboarded && (
+            <Card className="p-4 bg-primary/5 border-primary/20">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-5 w-5 text-primary" />
+                  <p className="text-sm text-muted-foreground">
+                    {t('studio.onboarding.inMiddleOfSetup')}
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => navigate('/studio/onboarding')}
+                  className="border-primary/50 hover:bg-primary/10"
+                >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t('studio.onboarding.backToOnboarding')}
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
