@@ -94,7 +94,7 @@ export default function FanOnboarding() {
   }
 
   return (
-    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-safe pb-safe overflow-y-auto">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-20 pb-safe overflow-y-auto">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">

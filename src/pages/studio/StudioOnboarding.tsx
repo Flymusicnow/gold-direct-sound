@@ -60,7 +60,7 @@ export default function StudioOnboarding() {
   // Show loading while checking onboarding status
   if (accessLoading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background">
+      <div className="min-h-dvh flex items-center justify-center bg-background pt-20 pb-safe">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
       </div>
     );
@@ -203,7 +203,7 @@ export default function StudioOnboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-20 pb-safe">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
