@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { useArtistNameAvailability } from "@/hooks/useArtistNameAvailability";
+import { useProfileAvatar } from "@/hooks/useProfileAvatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { AvatarUploadProgress } from "@/components/ui/avatar-upload-progress";
 import { Music, Upload, CheckCircle2, User, Image, Share2, ArrowLeft, ArrowRight, FileText, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -47,6 +49,108 @@ export default function StudioOnboarding() {
   });
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
   const nameAvailability = useArtistNameAvailability(user?.id);
+  
+  // Avatar upload state for step 2
+  const [avatarUploaded, setAvatarUploaded] = useState(false);
+  const [artistProfileId, setArtistProfileId] = useState<string | null>(null);
+  
+  // Track upload state for step 3
+  const [trackTitle, setTrackTitle] = useState("");
+  const [trackFile, setTrackFile] = useState<File | null>(null);
+  const [trackUploading, setTrackUploading] = useState(false);
+  const [trackUploaded, setTrackUploaded] = useState(false);
+  const [trackDragActive, setTrackDragActive] = useState(false);
+
+  // Fetch artist profile ID after step 1
+  useEffect(() => {
+    if (user && currentStep >= 2) {
+      supabase
+        .from('artist_profiles')
+        .select('id, avatar_url')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setArtistProfileId(data.id);
+            if (data.avatar_url) setAvatarUploaded(true);
+          }
+        });
+    }
+  }, [user, currentStep]);
+
+  // Avatar uploader hook
+  const avatarUploader = useProfileAvatar({
+    profileType: 'artist',
+    profileId: artistProfileId || undefined,
+    userId: user?.id || '',
+    onSuccess: () => setAvatarUploaded(true),
+  });
+
+  // Track upload handlers
+  const handleTrackDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setTrackDragActive(false);
+    
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('audio/')) {
+      setTrackFile(file);
+      if (!trackTitle) {
+        setTrackTitle(file.name.replace(/\.[^/.]+$/, ""));
+      }
+    } else {
+      toast.error(t('studio.onboarding.pleaseDropAudio'));
+    }
+  };
+
+  const handleTrackFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setTrackFile(file);
+      if (!trackTitle) {
+        setTrackTitle(file.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
+  };
+
+  const handleTrackUpload = async () => {
+    if (!trackFile || !user || !artistProfileId) return;
+    
+    setTrackUploading(true);
+    try {
+      const audioPath = `${user.id}/${Date.now()}_${trackFile.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const { error: uploadError } = await supabase.storage
+        .from('tracks')
+        .upload(audioPath, trackFile);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('tracks')
+        .getPublicUrl(audioPath);
+      
+      const { error: insertError } = await supabase.from('tracks').insert({
+        artist_id: artistProfileId,
+        title: trackTitle || trackFile.name.replace(/\.[^/.]+$/, ""),
+        audio_url: publicUrl,
+      });
+      
+      if (insertError) throw insertError;
+      
+      // Update onboarding progress
+      await supabase
+        .from("artist_onboarding_progress")
+        .update({ has_uploaded_track: true })
+        .eq("user_id", user.id);
+      
+      setTrackUploaded(true);
+      toast.success(t('studio.onboarding.trackUploadedSuccess'));
+    } catch (error: any) {
+      toast.error(error.message || t('studio.onboarding.uploadError'));
+    } finally {
+      setTrackUploading(false);
+    }
+  };
 
   const STEPS = [
     { id: 0, title: t('studio.onboarding.steps.terms'), icon: FileText, description: t('studio.onboarding.steps.termsDesc') },
@@ -380,16 +484,65 @@ export default function StudioOnboarding() {
                 </div>
               </div>
 
-              <div className="bg-muted/30 rounded-lg p-6 text-center">
-                <div className="w-24 h-24 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                  <User className="h-12 w-12 text-muted-foreground" />
+              {/* Inline Avatar Upload */}
+              <div className="flex flex-col items-center">
+                <AvatarUploadProgress
+                  currentUrl={avatarUploaded ? undefined : null}
+                  fallback={formData.artistName?.charAt(0).toUpperCase() || "A"}
+                  size="xl"
+                  uploading={avatarUploader.uploading}
+                  progress={avatarUploader.progress}
+                  onFileSelect={avatarUploader.handleFileSelect}
+                  onDrop={avatarUploader.handleDrop}
+                  onDragOver={avatarUploader.handleDragOver}
+                  onDragLeave={avatarUploader.handleDragLeave}
+                  dragActive={avatarUploader.dragActive}
+                />
+                
+                <div 
+                  onDrop={avatarUploader.handleDrop}
+                  onDragOver={avatarUploader.handleDragOver}
+                  onDragLeave={avatarUploader.handleDragLeave}
+                  className={cn(
+                    "mt-6 w-full border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+                    avatarUploader.dragActive 
+                      ? "border-primary bg-primary/5" 
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  <Upload className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                  <p className="text-sm font-medium mb-1">
+                    {t('studio.onboarding.dragDropImage')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {t('studio.onboarding.supportedFormats')}
+                  </p>
+                  <label className="inline-block">
+                    <Button variant="outline" size="sm" asChild>
+                      <span>{t('studio.onboarding.chooseFile')}</span>
+                    </Button>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={avatarUploader.handleFileSelect}
+                      disabled={avatarUploader.uploading}
+                    />
+                  </label>
+                  
+                  {avatarUploader.uploading && (
+                    <p className="text-sm text-primary mt-3">
+                      {t('studio.onboarding.uploading')} {avatarUploader.progress}%
+                    </p>
+                  )}
+                  
+                  {avatarUploaded && !avatarUploader.uploading && (
+                    <p className="text-sm text-green-500 mt-3 flex items-center justify-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {t('studio.onboarding.imageUploaded')}
+                    </p>
+                  )}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t('studio.onboarding.addLater')}
-                </p>
-                <Button variant="outline" onClick={() => navigate('/studio/profile')}>
-                  {t('studio.onboarding.goToProfile')}
-                </Button>
               </div>
             </div>
           )}
@@ -406,15 +559,105 @@ export default function StudioOnboarding() {
                 </div>
               </div>
 
-              <div className="bg-muted/30 rounded-lg p-6 text-center">
-                <Music className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t('studio.onboarding.readyUpload')}
-                </p>
-                <Button variant="outline" onClick={() => navigate('/studio/tracks')}>
-                  {t('studio.onboarding.goToTracks')}
-                </Button>
-              </div>
+              {!trackUploaded ? (
+                <>
+                  {/* Track Title Input */}
+                  {trackFile && (
+                    <div>
+                      <Label htmlFor="trackTitle">{t('studio.onboarding.trackTitle')}</Label>
+                      <Input
+                        id="trackTitle"
+                        value={trackTitle}
+                        onChange={(e) => setTrackTitle(e.target.value)}
+                        placeholder={t('studio.onboarding.trackTitlePlaceholder')}
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Drag & Drop Zone */}
+                  <div 
+                    onDrop={handleTrackDrop}
+                    onDragOver={(e) => { e.preventDefault(); setTrackDragActive(true); }}
+                    onDragLeave={(e) => { e.preventDefault(); setTrackDragActive(false); }}
+                    className={cn(
+                      "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+                      trackDragActive 
+                        ? "border-primary bg-primary/5" 
+                        : trackFile 
+                          ? "border-green-500/50 bg-green-500/5" 
+                          : "border-border hover:border-primary/50"
+                    )}
+                  >
+                    {trackFile ? (
+                      <>
+                        <Music className="h-8 w-8 mx-auto mb-3 text-green-500" />
+                        <p className="text-sm font-medium">{trackFile.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {(trackFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="mt-2"
+                          onClick={() => setTrackFile(null)}
+                        >
+                          {t('studio.onboarding.removeFile')}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Music className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
+                        <p className="text-sm font-medium mb-1">
+                          {t('studio.onboarding.dragDropAudio')}
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-3">
+                          MP3, WAV, FLAC, AAC
+                        </p>
+                        <label className="inline-block">
+                          <Button variant="outline" size="sm" asChild>
+                            <span>{t('studio.onboarding.chooseFile')}</span>
+                          </Button>
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            className="hidden"
+                            onChange={handleTrackFileSelect}
+                          />
+                        </label>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Upload Button */}
+                  {trackFile && (
+                    <Button 
+                      onClick={handleTrackUpload}
+                      disabled={trackUploading}
+                      className="w-full"
+                    >
+                      {trackUploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {t('studio.onboarding.uploading')}
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-4 w-4 mr-2" />
+                          {t('studio.onboarding.uploadTrack')}
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <div className="bg-green-500/10 rounded-lg p-6 text-center">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-500" />
+                  <p className="font-medium text-green-500">
+                    {t('studio.onboarding.trackUploadedSuccess')}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

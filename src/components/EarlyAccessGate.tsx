@@ -107,12 +107,9 @@ export function EarlyAccessGate({ children }: EarlyAccessGateProps) {
     // Has access but not onboarded - redirect to onboarding
     // Admins skip onboarding check - they can always enter
     // Allow navigation to profile/tracks during onboarding (for step 2/3 actions)
-    const isAdmin = role === 'admin';
-    const ONBOARDING_ALLOWED_ROUTES = ['/studio/onboarding', '/studio/profile', '/studio/tracks'];
-    const isOnboardingAllowed = ONBOARDING_ALLOWED_ROUTES.some(route => 
-      location.pathname.startsWith(route)
-    );
-    if (!isAdmin && !artistOnboarded && !isOnboardingAllowed) {
+const isAdmin = role === 'admin';
+// Only allow onboarding page - users must complete or skip onboarding before accessing other studio pages
+if (!isAdmin && !artistOnboarded && !location.pathname.includes('/onboarding')) {
       return <Navigate to="/studio/onboarding" replace />;
     }
   } else {
