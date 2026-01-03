@@ -6,17 +6,22 @@ import { useSubscriptionAccess } from '@/hooks/useSubscriptionAccess';
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
 import { SubscriptionCTA } from './SubscriptionCTA';
-import { Json } from '@/integrations/supabase/types';
 
-interface Post {
+interface CommunityPost {
   id: string;
-  title: string | null;
+  community_id: string;
+  author_id: string;
+  author_type: 'artist' | 'fan';
   content: string;
-  tier_required: string;
-  created_at: string;
-  artist_id: string;
   media_urls: string[];
-  community_id: string | null;
+  post_type: 'text' | 'image' | 'video' | 'audio';
+  tier_required: string;
+  is_pinned: boolean;
+  is_archived: boolean;
+  reaction_count: number;
+  comment_count: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface CommunityFeedProps {
@@ -29,7 +34,7 @@ type SubscriptionTier = 'free' | 'bronze' | 'silver' | 'gold' | 'diamond';
 export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communityId }) => {
   const { user } = useAuth();
   const { canAccessTier, isArtistOwner, isLoading: subscriptionLoading } = useSubscriptionAccess(artistId);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [artist, setArtist] = useState<{ artist_name: string; avatar_url: string | null } | null>(null);
   const [community, setCommunity] = useState<{ id: string; name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,12 +69,18 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
       }
       setCommunity(communityData);
 
-      // Fetch posts - RLS will handle access control
+      if (!communityData) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch posts from community_posts - RLS handles access control
       const { data: postsData, error } = await supabase
-        .from('artist_posts')
+        .from('community_posts')
         .select('*')
-        .eq('artist_id', artistId)
-        .order('pinned', { ascending: false })
+        .eq('community_id', communityData.id)
+        .eq('is_archived', false)
+        .order('is_pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -79,10 +90,12 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
       }
 
       // Transform posts to ensure media_urls is always an array
-      const transformedPosts: Post[] = (postsData || []).map(post => ({
+      const transformedPosts: CommunityPost[] = (postsData || []).map(post => ({
         ...post,
+        author_type: post.author_type as 'artist' | 'fan',
+        post_type: post.post_type as 'text' | 'image' | 'video' | 'audio',
         media_urls: Array.isArray(post.media_urls) 
-          ? (post.media_urls as Json[]).map(url => String(url))
+          ? post.media_urls.map((url: unknown) => String(url))
           : []
       }));
 
