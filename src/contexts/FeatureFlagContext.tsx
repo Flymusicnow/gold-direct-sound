@@ -6,9 +6,12 @@ export type FeatureFlagKey =
   | 'SOCIAL_RITUALS_ENABLED'
   | 'REACH_ECONOMY_ENABLED'
   | 'LIVE_OS_V2_ENABLED'
-  | 'CONTEXTUAL_REPORTING_ENABLED';
+  | 'CONTEXTUAL_REPORTING_ENABLED'
+  | 'COMMUNITY_FEED'
+  | 'SUBSCRIPTION_TIERS'
+  | 'SPOTLIGHT_CAROUSEL';
 
-export type UserTier = 'free' | 'pro' | 'elite' | 'supporter' | 'enterprise';
+export type UserTier = 'free' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'pro' | 'elite' | 'supporter' | 'enterprise';
 
 interface FeatureFlag {
   id: string;
@@ -21,6 +24,10 @@ interface FeatureFlag {
   enabled_for_pro: boolean;
   enabled_for_elite: boolean;
   enabled_for_brands: boolean;
+  enabled_for_artists: string[];
+  config: Record<string, unknown>;
+  requires_legal_approval: boolean;
+  requires_payment_setup: boolean;
 }
 
 interface FeatureFlagContextType {
@@ -28,6 +35,7 @@ interface FeatureFlagContextType {
   fullFlags: Record<string, FeatureFlag>;
   isLoading: boolean;
   isEnabled: (key: FeatureFlagKey) => boolean;
+  isEnabledForArtist: (key: FeatureFlagKey, artistId: string) => boolean;
   checkTierAccess: (key: string, tier: UserTier) => boolean;
   refetch: () => Promise<void>;
 }
@@ -62,7 +70,11 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
           enabled_for_free: flag.enabled_for_free ?? true,
           enabled_for_pro: flag.enabled_for_pro ?? true,
           enabled_for_elite: flag.enabled_for_elite ?? true,
-          enabled_for_brands: flag.enabled_for_brands ?? false
+          enabled_for_brands: flag.enabled_for_brands ?? false,
+          enabled_for_artists: flag.enabled_for_artists ?? [],
+          config: flag.config ?? {},
+          requires_legal_approval: flag.requires_legal_approval ?? false,
+          requires_payment_setup: flag.requires_payment_setup ?? false
         };
       });
       
@@ -83,6 +95,17 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
     return flags[key] ?? false;
   };
 
+  const isEnabledForArtist = (key: FeatureFlagKey, artistId: string): boolean => {
+    const flag = fullFlags[key];
+    if (!flag) return false;
+    
+    // If globally enabled, allow for all
+    if (flag.is_enabled) return true;
+    
+    // Check artist-specific allowlist
+    return flag.enabled_for_artists?.includes(artistId) ?? false;
+  };
+
   const checkTierAccess = (key: string, tier: UserTier): boolean => {
     const flag = fullFlags[key];
     if (!flag) return true; // Feature not configured, allow by default
@@ -92,10 +115,14 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
     switch (tier) {
       case 'enterprise':
       case 'elite':
+      case 'diamond':
         return flag.enabled_for_elite;
       case 'pro':
       case 'supporter':
+      case 'gold':
+      case 'silver':
         return flag.enabled_for_pro;
+      case 'bronze':
       case 'free':
       default:
         return flag.enabled_for_free;
@@ -103,7 +130,7 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
   };
 
   return (
-    <FeatureFlagContext.Provider value={{ flags, fullFlags, isLoading, isEnabled, checkTierAccess, refetch: fetchFlags }}>
+    <FeatureFlagContext.Provider value={{ flags, fullFlags, isLoading, isEnabled, isEnabledForArtist, checkTierAccess, refetch: fetchFlags }}>
       {children}
     </FeatureFlagContext.Provider>
   );
