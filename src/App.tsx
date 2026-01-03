@@ -158,6 +158,12 @@ import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
 import { ScrollToTop } from "@/components/ScrollToTop";
 
+// Community pages
+import ArtistCommunityPage from "./pages/community/ArtistCommunityPage";
+import PostDetailPage from "./pages/community/PostDetailPage";
+import FeedPage from "./pages/community/FeedPage";
+import SubscribePage from "./pages/community/SubscribePage";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -243,6 +249,15 @@ const App = () => (
               <ArtistErrorBoundary>
                 <ArtistAchievements />
               </ArtistErrorBoundary>
+            } />
+            {/* Community routes */}
+            <Route path="/artist/:artistId/community" element={<ArtistCommunityPage />} />
+            <Route path="/post/:postId" element={<PostDetailPage />} />
+            <Route path="/subscribe/:artistId" element={<SubscribePage />} />
+            <Route path="/feed" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FeedPage />
+              </ProtectedRoute>
             } />
             <Route path="/studio/onboarding" element={
               <ProtectedRoute allowedRoles={['artist']}>
