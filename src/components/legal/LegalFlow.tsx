@@ -62,7 +62,7 @@ export const LegalFlow = ({ userType, onComplete, children }: LegalFlowProps) =>
   const progress = ((currentIndex + 1) / pendingDocs.length) * 100;
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-20 pb-safe">
       <div className="w-full max-w-md">
         {children}
         
