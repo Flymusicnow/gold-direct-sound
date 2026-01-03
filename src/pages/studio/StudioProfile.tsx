@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Save, User, X, Plus, Upload, CheckCircle, XCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Save, User, X, Plus, Upload, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 export default function StudioProfile() {
   const { user } = useAuth();
@@ -280,29 +280,6 @@ export default function StudioProfile() {
         
         <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
         <div className="max-w-4xl mx-auto space-y-6 md:space-y-8">
-          {/* Onboarding Banner - shown when user is in the middle of setup */}
-          {!artistOnboarded && (
-            <Card className="p-4 bg-primary/5 border-primary/20">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <CheckCircle className="h-5 w-5 text-primary" />
-                  <p className="text-sm text-muted-foreground">
-                    {t('studio.onboarding.inMiddleOfSetup')}
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => navigate('/studio/onboarding')}
-                  className="border-primary/50 hover:bg-primary/10"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {t('studio.onboarding.backToOnboarding')}
-                </Button>
-              </div>
-            </Card>
-          )}
-
           {/* Premium Header */}
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
