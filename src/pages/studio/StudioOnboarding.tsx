@@ -24,10 +24,16 @@ export default function StudioOnboarding() {
   const { artistOnboarded, loading: accessLoading } = useUserAccessState();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    artistName: "",
-    bio: "",
-    genre: "",
+  const [formData, setFormData] = useState(() => {
+    const saved = sessionStorage.getItem('studio-onboarding-draft');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return { artistName: "", bio: "", genre: "" };
+      }
+    }
+    return { artistName: "", bio: "", genre: "" };
   });
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
   const nameAvailability = useArtistNameAvailability(user?.id);
@@ -53,9 +59,32 @@ export default function StudioOnboarding() {
     
     const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "artist_agreement", "privacy_policy"]);
     if (allAccepted && currentStep === 0) {
+      // Restore saved step if exists
+      const savedStep = sessionStorage.getItem('studio-onboarding-step');
+      if (savedStep) {
+        const step = parseInt(savedStep, 10);
+        if (!isNaN(step) && step > 0) {
+          setCurrentStep(step);
+          return;
+        }
+      }
       setCurrentStep(1);
     }
   }, [hasAcceptedRequiredCurrentVersions, legalLoading, currentStep, accessLoading]);
+
+  // Save form data to sessionStorage
+  useEffect(() => {
+    if (formData.artistName || formData.bio || formData.genre) {
+      sessionStorage.setItem('studio-onboarding-draft', JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  // Save current step to sessionStorage
+  useEffect(() => {
+    if (currentStep > 0) {
+      sessionStorage.setItem('studio-onboarding-step', String(currentStep));
+    }
+  }, [currentStep]);
 
   // Show loading while checking onboarding status
   if (accessLoading) {
@@ -146,6 +175,9 @@ export default function StudioOnboarding() {
               updated_at: new Date().toISOString()
             }, { onConflict: 'user_id' });
         }
+        // Clear sessionStorage on completion
+        sessionStorage.removeItem('studio-onboarding-draft');
+        sessionStorage.removeItem('studio-onboarding-step');
         toast.success(t('studio.onboarding.welcomeSuccess'));
         navigate('/studio', { replace: true });
       } catch (error) {
@@ -203,7 +235,7 @@ export default function StudioOnboarding() {
   }
 
   return (
-    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-20 pb-safe">
+    <div className="min-h-dvh bg-background flex flex-col items-center p-4 pt-20 pb-20 overflow-y-auto">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
