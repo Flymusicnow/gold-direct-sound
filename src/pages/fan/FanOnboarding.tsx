@@ -13,7 +13,14 @@ export default function FanOnboarding() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [step, setStep] = useState(0); // 0 = legal, 1 = features, 2 = complete
+  const [step, setStep] = useState(() => {
+    const savedStep = sessionStorage.getItem('fan-onboarding-step');
+    if (savedStep) {
+      const s = parseInt(savedStep, 10);
+      if (!isNaN(s) && s > 0) return s;
+    }
+    return 0;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { hasAcceptedRequiredCurrentVersions, loading: legalLoading } = useLegalAcceptance();
 
@@ -22,10 +29,17 @@ export default function FanOnboarding() {
     if (legalLoading) return;
     
     const allAccepted = hasAcceptedRequiredCurrentVersions(["user_agreement", "privacy_policy"]);
-    if (allAccepted) {
+    if (allAccepted && step === 0) {
       setStep(1);
     }
-  }, [hasAcceptedRequiredCurrentVersions, legalLoading]);
+  }, [hasAcceptedRequiredCurrentVersions, legalLoading, step]);
+
+  // Save step to sessionStorage
+  useEffect(() => {
+    if (step > 0) {
+      sessionStorage.setItem('fan-onboarding-step', String(step));
+    }
+  }, [step]);
 
   const handleLegalComplete = () => {
     setStep(1);
@@ -51,6 +65,7 @@ export default function FanOnboarding() {
         }
         setIsSubmitting(false);
       }
+      sessionStorage.removeItem('fan-onboarding-step');
       navigate('/fan/feed', { replace: true });
     }
   };
@@ -72,6 +87,7 @@ export default function FanOnboarding() {
       }
       setIsSubmitting(false);
     }
+    sessionStorage.removeItem('fan-onboarding-step');
     navigate('/fan/feed', { replace: true });
   };
 
@@ -94,7 +110,7 @@ export default function FanOnboarding() {
   }
 
   return (
-    <div className="min-h-dvh bg-background flex items-center justify-center p-4 pt-20 pb-safe overflow-y-auto">
+    <div className="min-h-dvh bg-background flex flex-col items-center p-4 pt-20 pb-20 overflow-y-auto">
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
