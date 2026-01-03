@@ -463,30 +463,39 @@ export type Database = {
       artist_posts: {
         Row: {
           artist_id: string
+          community_id: string | null
           content: string
           created_at: string | null
           id: string
+          media_urls: Json | null
           pinned: boolean | null
+          tier_required: string | null
           title: string | null
           updated_at: string | null
           visibility: string
         }
         Insert: {
           artist_id: string
+          community_id?: string | null
           content: string
           created_at?: string | null
           id?: string
+          media_urls?: Json | null
           pinned?: boolean | null
+          tier_required?: string | null
           title?: string | null
           updated_at?: string | null
           visibility?: string
         }
         Update: {
           artist_id?: string
+          community_id?: string | null
           content?: string
           created_at?: string | null
           id?: string
+          media_urls?: Json | null
           pinned?: boolean | null
+          tier_required?: string | null
           title?: string | null
           updated_at?: string | null
           visibility?: string
@@ -497,6 +506,13 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: false
             referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -617,6 +633,7 @@ export type Database = {
         Row: {
           artist_name: string
           avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           city: string | null
           country: string | null
@@ -636,6 +653,7 @@ export type Database = {
         Insert: {
           artist_name: string
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           city?: string | null
           country?: string | null
@@ -655,6 +673,7 @@ export type Database = {
         Update: {
           artist_name?: string
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           city?: string | null
           country?: string | null
@@ -1679,6 +1698,41 @@ export type Database = {
           },
         ]
       }
+      communities: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communities_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: true
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       crowd_push_participants: {
         Row: {
           crowd_push_id: string
@@ -2122,8 +2176,10 @@ export type Database = {
       }
       feature_flags: {
         Row: {
+          config: Json | null
           created_at: string
           description: string | null
+          enabled_for_artists: string[] | null
           enabled_for_brands: boolean | null
           enabled_for_elite: boolean | null
           enabled_for_free: boolean | null
@@ -2132,12 +2188,16 @@ export type Database = {
           flag_name: string
           id: string
           is_enabled: boolean
+          requires_legal_approval: boolean | null
+          requires_payment_setup: boolean | null
           requires_subscription: boolean | null
           updated_at: string
         }
         Insert: {
+          config?: Json | null
           created_at?: string
           description?: string | null
+          enabled_for_artists?: string[] | null
           enabled_for_brands?: boolean | null
           enabled_for_elite?: boolean | null
           enabled_for_free?: boolean | null
@@ -2146,12 +2206,16 @@ export type Database = {
           flag_name: string
           id?: string
           is_enabled?: boolean
+          requires_legal_approval?: boolean | null
+          requires_payment_setup?: boolean | null
           requires_subscription?: boolean | null
           updated_at?: string
         }
         Update: {
+          config?: Json | null
           created_at?: string
           description?: string | null
+          enabled_for_artists?: string[] | null
           enabled_for_brands?: boolean | null
           enabled_for_elite?: boolean | null
           enabled_for_free?: boolean | null
@@ -2160,6 +2224,8 @@ export type Database = {
           flag_name?: string
           id?: string
           is_enabled?: boolean
+          requires_legal_approval?: boolean | null
+          requires_payment_setup?: boolean | null
           requires_subscription?: boolean | null
           updated_at?: string
         }
@@ -2896,6 +2962,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      post_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          reaction_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          reaction_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          reaction_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "artist_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       premium_plans: {
         Row: {
@@ -4751,6 +4849,7 @@ export type Database = {
         Returns: Json
       }
       set_app_mode: { Args: { _mode: string }; Returns: boolean }
+      tier_level: { Args: { tier: string }; Returns: number }
       update_taste_profile: {
         Args: {
           _artist_id: string
@@ -4783,6 +4882,10 @@ export type Database = {
             }
             Returns: string
           }
+      user_can_view_post: {
+        Args: { p_artist_id: string; p_tier_required: string }
+        Returns: boolean
+      }
       validate_fan_invite_code: { Args: { _code: string }; Returns: Json }
       validate_invite_code_universal: { Args: { _code: string }; Returns: Json }
     }
