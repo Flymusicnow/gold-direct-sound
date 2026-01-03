@@ -1081,6 +1081,7 @@ export const sv = {
       resendLink: 'Skicka ny länk',
       backToSignIn: 'Till inloggning',
       couldNotUpdate: 'Kunde inte uppdatera lösenordet. Försök igen.',
+      samePasswordError: 'Det nya lösenordet måste vara annorlunda än ditt nuvarande lösenord',
     },
   },
   empty: {

@@ -1112,6 +1112,7 @@ export const en = {
       resendLink: 'Resend reset link',
       backToSignIn: 'Back to sign in',
       couldNotUpdate: 'Could not update password. Please try again.',
+      samePasswordError: 'New password must be different from your current password',
     },
   },
   empty: {

@@ -140,6 +140,12 @@ export default function Recovery() {
       });
 
       if (error) {
+        // Handle same password error specifically
+        if (error.message.includes('same_password') || 
+            error.message.includes('different from the old password')) {
+          setPasswordError(t('auth.recoveryPage.samePasswordError'));
+          return;
+        }
         if (error.message.includes('expired') || error.message.includes('session')) {
           setPageState('expired');
           return;
