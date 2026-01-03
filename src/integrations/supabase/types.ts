@@ -1701,26 +1701,44 @@ export type Database = {
       communities: {
         Row: {
           artist_id: string
+          banner_media_type: string | null
+          banner_media_url: string | null
+          community_rules: string | null
           created_at: string | null
           description: string | null
           id: string
+          moderators: Json
           name: string
+          settings: Json
+          spotlight_carousel: Json
           updated_at: string | null
         }
         Insert: {
           artist_id: string
+          banner_media_type?: string | null
+          banner_media_url?: string | null
+          community_rules?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          moderators?: Json
           name: string
+          settings?: Json
+          spotlight_carousel?: Json
           updated_at?: string | null
         }
         Update: {
           artist_id?: string
+          banner_media_type?: string | null
+          banner_media_url?: string | null
+          community_rules?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
+          moderators?: Json
           name?: string
+          settings?: Json
+          spotlight_carousel?: Json
           updated_at?: string | null
         }
         Relationships: [
@@ -1729,6 +1747,65 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: true
             referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          author_id: string
+          author_type: string
+          comment_count: number
+          community_id: string
+          content: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_pinned: boolean
+          media_urls: Json
+          post_type: string
+          reaction_count: number
+          tier_required: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_type: string
+          comment_count?: number
+          community_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_pinned?: boolean
+          media_urls?: Json
+          post_type?: string
+          reaction_count?: number
+          tier_required?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_type?: string
+          comment_count?: number
+          community_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_pinned?: boolean
+          media_urls?: Json
+          post_type?: string
+          reaction_count?: number
+          tier_required?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -2963,26 +3040,77 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          author_id: string
+          content: string
+          created_at: string
+          id: string
+          is_deleted: boolean
+          parent_comment_id: string | null
+          post_id: string
+          reaction_count: number
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          parent_comment_id?: string | null
+          post_id: string
+          reaction_count?: number
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_deleted?: boolean
+          parent_comment_id?: string | null
+          post_id?: string
+          reaction_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "post_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_reactions: {
         Row: {
-          created_at: string | null
+          created_at: string
           id: string
           post_id: string
-          reaction_type: string | null
+          reaction_type: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           post_id: string
-          reaction_type?: string | null
+          reaction_type?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           id?: string
           post_id?: string
-          reaction_type?: string | null
+          reaction_type?: string
           user_id?: string
         }
         Relationships: [
@@ -2990,7 +3118,7 @@ export type Database = {
             foreignKeyName: "post_reactions_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
-            referencedRelation: "artist_posts"
+            referencedRelation: "community_posts"
             referencedColumns: ["id"]
           },
         ]
@@ -4850,6 +4978,7 @@ export type Database = {
       }
       set_app_mode: { Args: { _mode: string }; Returns: boolean }
       tier_level: { Args: { tier: string }; Returns: number }
+      tier_rank: { Args: { tier: string }; Returns: number }
       update_taste_profile: {
         Args: {
           _artist_id: string

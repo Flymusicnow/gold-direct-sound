@@ -11,7 +11,7 @@ export const usePostReactions = (postId: string) => {
 
   const fetchReactions = useCallback(async () => {
     try {
-      // Get count
+      // Get count from post_reactions table (references community_posts)
       const { count, error: countError } = await supabase
         .from('post_reactions')
         .select('*', { count: 'exact', head: true })

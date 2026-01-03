@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +31,6 @@ export const PostComposer: React.FC<PostComposerProps> = ({
   onPostCreated
 }) => {
   const { user } = useAuth();
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tierRequired, setTierRequired] = useState('free');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,19 +42,19 @@ export const PostComposer: React.FC<PostComposerProps> = ({
     setIsSubmitting(true);
     try {
       const { error } = await supabase
-        .from('artist_posts')
+        .from('community_posts')
         .insert({
-          artist_id: artistId,
           community_id: communityId,
-          title: title.trim() || null,
+          author_id: user.id,
+          author_type: isArtist ? 'artist' : 'fan',
           content: content.trim(),
+          post_type: 'text',
           tier_required: isArtist ? tierRequired : 'free',
-          visibility: 'public'
+          media_urls: []
         });
 
       if (error) throw error;
 
-      setTitle('');
       setContent('');
       setTierRequired('free');
       toast.success('Post published!');
@@ -79,23 +77,12 @@ export const PostComposer: React.FC<PostComposerProps> = ({
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Title (optional)</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Post title..."
-              className="mt-1.5"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="content">Content</Label>
+            <Label htmlFor="content">What's on your mind?</Label>
             <Textarea
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's on your mind?"
+              placeholder="Share something with the community..."
               className="mt-1.5 min-h-[120px] resize-none"
               required
             />
