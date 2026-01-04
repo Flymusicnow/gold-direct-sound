@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Crown, Loader2 } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Check, Crown, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
+import { useSubscriptionPolling } from '@/hooks/useSubscriptionPolling';
 
 interface SupporterTier {
   id: string;
@@ -34,12 +36,21 @@ const TIER_COLORS: Record<string, string> = {
 
 const SubscribePage: React.FC = () => {
   const { artistId } = useParams<{ artistId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tiers, setTiers] = useState<SupporterTier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [subscribingTier, setSubscribingTier] = useState<string | null>(null);
+
+  // Check for success redirect
+  const isSuccessRedirect = searchParams.get('success') === 'true';
+  const sessionId = searchParams.get('session_id');
+
+  // Poll for subscription activation after checkout
+  const { status: pollingStatus } = useSubscriptionPolling(artistId, isSuccessRedirect);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,6 +93,16 @@ const SubscribePage: React.FC = () => {
     fetchData();
   }, [artistId]);
 
+  // Redirect to community on successful activation
+  useEffect(() => {
+    if (pollingStatus === 'active' && artistId) {
+      toast.success('Subscription activated!');
+      setTimeout(() => {
+        navigate(`/artist/${artistId}/community`);
+      }, 1500);
+    }
+  }, [pollingStatus, artistId, navigate]);
+
   const handleSubscribe = async (tier: SupporterTier) => {
     if (!user) {
       toast.error('Please sign in to subscribe');
@@ -96,11 +117,21 @@ const SubscribePage: React.FC = () => {
     try {
       const { data, error } = await supabase.functions.invoke('create-supporter-checkout', {
         body: {
-          artist_id: artistId,
-          tier_slug: tier.slug,
-          return_url: `${window.location.origin}/artist/${artistId}/community`
+          artistId,
+          tier: tier.slug,
+          tierId: tier.id,
+          success_url: `${window.location.origin}/subscribe/${artistId}?success=true`,
+          cancel_url: `${window.location.origin}/artist/${artistId}/community`,
+          locale: language
         }
       });
+
+      // Handle LEGAL_REQUIRED error
+      if (error?.message?.includes('LEGAL_REQUIRED') || data?.code === 'LEGAL_REQUIRED') {
+        const returnUrl = encodeURIComponent(`/subscribe/${artistId}`);
+        navigate(`/legal?redirect=${returnUrl}`);
+        return;
+      }
 
       if (error) throw error;
 
@@ -109,8 +140,16 @@ const SubscribePage: React.FC = () => {
       } else {
         throw new Error('No checkout URL returned');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating checkout:', error);
+      
+      // Check for LEGAL_REQUIRED in error response
+      if (error?.message?.includes('LEGAL_REQUIRED')) {
+        const returnUrl = encodeURIComponent(`/subscribe/${artistId}`);
+        navigate(`/legal?redirect=${returnUrl}`);
+        return;
+      }
+      
       toast.error('Failed to start checkout. Please try again.');
     } finally {
       setSubscribingTier(null);
@@ -124,6 +163,56 @@ const SubscribePage: React.FC = () => {
       navigate(-1);
     }
   };
+
+  // Show activation state
+  if (isSuccessRedirect) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md w-full mx-4">
+          <CardContent className="pt-6 text-center">
+            {pollingStatus === 'polling' && (
+              <>
+                <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Activating your subscription...</h2>
+                <p className="text-muted-foreground">This usually takes just a few seconds.</p>
+              </>
+            )}
+            {pollingStatus === 'active' && (
+              <>
+                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Subscription activated!</h2>
+                <p className="text-muted-foreground">Redirecting to community...</p>
+              </>
+            )}
+            {pollingStatus === 'timeout' && (
+              <>
+                <AlertCircle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Taking longer than expected</h2>
+                <p className="text-muted-foreground mb-4">
+                  Your payment was successful. The subscription should activate shortly.
+                </p>
+                <Button onClick={() => navigate(`/artist/${artistId}/community`)}>
+                  Go to Community
+                </Button>
+              </>
+            )}
+            {pollingStatus === 'error' && (
+              <>
+                <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+                <p className="text-muted-foreground mb-4">
+                  Please try refreshing or contact support.
+                </p>
+                <Button onClick={() => window.location.reload()}>
+                  Refresh
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

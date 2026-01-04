@@ -358,16 +358,30 @@ serve(async (req) => {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
         
+        // Map Stripe status to DB status per SUPER CARD
+        const STATUS_MAP: Record<string, string> = {
+          active: 'active',
+          past_due: 'past_due',
+          canceled: 'cancelled',
+          unpaid: 'expired',
+          incomplete: 'pending',
+          incomplete_expired: 'expired',
+          trialing: 'active',
+          paused: 'past_due',
+        };
+        
+        const dbStatus = STATUS_MAP[subscription.status] || subscription.status;
+        
         await supabaseAdmin
           .from("supporter_subscriptions")
           .update({
-            status: subscription.status,
+            status: dbStatus,
             current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
             current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);
 
-        log('SUBSCRIPTION_UPDATED', { subscriptionId: subscription.id, status: subscription.status });
+        log('SUBSCRIPTION_UPDATED', { subscriptionId: subscription.id, stripeStatus: subscription.status, dbStatus });
         break;
       }
 
@@ -377,7 +391,8 @@ serve(async (req) => {
         await supabaseAdmin
           .from("supporter_subscriptions")
           .update({
-            status: "canceled",
+            status: "cancelled",
+            current_period_end: new Date().toISOString(),
           })
           .eq("stripe_subscription_id", subscription.id);
 
