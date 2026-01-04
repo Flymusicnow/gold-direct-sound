@@ -14,8 +14,10 @@ const logStep = (step: string, details?: any) => {
 
 // Default tier prices (fallback when no custom tiers)
 const DEFAULT_PRICES = {
-  basic: { priceId: 'price_1SYxCzCSRAUHY3L4d2VZBrg8', priceCents: 4900 },
-  gold: { priceId: 'price_1SYxDyCSRAUHY3L4VXlGOcZb', priceCents: 9900 },
+  bronze: { priceId: 'price_1SYxCzCSRAUHY3L4d2VZBrg8', priceCents: 4900 },
+  silver: { priceId: 'price_1SYxDyCSRAUHY3L4VXlGOcZb', priceCents: 9900 },
+  gold: { priceId: 'price_1SYxEyCSRAUHY3L4VXlGOcZc', priceCents: 24900 },
+  diamond: { priceId: 'price_1SYxFyCSRAUHY3L4VXlGOcZd', priceCents: 34900 },
 };
 
 serve(async (req) => {
@@ -43,12 +45,35 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
     logStep("User authenticated", { userId: user.id, email: user.email });
 
-    const { artistId, tier, tierId } = await req.json();
+    const { artistId, tier, tierId, success_url, cancel_url, locale } = await req.json();
     
     if (!artistId || !tier) {
       throw new Error("Missing required fields: artistId, tier");
     }
     logStep("Request params", { artistId, tier, tierId });
+
+    // Legal gate: verify user has accepted terms_and_conditions AND nda
+    const { data: legalDocs, error: legalError } = await supabaseAdmin
+      .from('legal_acceptances')
+      .select('document_type')
+      .eq('user_id', user.id);
+    
+    if (legalError) {
+      logStep("Legal check error", { error: legalError.message });
+      throw new Error("Failed to verify legal acceptance");
+    }
+
+    const hasTerms = legalDocs?.some(d => d.document_type === 'terms_and_conditions');
+    const hasNda = legalDocs?.some(d => d.document_type === 'nda');
+
+    if (!hasTerms || !hasNda) {
+      logStep("Legal gate failed", { hasTerms, hasNda });
+      return new Response(
+        JSON.stringify({ error: 'LEGAL_REQUIRED', code: 'LEGAL_REQUIRED' }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    logStep("Legal gate passed");
 
     // Get artist profile
     const { data: artist, error: artistError } = await supabaseAdmin
@@ -120,6 +145,15 @@ serve(async (req) => {
     }
 
     // Build checkout session params
+    const origin = req.headers.get("origin") || 'https://flymusic.app';
+    const defaultSuccessUrl = `${origin}/subscribe/${artistId}?success=true`;
+    const defaultCancelUrl = `${origin}/artist/${artistId}/community`;
+    
+    // Add session_id to success URL for client-side verification
+    const finalSuccessUrl = success_url 
+      ? `${success_url}${success_url.includes('?') ? '&' : '?'}session_id={CHECKOUT_SESSION_ID}`
+      : `${defaultSuccessUrl}&session_id={CHECKOUT_SESSION_ID}`;
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -130,8 +164,9 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/fan/supporter?success=true`,
-      cancel_url: `${req.headers.get("origin")}/artist/${artistId}`,
+      success_url: finalSuccessUrl,
+      cancel_url: cancel_url || defaultCancelUrl,
+      locale: locale === 'sv' ? 'sv' : 'en',
       metadata: {
         fan_user_id: user.id,
         artist_id: artistId,
