@@ -57,6 +57,7 @@ import StudioLiveStreams from "./pages/studio/StudioLiveStreams";
 import StudioPromo from "./pages/studio/StudioPromo";
 import StudioSettings from "./pages/studio/StudioSettings";
 import StudioPresskit from "./pages/studio/StudioPresskit";
+import StudioCommunity from "./pages/studio/StudioCommunity";
 import StudioOpportunities from "./pages/studio/StudioOpportunities";
 import PromoPreview from "./pages/PromoPreview";
 import PublicPresskit from "./pages/PublicPresskit";
@@ -372,6 +373,11 @@ const App = () => (
             <Route path="/studio/verification" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioVerification />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/community" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioCommunity />
               </ProtectedRoute>
             } />
             <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
