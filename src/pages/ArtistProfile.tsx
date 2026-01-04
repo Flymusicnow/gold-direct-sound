@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -590,6 +590,13 @@ export default function ArtistProfile() {
                 >
                   About
                 </TabsTrigger>
+                <TabsTrigger
+                  value="community"
+                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
+                >
+                  <Users className="w-4 h-4 mr-2" />
+                  Community
+                </TabsTrigger>
               </TabsList>
 
               {/* Tracks Tab */}
@@ -750,8 +757,22 @@ export default function ArtistProfile() {
               </TabsContent>
 
               {/* About Tab */}
-              <TabsContent value="about" className="mt-0">
-                <ArtistAboutSection artist={artist} />
+              {/* Community Tab */}
+              <TabsContent value="community" className="mt-0">
+                <div className="text-center py-12 bg-card/50 rounded-xl border border-border">
+                  <Users className="h-16 w-16 mx-auto text-primary/50 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">Join {artist.artist_name}'s Community</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Get exclusive posts, behind-the-scenes content and connect with other fans.
+                  </p>
+                  <Button 
+                    onClick={() => navigate(`/artist/${artist.id}/community`)} 
+                    className="gap-2 bg-primary hover:bg-primary/90"
+                  >
+                    <Crown className="h-4 w-4" />
+                    Enter Community
+                  </Button>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
