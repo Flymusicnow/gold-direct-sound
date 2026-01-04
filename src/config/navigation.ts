@@ -126,6 +126,7 @@ export const artistNavConfig: NavConfig = {
     {
       title: "Engage",
       items: [
+        { icon: Users, label: "Community", path: "/studio/community", i18nKey: "nav.community" },
         { icon: ShoppingBag, label: "Merch", path: "/studio/merch", i18nKey: "nav.merch" },
         { icon: Radio, label: "Live", path: "/studio/live", i18nKey: "nav.liveStreams" },
         { icon: Calendar, label: "Events", path: "/studio/events", i18nKey: "nav.events" },
