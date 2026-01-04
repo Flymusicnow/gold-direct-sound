@@ -214,24 +214,25 @@ export default function StudioCommunity() {
   }
 
   return (
-    <div className="container max-w-4xl py-8 space-y-6">
+    <div className="container max-w-4xl py-4 md:py-8 px-4 md:px-6 space-y-4 md:space-y-6 pb-24 md:pb-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Users className="h-6 w-6" />
+          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+            <Users className="h-5 w-5 md:h-6 md:w-6" />
             {t("studio.communitySettings")}
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-sm md:text-base text-muted-foreground mt-1">
             {t("studio.communitySettingsDescription")}
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handlePreview}>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button variant="outline" onClick={handlePreview} className="flex-1 md:flex-none">
             <Eye className="h-4 w-4 mr-2" />
-            {t("studio.previewCommunity")}
+            <span className="hidden sm:inline">{t("studio.previewCommunity")}</span>
+            <span className="sm:hidden">{t("common.preview")}</span>
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button onClick={handleSave} disabled={isSaving} className="flex-1 md:flex-none">
             <Save className="h-4 w-4 mr-2" />
             {isSaving ? t("common.saving") : t("common.save")}
           </Button>

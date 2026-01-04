@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, User, Music, Calendar, BarChart3, MessageSquare, Sparkles, Video, FolderOpen, Crown, Star, Users, ShoppingBag, Radio, DollarSign, Link2, Settings, FileText, Briefcase, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
@@ -8,48 +8,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { artistNavConfig } from "@/config/navigation";
 
-const navSections = [
-  {
-    title: "Content",
-    items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
-      { icon: User, label: "Profile", path: "/studio/profile" },
-      { icon: Music, label: "Tracks", path: "/studio/tracks" },
-      { icon: Video, label: "Videos", path: "/studio/videos" },
-      { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
-      { icon: FileText, label: "Press Kit", path: "/studio/presskit" },
-    ]
-  },
-  {
-    title: "Distribution",
-    items: [
-      { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
-      { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
-      { icon: Radio, label: "Live", path: "/studio/live" },
-      { icon: Calendar, label: "Events", path: "/studio/events" },
-    ]
-  },
-  {
-    title: "Engagement",
-    items: [
-      { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
-      { icon: Link2, label: "Promo Hub", path: "/studio/promo" },
-      { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
-      { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
-      { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
-    ]
-  },
-  {
-    title: "Business",
-    items: [
-      { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities" },
-      { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
-      { icon: Crown, label: "Membership", path: "/studio/subscription" },
-      { icon: Settings, label: "Settings", path: "/studio/settings" },
-    ]
-  }
-];
+// Use centralized navigation config
+const navSections = artistNavConfig.sections;
 
 // Onboarding progress banner component
 function OnboardingProgressBanner() {
