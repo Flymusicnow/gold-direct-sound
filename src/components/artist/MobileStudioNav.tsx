@@ -1,9 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { 
-  LayoutDashboard, User, Music, Video, Calendar, BarChart3, MessageSquare, 
-  Users, ShoppingBag, Radio, Star, Crown, Menu, Search, X, FolderOpen, 
-  Sparkles, Settings, FileText, Link2, Briefcase, DollarSign 
-} from "lucide-react";
+import { LayoutDashboard, Menu, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,52 +16,11 @@ import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { motion } from "framer-motion";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { artistNavConfig, getFlatNavItems } from "@/config/navigation";
 
-const navSections = [
-  {
-    title: "Content",
-    items: [
-      { icon: LayoutDashboard, label: "Dashboard", path: "/studio" },
-      { icon: User, label: "Profile", path: "/studio/profile" },
-      { icon: Music, label: "Tracks", path: "/studio/tracks" },
-      { icon: Video, label: "Videos", path: "/studio/videos" },
-      { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
-      { icon: FileText, label: "Press Kit", path: "/studio/presskit" },
-      { icon: Star, label: "Verification", path: "/studio/verification" },
-    ]
-  },
-  {
-    title: "Distribution",
-    items: [
-      { icon: Users, label: "Collaborations", path: "/studio/collaborations" },
-      { icon: ShoppingBag, label: "Merch", path: "/studio/merch" },
-      { icon: Radio, label: "Live", path: "/studio/live" },
-      { icon: Calendar, label: "Events", path: "/studio/events" },
-    ]
-  },
-  {
-    title: "Engagement",
-    items: [
-      { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight" },
-      { icon: Link2, label: "Promo Hub", path: "/studio/promo" },
-      { icon: BarChart3, label: "Analytics", path: "/studio/analytics" },
-      { icon: MessageSquare, label: "Comments", path: "/studio/comments" },
-      { icon: Star, label: "Testimonials", path: "/studio/testimonials" },
-    ]
-  },
-  {
-    title: "Business",
-    items: [
-      { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities" },
-      { icon: DollarSign, label: "Earnings", path: "/studio/earnings" },
-      { icon: Crown, label: "Membership", path: "/studio/subscription" },
-      { icon: Settings, label: "Settings", path: "/studio/settings" },
-    ]
-  }
-];
-
-// Flatten for search functionality
-const allNavItems = navSections.flatMap(section => section.items);
+// Use centralized navigation config
+const navSections = artistNavConfig.sections;
+const allNavItems = getFlatNavItems(artistNavConfig);
 
 interface MobileStudioNavProps {
   inSheet?: boolean;
