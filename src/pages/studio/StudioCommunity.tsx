@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Users, Image, Eye, Save, Upload, Crown, ExternalLink, Trash2 } from "lucide-react";
+import { Users, Image, Eye, Save, Upload, Crown, ExternalLink, Trash2, ArrowLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 
 interface Community {
   id: string;
@@ -190,42 +191,58 @@ export default function StudioCommunity() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-4xl py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-muted rounded w-1/3" />
-          <div className="h-64 bg-muted rounded" />
+      <StudioLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/3" />
+            <div className="h-64 bg-muted rounded" />
+          </div>
         </div>
-      </div>
+      </StudioLayout>
     );
   }
 
   if (!community) {
     return (
-      <div className="container max-w-4xl py-8">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{t("studio.communityNotFound")}</h2>
-            <p className="text-muted-foreground">{t("studio.communitySetupPending")}</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StudioLayout>
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+              <h2 className="text-xl font-semibold mb-2">{t("studio.communityNotFound")}</h2>
+              <p className="text-muted-foreground">{t("studio.communitySetupPending")}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </StudioLayout>
     );
   }
 
   return (
-    <div className="container max-w-4xl py-4 md:py-8 px-4 md:px-6 space-y-4 md:space-y-6 pb-24 md:pb-8">
-      {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
-            <Users className="h-5 w-5 md:h-6 md:w-6" />
-            {t("studio.communitySettings")}
-          </h1>
-          <p className="text-sm md:text-base text-muted-foreground mt-1">
-            {t("studio.communitySettingsDescription")}
-          </p>
-        </div>
+    <StudioLayout>
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 pb-24 md:pb-8">
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate(-1)}
+          className="mb-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("common.back")}
+        </Button>
+
+        {/* Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
+              <Users className="h-5 w-5 md:h-6 md:w-6" />
+              {t("studio.communitySettings")}
+            </h1>
+            <p className="text-sm md:text-base text-muted-foreground mt-1">
+              {t("studio.communitySettingsDescription")}
+            </p>
+          </div>
         <div className="flex gap-2 w-full md:w-auto">
           <Button variant="outline" onClick={handlePreview} className="flex-1 md:flex-none">
             <Eye className="h-4 w-4 mr-2" />
@@ -374,7 +391,8 @@ export default function StudioCommunity() {
             <ExternalLink className="h-4 w-4 ml-auto" />
           </Button>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </div>
+    </StudioLayout>
   );
 }

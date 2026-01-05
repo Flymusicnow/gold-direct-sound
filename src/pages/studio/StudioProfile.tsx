@@ -173,7 +173,7 @@ export default function StudioProfile() {
   // Create profile form (no pending screen - direct to studio after creation)
   if (!hasProfile) {
     return (
-      <div className="h-screen overflow-hidden flex">
+      <div className="h-screen overflow-hidden flex pt-16">
         <StudioSidebar />
         <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-8">
           <div className="max-w-2xl mx-auto">
@@ -274,7 +274,7 @@ export default function StudioProfile() {
   // Main profile edit view (removed pending approval screen)
   return (
     <>
-      <div className="h-screen overflow-hidden flex">
+      <div className="h-screen overflow-hidden flex pt-16">
         <StudioSidebar />
         <MobileStudioNav />
         
