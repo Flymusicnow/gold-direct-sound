@@ -417,6 +417,7 @@ const App = () => (
             <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
             <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
             <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
+            <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />
             <Route path="/fan/feed" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanFeed />
