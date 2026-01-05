@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,6 +46,7 @@ export default function StudioCommunity() {
   const [communityRules, setCommunityRules] = useState("");
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [bannerType, setBannerType] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const fetchCommunityData = useCallback(async () => {
     if (!user?.id) return;
@@ -183,6 +185,80 @@ export default function StudioCommunity() {
     setBannerType(null);
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    const file = e.dataTransfer.files?.[0];
+    if (!file || !community?.id || !artistProfile?.id) return;
+    
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    
+    if (!isImage && !isVideo) {
+      toast.error("Please upload an image or video file");
+      return;
+    }
+    
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("File size must be less than 50MB");
+      return;
+    }
+    
+    // Reuse upload logic
+    setIsUploading(true);
+    setUploadProgress(0);
+    
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${artistProfile.id}/banner-${Date.now()}.${fileExt}`;
+      
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 10, 90));
+      }, 200);
+      
+      const { data, error } = await supabase.storage
+        .from("community-banners")
+        .upload(fileName, file, {
+          cacheControl: "3600",
+          upsert: true,
+        });
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      if (error) throw error;
+      
+      const { data: publicUrlData } = supabase.storage
+        .from("community-banners")
+        .getPublicUrl(data.path);
+      
+      setBannerUrl(publicUrlData.publicUrl);
+      setBannerType(isImage ? "image" : "video");
+      
+      toast.success(t("common.success"));
+    } catch (error) {
+      console.error("Error uploading banner:", error);
+      toast.error(t("errors.uploadFailed"));
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
   const handlePreview = () => {
     if (artistProfile?.id) {
       window.open(`/artist/${artistProfile.id}/community`, "_blank");
@@ -295,7 +371,17 @@ export default function StudioCommunity() {
               </Button>
             </div>
           ) : (
-            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+            <div 
+              className={cn(
+                "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+                dragActive 
+                  ? "border-primary bg-primary/10" 
+                  : "border-border"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <p className="text-muted-foreground mb-4">
                 {t("studio.dragDropBanner")}

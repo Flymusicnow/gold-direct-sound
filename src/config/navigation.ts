@@ -104,17 +104,19 @@ export const artistNavConfig: NavConfig = {
   sections: [
     {
       title: "Create",
+      i18nKey: "nav.studioSections.create",
       items: [
         { icon: LayoutDashboard, label: "Dashboard", path: "/studio", i18nKey: "nav.dashboard" },
         { icon: User, label: "Profile", path: "/studio/profile", i18nKey: "nav.profile" },
         { icon: Music, label: "Tracks", path: "/studio/tracks", i18nKey: "nav.tracks" },
         { icon: Video, label: "Videos", path: "/studio/videos", i18nKey: "nav.videos" },
-        { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections" },
+        { icon: FolderOpen, label: "Video Collections", path: "/studio/video-collections", i18nKey: "nav.videoCollections" },
         { icon: FileText, label: "Press Kit", path: "/studio/presskit", i18nKey: "nav.presskit" },
       ],
     },
     {
       title: "Grow",
+      i18nKey: "nav.studioSections.grow",
       items: [
         { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities", i18nKey: "nav.opportunities" },
         { icon: Users, label: "Collaborations", path: "/studio/collaborations", i18nKey: "nav.collaborations" },
@@ -125,6 +127,7 @@ export const artistNavConfig: NavConfig = {
     },
     {
       title: "Engage",
+      i18nKey: "nav.studioSections.engage",
       items: [
         { icon: Users, label: "Community", path: "/studio/community", i18nKey: "nav.community" },
         { icon: ShoppingBag, label: "Merch", path: "/studio/merch", i18nKey: "nav.merch" },
@@ -136,6 +139,7 @@ export const artistNavConfig: NavConfig = {
     },
     {
       title: "Monetize",
+      i18nKey: "nav.studioSections.monetize",
       items: [
         { icon: Crown, label: "Membership", path: "/studio/subscription", i18nKey: "nav.subscription" },
         { icon: DollarSign, label: "Earnings", path: "/studio/earnings", i18nKey: "nav.earnings" },
@@ -143,6 +147,7 @@ export const artistNavConfig: NavConfig = {
     },
     {
       title: "Account",
+      i18nKey: "nav.studioSections.account",
       items: [
         { icon: Settings, label: "Settings", path: "/studio/settings", i18nKey: "nav.settings" },
       ],

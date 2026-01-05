@@ -151,6 +151,14 @@ export const sv = {
     topArtists: 'Topp artister',
     trust: 'Förtroende & Säkerhet',
     community: 'Community',
+    videoCollections: 'Videosamlingar',
+    studioSections: {
+      create: 'Skapa',
+      grow: 'Väx',
+      engage: 'Engagera',
+      monetize: 'Monetisera',
+      account: 'Konto',
+    },
   },
   settings: {
     title: 'Inställningar',
