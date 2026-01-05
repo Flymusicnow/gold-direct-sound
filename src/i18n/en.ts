@@ -151,6 +151,14 @@ export const en = {
     topArtists: 'Top Artists',
     trust: 'Trust & Safety',
     community: 'Community',
+    videoCollections: 'Video Collections',
+    studioSections: {
+      create: 'Create',
+      grow: 'Grow',
+      engage: 'Engage',
+      monetize: 'Monetize',
+      account: 'Account',
+    },
   },
   settings: {
     title: 'Settings',

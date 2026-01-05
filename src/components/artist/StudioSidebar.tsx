@@ -88,7 +88,7 @@ export function StudioSidebar() {
               <div className="my-3 border-t border-border/30" />
             )}
             <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
-              {section.title}
+              {section.i18nKey ? t(section.i18nKey) : section.title}
             </p>
             {section.items.map((item) => {
               const isActive = location.pathname === item.path;
@@ -106,7 +106,7 @@ export function StudioSidebar() {
                   )}
                 >
                   <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                  <span>{item.label}</span>
+                  <span>{item.i18nKey ? t(item.i18nKey) : item.label}</span>
                 </Link>
               );
             })}
