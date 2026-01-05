@@ -200,7 +200,7 @@ export default function StudioSettings() {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex bg-background">
+    <div className="h-screen overflow-hidden flex bg-background pt-16">
       <StudioSidebar />
       
       <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-6 pb-24 md:pb-6">
