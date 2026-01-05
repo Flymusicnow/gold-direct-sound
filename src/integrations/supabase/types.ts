@@ -797,6 +797,81 @@ export type Database = {
           },
         ]
       }
+      artist_spotlight_media: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          display_duration_seconds: number | null
+          display_order: number
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          link_label: string | null
+          link_platform: string | null
+          link_type: string | null
+          link_url: string | null
+          media_type: string
+          media_url: string
+          start_date: string | null
+          template_data: Json | null
+          template_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          display_duration_seconds?: number | null
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_label?: string | null
+          link_platform?: string | null
+          link_type?: string | null
+          link_url?: string | null
+          media_type: string
+          media_url: string
+          start_date?: string | null
+          template_data?: Json | null
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          display_duration_seconds?: number | null
+          display_order?: number
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          link_label?: string | null
+          link_platform?: string | null
+          link_type?: string | null
+          link_url?: string | null
+          media_type?: string
+          media_url?: string
+          start_date?: string | null
+          template_data?: Json | null
+          template_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_spotlight_media_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_spotlight_media_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_stripe_accounts: {
         Row: {
           artist_id: string
@@ -2340,6 +2415,74 @@ export type Database = {
             columns: ["fan_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbound_tracking: {
+        Row: {
+          artist_id: string
+          campaign_name: string | null
+          converted_to_follow: boolean | null
+          converted_to_support: boolean | null
+          created_at: string | null
+          id: string
+          landing_id: string | null
+          landing_type: string
+          referrer_url: string | null
+          session_id: string | null
+          source_platform: string
+          user_agent: string | null
+          user_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          artist_id: string
+          campaign_name?: string | null
+          converted_to_follow?: boolean | null
+          converted_to_support?: boolean | null
+          created_at?: string | null
+          id?: string
+          landing_id?: string | null
+          landing_type: string
+          referrer_url?: string | null
+          session_id?: string | null
+          source_platform: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          artist_id?: string
+          campaign_name?: string | null
+          converted_to_follow?: boolean | null
+          converted_to_support?: boolean | null
+          created_at?: string | null
+          id?: string
+          landing_id?: string | null
+          landing_type?: string
+          referrer_url?: string | null
+          session_id?: string | null
+          source_platform?: string
+          user_agent?: string | null
+          user_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_tracking_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3962,6 +4105,99 @@ export type Database = {
             columns: ["track_id"]
             isOneToOne: false
             referencedRelation: "tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spotlight_templates: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_premium: boolean | null
+          layout_config: Json
+          name: string
+          sort_order: number | null
+          thumbnail_url: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_premium?: boolean | null
+          layout_config?: Json
+          name: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_premium?: boolean | null
+          layout_config?: Json
+          name?: string
+          sort_order?: number | null
+          thumbnail_url?: string | null
+        }
+        Relationships: []
+      }
+      spotlight_views: {
+        Row: {
+          artist_id: string
+          clicked_link: boolean | null
+          created_at: string | null
+          id: string
+          link_type: string | null
+          referrer_url: string | null
+          session_id: string
+          source: string | null
+          spotlight_media_id: string
+          user_id: string | null
+          view_duration_ms: number | null
+        }
+        Insert: {
+          artist_id: string
+          clicked_link?: boolean | null
+          created_at?: string | null
+          id?: string
+          link_type?: string | null
+          referrer_url?: string | null
+          session_id: string
+          source?: string | null
+          spotlight_media_id: string
+          user_id?: string | null
+          view_duration_ms?: number | null
+        }
+        Update: {
+          artist_id?: string
+          clicked_link?: boolean | null
+          created_at?: string | null
+          id?: string
+          link_type?: string | null
+          referrer_url?: string | null
+          session_id?: string
+          source?: string | null
+          spotlight_media_id?: string
+          user_id?: string | null
+          view_duration_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_views_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_views_spotlight_media_id_fkey"
+            columns: ["spotlight_media_id"]
+            isOneToOne: false
+            referencedRelation: "artist_spotlight_media"
             referencedColumns: ["id"]
           },
         ]

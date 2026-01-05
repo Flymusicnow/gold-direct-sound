@@ -139,6 +139,7 @@ export const sv = {
     collaborations: 'Samarbeten',
     opportunities: 'Möjligheter',
     spotlight: 'Spotlight',
+    pulse: 'Puls',
     verification: 'Verifiering',
     presskit: 'Presskit',
     smartLink: 'Smart Link',

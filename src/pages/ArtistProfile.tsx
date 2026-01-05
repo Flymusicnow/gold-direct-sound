@@ -34,6 +34,10 @@ import { PreviewModeBanner } from "@/components/preview/PreviewModeBanner";
 import { PreviewGateCTA } from "@/components/preview/PreviewGateCTA";
 import { PreviewTrackList } from "@/components/artist/PreviewTrackList";
 import { PreviewVideoGrid } from "@/components/artist/PreviewVideoGrid";
+import { SpotlightCarousel } from "@/components/spotlight/SpotlightCarousel";
+import { SpotlightSection } from "@/components/spotlight/SpotlightSection";
+import { useArtistSpotlight } from "@/hooks/useArtistSpotlight";
+import { useInboundTracking } from "@/hooks/useInboundTracking";
 
 interface Artist {
   id: string;
@@ -548,6 +552,9 @@ export default function ArtistProfile() {
         onFollow={isPreviewMode ? undefined : handleFollow}
         onShare={() => setShowShareModal(true)}
       />
+
+      {/* Spotlight / Pulse Carousel */}
+      <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
 
       {/* Preview Mode CTA - shown after hero for non-beta users */}
       {isPreviewMode && (

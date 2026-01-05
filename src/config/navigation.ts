@@ -121,6 +121,7 @@ export const artistNavConfig: NavConfig = {
         { icon: Briefcase, label: "Opportunities", path: "/studio/opportunities", i18nKey: "nav.opportunities" },
         { icon: Users, label: "Collaborations", path: "/studio/collaborations", i18nKey: "nav.collaborations" },
         { icon: Sparkles, label: "Spotlight", path: "/studio/spotlight", i18nKey: "nav.spotlight" },
+        { icon: Sparkles, label: "Pulse", path: "/studio/pulse", i18nKey: "nav.pulse" },
         { icon: Link2, label: "Promo Hub", path: "/studio/promo", i18nKey: "nav.promo" },
         { icon: BarChart3, label: "Analytics", path: "/studio/analytics", i18nKey: "nav.analytics" },
       ],
