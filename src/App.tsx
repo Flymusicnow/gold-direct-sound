@@ -108,6 +108,7 @@ import CulturePage from "./pages/trust/CulturePage";
 import SafetyPage from "./pages/trust/SafetyPage";
 import DataPage from "./pages/trust/DataPage";
 import StudioSpotlight from "./pages/studio/StudioSpotlight";
+import StudioPulse from "./pages/studio/StudioPulse";
 import SpotlightCampaign from "./pages/spotlight/SpotlightCampaign";
 import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
 import SpotlightArchive from "./pages/spotlight/SpotlightArchive";
@@ -334,6 +335,11 @@ const App = () => (
             <Route path="/studio/spotlight" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioSpotlight />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/pulse" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioPulse />
               </ProtectedRoute>
             } />
             <Route path="/studio/subscription" element={

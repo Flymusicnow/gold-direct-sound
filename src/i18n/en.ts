@@ -139,6 +139,7 @@ export const en = {
     collaborations: 'Collaborations',
     opportunities: 'Opportunities',
     spotlight: 'Spotlight',
+    pulse: 'Pulse',
     verification: 'Verification',
     presskit: 'Press Kit',
     smartLink: 'Smart Link',
