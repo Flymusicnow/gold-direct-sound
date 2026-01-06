@@ -3,11 +3,13 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users, Video, Info } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
+import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
 import { Button } from "@/components/ui/button";
 import { CommentsSection } from "@/components/CommentsSection";
 import { SimilarArtists } from "@/components/SimilarArtists";
@@ -569,45 +571,28 @@ export default function ArtistProfile() {
           {/* Main Content - 2/3 width on desktop */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="tracks" className="w-full">
-              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 mb-8">
-                <TabsTrigger
-                  value="tracks"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
-                >
-                  <Music className="w-4 h-4 mr-2" />
-                  Tracks
-                </TabsTrigger>
-                <TabsTrigger
-                  value="videos"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
-                >
-                  <Music className="w-4 h-4 mr-2" />
-                  Videos
-                </TabsTrigger>
-                <TabsTrigger
-                  value="merch"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
-                >
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Merch
-                </TabsTrigger>
-                <TabsTrigger
-                  value="about"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
-                >
-                  About
-                </TabsTrigger>
-                <TabsTrigger
-                  value="community"
-                  className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent px-6 py-4 text-base"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Community
-                </TabsTrigger>
-              </TabsList>
+              <ScrollableTabsList>
+                <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 mb-0 min-w-max md:min-w-0">
+                  <AnimatedTabTrigger value="tracks" icon={<Music className="w-4 h-4" />}>
+                    Tracks
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="videos" icon={<Video className="w-4 h-4" />}>
+                    Videos
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="merch" icon={<ShoppingBag className="w-4 h-4" />}>
+                    Merch
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="about" icon={<Info className="w-4 h-4" />}>
+                    About
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="community" icon={<Users className="w-4 h-4" />}>
+                    Community
+                  </AnimatedTabTrigger>
+                </TabsList>
+              </ScrollableTabsList>
 
               {/* Tracks Tab */}
-              <TabsContent value="tracks" className="mt-0">
+              <TabsContent value="tracks" className="mt-6 md:mt-8">
                 {tracks.length === 0 ? (
                   <EmptyStateCard
                     icon={Music}
