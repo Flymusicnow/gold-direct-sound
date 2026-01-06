@@ -164,7 +164,7 @@ export function PremiumTrackCard({
   return (
     <>
       <div
-        className="group p-4 rounded-xl bg-card/50 border border-border/50 hover:border-primary/50 hover:bg-card/80 hover:shadow-md hover:shadow-primary/5 transition-all duration-200 cursor-pointer"
+        className="group p-4 rounded-xl bg-card/50 border border-border/50 interactive-card list-row-premium cursor-pointer"
         onClick={handlePlay}
       >
         <div className="flex items-center gap-4">
