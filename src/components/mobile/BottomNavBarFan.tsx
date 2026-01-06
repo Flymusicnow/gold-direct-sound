@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 
 const mainNavItems = [
-  { icon: Home, label: "Home", path: "/fan" },
+  { icon: Home, label: "Home", path: "/fan/dashboard" },
   { icon: Rss, label: "Feed", path: "/fan/feed" },
   { icon: Target, label: "Missions", path: "/fan/missions" },
   { icon: Award, label: "Journey", path: "/fan/achievements" },
