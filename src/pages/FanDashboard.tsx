@@ -6,6 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Heart, Rss, Music, Sparkles, Trophy, ListMusic, Target, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
 
 interface Artist {
   id: string;
@@ -72,8 +73,13 @@ export default function FanDashboard() {
   return (
     <div className="min-h-screen py-24 px-4">
       <div className="container mx-auto max-w-6xl">
-        <h1 className="text-3xl font-bold mb-2">{t('fan.yourDashboard')}</h1>
-        <p className="text-muted-foreground mb-8">{t('fan.welcomeBack')}</p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">{t('fan.yourDashboard')}</h1>
+            <p className="text-muted-foreground">{t('fan.welcomeBack')}</p>
+          </div>
+          <DashboardFeedSwitch />
+        </div>
 
         {/* Quick Links Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">

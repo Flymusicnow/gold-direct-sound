@@ -25,6 +25,7 @@ import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMile
 import { VideoPostCard } from "@/components/feed/VideoPostCard";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { toast } from "sonner";
+import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
 
 interface NewTrack {
   id: string;
@@ -227,9 +228,12 @@ export default function FanFeed() {
           
           <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
             {/* Header */}
-            <div>
-              <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
-              <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
+                <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
+              </div>
+              <DashboardFeedSwitch />
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">
