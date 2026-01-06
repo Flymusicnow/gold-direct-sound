@@ -1923,6 +1923,59 @@ export type Database = {
           },
         ]
       }
+      community_notification_preferences: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          email_enabled: boolean | null
+          id: string
+          notify_artist_posts: boolean | null
+          notify_mentions: boolean | null
+          notify_new_posts: boolean | null
+          notify_pinned_posts: boolean | null
+          notify_replies: boolean | null
+          push_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notify_artist_posts?: boolean | null
+          notify_mentions?: boolean | null
+          notify_new_posts?: boolean | null
+          notify_pinned_posts?: boolean | null
+          notify_replies?: boolean | null
+          push_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          email_enabled?: boolean | null
+          id?: string
+          notify_artist_posts?: boolean | null
+          notify_mentions?: boolean | null
+          notify_new_posts?: boolean | null
+          notify_pinned_posts?: boolean | null
+          notify_replies?: boolean | null
+          push_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_notification_preferences_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           author_id: string
@@ -2146,6 +2199,65 @@ export type Database = {
             columns: ["code_id"]
             isOneToOne: false
             referencedRelation: "beta_access_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fan_engagement_scores: {
+        Row: {
+          comment_count: number | null
+          community_id: string
+          created_at: string | null
+          id: string
+          last_activity_at: string | null
+          post_count: number | null
+          previous_rank: number | null
+          rank: number | null
+          reaction_given_count: number | null
+          reaction_received_count: number | null
+          reply_count: number | null
+          total_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comment_count?: number | null
+          community_id: string
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          post_count?: number | null
+          previous_rank?: number | null
+          rank?: number | null
+          reaction_given_count?: number | null
+          reaction_received_count?: number | null
+          reply_count?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comment_count?: number | null
+          community_id?: string
+          created_at?: string | null
+          id?: string
+          last_activity_at?: string | null
+          post_count?: number | null
+          previous_rank?: number | null
+          rank?: number | null
+          reaction_given_count?: number | null
+          reaction_received_count?: number | null
+          reply_count?: number | null
+          total_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_engagement_scores_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
