@@ -6,3 +6,7 @@ export { CommunityAbout } from './CommunityAbout';
 export { ArtistControlMenu } from './ArtistControlMenu';
 export { CommentThread } from './CommentThread';
 export { CommunityHeader } from './CommunityHeader';
+export { FanLeaderboard } from './FanLeaderboard';
+export { MyEngagementCard } from './MyEngagementCard';
+export { NotificationPrefsDialog } from './NotificationPrefsDialog';
+export { CommunityPresence } from './CommunityPresence';
