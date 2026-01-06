@@ -6,6 +6,10 @@ import { useSubscriptionAccess } from '@/hooks/useSubscriptionAccess';
 import { PostCard } from './PostCard';
 import { PostComposer } from './PostComposer';
 import { SubscriptionCTA } from './SubscriptionCTA';
+import { FanLeaderboard } from './FanLeaderboard';
+import { MyEngagementCard } from './MyEngagementCard';
+import { CommunityPresence } from './CommunityPresence';
+import { NotificationPrefsDialog } from './NotificationPrefsDialog';
 
 interface CommunityPost {
   id: string;
@@ -35,7 +39,7 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
   const { user } = useAuth();
   const { canAccessTier, isArtistOwner, isLoading: subscriptionLoading } = useSubscriptionAccess(artistId);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [artist, setArtist] = useState<{ artist_name: string; avatar_url: string | null } | null>(null);
+  const [artist, setArtist] = useState<{ artist_name: string; avatar_url: string | null; user_id: string } | null>(null);
   const [community, setCommunity] = useState<{ id: string; name: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,7 +48,7 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
       // Fetch artist profile
       const { data: artistData } = await supabase
         .from('artist_profiles')
-        .select('artist_name, avatar_url')
+        .select('artist_name, avatar_url, user_id')
         .eq('id', artistId)
         .single();
       
@@ -160,6 +164,29 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
 
       {/* Sidebar column */}
       <div className="space-y-6">
+        {/* Presence indicator */}
+        {community && (
+          <CommunityPresence 
+            communityId={community.id} 
+            artistUserId={artist?.user_id}
+          />
+        )}
+        
+        {/* Notification settings */}
+        {user && community && (
+          <NotificationPrefsDialog communityId={community.id} />
+        )}
+        
+        {/* Leaderboard */}
+        {community && (
+          <FanLeaderboard communityId={community.id} limit={5} />
+        )}
+        
+        {/* User's engagement stats */}
+        {user && community && (
+          <MyEngagementCard communityId={community.id} />
+        )}
+        
         <SubscriptionCTA
           artistId={artistId}
           artistName={artist.artist_name}
