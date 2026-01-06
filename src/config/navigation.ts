@@ -69,7 +69,7 @@ export const fanNavConfig: NavConfig = {
       title: "Browse",
       i18nKey: "mobile.browse",
       items: [
-        { icon: Home, label: "Dashboard", path: "/fan", i18nKey: "nav.dashboard" },
+        { icon: Home, label: "Dashboard", path: "/fan/dashboard", i18nKey: "nav.dashboard" },
         { icon: Rss, label: "Feed", path: "/fan/feed", i18nKey: "nav.feed" },
         { icon: Target, label: "Missions", path: "/fan/missions", i18nKey: "fan.missions" },
       ],

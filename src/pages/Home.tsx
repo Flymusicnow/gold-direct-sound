@@ -25,7 +25,7 @@ export default function Home() {
     if (hasRole('admin')) return '/admin';
     if (hasRole('brand')) return '/brand';
     if (hasRole('artist')) return '/studio';
-    if (hasRole('fan')) return '/fan/feed';
+    if (hasRole('fan')) return '/fan/dashboard';
     return '/';
   };
 

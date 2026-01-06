@@ -34,7 +34,7 @@ export default function FanInvite() {
     
     if (authenticated && hasFanAccess) {
       if (fanOnboarded) {
-        navigate('/fan/feed', { replace: true });
+        navigate('/fan/dashboard', { replace: true });
       } else {
         navigate('/fan/onboarding', { replace: true });
       }

@@ -66,7 +66,7 @@ export default function FanOnboarding() {
         setIsSubmitting(false);
       }
       sessionStorage.removeItem('fan-onboarding-step');
-      navigate('/fan/feed', { replace: true });
+      navigate('/fan/dashboard', { replace: true });
     }
   };
 
@@ -88,7 +88,7 @@ export default function FanOnboarding() {
       setIsSubmitting(false);
     }
     sessionStorage.removeItem('fan-onboarding-step');
-    navigate('/fan/feed', { replace: true });
+    navigate('/fan/dashboard', { replace: true });
   };
 
   // Show legal flow

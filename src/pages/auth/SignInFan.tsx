@@ -108,7 +108,7 @@ export default function SignInFan() {
             .maybeSingle();
           
           if (onboarding?.onboarding_completed) {
-            navigate('/fan/feed', { replace: true });
+            navigate('/fan/dashboard', { replace: true });
           } else {
             navigate('/fan/onboarding', { replace: true });
           }

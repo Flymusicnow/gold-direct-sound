@@ -32,7 +32,7 @@ export default function JoinFan() {
     
     if (authenticated) {
       if (hasFanAccess && fanOnboarded) {
-        navigate('/fan/feed', { replace: true });
+        navigate('/fan/dashboard', { replace: true });
       } else if (hasFanAccess) {
         navigate('/fan/onboarding', { replace: true });
       } else {

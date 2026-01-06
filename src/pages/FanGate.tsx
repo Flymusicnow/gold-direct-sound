@@ -59,7 +59,7 @@ export default function FanGate() {
     if (authenticated && hasFanAccess) {
       // User is activated - never show gate visuals again
       if (fanOnboarded) {
-        navigate('/fan/feed', { replace: true });
+        navigate('/fan/dashboard', { replace: true });
       } else {
         navigate('/fan/onboarding', { replace: true });
       }
