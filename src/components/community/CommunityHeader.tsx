@@ -2,12 +2,19 @@ import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { resolveCommunityBanner, type BannerSource } from '@/lib/utils/bannerResolver';
 
 interface CommunityHeaderProps {
   artist: {
     artist_name: string;
     avatar_url: string | null;
+    banner_url?: string | null;
     verified?: boolean;
+  } | null;
+  community?: {
+    banner_source?: BannerSource | null;
+    banner_media_url?: string | null;
+    banner_media_type?: 'image' | 'video' | null;
   } | null;
   bannerMediaUrl?: string | null;
   bannerMediaType?: 'image' | 'video' | null;
@@ -16,6 +23,7 @@ interface CommunityHeaderProps {
 
 export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
   artist,
+  community,
   bannerMediaUrl,
   bannerMediaType,
   isLoading = false,
@@ -45,22 +53,31 @@ export const CommunityHeader: React.FC<CommunityHeaderProps> = ({
     );
   }
 
+  // Resolve banner using the new system
+  const resolvedBanner = resolveCommunityBanner(
+    community || { banner_source: 'custom', banner_media_url: bannerMediaUrl, banner_media_type: bannerMediaType },
+    { banner_url: artist.banner_url }
+  );
+
+  const finalBannerUrl = resolvedBanner.url;
+  const finalBannerType = resolvedBanner.type;
+
   return (
     <div className="relative rounded-lg overflow-hidden">
       {/* Banner */}
       <div className="w-full aspect-[3/1] bg-gradient-to-br from-primary/30 via-primary/10 to-background">
-        {bannerMediaUrl && bannerMediaType === 'video' ? (
+        {finalBannerUrl && finalBannerType === 'video' ? (
           <video
-            src={bannerMediaUrl}
+            src={finalBannerUrl}
             autoPlay
             loop
             muted
             playsInline
             className="w-full h-full object-cover"
           />
-        ) : bannerMediaUrl ? (
+        ) : finalBannerUrl ? (
           <img
-            src={bannerMediaUrl}
+            src={finalBannerUrl}
             alt={`${artist.artist_name}'s community banner`}
             className="w-full h-full object-cover"
             loading="lazy"

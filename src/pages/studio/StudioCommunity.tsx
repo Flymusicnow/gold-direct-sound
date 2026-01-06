@@ -9,10 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Users, Image, Eye, Save, Upload, Crown, ExternalLink, Trash2, ArrowLeft } from "lucide-react";
+import { Users, Image, Eye, Save, Upload, Crown, ExternalLink, Trash2, ArrowLeft, Shield, BarChart3, Settings, Link2, Plus, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { StudioLayout } from "@/components/layouts/StudioLayout";
+import { ModeratorManagement } from "@/components/studio/ModeratorManagement";
+import { CommunityAnalyticsDashboard } from "@/components/studio/CommunityAnalyticsDashboard";
+import { type BannerSource } from "@/lib/utils/bannerResolver";
 
 interface Community {
   id: string;
@@ -21,12 +26,22 @@ interface Community {
   community_rules: string | null;
   banner_media_url: string | null;
   banner_media_type: string | null;
+  banner_source: BannerSource | null;
+  about_content: string | null;
+  about_mission: string | null;
+  about_links: { label: string; url: string }[] | null;
   artist_id: string;
 }
 
 interface ArtistProfile {
   id: string;
   artist_name: string;
+  banner_url: string | null;
+}
+
+interface AboutLink {
+  label: string;
+  url: string;
 }
 
 export default function StudioCommunity() {
@@ -46,6 +61,10 @@ export default function StudioCommunity() {
   const [communityRules, setCommunityRules] = useState("");
   const [bannerUrl, setBannerUrl] = useState<string | null>(null);
   const [bannerType, setBannerType] = useState<string | null>(null);
+  const [bannerSource, setBannerSource] = useState<BannerSource>("custom");
+  const [aboutContent, setAboutContent] = useState("");
+  const [aboutMission, setAboutMission] = useState("");
+  const [aboutLinks, setAboutLinks] = useState<AboutLink[]>([]);
   const [dragActive, setDragActive] = useState(false);
 
   const fetchCommunityData = useCallback(async () => {
@@ -55,7 +74,7 @@ export default function StudioCommunity() {
       // First get artist profile
       const { data: artist, error: artistError } = await supabase
         .from("artist_profiles")
-        .select("id, artist_name")
+        .select("id, artist_name, banner_url")
         .eq("user_id", user.id)
         .single();
       
@@ -74,11 +93,22 @@ export default function StudioCommunity() {
       }
       
       if (communityData) {
-        setCommunity(communityData);
+        const communityWithTypes = {
+          ...communityData,
+          banner_source: (communityData.banner_source as BannerSource) || "custom",
+          about_links: Array.isArray(communityData.about_links) 
+            ? (communityData.about_links as unknown as AboutLink[]) 
+            : [],
+        };
+        setCommunity(communityWithTypes as Community);
         setDescription(communityData.description || "");
         setCommunityRules(communityData.community_rules || "");
         setBannerUrl(communityData.banner_media_url);
         setBannerType(communityData.banner_media_type);
+        setBannerSource((communityData.banner_source as BannerSource) || "custom");
+        setAboutContent(communityData.about_content || "");
+        setAboutMission(communityData.about_mission || "");
+        setAboutLinks(communityWithTypes.about_links);
       }
     } catch (error) {
       console.error("Error fetching community:", error);
@@ -104,6 +134,10 @@ export default function StudioCommunity() {
           community_rules: communityRules,
           banner_media_url: bannerUrl,
           banner_media_type: bannerType,
+          banner_source: bannerSource,
+          about_content: aboutContent || null,
+          about_mission: aboutMission || null,
+          about_links: aboutLinks.length > 0 ? JSON.parse(JSON.stringify(aboutLinks)) : null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", community.id);
@@ -169,6 +203,7 @@ export default function StudioCommunity() {
       
       setBannerUrl(publicUrlData.publicUrl);
       setBannerType(isImage ? "image" : "video");
+      setBannerSource("custom");
       
       toast.success(t("common.success"));
     } catch (error) {
@@ -248,6 +283,7 @@ export default function StudioCommunity() {
       
       setBannerUrl(publicUrlData.publicUrl);
       setBannerType(isImage ? "image" : "video");
+      setBannerSource("custom");
       
       toast.success(t("common.success"));
     } catch (error) {
@@ -263,6 +299,20 @@ export default function StudioCommunity() {
     if (artistProfile?.id) {
       window.open(`/artist/${artistProfile.id}/community`, "_blank");
     }
+  };
+
+  const addAboutLink = () => {
+    setAboutLinks([...aboutLinks, { label: "", url: "" }]);
+  };
+
+  const updateAboutLink = (index: number, field: "label" | "url", value: string) => {
+    const updated = [...aboutLinks];
+    updated[index][field] = value;
+    setAboutLinks(updated);
+  };
+
+  const removeAboutLink = (index: number) => {
+    setAboutLinks(aboutLinks.filter((_, i) => i !== index));
   };
 
   if (isLoading) {
@@ -319,165 +369,311 @@ export default function StudioCommunity() {
               {t("studio.communitySettingsDescription")}
             </p>
           </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <Button variant="outline" onClick={handlePreview} className="flex-1 md:flex-none">
-            <Eye className="h-4 w-4 mr-2" />
-            <span className="hidden sm:inline">{t("studio.previewCommunity")}</span>
-            <span className="sm:hidden">{t("common.preview")}</span>
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving} className="flex-1 md:flex-none">
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? t("common.saving") : t("common.save")}
-          </Button>
+          <div className="flex gap-2 w-full md:w-auto">
+            <Button variant="outline" onClick={handlePreview} className="flex-1 md:flex-none">
+              <Eye className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">{t("studio.previewCommunity")}</span>
+              <span className="sm:hidden">{t("common.preview")}</span>
+            </Button>
+            <Button onClick={handleSave} disabled={isSaving} className="flex-1 md:flex-none">
+              <Save className="h-4 w-4 mr-2" />
+              {isSaving ? t("common.saving") : t("common.save")}
+            </Button>
+          </div>
         </div>
-      </div>
 
-      {/* Banner Upload */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Image className="h-5 w-5" />
-            {t("studio.bannerImage")}
-          </CardTitle>
-          <CardDescription>
-            {t("studio.bannerImageDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {bannerUrl ? (
-            <div className="relative">
-              {bannerType === "video" ? (
-                <video
-                  src={bannerUrl}
-                  className="w-full h-48 object-cover rounded-lg"
-                  autoPlay
-                  muted
-                  loop
+        {/* Tabs for Settings, Moderators, Analytics */}
+        <Tabs defaultValue="settings" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="settings" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value="moderators" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("community.moderators")}</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("community.analytics")}</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            {/* Banner Source Selection */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Image className="h-5 w-5" />
+                  {t("community.bannerSource")}
+                </CardTitle>
+                <CardDescription>
+                  Choose how your community banner is displayed
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <RadioGroup
+                  value={bannerSource}
+                  onValueChange={(value) => setBannerSource(value as BannerSource)}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="profile" id="banner-profile" />
+                    <Label htmlFor="banner-profile" className="flex-1 cursor-pointer">
+                      <span className="font-medium">{t("community.bannerUseProfile")}</span>
+                      <p className="text-sm text-muted-foreground">
+                        Use the same banner as your artist profile
+                      </p>
+                      {artistProfile?.banner_url && bannerSource === "profile" && (
+                        <img
+                          src={artistProfile.banner_url}
+                          alt="Profile banner preview"
+                          className="mt-2 w-full max-w-md h-24 object-cover rounded-lg"
+                        />
+                      )}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="custom" id="banner-custom" />
+                    <Label htmlFor="banner-custom" className="flex-1 cursor-pointer">
+                      <span className="font-medium">{t("community.bannerCustom")}</span>
+                      <p className="text-sm text-muted-foreground">
+                        Upload a unique banner for your community
+                      </p>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="none" id="banner-none" />
+                    <Label htmlFor="banner-none" className="flex-1 cursor-pointer">
+                      <span className="font-medium">{t("community.bannerNone")}</span>
+                      <p className="text-sm text-muted-foreground">
+                        Display a gradient background instead
+                      </p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+
+                {/* Custom banner upload (only when custom is selected) */}
+                {bannerSource === "custom" && (
+                  <div className="mt-4 pt-4 border-t">
+                    {bannerUrl ? (
+                      <div className="relative">
+                        {bannerType === "video" ? (
+                          <video
+                            src={bannerUrl}
+                            className="w-full h-48 object-cover rounded-lg"
+                            autoPlay
+                            muted
+                            loop
+                          />
+                        ) : (
+                          <img
+                            src={bannerUrl}
+                            alt="Community banner"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                        )}
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveBanner}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div 
+                        className={cn(
+                          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+                          dragActive 
+                            ? "border-primary bg-primary/10" 
+                            : "border-border"
+                        )}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                      >
+                        <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <p className="text-muted-foreground mb-4">
+                          {t("studio.dragDropBanner")}
+                        </p>
+                        <Label htmlFor="banner-upload">
+                          <Button variant="outline" asChild disabled={isUploading}>
+                            <span>
+                              <Upload className="h-4 w-4 mr-2" />
+                              {t("common.upload")}
+                            </span>
+                          </Button>
+                        </Label>
+                        <Input
+                          id="banner-upload"
+                          type="file"
+                          accept="image/*,video/*"
+                          className="hidden"
+                          onChange={handleBannerUpload}
+                          disabled={isUploading}
+                        />
+                      </div>
+                    )}
+                    
+                    {isUploading && (
+                      <div className="space-y-2 mt-4">
+                        <Progress value={uploadProgress} />
+                        <p className="text-sm text-muted-foreground text-center">
+                          {t("common.uploading")} {uploadProgress}%
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* About Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("community.about")}</CardTitle>
+                <CardDescription>
+                  Tell fans about your community. If empty, your artist bio will be shown.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="about-mission">{t("community.aboutMission")} (optional)</Label>
+                  <Input
+                    id="about-mission"
+                    value={aboutMission}
+                    onChange={(e) => setAboutMission(e.target.value)}
+                    placeholder="What's your community's mission?"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="about-content">About Content</Label>
+                  <Textarea
+                    id="about-content"
+                    value={aboutContent}
+                    onChange={(e) => setAboutContent(e.target.value)}
+                    placeholder="Tell fans what your community is about..."
+                    rows={4}
+                  />
+                </div>
+
+                {/* About Links */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4" />
+                    {t("community.aboutLinks")}
+                  </Label>
+                  {aboutLinks.map((link, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={link.label}
+                        onChange={(e) => updateAboutLink(index, "label", e.target.value)}
+                        placeholder="Label"
+                        className="flex-1"
+                      />
+                      <Input
+                        value={link.url}
+                        onChange={(e) => updateAboutLink(index, "url", e.target.value)}
+                        placeholder="URL"
+                        className="flex-[2]"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeAboutLink(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={addAboutLink}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Link
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Description */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("studio.communityDescription")}</CardTitle>
+                <CardDescription>
+                  {t("studio.communityDescriptionHint")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={t("studio.communityDescriptionPlaceholder")}
+                  rows={4}
                 />
-              ) : (
-                <img
-                  src={bannerUrl}
-                  alt="Community banner"
-                  className="w-full h-48 object-cover rounded-lg"
+              </CardContent>
+            </Card>
+
+            {/* Community Rules */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("studio.communityRules")}</CardTitle>
+                <CardDescription>
+                  {t("studio.communityRulesHint")}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={communityRules}
+                  onChange={(e) => setCommunityRules(e.target.value)}
+                  placeholder={t("studio.communityRulesPlaceholder")}
+                  rows={6}
                 />
-              )}
-              <Button
-                variant="destructive"
-                size="sm"
-                className="absolute top-2 right-2"
-                onClick={handleRemoveBanner}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <div 
-              className={cn(
-                "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-                dragActive 
-                  ? "border-primary bg-primary/10" 
-                  : "border-border"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground mb-4">
-                {t("studio.dragDropBanner")}
-              </p>
-              <Label htmlFor="banner-upload">
-                <Button variant="outline" asChild disabled={isUploading}>
-                  <span>
-                    <Upload className="h-4 w-4 mr-2" />
-                    {t("common.upload")}
-                  </span>
+              </CardContent>
+            </Card>
+
+            {/* Quick Links */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("studio.quickLinks")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => navigate("/studio/earnings")}
+                >
+                  <Crown className="h-4 w-4 mr-2" />
+                  {t("studio.manageTiers")}
+                  <ExternalLink className="h-4 w-4 ml-auto" />
                 </Button>
-              </Label>
-              <Input
-                id="banner-upload"
-                type="file"
-                accept="image/*,video/*"
-                className="hidden"
-                onChange={handleBannerUpload}
-                disabled={isUploading}
-              />
-            </div>
-          )}
-          
-          {isUploading && (
-            <div className="space-y-2">
-              <Progress value={uploadProgress} />
-              <p className="text-sm text-muted-foreground text-center">
-                {t("common.uploading")} {uploadProgress}%
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => navigate("/studio/subscription")}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  {t("studio.viewSupporters")}
+                  <ExternalLink className="h-4 w-4 ml-auto" />
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      {/* Description */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("studio.communityDescription")}</CardTitle>
-          <CardDescription>
-            {t("studio.communityDescriptionHint")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder={t("studio.communityDescriptionPlaceholder")}
-            rows={4}
-          />
-        </CardContent>
-      </Card>
+          {/* Moderators Tab */}
+          <TabsContent value="moderators">
+            <ModeratorManagement
+              communityId={community?.id || null}
+              currentUserId={user?.id || ""}
+            />
+          </TabsContent>
 
-      {/* Community Rules */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("studio.communityRules")}</CardTitle>
-          <CardDescription>
-            {t("studio.communityRulesHint")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={communityRules}
-            onChange={(e) => setCommunityRules(e.target.value)}
-            placeholder={t("studio.communityRulesPlaceholder")}
-            rows={6}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Quick Links */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("studio.quickLinks")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => navigate("/studio/earnings")}
-          >
-            <Crown className="h-4 w-4 mr-2" />
-            {t("studio.manageTiers")}
-            <ExternalLink className="h-4 w-4 ml-auto" />
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full justify-start"
-            onClick={() => navigate("/studio/subscription")}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            {t("studio.viewSupporters")}
-            <ExternalLink className="h-4 w-4 ml-auto" />
-          </Button>
-        </CardContent>
-        </Card>
+          {/* Analytics Tab */}
+          <TabsContent value="analytics">
+            <CommunityAnalyticsDashboard communityId={community?.id || null} />
+          </TabsContent>
+        </Tabs>
       </div>
     </StudioLayout>
   );
