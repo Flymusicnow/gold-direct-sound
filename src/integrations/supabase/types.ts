@@ -1775,9 +1775,13 @@ export type Database = {
       }
       communities: {
         Row: {
+          about_content: string | null
+          about_links: Json | null
+          about_mission: string | null
           artist_id: string
           banner_media_type: string | null
           banner_media_url: string | null
+          banner_source: string | null
           community_rules: string | null
           created_at: string | null
           description: string | null
@@ -1789,9 +1793,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          about_content?: string | null
+          about_links?: Json | null
+          about_mission?: string | null
           artist_id: string
           banner_media_type?: string | null
           banner_media_url?: string | null
+          banner_source?: string | null
           community_rules?: string | null
           created_at?: string | null
           description?: string | null
@@ -1803,9 +1811,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          about_content?: string | null
+          about_links?: Json | null
+          about_mission?: string | null
           artist_id?: string
           banner_media_type?: string | null
           banner_media_url?: string | null
+          banner_source?: string | null
           community_rules?: string | null
           created_at?: string | null
           description?: string | null
@@ -1822,6 +1834,91 @@ export type Database = {
             columns: ["artist_id"]
             isOneToOne: true
             referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_member_events: {
+        Row: {
+          community_id: string
+          created_at: string | null
+          event_type: string
+          id: string
+          tier: string | null
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at?: string | null
+          event_type: string
+          id?: string
+          tier?: string | null
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          tier?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_member_events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_moderators: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string
+          can_hide_comments: boolean | null
+          can_hide_posts: boolean | null
+          can_pin_comments: boolean | null
+          can_pin_posts: boolean | null
+          community_id: string
+          id: string
+          is_active: boolean | null
+          revoked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by: string
+          can_hide_comments?: boolean | null
+          can_hide_posts?: boolean | null
+          can_pin_comments?: boolean | null
+          can_pin_posts?: boolean | null
+          community_id: string
+          id?: string
+          is_active?: boolean | null
+          revoked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string
+          can_hide_comments?: boolean | null
+          can_hide_posts?: boolean | null
+          can_pin_comments?: boolean | null
+          can_pin_posts?: boolean | null
+          community_id?: string
+          id?: string
+          is_active?: boolean | null
+          revoked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_moderators_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
             referencedColumns: ["id"]
           },
         ]
@@ -3186,10 +3283,16 @@ export type Database = {
       post_comments: {
         Row: {
           author_id: string
+          author_type: string | null
           content: string
           created_at: string
+          display_name: string | null
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
           is_deleted: boolean
+          is_hidden: boolean | null
+          is_pinned: boolean | null
           parent_comment_id: string | null
           post_id: string
           reaction_count: number
@@ -3197,10 +3300,16 @@ export type Database = {
         }
         Insert: {
           author_id: string
+          author_type?: string | null
           content: string
           created_at?: string
+          display_name?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           is_deleted?: boolean
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
           post_id: string
           reaction_count?: number
@@ -3208,10 +3317,16 @@ export type Database = {
         }
         Update: {
           author_id?: string
+          author_type?: string | null
           content?: string
           created_at?: string
+          display_name?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
           is_deleted?: boolean
+          is_hidden?: boolean | null
+          is_pinned?: boolean | null
           parent_comment_id?: string | null
           post_id?: string
           reaction_count?: number
