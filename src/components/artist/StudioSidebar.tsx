@@ -99,10 +99,10 @@ export function StudioSidebar() {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 border-l-2",
+                    "flex items-center gap-3 px-4 py-3 rounded-lg focus-premium",
                     isActive
-                      ? "border-primary bg-primary/10 text-primary font-semibold shadow-sm"
-                      : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground hover:border-muted"
+                      ? "border-l-2 border-primary bg-primary/10 text-primary font-semibold shadow-sm"
+                      : "menu-item-premium text-muted-foreground"
                   )}
                 >
                   <Icon className={cn("h-5 w-5", isActive && "text-primary")} />

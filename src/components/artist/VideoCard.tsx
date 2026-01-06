@@ -149,7 +149,7 @@ export function VideoCard({
   return (
     <div className="space-y-3">
       <div
-        className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation"
+        className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation interactive-card"
         onClick={handleVideoClick}
       >
         {/* Video element with proper mobile attributes */}

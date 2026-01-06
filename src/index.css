@@ -156,7 +156,13 @@ All colors MUST be HSL.
     --timing-slow: 350ms;
     --timing-ceremonial: 500ms;
     --easing-elegant: cubic-bezier(0.4, 0, 0.2, 1);
-  --easing-soft: cubic-bezier(0.25, 0.1, 0.25, 1);
+    --easing-soft: cubic-bezier(0.25, 0.1, 0.25, 1);
+    
+    /* Premium Hover Micro-Interactions - Per SUPER CARD spec */
+    --hover-duration: 220ms;
+    --hover-easing: cubic-bezier(0.22, 1, 0.36, 1);
+    --focus-duration: 280ms;
+    --touch-duration: 150ms;
   }
 
   /* Animated gradient overlay for auth backgrounds */
@@ -833,6 +839,166 @@ All colors MUST be HSL.
     50% { 
       opacity: 0.8; 
       transform: scale(1.02);
+    }
+  }
+
+
+  /* ============================================
+     Premium Hover Micro-Interactions (SUPER CARD)
+     Motion over color, soft reveal over hard switch
+     ============================================ */
+
+  /* Interactive card - Full premium treatment for cards */
+  .interactive-card {
+    position: relative;
+    transition: 
+      transform var(--hover-duration) var(--hover-easing),
+      box-shadow var(--hover-duration) var(--hover-easing),
+      border-color var(--hover-duration) var(--hover-easing);
+    will-change: transform;
+  }
+
+  .interactive-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 24px hsla(45, 82%, 51%, 0.12);
+    opacity: 0;
+    transition: opacity var(--hover-duration) var(--hover-easing);
+    pointer-events: none;
+  }
+
+  .interactive-card:hover {
+    transform: translateY(-3px);
+    border-color: hsla(45, 82%, 51%, 0.25);
+  }
+
+  .interactive-card:hover::before {
+    opacity: 1;
+  }
+
+  /* Menu item premium - Sidebar/navigation items with gold accent reveal */
+  .menu-item-premium {
+    position: relative;
+    transition: 
+      transform var(--hover-duration) var(--hover-easing),
+      background-color var(--hover-duration) var(--hover-easing),
+      color var(--hover-duration) var(--hover-easing);
+    will-change: transform;
+  }
+
+  .menu-item-premium::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, 
+      hsla(45, 82%, 51%, 0.8) 0%, 
+      hsla(45, 82%, 61%, 0.6) 100%);
+    border-radius: 0 4px 4px 0;
+    transition: height var(--hover-duration) var(--hover-easing);
+  }
+
+  .menu-item-premium:hover {
+    transform: translateX(4px);
+    background-color: hsla(45, 82%, 51%, 0.05);
+  }
+
+  .menu-item-premium:hover::after {
+    height: 60%;
+  }
+
+  /* List row premium - Track/video/merch items */
+  .list-row-premium {
+    position: relative;
+    transition: 
+      transform var(--hover-duration) var(--hover-easing),
+      background-color var(--hover-duration) var(--hover-easing),
+      border-color var(--hover-duration) var(--hover-easing);
+    will-change: transform;
+  }
+
+  .list-row-premium::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px hsla(45, 82%, 51%, 0.15);
+    opacity: 0;
+    transition: opacity var(--hover-duration) var(--hover-easing);
+    pointer-events: none;
+  }
+
+  .list-row-premium:hover {
+    transform: translateX(2px);
+    background-color: hsla(45, 82%, 51%, 0.03);
+  }
+
+  .list-row-premium:hover::after {
+    opacity: 1;
+  }
+
+  /* Focus premium - Matches hover but slightly slower */
+  .focus-premium:focus-visible {
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 
+      0 0 0 2px hsla(45, 82%, 51%, 0.4),
+      0 4px 16px hsla(0, 0%, 0%, 0.2);
+    transition: 
+      transform var(--focus-duration) var(--hover-easing),
+      box-shadow var(--focus-duration) var(--hover-easing);
+  }
+
+  /* Touch/Mobile - Shorter, press-triggered */
+  @media (hover: none) {
+    .interactive-card:active,
+    .list-row-premium:active {
+      transform: translateY(-2px);
+      transition-duration: var(--touch-duration);
+    }
+    
+    .menu-item-premium:active {
+      transform: translateX(2px);
+      transition-duration: var(--touch-duration);
+    }
+    
+    /* Disable hover pseudo-states on touch devices */
+    .interactive-card:hover,
+    .list-row-premium:hover,
+    .menu-item-premium:hover {
+      transform: none;
+    }
+    
+    .interactive-card:hover::before,
+    .list-row-premium:hover::after,
+    .menu-item-premium:hover::after {
+      opacity: 0;
+      height: 0;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    .interactive-card,
+    .menu-item-premium,
+    .list-row-premium {
+      transition: none !important;
+    }
+    
+    .interactive-card:hover,
+    .menu-item-premium:hover,
+    .list-row-premium:hover {
+      transform: none !important;
+    }
+    
+    .interactive-card::before,
+    .list-row-premium::after {
+      opacity: 1;
     }
   }
 }
