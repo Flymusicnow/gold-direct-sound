@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Heart, Rss, Music, Sparkles, Trophy, ListMusic, Target, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
+import { ArtistCardSkeleton } from "@/components/ui/skeletons";
+import { StaggeredGrid } from "@/components/ui/StaggeredGrid";
 
 interface Artist {
   id: string;
@@ -55,8 +58,37 @@ export default function FanDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
+      <div className="min-h-screen py-24 px-4">
+        <div className="container mx-auto max-w-6xl">
+          {/* Header skeleton */}
+          <div className="mb-8">
+            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+          
+          {/* Quick links skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border/50">
+                <Skeleton className="h-6 w-6 rounded" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
+          
+          {/* Following section skeleton */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-8 w-20" />
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <ArtistCardSkeleton key={i} />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -82,18 +114,22 @@ export default function FanDashboard() {
         </div>
 
         {/* Quick Links Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+        <StaggeredGrid 
+          columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6" 
+          staggerDelay={0.04}
+          className="mb-10"
+        >
           {quickLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border hover:border-primary/50 transition-all group"
+              className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border interactive-card group"
             >
-              <link.icon className={`h-6 w-6 ${link.color} group-hover:scale-110 transition-transform`} />
+              <link.icon className={`h-6 w-6 ${link.color} group-hover:scale-110 transition-transform duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]`} />
               <span className="text-sm font-medium text-center">{link.label}</span>
             </Link>
           ))}
-        </div>
+        </StaggeredGrid>
 
         {/* Following Section */}
         <div className="mb-8">
@@ -115,11 +151,11 @@ export default function FanDashboard() {
               </Button>
             </Card>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StaggeredGrid columns="sm:grid-cols-2 lg:grid-cols-3" className="gap-6">
               {followedArtists.slice(0, 6).map((artist) => (
                 <Card
                   key={artist.id}
-                  className="p-6 hover:border-primary/50 transition-all cursor-pointer"
+                  className="p-6 interactive-card cursor-pointer"
                   onClick={() => navigate(`/artist/${artist.user_id}`)}
                 >
                   <div className="flex items-center gap-4">
@@ -142,7 +178,7 @@ export default function FanDashboard() {
                   </div>
                 </Card>
               ))}
-            </div>
+            </StaggeredGrid>
           )}
         </div>
       </div>

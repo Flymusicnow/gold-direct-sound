@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
@@ -26,6 +27,8 @@ import { VideoPostCard } from "@/components/feed/VideoPostCard";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { toast } from "sonner";
 import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
+import { TrackCardSkeleton, CardSkeleton } from "@/components/ui/skeletons";
+import { StaggeredList } from "@/components/ui/StaggeredList";
 
 interface NewTrack {
   id: string;
@@ -212,9 +215,46 @@ export default function FanFeed() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('fan.loadingFeed')}</p>
-      </div>
+      <>
+        <MobileFanNav />
+        <div className="flex min-h-screen w-full pt-16">
+          <FanSidebar />
+          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+            <PageBreadcrumb role="fan" />
+            <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+              {/* Header skeleton */}
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+
+              <div className="grid lg:grid-cols-3 gap-8">
+                {/* Main Feed Column skeleton */}
+                <div className="lg:col-span-2 space-y-8">
+                  <Card className="p-6">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Skeleton className="h-6 w-6 rounded" />
+                      <Skeleton className="h-6 w-48" />
+                    </div>
+                    <div className="space-y-3">
+                      {[...Array(5)].map((_, i) => (
+                        <TrackCardSkeleton key={i} />
+                      ))}
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Sidebar skeleton */}
+                <div className="space-y-8">
+                  <CardSkeleton lines={4} />
+                  <CardSkeleton lines={3} />
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+        {isMobile && <BottomNavBarFan />}
+      </>
     );
   }
 
@@ -273,7 +313,7 @@ export default function FanFeed() {
                         </Button>
                       </div>
                       
-                      <div className="space-y-3">
+                    <StaggeredList className="space-y-3" staggerDelay={0.06}>
                         {newTracks.map((track) => (
                           <TrackCard
                             key={track.id}
@@ -285,7 +325,7 @@ export default function FanFeed() {
                             onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
                           />
                         ))}
-                      </div>
+                      </StaggeredList>
                     </div>
                   )}
                 </Card>
