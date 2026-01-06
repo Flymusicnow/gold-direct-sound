@@ -1001,6 +1001,50 @@ All colors MUST be HSL.
       opacity: 1;
     }
   }
+
+  /* ============================================
+     Premium Loading Skeleton - Gold Shimmer
+     ============================================ */
+
+  @keyframes skeleton-gold-shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .skeleton-gold-shimmer {
+    position: relative;
+    overflow: hidden;
+    background: hsl(var(--muted));
+  }
+
+  .skeleton-gold-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsla(45, 82%, 51%, 0.08) 20%,
+      hsla(45, 82%, 61%, 0.15) 50%,
+      hsla(45, 82%, 51%, 0.08) 80%,
+      transparent 100%
+    );
+    animation: skeleton-gold-shimmer 1.8s ease-in-out infinite;
+    transform: translateX(-100%);
+  }
+
+  /* Reduced motion support for skeletons */
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-gold-shimmer::after {
+      animation: none;
+      opacity: 0.5;
+      transform: translateX(0);
+    }
+  }
 }
 
 @layer base {
