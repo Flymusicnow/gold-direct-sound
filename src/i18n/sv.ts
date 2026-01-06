@@ -517,10 +517,12 @@ export const sv = {
   fan: {
     dashboard: 'Översikt',
     yourDashboard: 'Din översikt',
+    welcomeBack: 'Välkommen tillbaka!',
     welcome: 'Välkommen tillbaka',
     yourArtists: 'Dina artister',
     following: 'Följer',
     notFollowingAnyone: 'Du följer inga artister ännu',
+    notFollowingAnyArtists: 'Du följer inga artister ännu',
     discoverArtists: 'Utforska artister att följa',
     // Feed specific keys
     loadingFeed: 'Laddar ditt flöde...',

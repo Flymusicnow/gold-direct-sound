@@ -63,6 +63,7 @@ import PromoPreview from "./pages/PromoPreview";
 import PublicPresskit from "./pages/PublicPresskit";
 import LiveStream from "./pages/LiveStream";
 import FanPortal from "./pages/FanPortal";
+import FanDashboard from "./pages/FanDashboard";
 import FanOnboarding from "./pages/fan/FanOnboarding";
 import FanInvite from "./pages/fan/FanInvite";
 import ArtistInvite from "./pages/studio/ArtistInvite";
@@ -424,6 +425,11 @@ const App = () => (
             <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
             <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
             <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />
+            <Route path="/fan/dashboard" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanDashboard />
+              </ProtectedRoute>
+            } />
             <Route path="/fan/feed" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanFeed />

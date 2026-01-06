@@ -548,10 +548,12 @@ export const en = {
   fan: {
     dashboard: 'Dashboard',
     yourDashboard: 'Your Dashboard',
+    welcomeBack: 'Welcome back!',
     welcome: 'Welcome back',
     yourArtists: 'Your Artists',
     following: 'Following',
     notFollowingAnyone: "You're not following any artists yet",
+    notFollowingAnyArtists: "You're not following any artists yet",
     discoverArtists: 'Discover artists to follow',
     // Feed specific keys
     loadingFeed: 'Loading your feed...',
