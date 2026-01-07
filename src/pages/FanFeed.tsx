@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
 import { TrackCardSkeleton, CardSkeleton } from "@/components/ui/skeletons";
 import { StaggeredList } from "@/components/ui/StaggeredList";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface NewTrack {
   id: string;
@@ -266,7 +267,7 @@ export default function FanFeed() {
         <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
           <PageBreadcrumb role="fan" />
           
-          <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+          <PageTransition className="max-w-7xl mx-auto space-y-6 md:space-y-8">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
@@ -426,7 +427,7 @@ export default function FanFeed() {
                 </Card>
               </div>
             </div>
-          </div>
+          </PageTransition>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}

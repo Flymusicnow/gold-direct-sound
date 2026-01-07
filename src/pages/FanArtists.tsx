@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Search, UserMinus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface Artist {
   id: string;
@@ -108,7 +109,7 @@ export default function FanArtists() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-            <>
+            <PageTransition>
             <h1 className="text-3xl font-bold mb-8">{t('fan.myArtists')}</h1>
 
             <div className="mb-6">
@@ -186,7 +187,7 @@ export default function FanArtists() {
               ))}
             </div>
           )}
-          </>
+          </PageTransition>
             )}
           </div>
         </main>

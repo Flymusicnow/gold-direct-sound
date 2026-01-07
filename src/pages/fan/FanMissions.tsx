@@ -11,6 +11,7 @@ import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 import { BottomNavBarFan } from '@/components/mobile/BottomNavBarFan';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { PageTransition } from '@/components/ui/PageTransition';
 
 export default function FanMissions() {
   const navigate = useNavigate();
@@ -50,8 +51,7 @@ export default function FanMissions() {
         <FanSidebar />
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
-          
-          <div className="max-w-2xl mx-auto space-y-6">
+          <PageTransition className="max-w-2xl mx-auto space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -83,7 +83,7 @@ export default function FanMissions() {
 
             {/* Missions List */}
             <MissionsList />
-          </div>
+          </PageTransition>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}
