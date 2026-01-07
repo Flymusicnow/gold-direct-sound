@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFanProfile } from "@/hooks/useFanProfile";
@@ -12,7 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CreditCard, UserCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { CreditCard, UserCircle, Music } from "lucide-react";
 import { toast } from "sonner";
 import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
@@ -34,6 +35,7 @@ export default function FanSettings() {
   } = useFanProfile();
 
   const [fullName, setFullName] = useState("");
+  const [bio, setBio] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -43,17 +45,20 @@ export default function FanSettings() {
     if (authProfile?.full_name) {
       setFullName(authProfile.full_name);
     }
+    if ((authProfile as any)?.bio) {
+      setBio((authProfile as any).bio);
+    }
   }, [user, authProfile, navigate]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const result = await updateProfile({ fullName });
+    const result = await updateProfile({ fullName, bio });
     
     if (result.success) {
-      toast.success("Settings updated successfully");
+      toast.success(t('toast.saved'));
     } else {
-      toast.error(result.error || "Failed to update settings");
+      toast.error(result.error || t('toast.failed'));
     }
   };
 
@@ -62,7 +67,7 @@ export default function FanSettings() {
       <MobileFanNav />
       <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
           <div className="max-w-2xl mx-auto">
@@ -133,6 +138,28 @@ export default function FanSettings() {
                   />
                 </div>
 
+                {/* Music Bio Section */}
+                <div>
+                  <Label htmlFor="bio" className="flex items-center gap-2">
+                    <Music className="h-4 w-4 text-primary" />
+                    {t('fan.musicBio')}
+                  </Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    {t('fan.musicBioDescription')}
+                  </p>
+                  <Textarea
+                    id="bio"
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value.slice(0, 300))}
+                    placeholder={t('fan.musicBioPlaceholder')}
+                    className="min-h-[100px] resize-none"
+                    maxLength={300}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1 text-right">
+                    {bio.length}/300
+                  </p>
+                </div>
+
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-semibold mb-4">{t('settings.notificationPreferences')}</h3>
                   <p className="text-sm text-muted-foreground mb-4">
@@ -146,7 +173,7 @@ export default function FanSettings() {
                 </div>
 
                 <Button type="submit" disabled={saving} className="bg-gradient-gold">
-                  {saving ? t('common.saving') : t('common.saveChanges')}
+                  {saving ? t('common.saving') : t('settings.saveChanges')}
                 </Button>
               </form>
             </Card>

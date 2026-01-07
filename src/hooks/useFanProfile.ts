@@ -8,10 +8,12 @@ export interface FanProfileData {
   email: string;
   full_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
 }
 
 export interface UpdateFanProfileInput {
   fullName?: string;
+  bio?: string;
 }
 
 interface ActionResult {
@@ -62,6 +64,7 @@ export function useFanProfile(): UseFanProfileReturn {
     email: authProfile.email,
     full_name: authProfile.full_name,
     avatar_url: (authProfile as any)?.avatar_url || null,
+    bio: (authProfile as any)?.bio || null,
   } : null;
 
   const refetch = useCallback(async () => {
@@ -92,6 +95,10 @@ export function useFanProfile(): UseFanProfileReturn {
       
       if (data.fullName !== undefined) {
         updateData.full_name = data.fullName || null;
+      }
+      
+      if (data.bio !== undefined) {
+        updateData.bio = data.bio || null;
       }
 
       const { error } = await supabase
