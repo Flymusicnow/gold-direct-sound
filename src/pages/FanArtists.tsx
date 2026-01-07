@@ -10,8 +10,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, UserMinus } from "lucide-react";
+import { Search, UserMinus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 
 interface Artist {
   id: string;
@@ -93,22 +94,21 @@ export default function FanArtists() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('common.loading')}</p>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="flex min-h-screen w-full">
+      <MobileFanNav />
+      <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 py-24 px-4 pb-32 md:pb-28 md:py-8 md:px-6">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <div className="max-w-6xl mx-auto">
             <PageBreadcrumb role="fan" />
 
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+            <>
             <h1 className="text-3xl font-bold mb-8">{t('fan.myArtists')}</h1>
 
             <div className="mb-6">
@@ -186,6 +186,8 @@ export default function FanArtists() {
               ))}
             </div>
           )}
+          </>
+            )}
           </div>
         </main>
       </div>
