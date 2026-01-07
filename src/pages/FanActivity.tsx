@@ -12,7 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
 import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
-import { Heart, MessageSquare, Users, Activity } from "lucide-react";
+import { Heart, MessageSquare, Users, Activity, Loader2 } from "lucide-react";
 
 interface Activity {
   type: 'like' | 'comment' | 'follow';
@@ -157,14 +157,6 @@ export default function FanActivity() {
     </div>
   );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('fan.loadingActivity')}</p>
-      </div>
-    );
-  }
-
   return (
     <>
       <MobileFanNav />
@@ -174,6 +166,12 @@ export default function FanActivity() {
           <PageBreadcrumb role="fan" />
           
           <div className="max-w-4xl mx-auto">
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+            <>
             <h1 className="text-3xl font-bold mb-8">{t('fan.myActivity')}</h1>
 
             <Tabs defaultValue="all" className="w-full">
@@ -210,6 +208,8 @@ export default function FanActivity() {
                 <ActivityList items={filterActivities('follow')} />
               </TabsContent>
             </Tabs>
+            </>
+            )}
           </div>
         </main>
       </div>

@@ -56,43 +56,6 @@ export default function FanDashboard() {
     setLoading(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen py-24 px-4">
-        <div className="container mx-auto max-w-6xl">
-          {/* Header skeleton */}
-          <div className="mb-8">
-            <Skeleton className="h-9 w-48 mb-2" />
-            <Skeleton className="h-4 w-32" />
-          </div>
-          
-          {/* Quick links skeleton */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border/50">
-                <Skeleton className="h-6 w-6 rounded" />
-                <Skeleton className="h-4 w-16" />
-              </div>
-            ))}
-          </div>
-          
-          {/* Following section skeleton */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-8 w-20" />
-            </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <ArtistCardSkeleton key={i} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const quickLinks = [
     { icon: Rss, label: t('nav.feed'), path: '/fan/feed', color: 'text-violet-400' },
     { icon: Music, label: t('fan.myArtists'), path: '/fan/artists', color: 'text-primary' },
@@ -105,6 +68,39 @@ export default function FanDashboard() {
   return (
     <div className="min-h-screen py-24 px-4">
       <div className="container mx-auto max-w-6xl">
+        {loading ? (
+          <>
+            {/* Header skeleton */}
+            <div className="mb-8">
+              <Skeleton className="h-9 w-48 mb-2" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            
+            {/* Quick links skeleton */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-10">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-card border border-border/50">
+                  <Skeleton className="h-6 w-6 rounded" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              ))}
+            </div>
+            
+            {/* Following section skeleton */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-8 w-20" />
+              </div>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[...Array(6)].map((_, i) => (
+                  <ArtistCardSkeleton key={i} />
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+        <>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">{t('fan.yourDashboard')}</h1>
@@ -181,6 +177,8 @@ export default function FanDashboard() {
             </StaggeredGrid>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

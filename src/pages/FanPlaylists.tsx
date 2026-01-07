@@ -8,7 +8,8 @@ import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { Plus, ListMusic } from "lucide-react";
+import { Plus, ListMusic, Loader2 } from "lucide-react";
+import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import PlaylistCard from "@/components/playlists/PlaylistCard";
 import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
@@ -76,22 +77,21 @@ export default function FanPlaylists() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('playlist.loadingPlaylists')}</p>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="flex min-h-screen w-full">
+      <MobileFanNav />
+      <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 py-24 px-4 pb-44 md:pb-28 md:py-8 md:px-6">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <div className="max-w-6xl mx-auto">
             <PageBreadcrumb role="fan" />
 
+            {loading ? (
+              <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+            <>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -149,6 +149,8 @@ export default function FanPlaylists() {
               onClose={() => setCreateDialogOpen(false)}
               onSuccess={fetchPlaylists}
             />
+            </>
+            )}
           </div>
         </main>
       </div>
