@@ -73,7 +73,7 @@ export default function FanAchievements() {
       <MobileFanNav />
       <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
           <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">

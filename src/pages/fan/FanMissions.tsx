@@ -25,7 +25,7 @@ export default function FanMissions() {
         <MobileFanNav />
         <div className="flex min-h-screen w-full pt-16">
           <FanSidebar />
-          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+          <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
             <PageBreadcrumb role="fan" />
             <Card className="max-w-md mx-auto">
               <CardContent className="p-8 text-center">
@@ -48,7 +48,7 @@ export default function FanMissions() {
       <MobileFanNav />
       <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
           <div className="max-w-2xl mx-auto space-y-6">
