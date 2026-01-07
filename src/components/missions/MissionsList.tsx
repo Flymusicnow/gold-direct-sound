@@ -2,7 +2,9 @@ import React from 'react';
 import { MissionCard } from './MissionCard';
 import { useMissions } from '@/hooks/useMissions';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/ScrollableTabs';
+import { AnimatedTabTrigger } from '@/components/ui/AnimatedTabTrigger';
 import { Calendar, CalendarDays } from 'lucide-react';
 
 export function MissionsList() {
@@ -23,16 +25,16 @@ export function MissionsList() {
 
   return (
     <Tabs defaultValue="daily" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
-        <TabsTrigger value="daily" className="gap-2">
-          <Calendar className="h-4 w-4" />
-          Daily ({completedDaily}/{dailyMissions.length})
-        </TabsTrigger>
-        <TabsTrigger value="weekly" className="gap-2">
-          <CalendarDays className="h-4 w-4" />
-          Weekly ({completedWeekly}/{weeklyMissions.length})
-        </TabsTrigger>
-      </TabsList>
+      <ScrollableTabsList sticky={false}>
+        <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0 mb-4">
+          <AnimatedTabTrigger value="daily" icon={<Calendar className="w-4 h-4" />} layoutId="missionsTabs">
+            Daily ({completedDaily}/{dailyMissions.length})
+          </AnimatedTabTrigger>
+          <AnimatedTabTrigger value="weekly" icon={<CalendarDays className="w-4 h-4" />} layoutId="missionsTabs">
+            Weekly ({completedWeekly}/{weeklyMissions.length})
+          </AnimatedTabTrigger>
+        </TabsList>
+      </ScrollableTabsList>
 
       <TabsContent value="daily" className="space-y-3 mt-0">
         {dailyMissions.map(mission => (

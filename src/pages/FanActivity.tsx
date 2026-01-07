@@ -9,8 +9,10 @@ import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, MessageSquare, Users } from "lucide-react";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
+import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
+import { Heart, MessageSquare, Users, Activity } from "lucide-react";
 
 interface Activity {
   type: 'like' | 'comment' | 'follow';
@@ -175,12 +177,22 @@ export default function FanActivity() {
             <h1 className="text-3xl font-bold mb-8">{t('fan.myActivity')}</h1>
 
             <Tabs defaultValue="all" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="all">{t('common.all')}</TabsTrigger>
-                <TabsTrigger value="likes">{t('common.likes')}</TabsTrigger>
-                <TabsTrigger value="comments">{t('common.comments')}</TabsTrigger>
-                <TabsTrigger value="follows">{t('common.follows')}</TabsTrigger>
-              </TabsList>
+              <ScrollableTabsList sticky={false}>
+                <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0">
+                  <AnimatedTabTrigger value="all" icon={<Activity className="w-4 h-4" />} layoutId="fanActivityTabs">
+                    {t('common.all')}
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="likes" icon={<Heart className="w-4 h-4" />} layoutId="fanActivityTabs">
+                    {t('common.likes')}
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="comments" icon={<MessageSquare className="w-4 h-4" />} layoutId="fanActivityTabs">
+                    {t('common.comments')}
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="follows" icon={<Users className="w-4 h-4" />} layoutId="fanActivityTabs">
+                    {t('common.follows')}
+                  </AnimatedTabTrigger>
+                </TabsList>
+              </ScrollableTabsList>
 
               <TabsContent value="all" className="mt-6">
                 <ActivityList items={filterActivities()} />
