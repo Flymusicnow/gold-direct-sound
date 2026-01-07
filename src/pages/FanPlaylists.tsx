@@ -14,6 +14,7 @@ import PlaylistCard from "@/components/playlists/PlaylistCard";
 import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface Playlist {
   id: string;
@@ -91,7 +92,7 @@ export default function FanPlaylists() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-            <>
+            <PageTransition>
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
               <div>
@@ -149,7 +150,7 @@ export default function FanPlaylists() {
               onClose={() => setCreateDialogOpen(false)}
               onSuccess={fetchPlaylists}
             />
-            </>
+            </PageTransition>
             )}
           </div>
         </main>

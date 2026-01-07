@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
 import { ArtistCardSkeleton } from "@/components/ui/skeletons";
 import { StaggeredGrid } from "@/components/ui/StaggeredGrid";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface Artist {
   id: string;
@@ -100,7 +101,7 @@ export default function FanDashboard() {
             </div>
           </>
         ) : (
-        <>
+        <PageTransition>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">{t('fan.yourDashboard')}</h1>
@@ -177,7 +178,7 @@ export default function FanDashboard() {
             </StaggeredGrid>
           )}
         </div>
-        </>
+        </PageTransition>
         )}
       </div>
     </div>

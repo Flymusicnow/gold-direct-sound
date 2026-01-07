@@ -16,6 +16,7 @@ import SupporterBadge from "@/components/supporter/SupporterBadge";
 import { ManageSubscriptionCard } from "@/components/supporter/ManageSubscriptionCard";
 import { useFanAchievements } from "@/hooks/useFanAchievements";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface SupportScore {
   artist_id: string;
@@ -138,9 +139,16 @@ export default function FanSupporter() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">{t('fan.loadingSupporterPass')}</p>
-      </div>
+      <>
+        <MobileFanNav />
+        <div className="flex min-h-screen w-full pt-16">
+          <FanSidebar />
+          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8 flex items-center justify-center">
+            <p className="text-muted-foreground">{t('fan.loadingSupporterPass')}</p>
+          </main>
+        </div>
+        {isMobile && <BottomNavBarFan />}
+      </>
     );
   }
 
@@ -152,7 +160,7 @@ export default function FanSupporter() {
         <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
           <PageBreadcrumb role="fan" />
           
-          <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+          <PageTransition className="max-w-5xl mx-auto space-y-6 md:space-y-8">
             {/* Hero Header */}
             <div className="text-center space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
@@ -423,7 +431,7 @@ export default function FanSupporter() {
                 </div>
               </div>
             </Card>
-          </div>
+          </PageTransition>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}

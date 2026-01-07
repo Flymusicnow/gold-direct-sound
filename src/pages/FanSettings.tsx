@@ -19,6 +19,7 @@ import { LegalSettingsSection } from "@/components/legal/LegalSettingsSection";
 import { BillingManagementCard } from "@/components/billing/BillingManagementCard";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Badge } from "@/components/ui/badge";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 export default function FanSettings() {
   const { user, profile: authProfile } = useAuth();
@@ -70,7 +71,7 @@ export default function FanSettings() {
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
-          <div className="max-w-2xl mx-auto">
+          <PageTransition className="max-w-2xl mx-auto">
             <h1 className="text-3xl font-bold mb-8">{t('settings.accountSettings')}</h1>
 
             {/* Account Type Section */}
@@ -191,7 +192,7 @@ export default function FanSettings() {
             <div className="mt-8">
               <LegalSettingsSection isArtist={false} isBrand={false} />
             </div>
-          </div>
+          </PageTransition>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}

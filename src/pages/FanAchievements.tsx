@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 export default function FanAchievements() {
   const { user, profile } = useAuth();
@@ -75,8 +76,7 @@ export default function FanAchievements() {
         <FanSidebar />
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
-          
-          <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+          <PageTransition className="max-w-5xl mx-auto space-y-6 md:space-y-8">
             {/* Header Section */}
             <Card className="p-6 md:p-8 bg-card/50 backdrop-blur border-primary/20 shadow-gold">
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -163,7 +163,7 @@ export default function FanAchievements() {
                 {t('fan.actionsHelpYouGrow')}
               </p>
             </Card>
-          </div>
+          </PageTransition>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}

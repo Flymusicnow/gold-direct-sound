@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
 import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
 import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
 import { Heart, MessageSquare, Users, Activity, Loader2 } from "lucide-react";
+import { PageTransition } from "@/components/ui/PageTransition";
 
 interface Activity {
   type: 'like' | 'comment' | 'follow';
@@ -171,7 +172,7 @@ export default function FanActivity() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : (
-            <>
+            <PageTransition>
             <h1 className="text-3xl font-bold mb-8">{t('fan.myActivity')}</h1>
 
             <Tabs defaultValue="all" className="w-full">
@@ -208,7 +209,7 @@ export default function FanActivity() {
                 <ActivityList items={filterActivities('follow')} />
               </TabsContent>
             </Tabs>
-            </>
+            </PageTransition>
             )}
           </div>
         </main>
