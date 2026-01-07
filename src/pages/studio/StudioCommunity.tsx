@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
+import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
 import { toast } from "sonner";
 import { Users, Image, Eye, Save, Upload, Crown, ExternalLink, Trash2, ArrowLeft, Shield, BarChart3, Settings, Link2, Plus, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -384,20 +386,19 @@ export default function StudioCommunity() {
 
         {/* Tabs for Settings, Moderators, Analytics */}
         <Tabs defaultValue="settings" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Settings</span>
-            </TabsTrigger>
-            <TabsTrigger value="moderators" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("community.moderators")}</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("community.analytics")}</span>
-            </TabsTrigger>
-          </TabsList>
+          <ScrollableTabsList sticky={false}>
+            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0">
+              <AnimatedTabTrigger value="settings" icon={<Settings className="w-4 h-4" />} layoutId="studioCommunityTabs">
+                Settings
+              </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="moderators" icon={<Shield className="w-4 h-4" />} layoutId="studioCommunityTabs">
+                {t("community.moderators")}
+              </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="analytics" icon={<BarChart3 className="w-4 h-4" />} layoutId="studioCommunityTabs">
+                {t("community.analytics")}
+              </AnimatedTabTrigger>
+            </TabsList>
+          </ScrollableTabsList>
 
           {/* Settings Tab */}
           <TabsContent value="settings" className="space-y-4">

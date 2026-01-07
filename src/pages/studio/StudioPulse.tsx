@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Sparkles, Eye, BarChart3, Link2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
+import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -171,20 +173,19 @@ export default function StudioPulse() {
         </div>
 
         <Tabs defaultValue="media" className="w-full">
-          <TabsList>
-            <TabsTrigger value="media" className="gap-2">
-              <Sparkles className="h-4 w-4" />
-              Media
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="gap-2">
-              <BarChart3 className="h-4 w-4" />
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger value="deeplinks" className="gap-2">
-              <Link2 className="h-4 w-4" />
-              Deep Links
-            </TabsTrigger>
-          </TabsList>
+          <ScrollableTabsList sticky={false}>
+            <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0">
+              <AnimatedTabTrigger value="media" icon={<Sparkles className="w-4 h-4" />} layoutId="studioPulseTabs">
+                Media
+              </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="analytics" icon={<BarChart3 className="w-4 h-4" />} layoutId="studioPulseTabs">
+                Analytics
+              </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="deeplinks" icon={<Link2 className="w-4 h-4" />} layoutId="studioPulseTabs">
+                Deep Links
+              </AnimatedTabTrigger>
+            </TabsList>
+          </ScrollableTabsList>
 
           {/* Media Tab */}
           <TabsContent value="media" className="space-y-6">

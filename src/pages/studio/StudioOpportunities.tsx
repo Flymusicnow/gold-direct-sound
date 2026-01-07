@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
+import { ScrollableTabsList } from "@/components/ui/ScrollableTabs";
+import { AnimatedTabTrigger } from "@/components/ui/AnimatedTabTrigger";
+import { ClipboardList } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ArrowLeft,
@@ -190,15 +193,19 @@ export default function StudioOpportunities() {
           </div>
 
           <Tabs defaultValue="browse" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="browse">{t('studio.browseOpportunities')}</TabsTrigger>
-              <TabsTrigger value="applications">
-                {t('studio.myApplications')}
-                {myApplications.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">{myApplications.length}</Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+            <ScrollableTabsList sticky={false}>
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0">
+                <AnimatedTabTrigger value="browse" icon={<Briefcase className="w-4 h-4" />} layoutId="studioOpportunitiesTabs">
+                  {t('studio.browseOpportunities')}
+                </AnimatedTabTrigger>
+                <AnimatedTabTrigger value="applications" icon={<ClipboardList className="w-4 h-4" />} layoutId="studioOpportunitiesTabs">
+                  {t('studio.myApplications')}
+                  {myApplications.length > 0 && (
+                    <Badge variant="secondary" className="ml-2">{myApplications.length}</Badge>
+                  )}
+                </AnimatedTabTrigger>
+              </TabsList>
+            </ScrollableTabsList>
 
             {/* Browse Tab */}
             <TabsContent value="browse" className="space-y-6">

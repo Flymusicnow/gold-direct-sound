@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList } from '@/components/ui/tabs';
+import { ScrollableTabsList } from '@/components/ui/ScrollableTabs';
+import { AnimatedTabTrigger } from '@/components/ui/AnimatedTabTrigger';
+import { Sparkles, TrendingUp, Star, Music } from 'lucide-react';
 import { DiscoverForYouRail } from '@/components/discover/DiscoverForYouRail';
 import { DiscoverTrendingRail } from '@/components/discover/DiscoverTrendingRail';
 import { DiscoverRisingArtistsRail } from '@/components/discover/DiscoverRisingArtistsRail';
@@ -57,12 +60,22 @@ export default function Discover() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full grid grid-cols-4 bg-muted/50">
-              <TabsTrigger value="for-you">For You</TabsTrigger>
-              <TabsTrigger value="trending">Trending</TabsTrigger>
-              <TabsTrigger value="rising">Rising</TabsTrigger>
-              <TabsTrigger value="genres">Genres</TabsTrigger>
-            </TabsList>
+            <ScrollableTabsList sticky={false}>
+              <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 min-w-max md:min-w-0">
+                <AnimatedTabTrigger value="for-you" icon={<Sparkles className="w-4 h-4" />} layoutId="discoverTabs">
+                  For You
+                </AnimatedTabTrigger>
+                <AnimatedTabTrigger value="trending" icon={<TrendingUp className="w-4 h-4" />} layoutId="discoverTabs">
+                  Trending
+                </AnimatedTabTrigger>
+                <AnimatedTabTrigger value="rising" icon={<Star className="w-4 h-4" />} layoutId="discoverTabs">
+                  Rising
+                </AnimatedTabTrigger>
+                <AnimatedTabTrigger value="genres" icon={<Music className="w-4 h-4" />} layoutId="discoverTabs">
+                  Genres
+                </AnimatedTabTrigger>
+              </TabsList>
+            </ScrollableTabsList>
           </Tabs>
         </div>
       </div>
