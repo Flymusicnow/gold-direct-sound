@@ -2,10 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { StudioSidebar } from "@/components/artist/StudioSidebar";
-import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
-import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,7 +97,6 @@ export default function StudioSubscription() {
   const [badgeName, setBadgeName] = useState<string | null>(null);
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [earnings, setEarnings] = useState({ total: 0, pending: 0, lastPayout: null as string | null });
-  const isMobile = useIsMobile();
   const { pricingStatus, hasBetaAccess: hasPricingBetaAccess, discountPercent, expiresAt } = useMyPricingStatus();
 
   useEffect(() => {
@@ -184,20 +180,17 @@ export default function StudioSubscription() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
+      <StudioLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </StudioLayout>
     );
   }
 
   return (
-    <>
-      <div className="h-screen overflow-hidden flex">
-        <StudioSidebar />
-        <MobileStudioNav />
-
-        <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-20 md:pb-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+    <StudioLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -354,9 +347,6 @@ export default function StudioSubscription() {
             </div>
           </Card>
         </div>
-      </main>
-      </div>
-      {isMobile && <BottomNavBarStudio />}
-    </>
+    </StudioLayout>
   );
 }
