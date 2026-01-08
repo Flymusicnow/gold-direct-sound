@@ -97,8 +97,10 @@ export function ArtistHeroSection({
         <div className="w-full aspect-[3/1] md:aspect-[4/1] bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
       )}
 
-      {/* Gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-transparent" />
+      {/* Gradient overlay for text readability - lighter to show banner */}
+      <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+      {/* Extra gradient at bottom for text area */}
+      <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-background via-background/50 to-transparent" />
 
       {/* Artist info - positioned over banner */}
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
