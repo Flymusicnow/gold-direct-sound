@@ -100,6 +100,7 @@ import AdminFlightRecorder from "./pages/admin/AdminFlightRecorder";
 import AdminStripeTierRepair from "./pages/admin/AdminStripeTierRepair";
 import AdminEdgeFunctions from "./pages/admin/AdminEdgeFunctions";
 import AdminOnboardingDebug from "./pages/admin/AdminOnboardingDebug";
+import AdminArtistPricing from "./pages/admin/AdminArtistPricing";
 import AdminAccessDenied from "./pages/admin/AdminAccessDenied";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
 import SmartLinkPage from "./pages/SmartLinkPage";
@@ -422,6 +423,7 @@ const App = () => (
             <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
             <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
             <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
+            <Route path="/admin/artist-pricing" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtistPricing /></ProtectedRoute>} />
             <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
             <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
             <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />

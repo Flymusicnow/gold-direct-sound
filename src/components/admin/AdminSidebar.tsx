@@ -24,6 +24,7 @@ import {
   LogOut,
   Wrench,
   Zap,
+  Percent,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
@@ -195,6 +196,12 @@ const navSections = [
         url: "/admin/payouts", 
         icon: CreditCard,
         description: "Hantera utbetalningar till artister. Se saldo, historik och initiera betalningar"
+      },
+      { 
+        title: "Beta Pricing", 
+        url: "/admin/artist-pricing", 
+        icon: Percent,
+        description: "Hantera beta-prissättning och rabatter för artister. Gratis access för beta-artister"
       },
       { 
         title: "Stripe Tier Repair", 
