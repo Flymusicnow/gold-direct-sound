@@ -10,6 +10,7 @@ import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AvatarUploadProgress } from "@/components/ui/avatar-upload-progress";
+import { BannerUploadSection } from "@/components/studio/BannerUploadSection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,7 @@ export default function StudioProfile() {
     avatarUploader,
     nameAvailability,
     hasProfile,
+    refetch,
   } = useArtistProfile();
 
   // Check if user is still in onboarding
@@ -342,6 +344,30 @@ export default function StudioProfile() {
               </div>
             </div>
           </Card>
+
+          {/* Profile Banner Upload */}
+          {artistProfile && (
+            <BannerUploadSection
+              profileId={artistProfile.id}
+              userId={artistProfile.user_id}
+              artistName={artistProfile.artist_name}
+              avatarUrl={artistProfile.avatar_url}
+              genre={artistProfile.genre}
+              city={artistProfile.city}
+              country={artistProfile.country}
+              desktopBanner={{
+                url: artistProfile.banner_url,
+                mediaType: artistProfile.banner_media_type as 'image' | 'video' | null,
+                cropData: artistProfile.banner_crop_data as any,
+              }}
+              mobileBanner={{
+                url: artistProfile.banner_url_mobile,
+                mediaType: artistProfile.banner_media_type_mobile as 'image' | 'video' | null,
+                cropData: artistProfile.banner_crop_data_mobile as any,
+              }}
+              onSuccess={refetch}
+            />
+          )}
 
           {/* Edit Profile */}
           <Card className="p-6">

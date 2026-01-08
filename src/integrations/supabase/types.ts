@@ -683,7 +683,12 @@ export type Database = {
         Row: {
           artist_name: string
           avatar_url: string | null
+          banner_crop_data: Json | null
+          banner_crop_data_mobile: Json | null
+          banner_media_type: string | null
+          banner_media_type_mobile: string | null
           banner_url: string | null
+          banner_url_mobile: string | null
           bio: string | null
           city: string | null
           country: string | null
@@ -703,7 +708,12 @@ export type Database = {
         Insert: {
           artist_name: string
           avatar_url?: string | null
+          banner_crop_data?: Json | null
+          banner_crop_data_mobile?: Json | null
+          banner_media_type?: string | null
+          banner_media_type_mobile?: string | null
           banner_url?: string | null
+          banner_url_mobile?: string | null
           bio?: string | null
           city?: string | null
           country?: string | null
@@ -723,7 +733,12 @@ export type Database = {
         Update: {
           artist_name?: string
           avatar_url?: string | null
+          banner_crop_data?: Json | null
+          banner_crop_data_mobile?: Json | null
+          banner_media_type?: string | null
+          banner_media_type_mobile?: string | null
           banner_url?: string | null
+          banner_url_mobile?: string | null
           bio?: string | null
           city?: string | null
           country?: string | null

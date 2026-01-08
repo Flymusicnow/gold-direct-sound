@@ -1,9 +1,19 @@
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Users, Share2 } from "lucide-react";
 import { EarlyAccessBadge } from "./EarlyAccessBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { useIsMobile } from "@/hooks/use-mobile";
+
+interface BannerCropData {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zoom?: number;
+}
 
 interface ArtistHeroSectionProps {
   artist: {
@@ -11,6 +21,11 @@ interface ArtistHeroSectionProps {
     artist_name: string;
     avatar_url: string | null;
     banner_url?: string | null;
+    banner_url_mobile?: string | null;
+    banner_media_type?: 'image' | 'video' | string | null;
+    banner_media_type_mobile?: 'image' | 'video' | string | null;
+    banner_crop_data?: BannerCropData | null;
+    banner_crop_data_mobile?: BannerCropData | null;
     genre: string | null;
     city: string | null;
     country: string | null;
@@ -32,18 +47,51 @@ export function ArtistHeroSection({
   onFollow,
   onShare,
 }: ArtistHeroSectionProps) {
-  const hasBanner = !!artist.banner_url;
+  const isMobile = useIsMobile();
+
+  // Determine which banner to show based on device
+  const activeBanner = useMemo(() => {
+    const useMobileBanner = isMobile && artist.banner_url_mobile;
+    return {
+      url: useMobileBanner ? artist.banner_url_mobile : artist.banner_url,
+      mediaType: useMobileBanner ? artist.banner_media_type_mobile : artist.banner_media_type,
+      cropData: useMobileBanner ? artist.banner_crop_data_mobile : artist.banner_crop_data,
+    };
+  }, [isMobile, artist]);
+
+  // Calculate crop styles for images
+  const cropStyle = useMemo(() => {
+    if (!activeBanner.cropData || activeBanner.mediaType === 'video') return {};
+    return {
+      objectPosition: `${activeBanner.cropData.x}% ${activeBanner.cropData.y}%`,
+    };
+  }, [activeBanner]);
+
+  const hasBanner = !!activeBanner.url;
+  const isVideo = activeBanner.mediaType === 'video';
 
   return (
     <div className="relative border-b border-border">
-      {/* Banner Image or Gradient Fallback */}
+      {/* Banner Image/Video or Gradient Fallback */}
       {hasBanner ? (
         <div className="w-full aspect-[3/1] md:aspect-[4/1] overflow-hidden">
-          <img
-            src={artist.banner_url!}
-            alt={`${artist.artist_name} banner`}
-            className="w-full h-full object-cover"
-          />
+          {isVideo ? (
+            <video
+              src={activeBanner.url!}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <img
+              src={activeBanner.url!}
+              alt={`${artist.artist_name} banner`}
+              className="w-full h-full object-cover"
+              style={cropStyle}
+            />
+          )}
         </div>
       ) : (
         <div className="w-full aspect-[3/1] md:aspect-[4/1] bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
