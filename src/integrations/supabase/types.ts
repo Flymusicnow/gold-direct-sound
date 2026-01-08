@@ -629,6 +629,56 @@ export type Database = {
           },
         ]
       }
+      artist_pricing_overrides: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          discount_percent: number | null
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          reason: string
+          scope: Database["public"]["Enums"]["discount_scope"]
+          starts_at: string | null
+          status: Database["public"]["Enums"]["pricing_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          reason: string
+          scope?: Database["public"]["Enums"]["discount_scope"]
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["pricing_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          discount_percent?: number | null
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          reason?: string
+          scope?: Database["public"]["Enums"]["discount_scope"]
+          starts_at?: string | null
+          status?: Database["public"]["Enums"]["pricing_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_pricing_overrides_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: true
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_profiles: {
         Row: {
           artist_name: string
@@ -3547,6 +3597,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pricing_override_audit_log: {
+        Row: {
+          action: string
+          artist_id: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          new_values: Json | null
+          notes: string | null
+          old_values: Json | null
+          override_id: string | null
+        }
+        Insert: {
+          action: string
+          artist_id: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          notes?: string | null
+          old_values?: Json | null
+          override_id?: string | null
+        }
+        Update: {
+          action?: string
+          artist_id?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          new_values?: Json | null
+          notes?: string | null
+          old_values?: Json | null
+          override_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pricing_override_audit_log_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_override_audit_log_override_id_fkey"
+            columns: ["override_id"]
+            isOneToOne: false
+            referencedRelation: "artist_pricing_overrides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           admin_inbox_language: string | null
@@ -5263,6 +5364,10 @@ export type Database = {
         Args: { _fan_user_id: string }
         Returns: Json
       }
+      check_artist_pricing_status: {
+        Args: { p_artist_id: string }
+        Returns: Json
+      }
       check_brand_application_status: {
         Args: { _email: string }
         Returns: string
@@ -5320,6 +5425,7 @@ export type Database = {
           title: string
         }[]
       }
+      get_my_pricing_status: { Args: never; Returns: Json }
       get_promo_link_stats: {
         Args: { _artist_id: string }
         Returns: {
@@ -5486,6 +5592,8 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "artist" | "fan" | "brand" | "super_admin"
+      discount_scope: "platform_fees" | "subscriptions" | "features" | "all"
+      pricing_status: "beta_free" | "discounted" | "standard"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5614,6 +5722,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "artist", "fan", "brand", "super_admin"],
+      discount_scope: ["platform_fees", "subscriptions", "features", "all"],
+      pricing_status: ["beta_free", "discounted", "standard"],
     },
   },
 } as const

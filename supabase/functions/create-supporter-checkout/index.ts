@@ -85,6 +85,48 @@ serve(async (req) => {
     if (artistError || !artist) throw new Error("Artist not found");
     logStep("Artist found", { artistName: artist.artist_name });
 
+    // Check artist pricing override (beta artist pricing)
+    const { data: pricingOverride } = await supabaseAdmin
+      .rpc('check_artist_pricing_status', { p_artist_id: artistId });
+    
+    logStep("Pricing override check", pricingOverride);
+
+    // If artist has 100% beta-free discount, skip payment entirely
+    if (pricingOverride?.has_override && pricingOverride?.discount_percent === 100) {
+      logStep("Beta artist - creating free subscription", { status: pricingOverride.status });
+      
+      // Create subscription record directly without Stripe
+      const { error: subError } = await supabaseAdmin
+        .from('supporter_subscriptions')
+        .upsert({
+          fan_user_id: user.id,
+          artist_id: artistId,
+          tier,
+          tier_id: tierId || null,
+          status: 'active',
+          is_beta_grant: true,
+          started_at: new Date().toISOString(),
+        }, { onConflict: 'fan_user_id,artist_id' });
+      
+      if (subError) {
+        logStep("Failed to create beta subscription", { error: subError.message });
+        throw new Error("Failed to create subscription");
+      }
+      
+      logStep("Beta subscription created successfully");
+      
+      const origin = req.headers.get("origin") || 'https://flymusic.app';
+      const redirectUrl = success_url || `${origin}/subscribe/${artistId}?success=true&beta=true`;
+      
+      return new Response(JSON.stringify({ 
+        url: redirectUrl,
+        is_beta_grant: true 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
     // Check if artist has Stripe Connect account
     const { data: stripeAccount } = await supabaseAdmin
       .from('artist_stripe_accounts')

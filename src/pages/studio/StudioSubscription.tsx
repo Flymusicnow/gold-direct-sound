@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BetaCodeInput } from "@/components/artist/BetaCodeInput";
 import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { InviteFriendsCard } from "@/components/artist/InviteFriendsCard";
+import { useMyPricingStatus } from "@/hooks/useMyPricingStatus";
 
 interface Supporter {
   id: string;
@@ -100,6 +101,7 @@ export default function StudioSubscription() {
   const [supporters, setSupporters] = useState<Supporter[]>([]);
   const [earnings, setEarnings] = useState({ total: 0, pending: 0, lastPayout: null as string | null });
   const isMobile = useIsMobile();
+  const { pricingStatus, hasBetaAccess: hasPricingBetaAccess, discountPercent, expiresAt } = useMyPricingStatus();
 
   useEffect(() => {
     if (!user) {
@@ -207,7 +209,19 @@ export default function StudioSubscription() {
                 <p className="text-sm text-muted-foreground">Manage supporters and track revenue</p>
               </div>
             </div>
-            {hasBetaAccess && <EarlyAccessBadge />}
+            <div className="flex items-center gap-2">
+              {hasPricingBetaAccess && (
+                <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
+                  Beta Access Active
+                </Badge>
+              )}
+              {!hasPricingBetaAccess && discountPercent > 0 && (
+                <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20">
+                  {discountPercent}% Discount Applied
+                </Badge>
+              )}
+              {hasBetaAccess && <EarlyAccessBadge />}
+            </div>
           </div>
 
           {/* Earnings Cards */}
