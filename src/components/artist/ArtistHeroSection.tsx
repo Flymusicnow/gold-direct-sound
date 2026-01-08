@@ -127,9 +127,9 @@ export function ArtistHeroSection({
             </div>
 
             {/* Artist Info */}
-            <div className="flex-1 text-center md:text-left">
+            <div className="flex-1 text-center md:text-left text-white">
               <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-md">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                   {artist.artist_name}
                 </h1>
                 {isVerified && <VerifiedBadge size="lg" />}
