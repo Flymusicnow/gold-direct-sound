@@ -15,6 +15,12 @@ export interface ArtistProfileData {
   country: string | null;
   status: string;
   avatar_url: string | null;
+  banner_url: string | null;
+  banner_url_mobile: string | null;
+  banner_media_type: string | null;
+  banner_media_type_mobile: string | null;
+  banner_crop_data: Record<string, any> | null;
+  banner_crop_data_mobile: Record<string, any> | null;
   instagram_url: string | null;
   tiktok_url: string | null;
   youtube_url: string | null;
@@ -106,7 +112,7 @@ export function useArtistProfile(): UseArtistProfileReturn {
         console.error('Error fetching artist profile:', error);
       }
 
-      setProfile(data || null);
+      setProfile(data as ArtistProfileData | null);
     } catch (error) {
       console.error('Error in fetchProfile:', error);
       setProfile(null);
