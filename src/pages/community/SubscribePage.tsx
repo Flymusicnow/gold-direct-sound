@@ -57,20 +57,33 @@ const SubscribePage: React.FC = () => {
       if (!artistId) return;
 
       try {
-        // Fetch artist
-        const { data: artistData } = await supabase
+        // Dual ID lookup: try id first, then user_id
+        const { data: artistById } = await supabase
           .from('artist_profiles')
           .select('id, artist_name, avatar_url')
           .eq('id', artistId)
-          .single();
+          .maybeSingle();
+
+        let artistData = artistById;
+        if (!artistData) {
+          const { data: artistByUserId } = await supabase
+            .from('artist_profiles')
+            .select('id, artist_name, avatar_url')
+            .eq('user_id', artistId)
+            .maybeSingle();
+          artistData = artistByUserId;
+        }
 
         setArtist(artistData);
+        
+        // Use resolved artist ID for tier query
+        const resolvedArtistId = artistData?.id || artistId;
 
-        // Fetch tiers
+        // Fetch tiers using resolved artist ID
         const { data: tiersData } = await supabase
           .from('supporter_tiers')
           .select('*')
-          .eq('artist_id', artistId)
+          .eq('artist_id', resolvedArtistId)
           .eq('is_active', true)
           .order('price_cents', { ascending: true });
 

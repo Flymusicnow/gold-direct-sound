@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown } from 'lucide-react';
+import { ArrowLeft, Crown, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { CommunityHeader } from '@/components/community/CommunityHeader';
 import { CommunityFeed } from '@/components/community/CommunityFeed';
@@ -42,23 +43,35 @@ const ArtistCommunityPage: React.FC = () => {
       if (!artistId) return;
 
       try {
-        // Fetch artist
-        const { data: artistData } = await supabase
+        // Dual ID lookup: try id first, then user_id
+        const { data: artistById } = await supabase
           .from('artist_profiles')
           .select('id, artist_name, avatar_url, banner_url, user_id')
           .eq('id', artistId)
-          .single();
+          .maybeSingle();
+
+        let artistData = artistById;
+        if (!artistData) {
+          const { data: artistByUserId } = await supabase
+            .from('artist_profiles')
+            .select('id, artist_name, avatar_url, banner_url, user_id')
+            .eq('user_id', artistId)
+            .maybeSingle();
+          artistData = artistByUserId;
+        }
 
         setArtist(artistData);
 
-        // Fetch community
-        const { data: communityData } = await supabase
-          .from('communities')
-          .select('id, name, description, banner_media_url, banner_media_type')
-          .eq('artist_id', artistId)
-          .single();
+        // Fetch community using resolved artist ID
+        if (artistData) {
+          const { data: communityData } = await supabase
+            .from('communities')
+            .select('id, name, description, banner_media_url, banner_media_type')
+            .eq('artist_id', artistData.id)
+            .maybeSingle();
 
-        setCommunity(communityData);
+          setCommunity(communityData);
+        }
 
         // Fetch min price
         const price = await getMinimumPrice();
@@ -84,6 +97,36 @@ const ArtistCommunityPage: React.FC = () => {
 
   const priceDisplay = minPrice ? `${Math.floor(minPrice / 100)} kr/month` : '49 kr/month';
   const showMobileCTA = !isSubscribed && !isArtistOwner;
+
+  // Controlled empty state when artist exists but community is null
+  if (!isLoading && artist && !community) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container max-w-6xl mx-auto px-4 py-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBack}
+            className="gap-2 mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Profile
+          </Button>
+          <Card className="p-8 text-center">
+            <CardHeader className="pb-4">
+              <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <CardTitle>Community Coming Soon</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                {artist.artist_name} hasn't set up their community yet. Check back later!
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-0">
