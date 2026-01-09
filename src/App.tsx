@@ -195,8 +195,8 @@ const App = () => (
           <VerificationBanner />
           <PreferencesSync />
           <SwipeBackProvider>
-          <FlightdeckLayout>
           <NavigationWrapper />
+          <FlightdeckLayout>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />

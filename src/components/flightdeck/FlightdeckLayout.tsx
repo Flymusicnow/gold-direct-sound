@@ -24,6 +24,9 @@ export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
   const { queueOpen, currentItem } = useFlightdeck();
   const isMobile = useIsMobile();
 
+  // Separate NavigationWrapper from page content
+  const childArray = Array.isArray(children) ? children : [children];
+  
   return (
     <div className="h-screen overflow-hidden flex flex-col">
       {/* Main content area - scrolls internally */}
@@ -37,7 +40,7 @@ export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
         )}
         style={{ transition: 'margin-right 300ms ease' }}
       >
-        {children}
+        {childArray}
       </main>
 
       {/* Queue Sidebar - FIXED position, not part of layout flow */}
