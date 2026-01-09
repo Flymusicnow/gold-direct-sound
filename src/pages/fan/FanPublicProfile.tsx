@@ -50,16 +50,19 @@ export default function FanPublicProfile() {
       if (!userId) return;
 
       try {
-        // Fetch profile
-        const { data: profileData } = await supabase
-          .from('profiles')
+        // Use public_profiles view with maybeSingle() for graceful null handling
+        const { data: profileData, error } = await supabase
+          .from('public_profiles')
           .select('id, full_name, avatar_url, bio, created_at')
           .eq('id', userId)
-          .single();
+          .maybeSingle();
 
-        if (profileData) {
-          setProfile(profileData);
+        if (error) {
+          console.error('Error fetching profile:', error);
         }
+
+        // Set profile (null triggers "Profile not found" UI)
+        setProfile(profileData);
 
         // Fetch achievements
         const { data: achievementData } = await supabase

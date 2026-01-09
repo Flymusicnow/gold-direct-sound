@@ -45,30 +45,43 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
 
   const fetchData = useCallback(async () => {
     try {
-      // Fetch artist profile
-      const { data: artistData } = await supabase
+      // Dual ID lookup: try id first, then user_id
+      const { data: artistById } = await supabase
         .from('artist_profiles')
-        .select('artist_name, avatar_url, user_id')
+        .select('id, artist_name, avatar_url, user_id')
         .eq('id', artistId)
-        .single();
+        .maybeSingle();
+      
+      let artistData = artistById;
+      if (!artistData) {
+        const { data: artistByUserId } = await supabase
+          .from('artist_profiles')
+          .select('id, artist_name, avatar_url, user_id')
+          .eq('user_id', artistId)
+          .maybeSingle();
+        artistData = artistByUserId;
+      }
       
       setArtist(artistData);
+      
+      // Use resolved artist ID for community query
+      const resolvedArtistId = artistData?.id || artistId;
 
-      // Fetch or create community
+      // Fetch or create community using resolved artist ID
       let communityData = null;
       if (communityId) {
         const { data } = await supabase
           .from('communities')
           .select('id, name')
           .eq('id', communityId)
-          .single();
+          .maybeSingle();
         communityData = data;
       } else {
         const { data } = await supabase
           .from('communities')
           .select('id, name')
-          .eq('artist_id', artistId)
-          .single();
+          .eq('artist_id', resolvedArtistId)
+          .maybeSingle();
         communityData = data;
       }
       setCommunity(communityData);
