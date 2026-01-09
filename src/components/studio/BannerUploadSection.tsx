@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { 
   Upload, 
@@ -18,6 +19,10 @@ import {
 import { useProfileBanner, type BannerCropData } from '@/hooks/useProfileBanner';
 import { BannerCropper } from './BannerCropper';
 import { BannerPreviewModal } from './BannerPreviewModal';
+import { BannerPositionSlider } from './BannerPositionSlider';
+import { BannerTextToggle } from './BannerTextToggle';
+import { ProfileThemeSelector } from './ProfileThemeSelector';
+import { type ProfileTheme } from '@/lib/themes';
 
 interface BannerData {
   url: string | null;
@@ -35,7 +40,13 @@ interface BannerUploadSectionProps {
   country: string | null;
   desktopBanner: BannerData;
   mobileBanner: BannerData;
+  bannerPositionY: number;
+  showNameOnBanner: boolean;
+  profileTheme: ProfileTheme;
   onSuccess: () => void;
+  onPositionChange: (value: number) => void;
+  onTextToggleChange: (value: boolean) => void;
+  onThemeChange: (theme: ProfileTheme) => void;
 }
 
 export function BannerUploadSection({
@@ -48,7 +59,13 @@ export function BannerUploadSection({
   country,
   desktopBanner,
   mobileBanner,
+  bannerPositionY,
+  showNameOnBanner,
+  profileTheme,
   onSuccess,
+  onPositionChange,
+  onTextToggleChange,
+  onThemeChange,
 }: BannerUploadSectionProps) {
   const [useMobileBanner, setUseMobileBanner] = useState(!!mobileBanner.url);
   const [showCropper, setShowCropper] = useState(false);
@@ -88,9 +105,13 @@ export function BannerUploadSection({
       );
     }
 
-    const cropStyle: React.CSSProperties = banner.cropData ? {
-      objectPosition: `${banner.cropData.x}% ${banner.cropData.y}%`,
-    } : {};
+    // Use bannerPositionY for Y position, crop data for X
+    const yPosition = type === 'desktop' ? bannerPositionY : (banner.cropData?.y ?? 50);
+    const xPosition = banner.cropData?.x ?? 50;
+    
+    const cropStyle: React.CSSProperties = {
+      objectPosition: `${xPosition}% ${yPosition}%`,
+    };
 
     if (banner.mediaType === 'video') {
       return (
@@ -125,6 +146,7 @@ export function BannerUploadSection({
   const currentCropUrl = cropperType === 'desktop' ? desktopBanner.url : mobileBanner.url;
   const currentCropData = cropperType === 'desktop' ? desktopBanner.cropData : mobileBanner.cropData;
   const currentAspectRatio = cropperType === 'desktop' ? 3 : 4/3;
+  const hasBanner = !!desktopBanner.url;
 
   return (
     <>
@@ -239,9 +261,36 @@ export function BannerUploadSection({
             )}
           </div>
 
+          {/* Banner Position Slider - Only for images */}
+          {hasBanner && desktopBanner.mediaType === 'image' && (
+            <>
+              <Separator />
+              <BannerPositionSlider
+                value={bannerPositionY}
+                onChange={onPositionChange}
+              />
+            </>
+          )}
+
+          {/* Show Name Toggle */}
+          <Separator />
+          <BannerTextToggle
+            value={showNameOnBanner}
+            onChange={onTextToggleChange}
+            hasBanner={hasBanner}
+          />
+
+          {/* Theme Selector */}
+          <Separator />
+          <ProfileThemeSelector
+            value={profileTheme}
+            onChange={onThemeChange}
+          />
+
           {/* Mobile Banner Toggle */}
-          <div className="border-t pt-6">
-            <div className="flex items-center justify-between mb-4">
+          <Separator />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div>
                 <Label className="text-base font-medium">Mobile Banner (4:3)</Label>
                 <p className="text-sm text-muted-foreground">
@@ -356,6 +405,9 @@ export function BannerUploadSection({
           banner_media_type_mobile: mobileBanner.mediaType,
           banner_crop_data: desktopBanner.cropData,
           banner_crop_data_mobile: mobileBanner.cropData,
+          banner_position_y: bannerPositionY,
+          show_name_on_banner: showNameOnBanner,
+          profile_theme: profileTheme,
           genre,
           city,
           country,

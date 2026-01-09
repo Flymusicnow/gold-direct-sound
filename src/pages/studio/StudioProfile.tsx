@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Save, User, X, Plus, Upload, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { type ProfileTheme } from "@/lib/themes";
 
 export default function StudioProfile() {
   const { user } = useAuth();
@@ -54,6 +55,11 @@ export default function StudioProfile() {
   const [editYoutube, setEditYoutube] = useState("");
   const [editTwitter, setEditTwitter] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
+  
+  // SUPER CARD: Banner identity controls
+  const [bannerPositionY, setBannerPositionY] = useState(50);
+  const [showNameOnBanner, setShowNameOnBanner] = useState(true);
+  const [profileTheme, setProfileTheme] = useState<ProfileTheme>('gold');
 
   const popularGenres = [
     "Pop", "Hip-Hop", "R&B", "Rock", "Electronic", 
@@ -81,6 +87,10 @@ export default function StudioProfile() {
       setEditYoutube(artistProfile.youtube_url || "");
       setEditTwitter(artistProfile.twitter_url || "");
       setEditWebsite(artistProfile.website_url || "");
+      // SUPER CARD: Banner identity controls
+      setBannerPositionY(artistProfile.banner_position_y ?? 50);
+      setShowNameOnBanner(artistProfile.show_name_on_banner ?? true);
+      setProfileTheme((artistProfile.profile_theme as ProfileTheme) || 'gold');
     }
   }, [artistProfile]);
 
@@ -155,6 +165,9 @@ export default function StudioProfile() {
       youtubeUrl: editYoutube,
       twitterUrl: editTwitter,
       websiteUrl: editWebsite,
+      bannerPositionY,
+      showNameOnBanner,
+      profileTheme,
     });
 
     if (result.success) {
@@ -163,6 +176,28 @@ export default function StudioProfile() {
       toast.error(result.error || "Error updating profile");
     }
   };
+
+  // SUPER CARD: Handlers for banner controls with auto-save
+  const handlePositionChange = useCallback(async (value: number) => {
+    setBannerPositionY(value);
+    // Debounced auto-save handled in the save button
+  }, []);
+
+  const handleTextToggleChange = useCallback(async (value: boolean) => {
+    setShowNameOnBanner(value);
+    // Auto-save this change immediately
+    if (artistProfile) {
+      await updateProfile({ showNameOnBanner: value });
+    }
+  }, [artistProfile, updateProfile]);
+
+  const handleThemeChange = useCallback(async (theme: ProfileTheme) => {
+    setProfileTheme(theme);
+    // Auto-save this change immediately
+    if (artistProfile) {
+      await updateProfile({ profileTheme: theme });
+    }
+  }, [artistProfile, updateProfile]);
 
   if (loading) {
     return (
@@ -365,7 +400,13 @@ export default function StudioProfile() {
                 mediaType: artistProfile.banner_media_type_mobile as 'image' | 'video' | null,
                 cropData: artistProfile.banner_crop_data_mobile as any,
               }}
+              bannerPositionY={bannerPositionY}
+              showNameOnBanner={showNameOnBanner}
+              profileTheme={profileTheme}
               onSuccess={refetch}
+              onPositionChange={handlePositionChange}
+              onTextToggleChange={handleTextToggleChange}
+              onThemeChange={handleThemeChange}
             />
           )}
 

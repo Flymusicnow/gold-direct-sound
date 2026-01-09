@@ -21,6 +21,9 @@ export interface ArtistProfileData {
   banner_media_type_mobile: string | null;
   banner_crop_data: Record<string, any> | null;
   banner_crop_data_mobile: Record<string, any> | null;
+  banner_position_y: number | null;
+  show_name_on_banner: boolean | null;
+  profile_theme: string | null;
   instagram_url: string | null;
   tiktok_url: string | null;
   youtube_url: string | null;
@@ -47,6 +50,9 @@ export interface UpdateProfileInput {
   youtubeUrl?: string;
   twitterUrl?: string;
   websiteUrl?: string;
+  bannerPositionY?: number;
+  showNameOnBanner?: boolean;
+  profileTheme?: string;
 }
 
 interface ActionResult {
@@ -228,6 +234,9 @@ export function useArtistProfile(): UseArtistProfileReturn {
       if (data.youtubeUrl !== undefined) updateData.youtube_url = data.youtubeUrl || null;
       if (data.twitterUrl !== undefined) updateData.twitter_url = data.twitterUrl || null;
       if (data.websiteUrl !== undefined) updateData.website_url = data.websiteUrl || null;
+      if (data.bannerPositionY !== undefined) updateData.banner_position_y = data.bannerPositionY;
+      if (data.showNameOnBanner !== undefined) updateData.show_name_on_banner = data.showNameOnBanner;
+      if (data.profileTheme !== undefined) updateData.profile_theme = data.profileTheme;
 
       const { error } = await supabase
         .from('artist_profiles')
