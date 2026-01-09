@@ -186,10 +186,19 @@ const App = () => (
         <AuthProvider>
         <FlightRecorderProvider>
         <VerificationModeProvider>
+        <FanTasteProvider>
+        <VideoPlaybackProvider>
+        <FlightdeckProvider>
+        <AudioFocusProvider>
+        <VideoSessionProvider>
           <ReproDebugPanel />
           <VerificationBanner />
-          {/* Public routes - outside EarlyAccessGate */}
+          <PreferencesSync />
+          <SwipeBackProvider>
+          <FlightdeckLayout>
+          <NavigationWrapper />
           <Routes>
+            {/* Public routes */}
             <Route path="/" element={<Home />} />
             <Route path="/link/:slug" element={<PromoPreview />} />
             <Route path="/epk/:slug" element={<PublicPresskit />} />
@@ -200,7 +209,6 @@ const App = () => (
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/top-artists" element={<TopArtists />} />
             <Route path="/explore" element={<Explore />} />
-            
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/fan" element={<FanGate />} />
             <Route path="/fan/invite" element={<FanInvite />} />
@@ -217,23 +225,27 @@ const App = () => (
             <Route path="/culture" element={<CulturePage />} />
             <Route path="/safety" element={<SafetyPage />} />
             <Route path="/data" element={<DataPage />} />
-            <Route path="*" element={
-          <EarlyAccessGate>
-            <FanTasteProvider>
-              <VideoPlaybackProvider>
-                <FlightdeckProvider>
-                  <AudioFocusProvider>
-                    <VideoSessionProvider>
-                  <PreferencesSync />
-                  <SwipeBackProvider>
-                  <FlightdeckLayout>
-                  <NavigationWrapper />
-                <Routes>
             <Route path="/search" element={<Search />} />
             <Route path="/role-selection" element={<RoleSelection />} />
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/recovery" element={<Recovery />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/learn" element={<Learn />} />
+            
+            {/* Legal routes */}
+            <Route path="/legal/user-agreement" element={<UserAgreement />} />
+            <Route path="/legal/artist-agreement" element={<ArtistAgreement />} />
+            <Route path="/legal/fan-terms" element={<FanTerms />} />
+            <Route path="/legal/brand-portal-terms" element={<BrandPortalTerms />} />
+            <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
+            
+            {/* Checkout routes */}
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+            
+            {/* Join routes with beta gates */}
             <Route path="/join/artist" element={
               <PrivateBetaGate routeRole="artist">
                 <JoinArtist />
@@ -246,6 +258,8 @@ const App = () => (
             } />
             <Route path="/join/brand" element={<JoinBrand />} />
             <Route path="/signin/brand" element={<SignInBrand />} />
+            
+            {/* Artist public routes */}
             <Route path="/artist/:userId" element={
               <ArtistErrorBoundary>
                 <ArtistProfile />
@@ -256,6 +270,7 @@ const App = () => (
                 <ArtistAchievements />
               </ArtistErrorBoundary>
             } />
+            
             {/* Community routes */}
             <Route path="/artist/:artistId/community" element={<ArtistCommunityPage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
@@ -265,14 +280,23 @@ const App = () => (
                 <FeedPage />
               </ProtectedRoute>
             } />
+            
+            {/* Spotlight routes */}
+            <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
+            <Route path="/spotlight/archive" element={<SpotlightArchive />} />
+            <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
+            <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
+            <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
+            
+            {/* Other public routes */}
+            <Route path="/live/:streamId" element={<LiveStream />} />
+            <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
+            <Route path="/fan/profile/:userId" element={<FanPublicProfile />} />
+            
+            {/* Studio (Artist) protected routes */}
             <Route path="/studio/onboarding" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioOnboarding />
-              </ProtectedRoute>
-            } />
-            <Route path="/fan/onboarding" element={
-              <ProtectedRoute allowedRoles={['fan']}>
-                <FanOnboarding />
               </ProtectedRoute>
             } />
             <Route path="/studio" element={
@@ -390,44 +414,13 @@ const App = () => (
                 <StudioCommunity />
               </ProtectedRoute>
             } />
-            <Route path="/spotlight/leaderboard" element={<FanLeaderboard />} />
-            <Route path="/spotlight/archive" element={<SpotlightArchive />} />
-            <Route path="/spotlight/:campaignId/results" element={<SpotlightResults />} />
-            <Route path="/spotlight/:campaignId" element={<SpotlightCampaign />} />
-            <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
-            <Route path="/live/:streamId" element={<LiveStream />} />
-            <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
-            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/admin/qa" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminQA /></ProtectedRoute>} />
-            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUsers /></ProtectedRoute>} />
-            <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUserDetail /></ProtectedRoute>} />
-            <Route path="/admin/artists" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtists /></ProtectedRoute>} />
-            <Route path="/admin/tracks" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminTracks /></ProtectedRoute>} />
-            <Route path="/admin/approvals" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminApprovals /></ProtectedRoute>} />
-            <Route path="/admin/activity" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminActivityLog /></ProtectedRoute>} />
-            <Route path="/admin/spotlight" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlight /></ProtectedRoute>} />
-            <Route path="/admin/spotlight/:campaignId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlightEntries /></ProtectedRoute>} />
-            <Route path="/admin/beta-codes" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBetaCodes /></ProtectedRoute>} />
-            <Route path="/admin/payouts" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminPayouts /></ProtectedRoute>} />
-            <Route path="/admin/features" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFeatures /></ProtectedRoute>} />
-            <Route path="/admin/collab-entities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntities /></ProtectedRoute>} />
-            <Route path="/admin/collab-entities/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntityEdit /></ProtectedRoute>} />
-            <Route path="/admin/matching" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminMatching /></ProtectedRoute>} />
-            <Route path="/admin/opportunities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOpportunities /></ProtectedRoute>} />
-            <Route path="/admin/brand-applications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBrandApplications /></ProtectedRoute>} />
-            <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
-            <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
-            <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUpdates /></ProtectedRoute>} />
-            <Route path="/admin/smart-links" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSmartLinks /></ProtectedRoute>} />
-            <Route path="/admin/inbox" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInbox /></ProtectedRoute>} />
-            <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
-            <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
-            <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
-            <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
-            <Route path="/admin/artist-pricing" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtistPricing /></ProtectedRoute>} />
-            <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
-            <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
-            <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />
+            
+            {/* Fan protected routes */}
+            <Route path="/fan/onboarding" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanOnboarding />
+              </ProtectedRoute>
+            } />
             <Route path="/fan/dashboard" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanDashboard />
@@ -483,17 +476,41 @@ const App = () => (
                 <FanWrapped />
               </ProtectedRoute>
             } />
-            <Route path="/fan/profile/:userId" element={<FanPublicProfile />} />
-            <Route path="/discover" element={<Discover />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/legal/user-agreement" element={<UserAgreement />} />
-            <Route path="/legal/artist-agreement" element={<ArtistAgreement />} />
-            <Route path="/legal/fan-terms" element={<FanTerms />} />
-            <Route path="/legal/brand-portal-terms" element={<BrandPortalTerms />} />
-            <Route path="/legal/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/legal/risk-disclaimer" element={<RiskDisclaimer />} />
-            <Route path="/checkout/success" element={<CheckoutSuccess />} />
-            <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+            
+            {/* Admin protected routes */}
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/admin/qa" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminQA /></ProtectedRoute>} />
+            <Route path="/admin/users" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUsers /></ProtectedRoute>} />
+            <Route path="/admin/users/:userId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUserDetail /></ProtectedRoute>} />
+            <Route path="/admin/artists" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtists /></ProtectedRoute>} />
+            <Route path="/admin/tracks" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminTracks /></ProtectedRoute>} />
+            <Route path="/admin/approvals" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminApprovals /></ProtectedRoute>} />
+            <Route path="/admin/activity" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminActivityLog /></ProtectedRoute>} />
+            <Route path="/admin/spotlight" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlight /></ProtectedRoute>} />
+            <Route path="/admin/spotlight/:campaignId" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSpotlightEntries /></ProtectedRoute>} />
+            <Route path="/admin/beta-codes" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBetaCodes /></ProtectedRoute>} />
+            <Route path="/admin/payouts" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminPayouts /></ProtectedRoute>} />
+            <Route path="/admin/features" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFeatures /></ProtectedRoute>} />
+            <Route path="/admin/collab-entities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntities /></ProtectedRoute>} />
+            <Route path="/admin/collab-entities/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCollabEntityEdit /></ProtectedRoute>} />
+            <Route path="/admin/matching" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminMatching /></ProtectedRoute>} />
+            <Route path="/admin/opportunities" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOpportunities /></ProtectedRoute>} />
+            <Route path="/admin/brand-applications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminBrandApplications /></ProtectedRoute>} />
+            <Route path="/admin/campaigns" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminCampaigns /></ProtectedRoute>} />
+            <Route path="/admin/roles" element={<ProtectedRoute allowedRoles={['super_admin']}><AdminRoleManagement /></ProtectedRoute>} />
+            <Route path="/admin/updates" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminUpdates /></ProtectedRoute>} />
+            <Route path="/admin/smart-links" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminSmartLinks /></ProtectedRoute>} />
+            <Route path="/admin/inbox" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInbox /></ProtectedRoute>} />
+            <Route path="/admin/inbox/:id" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminInboxDetail /></ProtectedRoute>} />
+            <Route path="/admin/verifications" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminVerifications /></ProtectedRoute>} />
+            <Route path="/admin/waitlist" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminWaitlist /></ProtectedRoute>} />
+            <Route path="/admin/flight-recorder" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminFlightRecorder /></ProtectedRoute>} />
+            <Route path="/admin/artist-pricing" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminArtistPricing /></ProtectedRoute>} />
+            <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
+            <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
+            <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />
+            
+            {/* Brand protected routes */}
             <Route path="/brand/onboarding" element={
               <ProtectedRoute allowedRoles={['brand']}>
                 <BrandOnboarding />
@@ -539,18 +556,17 @@ const App = () => (
                 <BrandInbox />
               </ProtectedRoute>
             } />
+            
+            {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-              </FlightdeckLayout>
-              </SwipeBackProvider>
-              </VideoSessionProvider>
-              </AudioFocusProvider>
-            </FlightdeckProvider>
-            </VideoPlaybackProvider>
-          </FanTasteProvider>
-          </EarlyAccessGate>
-            } />
-          </Routes>
+          </FlightdeckLayout>
+          </SwipeBackProvider>
+        </VideoSessionProvider>
+        </AudioFocusProvider>
+        </FlightdeckProvider>
+        </VideoPlaybackProvider>
+        </FanTasteProvider>
         </VerificationModeProvider>
         </FlightRecorderProvider>
         </AuthProvider>
