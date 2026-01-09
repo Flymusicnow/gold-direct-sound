@@ -3439,6 +3439,7 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_pinned: boolean | null
           is_public: boolean
           name: string
           updated_at: string | null
@@ -3449,6 +3450,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_pinned?: boolean | null
           is_public?: boolean
           name: string
           updated_at?: string | null
@@ -3459,6 +3461,7 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_pinned?: boolean | null
           is_public?: boolean
           name?: string
           updated_at?: string | null
@@ -4921,6 +4924,7 @@ export type Database = {
           genre: string | null
           id: string
           is_supporter_only: boolean | null
+          lyrics: string | null
           mood: string | null
           play_count: number | null
           release_date: string | null
@@ -4945,6 +4949,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_supporter_only?: boolean | null
+          lyrics?: string | null
           mood?: string | null
           play_count?: number | null
           release_date?: string | null
@@ -4969,6 +4974,7 @@ export type Database = {
           genre?: string | null
           id?: string
           is_supporter_only?: boolean | null
+          lyrics?: string | null
           mood?: string | null
           play_count?: number | null
           release_date?: string | null

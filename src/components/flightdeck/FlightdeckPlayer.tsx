@@ -2,14 +2,19 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Shuffle, Repeat, Repeat1, Smartphone } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, List, ChevronDown, ChevronUp, X, Shuffle, Repeat, Repeat1, Smartphone, Heart, Plus } from 'lucide-react';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
 import { useVideoPlayback } from '@/contexts/VideoPlaybackContext';
 import { useAudioFocus } from '@/contexts/AudioFocusContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { FlightdeckQueueDrawer } from './FlightdeckQueueDrawer';
+import { NowPlayingScreen } from './NowPlayingScreen';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import AddToPlaylistDialog from '@/components/playlists/AddToPlaylistDialog';
 
 type MiniPlayerPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -39,6 +44,7 @@ export function FlightdeckPlayer() {
   
   const { pauseAllVideos } = useVideoPlayback();
   const { onMusicPlay } = useAudioFocus();
+  const { user } = useAuth();
   const isMobile = useIsMobile();
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -54,6 +60,12 @@ export function FlightdeckPlayer() {
   const [miniPlayerPosition, setMiniPlayerPosition] = useState<MiniPlayerPosition>(() => {
     return (localStorage.getItem('miniPlayerPosition') as MiniPlayerPosition) || 'bottom-right';
   });
+  
+  // Like and playlist states
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLikeUpdating, setIsLikeUpdating] = useState(false);
+  const [showPlaylistDialog, setShowPlaylistDialog] = useState(false);
+  const [showNowPlaying, setShowNowPlaying] = useState(false);
 
   // Debug helper for queue/player state
   const dbg = (...args: unknown[]) => console.log("[PLAYER/QUEUE DBG]", ...args);
@@ -262,10 +274,72 @@ export function FlightdeckPlayer() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentTime, duration, togglePlay, toggleMute]);
 
+  // Fetch like status when current item changes
+  useEffect(() => {
+    if (!currentItem || !user) {
+      setIsLiked(false);
+      return;
+    }
+
+    const checkLiked = async () => {
+      const { data } = await supabase
+        .from('likes')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('track_id', currentItem.id)
+        .maybeSingle();
+
+      setIsLiked(!!data);
+    };
+
+    checkLiked();
+  }, [currentItem?.id, user?.id]);
+
+  const handleToggleLike = async () => {
+    if (!user || !currentItem) {
+      toast.error('Please sign in to like tracks');
+      return;
+    }
+
+    if (isLikeUpdating) return;
+    setIsLikeUpdating(true);
+
+    try {
+      if (isLiked) {
+        await supabase
+          .from('likes')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('track_id', currentItem.id);
+        setIsLiked(false);
+        toast.success('Removed from liked tracks');
+      } else {
+        await supabase
+          .from('likes')
+          .insert({ user_id: user.id, track_id: currentItem.id });
+        setIsLiked(true);
+        toast.success('Added to liked tracks');
+      }
+    } catch (error) {
+      console.error('Error updating like:', error);
+      toast.error('Failed to update like');
+    } finally {
+      setIsLikeUpdating(false);
+    }
+  };
+
   if (!currentItem) return null;
 
   return (
     <>
+      {/* Now Playing Screen (Mobile) */}
+      {isMobile && (
+        <NowPlayingScreen 
+          isOpen={showNowPlaying} 
+          onClose={() => setShowNowPlaying(false)} 
+        />
+      )}
+
       {/* Mobile Queue Drawer - shows queue list only (MOBILE ONLY) */}
       {isMobile && (
         <FlightdeckQueueDrawer 
@@ -361,10 +435,10 @@ export function FlightdeckPlayer() {
 
         {/* Controls */}
         <div className="flex items-center justify-between gap-4">
-          {/* Track Info - Clickable link to artist */}
-          <Link 
-            to={`/artist/${currentItem.artistUserId}`}
-            className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
+          {/* Track Info - Clickable to open Now Playing on mobile */}
+          <button 
+            onClick={() => isMobile && setShowNowPlaying(true)}
+            className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity text-left"
           >
             {currentItem.coverUrl && (
               <img
@@ -377,7 +451,47 @@ export function FlightdeckPlayer() {
               <p className="font-semibold truncate">{currentItem.title}</p>
               <p className="text-sm text-muted-foreground truncate">{currentItem.artistName}</p>
             </div>
-          </Link>
+          </button>
+
+          {/* Quick Actions - Like & Add to Stack */}
+          <div className="hidden sm:flex items-center gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleLike}
+                    disabled={isLikeUpdating}
+                    className={cn("h-8 w-8", isLiked && "text-red-500")}
+                  >
+                    <Heart className={cn("h-4 w-4", isLiked && "fill-current")} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isLiked ? 'Unlike' : 'Like'}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowPlaylistDialog(true)}
+                    className="h-8 w-8"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Add to Stack</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
 
           {/* Playback Controls */}
           <div className="flex items-center gap-1 md:gap-2">
@@ -600,6 +714,14 @@ export function FlightdeckPlayer() {
           </div>
         </div>
       )}
+
+      {/* Add to Playlist Dialog */}
+      <AddToPlaylistDialog
+        isOpen={showPlaylistDialog}
+        onClose={() => setShowPlaylistDialog(false)}
+        trackId={currentItem.id}
+        trackTitle={currentItem.title}
+      />
     </>
   );
 }

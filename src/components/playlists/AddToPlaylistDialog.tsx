@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -9,7 +10,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Check } from "lucide-react";
+import { Plus, Check, ListMusic, Pin } from "lucide-react";
 import { toast } from "sonner";
 import CreatePlaylistDialog from "./CreatePlaylistDialog";
 
@@ -17,6 +18,8 @@ interface Playlist {
   id: string;
   name: string;
   has_track: boolean;
+  is_pinned: boolean;
+  updated_at: string;
 }
 
 interface AddToPlaylistDialogProps {
@@ -33,6 +36,7 @@ export default function AddToPlaylistDialog({
   trackTitle,
 }: AddToPlaylistDialogProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [loading, setLoading] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -47,12 +51,12 @@ export default function AddToPlaylistDialog({
     if (!user) return;
 
     try {
-      // Get user's playlists
+      // Get user's playlists - sorted by updated_at to show recently used first
       const { data: playlistsData, error: playlistsError } = await supabase
         .from("playlists")
-        .select("id, name")
+        .select("id, name, is_pinned, updated_at")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
 
       if (playlistsError) throw playlistsError;
 
@@ -68,10 +72,18 @@ export default function AddToPlaylistDialog({
         existingTracks?.map((t) => t.playlist_id) || []
       );
 
-      const enrichedPlaylists = (playlistsData || []).map((p) => ({
+      const enrichedPlaylists = (playlistsData || []).map((p: any) => ({
         ...p,
         has_track: existingPlaylistIds.has(p.id),
+        is_pinned: p.is_pinned || false,
       }));
+
+      // Sort: pinned first, then by updated_at
+      enrichedPlaylists.sort((a: Playlist, b: Playlist) => {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      });
 
       setPlaylists(enrichedPlaylists);
     } catch (error) {
@@ -127,14 +139,27 @@ export default function AddToPlaylistDialog({
           </DialogHeader>
 
           <div className="space-y-2 max-h-[400px] overflow-y-auto">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Playlist
-            </Button>
+            {/* Action buttons row */}
+            <div className="flex gap-2 pb-2 border-b border-border mb-2">
+              <Button
+                variant="outline"
+                className="flex-1 justify-start"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Create New
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onClose();
+                  navigate('/fan/stacks');
+                }}
+              >
+                <ListMusic className="h-4 w-4 mr-2" />
+                View All
+              </Button>
+            </div>
 
             {playlists.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -152,7 +177,10 @@ export default function AddToPlaylistDialog({
                   }
                   disabled={loading}
                 >
-                  <span>{playlist.name}</span>
+                  <span className="flex items-center gap-1">
+                    {playlist.is_pinned && <Pin className="h-3 w-3 text-primary" />}
+                    {playlist.name}
+                  </span>
                   {playlist.has_track && <Check className="h-4 w-4" />}
                 </Button>
               ))
