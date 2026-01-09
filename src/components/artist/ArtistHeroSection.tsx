@@ -6,6 +6,8 @@ import { EarlyAccessBadge } from "./EarlyAccessBadge";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getThemeConfig, type ProfileTheme } from "@/lib/themes";
+import { cn } from "@/lib/utils";
 
 interface BannerCropData {
   x: number;
@@ -26,6 +28,9 @@ interface ArtistHeroSectionProps {
     banner_media_type_mobile?: 'image' | 'video' | string | null;
     banner_crop_data?: BannerCropData | null;
     banner_crop_data_mobile?: BannerCropData | null;
+    banner_position_y?: number | null;
+    show_name_on_banner?: boolean | null;
+    profile_theme?: ProfileTheme | string | null;
     genre: string | null;
     city: string | null;
     country: string | null;
@@ -49,6 +54,9 @@ export function ArtistHeroSection({
 }: ArtistHeroSectionProps) {
   const isMobile = useIsMobile();
 
+  // Get theme configuration
+  const theme = useMemo(() => getThemeConfig(artist.profile_theme), [artist.profile_theme]);
+
   // Determine which banner to show based on device
   const activeBanner = useMemo(() => {
     const useMobileBanner = isMobile && artist.banner_url_mobile;
@@ -59,16 +67,24 @@ export function ArtistHeroSection({
     };
   }, [isMobile, artist]);
 
-  // Calculate crop styles for images
+  // Calculate crop styles for images - using Y position from settings or crop data
   const cropStyle = useMemo(() => {
-    if (!activeBanner.cropData || activeBanner.mediaType === 'video') return {};
+    if (activeBanner.mediaType === 'video') return {};
+    
+    // Use banner_position_y if set, otherwise fall back to crop data
+    const yPosition = artist.banner_position_y ?? activeBanner.cropData?.y ?? 50;
+    const xPosition = activeBanner.cropData?.x ?? 50;
+    
     return {
-      objectPosition: `${activeBanner.cropData.x}% ${activeBanner.cropData.y}%`,
+      objectPosition: `${xPosition}% ${yPosition}%`,
     };
-  }, [activeBanner]);
+  }, [activeBanner, artist.banner_position_y]);
 
   const hasBanner = !!activeBanner.url;
   const isVideo = activeBanner.mediaType === 'video';
+  
+  // SUPER CARD: Show name unless explicitly disabled AND banner exists
+  const showArtistName = !hasBanner || artist.show_name_on_banner !== false;
 
   return (
     <div className="relative border-b border-border">
@@ -106,10 +122,17 @@ export function ArtistHeroSection({
       <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
         <div className="container mx-auto max-w-6xl">
           <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-center md:items-end">
-            {/* Avatar with gold ring */}
+            {/* Avatar with themed ring - ALWAYS VISIBLE per SUPER CARD */}
             <div className="relative flex-shrink-0">
-              <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full scale-150 -z-10" />
-              <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 ring-primary shadow-lg shadow-primary/30 overflow-hidden">
+              <div 
+                className="absolute inset-0 blur-2xl rounded-full scale-150 -z-10"
+                style={{ backgroundColor: `hsl(${theme.colorValue} / 0.3)` }}
+              />
+              <div className={cn(
+                "relative w-24 h-24 md:w-32 md:h-32 rounded-full ring-4 shadow-lg overflow-hidden",
+                theme.ringClass,
+                theme.shadowClass
+              )}>
                 {artist.avatar_url ? (
                   <img
                     src={artist.avatar_url}
@@ -117,8 +140,14 @@ export function ArtistHeroSection({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-4xl md:text-5xl text-primary font-bold">
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: `hsl(${theme.colorValue} / 0.2)` }}
+                  >
+                    <span 
+                      className="text-4xl md:text-5xl font-bold"
+                      style={{ color: `hsl(${theme.colorValue})` }}
+                    >
                       {artist.artist_name[0]}
                     </span>
                   </div>
@@ -128,17 +157,32 @@ export function ArtistHeroSection({
 
             {/* Artist Info */}
             <div className="flex-1 text-center md:text-left text-white">
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  {artist.artist_name}
-                </h1>
-                {isVerified && <VerifiedBadge size="lg" />}
-              </div>
+              {/* Artist Name - conditionally shown based on toggle */}
+              {showArtistName && (
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                    {artist.artist_name}
+                  </h1>
+                  {isVerified && <VerifiedBadge size="lg" />}
+                </div>
+              )}
+              
+              {/* Verified badge shown separately when name is hidden */}
+              {!showArtistName && isVerified && (
+                <div className="flex items-center gap-2 justify-center md:justify-start mb-2">
+                  <VerifiedBadge size="lg" />
+                </div>
+              )}
 
-              {/* Badges Row */}
+              {/* Badges Row - with themed colors */}
               <div className="flex flex-wrap items-center gap-2 mb-2 justify-center md:justify-start">
                 {artist.genre && (
-                  <Badge className="bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 backdrop-blur-sm">
+                  <Badge className={cn(
+                    "backdrop-blur-sm hover:opacity-80",
+                    theme.badgeBg,
+                    theme.badgeText,
+                    theme.badgeBorder
+                  )}>
                     {artist.genre}
                   </Badge>
                 )}

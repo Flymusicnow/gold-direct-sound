@@ -687,6 +687,7 @@ export type Database = {
           banner_crop_data_mobile: Json | null
           banner_media_type: string | null
           banner_media_type_mobile: string | null
+          banner_position_y: number | null
           banner_url: string | null
           banner_url_mobile: string | null
           bio: string | null
@@ -696,6 +697,8 @@ export type Database = {
           genre: string | null
           id: string
           instagram_url: string | null
+          profile_theme: string | null
+          show_name_on_banner: boolean | null
           status: string | null
           tiktok_url: string | null
           twitter_url: string | null
@@ -712,6 +715,7 @@ export type Database = {
           banner_crop_data_mobile?: Json | null
           banner_media_type?: string | null
           banner_media_type_mobile?: string | null
+          banner_position_y?: number | null
           banner_url?: string | null
           banner_url_mobile?: string | null
           bio?: string | null
@@ -721,6 +725,8 @@ export type Database = {
           genre?: string | null
           id?: string
           instagram_url?: string | null
+          profile_theme?: string | null
+          show_name_on_banner?: boolean | null
           status?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
@@ -737,6 +743,7 @@ export type Database = {
           banner_crop_data_mobile?: Json | null
           banner_media_type?: string | null
           banner_media_type_mobile?: string | null
+          banner_position_y?: number | null
           banner_url?: string | null
           banner_url_mobile?: string | null
           bio?: string | null
@@ -746,6 +753,8 @@ export type Database = {
           genre?: string | null
           id?: string
           instagram_url?: string | null
+          profile_theme?: string | null
+          show_name_on_banner?: boolean | null
           status?: string | null
           tiktok_url?: string | null
           twitter_url?: string | null
