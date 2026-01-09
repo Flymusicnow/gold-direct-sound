@@ -15,6 +15,7 @@ import CreatePlaylistDialog from "@/components/playlists/CreatePlaylistDialog";
 import { toast } from "sonner";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { PageTransition } from "@/components/ui/PageTransition";
+import { RecentlyAddedSection } from "@/components/stacks/RecentlyAddedSection";
 
 interface Playlist {
   id: string;
@@ -115,6 +116,9 @@ export default function FanPlaylists() {
                 {t('playlist.createPlaylist')}
               </Button>
             </div>
+
+            {/* Recently Added Section */}
+            <RecentlyAddedSection />
 
             {/* Playlists Grid */}
             {playlists.length === 0 ? (

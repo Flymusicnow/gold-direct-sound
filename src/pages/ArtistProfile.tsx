@@ -40,6 +40,7 @@ import { SpotlightCarousel } from "@/components/spotlight/SpotlightCarousel";
 import { SpotlightSection } from "@/components/spotlight/SpotlightSection";
 import { useArtistSpotlight } from "@/hooks/useArtistSpotlight";
 import { useInboundTracking } from "@/hooks/useInboundTracking";
+import { QuickAddButton } from "@/components/QuickAddButton";
 
 interface Artist {
   id: string;
@@ -851,6 +852,9 @@ export default function ArtistProfile() {
         artistId={artist.id}
         artistName={artist.artist_name}
       />
+      
+      {/* Quick Add Floating Button */}
+      <QuickAddButton />
       </div>
       {isMobile && <BottomNavBarFan />}
     </>
