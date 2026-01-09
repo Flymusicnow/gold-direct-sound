@@ -122,6 +122,7 @@ import FanSupporter from "./pages/FanSupporter";
 import FanAchievements from "./pages/FanAchievements";
 import FanMissions from "./pages/fan/FanMissions";
 import FanWrapped from "./pages/fan/FanWrapped";
+import FanPublicProfile from "./pages/fan/FanPublicProfile";
 import Search from "./pages/Search";
 import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
@@ -482,6 +483,7 @@ const App = () => (
                 <FanWrapped />
               </ProtectedRoute>
             } />
+            <Route path="/fan/profile/:userId" element={<FanPublicProfile />} />
             <Route path="/discover" element={<Discover />} />
             <Route path="/learn" element={<Learn />} />
             <Route path="/legal/user-agreement" element={<UserAgreement />} />

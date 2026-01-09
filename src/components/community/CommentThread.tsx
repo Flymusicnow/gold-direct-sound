@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, Pin, ChevronDown, ChevronUp, CornerDownRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { ArtistControlMenu } from './ArtistControlMenu';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { fetchAuthorIdentities, type AuthorIdentity } from '@/hooks/useAuthorIdentity';
+import { toast } from 'sonner';
 
 interface Comment {
   id: string;
@@ -76,6 +78,7 @@ const CommentItem: React.FC<{
   onCommentCreated: () => void;
   identityMap: Map<string, AuthorIdentity>;
   communityArtistUserId?: string;
+  onProfileClick: (authorId: string, identity: AuthorIdentity | undefined) => void;
 }> = ({ 
   comment, 
   depth, 
@@ -86,6 +89,7 @@ const CommentItem: React.FC<{
   onCommentCreated,
   identityMap,
   communityArtistUserId,
+  onProfileClick,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   
@@ -130,7 +134,12 @@ const CommentItem: React.FC<{
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-sm font-medium">{displayName}</span>
+            <button 
+              onClick={() => onProfileClick(comment.author_id, identity)}
+              className="text-sm font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+            >
+              {displayName}
+            </button>
             <RoleBadge role={roleBadge} />
             {comment.is_pinned && (
               <Pin className="h-3 w-3 text-primary" />
@@ -217,6 +226,7 @@ const CommentItem: React.FC<{
           onCommentCreated={onCommentCreated}
           identityMap={identityMap}
           communityArtistUserId={communityArtistUserId}
+          onProfileClick={onProfileClick}
         />
       ))}
     </div>
@@ -228,10 +238,19 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   maxDepth = 3,
   communityArtistUserId,
 }) => {
+  const navigate = useNavigate();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [identityMap, setIdentityMap] = useState<Map<string, AuthorIdentity>>(new Map());
+
+  const handleProfileClick = (authorId: string, identity: AuthorIdentity | undefined) => {
+    if (identity?.artistProfileId) {
+      navigate(`/artist/${identity.artistProfileId}`);
+    } else {
+      navigate(`/fan/profile/${authorId}`);
+    }
+  };
 
   const fetchComments = useCallback(async () => {
     try {
@@ -347,6 +366,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           onCommentCreated={handleCommentCreated}
           identityMap={identityMap}
           communityArtistUserId={communityArtistUserId}
+          onProfileClick={handleProfileClick}
         />
       ))}
     </div>
