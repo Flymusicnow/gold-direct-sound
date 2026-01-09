@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { 
-  Headphones, Heart, Play, Star, Award, Compass, Share2, Video, CheckCircle2 
+  Headphones, Heart, Play, Star, Award, Compass, Share2, Video, CheckCircle2, Loader2 
 } from 'lucide-react';
 
 interface MissionCardProps {
@@ -19,6 +19,7 @@ interface MissionCardProps {
   };
   progress: number;
   completed: boolean;
+  isPending?: boolean;
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -32,9 +33,10 @@ const iconMap: Record<string, React.ReactNode> = {
   video: <Video className="h-5 w-5" />,
 };
 
-export function MissionCard({ mission, progress, completed }: MissionCardProps) {
+export function MissionCard({ mission, progress, completed, isPending }: MissionCardProps) {
   const progressPercent = Math.min((progress / mission.target_count) * 100, 100);
   const icon = iconMap[mission.icon] || <Star className="h-5 w-5" />;
+  const remaining = mission.target_count - progress;
 
   return (
     <Card className={`transition-all ${completed ? 'bg-primary/10 border-primary/30' : 'bg-card/50'}`}>
@@ -63,9 +65,19 @@ export function MissionCard({ mission, progress, completed }: MissionCardProps) 
               <span className="text-xs text-muted-foreground whitespace-nowrap">
                 {progress}/{mission.target_count}
               </span>
-              <Badge variant="outline" className="text-primary border-primary/30 shrink-0">
-                +{mission.xp_reward} XP
-              </Badge>
+              {isPending ? (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                </div>
+              ) : completed ? (
+                <span className="text-sm font-medium text-green-500 shrink-0">
+                  Completed!
+                </span>
+              ) : (
+                <span className="text-sm font-medium text-muted-foreground shrink-0">
+                  {remaining} left
+                </span>
+              )}
             </div>
           </div>
         </div>

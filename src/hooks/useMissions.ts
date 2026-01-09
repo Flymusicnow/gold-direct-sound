@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface Mission {
   id: string;
@@ -24,6 +25,7 @@ export function useMissions() {
   const [missions, setMissions] = useState<Mission[]>([]);
   const [progress, setProgress] = useState<Record<string, MissionProgress>>({});
   const [loading, setLoading] = useState(true);
+  const [pendingMissions, setPendingMissions] = useState<Set<string>>(new Set());
 
   const fetchMissions = useCallback(async () => {
     try {
@@ -36,7 +38,6 @@ export function useMissions() {
       setMissions((missionsData || []) as Mission[]);
 
       if (user) {
-        const today = new Date().toISOString().split('T')[0];
         const weekStart = getWeekStart();
 
         const { data: progressData, error: progressError } = await supabase
@@ -81,6 +82,21 @@ export function useMissions() {
     const currentProgress = progress[mission.id]?.progress || 0;
     const newProgress = Math.min(currentProgress + increment, mission.target_count);
     const isCompleted = newProgress >= mission.target_count;
+    const wasAlreadyCompleted = currentProgress >= mission.target_count;
+
+    // Don't update if already at max
+    if (wasAlreadyCompleted) return { completed: true, xpEarned: 0 };
+
+    // Optimistic update
+    setPendingMissions(prev => new Set(prev).add(mission.id));
+    setProgress(prev => ({
+      ...prev,
+      [mission.id]: {
+        mission_id: mission.id,
+        progress: newProgress,
+        completed_at: isCompleted ? new Date().toISOString() : null,
+      },
+    }));
 
     try {
       const { error } = await supabase
@@ -97,19 +113,42 @@ export function useMissions() {
 
       if (error) throw error;
 
-      setProgress(prev => ({
-        ...prev,
-        [mission.id]: {
-          mission_id: mission.id,
-          progress: newProgress,
-          completed_at: isCompleted ? new Date().toISOString() : null,
-        },
-      }));
+      // Show toast notification
+      const remaining = mission.target_count - newProgress;
+      if (isCompleted) {
+        toast.success(`Mission Complete: ${mission.title}`, {
+          description: "Great job!",
+          duration: 3000,
+        });
+      } else {
+        toast.success(`+1 progress on "${mission.title}"`, {
+          description: `${remaining} left`,
+          duration: 2000,
+        });
+      }
 
       return { completed: isCompleted, xpEarned: isCompleted ? mission.xp_reward : 0 };
     } catch (error) {
       console.error('Error updating mission progress:', error);
+      
+      // Rollback on error
+      setProgress(prev => ({
+        ...prev,
+        [mission.id]: {
+          mission_id: mission.id,
+          progress: currentProgress,
+          completed_at: null,
+        },
+      }));
+      
+      toast.error("Could not update progress");
       return null;
+    } finally {
+      setPendingMissions(prev => {
+        const next = new Set(prev);
+        next.delete(mission.id);
+        return next;
+      });
     }
   }, [user, missions, progress]);
 
@@ -122,6 +161,7 @@ export function useMissions() {
     weeklyMissions,
     progress,
     loading,
+    pendingMissions,
     updateMissionProgress,
     refetch: fetchMissions,
   };
