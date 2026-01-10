@@ -67,7 +67,7 @@ export default function FanDashboard() {
     { icon: Rss, label: t('nav.feed'), path: '/fan/feed', color: 'text-violet-400' },
     { icon: Music, label: t('fan.myArtists'), path: '/fan/artists', color: 'text-primary' },
     { icon: ListMusic, label: t('nav.playlists'), path: '/fan/playlists', color: 'text-blue-400' },
-    { icon: Sparkles, label: t('nav.spotlight'), path: '/spotlight/leaderboard', color: 'text-yellow-400' },
+    { icon: Sparkles, label: t('nav.vote'), path: '/fan/vote', color: 'text-yellow-400' },
     { icon: Target, label: t('fan.missions'), path: '/fan/missions', color: 'text-green-400' },
     { icon: Award, label: t('fan.achievements'), path: '/fan/achievements', color: 'text-orange-400' },
   ];

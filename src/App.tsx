@@ -121,6 +121,7 @@ import PlaylistDetail from "./pages/PlaylistDetail";
 import FanSupporter from "./pages/FanSupporter";
 import FanAchievements from "./pages/FanAchievements";
 import FanMissions from "./pages/fan/FanMissions";
+import FanVote from "./pages/fan/FanVote";
 import FanWrapped from "./pages/fan/FanWrapped";
 import FanPublicProfile from "./pages/fan/FanPublicProfile";
 import Search from "./pages/Search";
@@ -469,6 +470,11 @@ const App = () => (
             <Route path="/fan/missions" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanMissions />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/vote" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanVote />
               </ProtectedRoute>
             } />
             <Route path="/fan/wrapped" element={
