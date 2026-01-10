@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Sparkles, Trophy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { SpotlightVoteProvider } from "@/contexts/SpotlightVoteContext";
 import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
@@ -155,139 +156,141 @@ export default function SpotlightCampaign() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky Back Button */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
-        <div className="container mx-auto px-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </div>
-
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-b from-[#E8BF1A]/10 to-background py-16 px-4">
-        <div className="container mx-auto text-center">
-          <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />
-          <h1 className="text-4xl font-bold text-foreground mb-4">{campaign.name}</h1>
-          <p className="text-lg text-muted-foreground mb-4">{campaign.description}</p>
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <span>{new Date(campaign.start_date).toLocaleDateString()}</span>
-            <span>-</span>
-            <span>{new Date(campaign.end_date).toLocaleDateString()}</span>
+    <SpotlightVoteProvider campaignId={campaignId || null}>
+      <div className="min-h-screen bg-background">
+        {/* Sticky Back Button */}
+        <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
+          <div className="container mx-auto px-4">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
           </div>
-          <Badge className="mt-4" variant={campaign.status === 'active' ? 'default' : 'secondary'}>
-            {campaign.status}
-          </Badge>
-
-          {/* Supporter Badge for logged-in users */}
-          {user && supporterStats && supporterStats.tier !== 'none' && (
-            <div className="mt-6 max-w-xs mx-auto">
-              <SpotlightSupporterBadge
-                tier={supporterStats.tier}
-                totalVotes={supporterStats.totalVotes}
-                variant="compact"
-              />
-            </div>
-          )}
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        {/* Leaderboard Section */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Trophy className="h-6 w-6 text-[#E8BF1A]" />
-              <h2 className="text-2xl font-bold">Top 10 Leaderboard</h2>
+        {/* Hero Section */}
+        <div className="relative bg-gradient-to-b from-[#E8BF1A]/10 to-background py-16 px-4">
+          <div className="container mx-auto text-center">
+            <Sparkles className="h-16 w-16 text-[#E8BF1A] mx-auto mb-4" />
+            <h1 className="text-4xl font-bold text-foreground mb-4">{campaign.name}</h1>
+            <p className="text-lg text-muted-foreground mb-4">{campaign.description}</p>
+            <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+              <span>{new Date(campaign.start_date).toLocaleDateString()}</span>
+              <span>-</span>
+              <span>{new Date(campaign.end_date).toLocaleDateString()}</span>
             </div>
-            <Link
-              to={`/spotlight/${campaignId}/leaderboard`}
-              className="text-[#E8BF1A] hover:underline text-sm"
-            >
-              View Full Leaderboard →
-            </Link>
+            <Badge className="mt-4" variant={campaign.status === 'active' ? 'default' : 'secondary'}>
+              {campaign.status}
+            </Badge>
+
+            {/* Supporter Badge for logged-in users */}
+            {user && supporterStats && supporterStats.tier !== 'none' && (
+              <div className="mt-6 max-w-xs mx-auto">
+                <SpotlightSupporterBadge
+                  tier={supporterStats.tier}
+                  totalVotes={supporterStats.totalVotes}
+                  variant="compact"
+                />
+              </div>
+            )}
           </div>
-          <Card>
-            <CardContent className="p-6">
-              <div className="space-y-3">
-                {topEntries.map((entry, index) => (
-                  <div
-                    key={entry.id}
-                    className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 rounded-lg transition-all spotlight-rank-transition ${
-                      index < 3 ? 'spotlight-glow-gold' : 'hover:bg-muted/50'
-                    } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold shrink-0">
-                        {index + 1}
+        </div>
+
+        <div className="container mx-auto px-4 py-8">
+          {/* Leaderboard Section */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Trophy className="h-6 w-6 text-[#E8BF1A]" />
+                <h2 className="text-2xl font-bold">Top 10 Leaderboard</h2>
+              </div>
+              <Link
+                to={`/spotlight/${campaignId}/leaderboard`}
+                className="text-[#E8BF1A] hover:underline text-sm"
+              >
+                View Full Leaderboard →
+              </Link>
+            </div>
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  {topEntries.map((entry, index) => (
+                    <div
+                      key={entry.id}
+                      className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 rounded-lg transition-all spotlight-rank-transition ${
+                        index < 3 ? 'spotlight-glow-gold' : 'hover:bg-muted/50'
+                      } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="sm:hidden">
+                          <p className="font-medium">{entry.title || entry.tracks.title}</p>
+                          <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
+                        </div>
                       </div>
-                      <div className="sm:hidden">
+                      <div className="flex-1 hidden sm:block">
                         <p className="font-medium">{entry.title || entry.tracks.title}</p>
                         <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
                       </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <Badge variant="outline">{entry.total_votes} votes</Badge>
+                        <SpotlightVoteButton
+                          entryId={entry.id}
+                          artistUserId={entry.artist_profiles.user_id}
+                          onVoteSuccess={fetchData}
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1 hidden sm:block">
-                      <p className="font-medium">{entry.title || entry.tracks.title}</p>
-                      <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                      <Badge variant="outline">{entry.total_votes} votes</Badge>
-                      <SpotlightVoteButton
-                        entryId={entry.id}
-                        artistUserId={entry.artist_profiles.user_id}
-                        onVoteSuccess={fetchData}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Entries Section */}
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold">All Entries</h2>
+                <InfoTooltip
+                  title="How Spotlight Voting Works"
+                  description="Vote for your favorite tracks in this campaign! Each fan gets one vote per entry. Your vote helps artists gain visibility and rise on the leaderboard."
+                  learnLink="/learn?tab=fan#spotlight"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Entries Section */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold">All Entries</h2>
-              <InfoTooltip
-                title="How Spotlight Voting Works"
-                description="Vote for your favorite tracks in this campaign! Each fan gets one vote per entry. Your vote helps artists gain visibility and rise on the leaderboard."
-                learnLink="/learn?tab=fan#spotlight"
-              />
+              <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="votes">Most Voted</SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="votes">Most Voted</SelectItem>
-                <SelectItem value="newest">Newest First</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {entries.map((entry) => (
-              <SpotlightEntryCard
-                key={entry.id}
-                entry={entry}
-                onVoteSuccess={fetchData}
-                campaignId={campaignId}
-              />
-            ))}
-          </div>
-
-          {entries.length === 0 && (
-            <div className="text-center py-12">
-              <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No entries yet</p>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {entries.map((entry) => (
+                <SpotlightEntryCard
+                  key={entry.id}
+                  entry={entry}
+                  onVoteSuccess={fetchData}
+                  campaignId={campaignId}
+                />
+              ))}
             </div>
-          )}
+
+            {entries.length === 0 && (
+              <div className="text-center py-12">
+                <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No entries yet</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </SpotlightVoteProvider>
   );
 }

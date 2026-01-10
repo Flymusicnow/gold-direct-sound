@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trophy, Medal, Award, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { SpotlightVoteProvider } from "@/contexts/SpotlightVoteContext";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 
 interface Entry {
@@ -120,87 +121,89 @@ export default function SpotlightLeaderboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Sticky Back Button */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
-        <div className="container mx-auto px-4">
-          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <Trophy className="h-12 w-12 text-[#E8BF1A] mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
-          <p className="text-muted-foreground">{campaignName}</p>
+    <SpotlightVoteProvider campaignId={campaignId || null}>
+      <div className="min-h-screen bg-background">
+        {/* Sticky Back Button */}
+        <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
+          <div className="container mx-auto px-4">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+          </div>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Rankings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {entries.map((entry, index) => (
-                <div
-                  key={entry.id}
-                  className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 rounded-lg transition-all spotlight-rank-transition ${
-                    index < 3 ? 'bg-gradient-to-r from-[#E8BF1A]/10 to-transparent spotlight-glow-gold' : 'hover:bg-muted/50'
-                  } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
-                >
-                  <div className="flex items-center gap-3 sm:gap-0">
-                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
-                      {getRankIcon(index) || (
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-foreground font-bold">
-                          {index + 1}
-                        </div>
-                      )}
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center mb-8">
+            <Trophy className="h-12 w-12 text-[#E8BF1A] mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
+            <p className="text-muted-foreground">{campaignName}</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Rankings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {entries.map((entry, index) => (
+                  <div
+                    key={entry.id}
+                    className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 rounded-lg transition-all spotlight-rank-transition ${
+                      index < 3 ? 'bg-gradient-to-r from-[#E8BF1A]/10 to-transparent spotlight-glow-gold' : 'hover:bg-muted/50'
+                    } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
+                  >
+                    <div className="flex items-center gap-3 sm:gap-0">
+                      <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
+                        {getRankIcon(index) || (
+                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-foreground font-bold">
+                            {index + 1}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 sm:hidden">
+                        <p className="font-semibold">
+                          {entry.title || entry.tracks.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {entry.artist_profiles.artist_name}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1 sm:hidden">
-                      <p className="font-semibold">
+                    <div className="flex-1 hidden sm:block">
+                      <p className="font-semibold text-lg">
                         {entry.title || entry.tracks.title}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {entry.artist_profiles.artist_name}
                       </p>
                     </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                      <Badge
+                        variant="outline"
+                        className={index < 3 ? 'border-[#E8BF1A] text-[#E8BF1A]' : ''}
+                      >
+                        {entry.total_votes} votes
+                      </Badge>
+                      <SpotlightVoteButton
+                        entryId={entry.id}
+                        artistUserId={entry.artist_profiles.user_id}
+                        onVoteSuccess={fetchData}
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1 hidden sm:block">
-                    <p className="font-semibold text-lg">
-                      {entry.title || entry.tracks.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {entry.artist_profiles.artist_name}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <Badge
-                      variant="outline"
-                      className={index < 3 ? 'border-[#E8BF1A] text-[#E8BF1A]' : ''}
-                    >
-                      {entry.total_votes} votes
-                    </Badge>
-                    <SpotlightVoteButton
-                      entryId={entry.id}
-                      artistUserId={entry.artist_profiles.user_id}
-                      onVoteSuccess={fetchData}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {entries.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No entries yet</p>
+                ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {entries.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">No entries yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </SpotlightVoteProvider>
   );
 }
