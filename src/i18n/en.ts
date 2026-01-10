@@ -107,6 +107,7 @@ export const en = {
   nav: {
     explore: 'Explore Artists',
     search: 'Search',
+    vote: 'Vote',
     myStudio: 'My Studio',
     fanPortal: 'Fan Portal',
     feed: 'Feed',
@@ -574,6 +575,11 @@ export const en = {
     notFollowingAnyone: "You're not following any artists yet",
     notFollowingAnyArtists: "You're not following any artists yet",
     discoverArtists: 'Discover artists to follow',
+    // Vote page keys
+    noActiveCampaigns: 'No active campaigns',
+    checkBackLater: 'Check back later for new voting campaigns',
+    voteSubtitle: 'Support your favorite artists',
+    noEntriesInCampaign: 'No entries in this campaign yet',
     // Feed specific keys
     loadingFeed: 'Loading your feed...',
     newFromYourArtists: 'New from your artists',

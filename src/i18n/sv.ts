@@ -107,6 +107,7 @@ export const sv = {
   nav: {
     explore: 'Utforska artister',
     search: 'Sök',
+    vote: 'Rösta',
     myStudio: 'Min studio',
     fanPortal: 'Fan-portal',
     feed: 'Flöde',
@@ -543,6 +544,11 @@ export const sv = {
     notFollowingAnyone: 'Du följer inga artister ännu',
     notFollowingAnyArtists: 'Du följer inga artister ännu',
     discoverArtists: 'Utforska artister att följa',
+    // Vote page keys
+    noActiveCampaigns: 'Inga aktiva kampanjer',
+    checkBackLater: 'Kom tillbaka senare för nya röstkampanjer',
+    voteSubtitle: 'Stötta dina favoritartister',
+    noEntriesInCampaign: 'Inga bidrag i denna kampanj ännu',
     // Feed specific keys
     loadingFeed: 'Laddar ditt flöde...',
     newFromYourArtists: 'Nytt från dina artister',
