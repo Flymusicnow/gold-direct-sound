@@ -113,10 +113,21 @@ export function useSpotlightVote(entryId: string, campaignId: string, artistId: 
         endFlow('ok');
       }
     } catch (error) {
-      const errorMessage = (error as Error).message || 'Unknown error';
-      step('vote_error', 'fail', { error: errorMessage });
+      const err = error as any;
+      const errorMessage = err?.message || 'Unknown error';
+      step('vote_error', 'fail', { error: errorMessage, code: err?.code });
       console.error('Error voting:', error);
-      toast.error('Failed to vote');
+      
+      // Handle duplicate vote attempt (unique constraint violation)
+      if (err?.code === '23505') {
+        setHasVoted(true);
+        toast.success('Already voted — You\'ve already supported this entry.');
+        endFlow('ok'); // Not a failure, just already voted
+        return;
+      }
+      
+      // Network/server failure - polite message
+      toast.error('Couldn\'t vote right now. Please try again in a moment.');
       endFlow('fail');
     } finally {
       setIsVoting(false);

@@ -147,18 +147,28 @@ export default function SpotlightLeaderboard() {
               {entries.map((entry, index) => (
                 <div
                   key={entry.id}
-                  className={`flex items-center gap-4 p-4 rounded-lg transition-all spotlight-rank-transition ${
+                  className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-4 rounded-lg transition-all spotlight-rank-transition ${
                     index < 3 ? 'bg-gradient-to-r from-[#E8BF1A]/10 to-transparent spotlight-glow-gold' : 'hover:bg-muted/50'
                   } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
                 >
-                  <div className="flex items-center justify-center w-12 h-12">
-                    {getRankIcon(index) || (
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-foreground font-bold">
-                        {index + 1}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-3 sm:gap-0">
+                    <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12">
+                      {getRankIcon(index) || (
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-foreground font-bold">
+                          {index + 1}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 sm:hidden">
+                      <p className="font-semibold">
+                        {entry.title || entry.tracks.title}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {entry.artist_profiles.artist_name}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 hidden sm:block">
                     <p className="font-semibold text-lg">
                       {entry.title || entry.tracks.title}
                     </p>
@@ -166,7 +176,7 @@ export default function SpotlightLeaderboard() {
                       {entry.artist_profiles.artist_name}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                     <Badge
                       variant="outline"
                       className={index < 3 ? 'border-[#E8BF1A] text-[#E8BF1A]' : ''}

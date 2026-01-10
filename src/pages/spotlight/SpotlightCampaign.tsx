@@ -215,18 +215,24 @@ export default function SpotlightCampaign() {
                 {topEntries.map((entry, index) => (
                   <div
                     key={entry.id}
-                    className={`flex items-center gap-4 p-3 rounded-lg transition-all spotlight-rank-transition ${
+                    className={`flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 p-3 rounded-lg transition-all spotlight-rank-transition ${
                       index < 3 ? 'spotlight-glow-gold' : 'hover:bg-muted/50'
                     } ${changedEntries.has(entry.id) ? 'vote-flash' : ''}`}
                   >
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold">
-                      {index + 1}
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[#E8BF1A]/10 text-[#E8BF1A] font-bold shrink-0">
+                        {index + 1}
+                      </div>
+                      <div className="sm:hidden">
+                        <p className="font-medium">{entry.title || entry.tracks.title}</p>
+                        <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 hidden sm:block">
                       <p className="font-medium">{entry.title || entry.tracks.title}</p>
                       <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                       <Badge variant="outline">{entry.total_votes} votes</Badge>
                       <SpotlightVoteButton
                         entryId={entry.id}

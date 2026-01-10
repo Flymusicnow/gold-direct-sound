@@ -103,9 +103,21 @@ export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSucce
       onVoteSuccess();
     } catch (error: any) {
       console.error('Error voting:', error);
+      
+      // Handle duplicate vote attempt (unique constraint violation)
+      if (error.code === '23505') {
+        setHasVoted(true);
+        toast({
+          title: "Already voted",
+          description: "You've already supported this entry.",
+        });
+        return;
+      }
+      
+      // Network/server failure - polite message
       toast({
-        title: "Error",
-        description: error.message || "Failed to record vote",
+        title: "Couldn't vote right now",
+        description: "Please try again in a moment.",
         variant: "destructive",
       });
     } finally {
@@ -129,9 +141,9 @@ export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSucce
         disabled={loading}
         variant={hasVoted ? "default" : "outline"}
         size="sm"
-        className={hasVoted ? "bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]" : ""}
+        className={`min-h-[44px] px-4 ${hasVoted ? "bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]" : ""}`}
       >
-        <Heart className={`h-4 w-4 mr-1 ${hasVoted ? 'fill-current' : ''}`} />
+        <Heart className={`h-4 w-4 mr-1.5 ${hasVoted ? 'fill-current' : ''}`} />
         {hasVoted ? 'Voted' : 'Vote'}
       </Button>
       
