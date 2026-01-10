@@ -71,6 +71,7 @@ export const fanNavConfig: NavConfig = {
       items: [
         { icon: Home, label: "Dashboard", path: "/fan/dashboard", i18nKey: "nav.dashboard" },
         { icon: Rss, label: "Feed", path: "/fan/feed", i18nKey: "nav.feed" },
+        { icon: Sparkles, label: "Vote", path: "/fan/vote", i18nKey: "nav.vote" },
         { icon: Target, label: "Missions", path: "/fan/missions", i18nKey: "fan.missions" },
       ],
     },
