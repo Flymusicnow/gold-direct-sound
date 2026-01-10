@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { SpotlightVoteProvider } from "@/contexts/SpotlightVoteContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
@@ -31,6 +32,7 @@ interface SpotlightEntry {
     id: string;
     artist_name: string;
     avatar_url: string | null;
+    user_id?: string;
   } | null;
 }
 
@@ -96,7 +98,8 @@ export default function FanVote() {
         artist_profiles (
           id,
           artist_name,
-          avatar_url
+          avatar_url,
+          user_id
         )
       `)
       .eq('campaign_id', campaignId)
@@ -253,6 +256,7 @@ export default function FanVote() {
                   {/* Vote button */}
                   <SpotlightVoteButton
                     entryId={entry.id}
+                    artistUserId={entry.artist_profile?.user_id}
                     onVoteSuccess={handleVoteSuccess}
                   />
                 </div>
@@ -271,7 +275,9 @@ export default function FanVote() {
         <FanSidebar />
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
-          {renderContent()}
+          <SpotlightVoteProvider campaignId={selectedCampaign}>
+            {renderContent()}
+          </SpotlightVoteProvider>
         </main>
       </div>
       {isMobile && <BottomNavBarFan />}

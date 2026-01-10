@@ -1,52 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSpotlightVotesOptional } from "@/contexts/SpotlightVoteContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
 interface SpotlightVoteButtonProps {
   entryId: string;
   artistUserId?: string;
-  onVoteSuccess: () => void;
+  onVoteSuccess?: () => void;
 }
 
 export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSuccess }: SpotlightVoteButtonProps) {
   const { user } = useAuth();
   const location = useLocation();
-  const [hasVoted, setHasVoted] = useState(false);
+  const voteContext = useSpotlightVotesOptional();
   const [loading, setLoading] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   // Check if this is the user's own entry
   const isOwnEntry = user?.id === artistUserId;
 
-  useEffect(() => {
-    if (user) {
-      checkVoteStatus();
-    }
-  }, [user, entryId]);
-
-  const checkVoteStatus = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('spotlight_votes')
-        .select('id')
-        .eq('entry_id', entryId)
-        .eq('fan_user_id', user.id)
-        .maybeSingle();
-
-      if (error) throw error;
-      setHasVoted(!!data);
-    } catch (error) {
-      console.error('Error checking vote status:', error);
-    }
-  };
+  // Use context state if available
+  const hasVoted = voteContext?.hasVotedFor(entryId) ?? false;
 
   const handleVote = async () => {
     if (!user) {
@@ -54,72 +32,23 @@ export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSucce
       return;
     }
 
+    if (!voteContext) {
+      console.error('SpotlightVoteButton used outside SpotlightVoteProvider');
+      return;
+    }
+
     setLoading(true);
     try {
+      let success: boolean;
       if (hasVoted) {
-        // Unvote
-        const { error } = await supabase
-          .from('spotlight_votes')
-          .delete()
-          .eq('entry_id', entryId)
-          .eq('fan_user_id', user.id);
-
-        if (error) throw error;
-
-        setHasVoted(false);
-        toast({
-          title: "Vote removed",
-          description: "Your vote has been removed",
-        });
+        success = await voteContext.removeVote(entryId);
       } else {
-        // Vote
-        // First get the campaign_id for this entry
-        const { data: entryData, error: entryError } = await supabase
-          .from('spotlight_entries')
-          .select('campaign_id')
-          .eq('id', entryId)
-          .single();
-
-        if (entryError) throw entryError;
-
-        const { error } = await supabase
-          .from('spotlight_votes')
-          .insert([{
-            entry_id: entryId,
-            campaign_id: entryData.campaign_id,
-            fan_user_id: user.id,
-            vote_type: 'free',
-          }]);
-
-        if (error) throw error;
-
-        setHasVoted(true);
-        toast({
-          title: "Vote recorded!",
-          description: "Thank you for voting",
-        });
+        success = await voteContext.castVote(entryId);
       }
 
-      onVoteSuccess();
-    } catch (error: any) {
-      console.error('Error voting:', error);
-      
-      // Handle duplicate vote attempt (unique constraint violation)
-      if (error.code === '23505') {
-        setHasVoted(true);
-        toast({
-          title: "Already voted",
-          description: "You've already supported this entry.",
-        });
-        return;
+      if (success && onVoteSuccess) {
+        onVoteSuccess();
       }
-      
-      // Network/server failure - polite message
-      toast({
-        title: "Couldn't vote right now",
-        description: "Please try again in a moment.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -138,7 +67,7 @@ export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSucce
     <>
       <Button
         onClick={handleVote}
-        disabled={loading}
+        disabled={loading || voteContext?.isLoading}
         variant={hasVoted ? "default" : "outline"}
         size="sm"
         className={`min-h-[44px] px-4 ${hasVoted ? "bg-gradient-to-r from-[#E8BF1A] to-[#B8960F]" : ""}`}
