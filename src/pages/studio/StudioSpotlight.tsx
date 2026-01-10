@@ -8,10 +8,11 @@ import { StudioSidebar } from "@/components/artist/StudioSidebar";
 import { MobileStudioNav } from "@/components/artist/MobileStudioNav";
 import { BottomNavBarStudio } from "@/components/mobile/BottomNavBarStudio";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sparkles } from "lucide-react";
+import { Sparkles, TrendingUp, Star } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import SpotlightSubmitDialog from "@/components/spotlight/SpotlightSubmitDialog";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SpotlightCampaign {
   id: string;
@@ -37,17 +38,83 @@ interface SpotlightEntry {
   };
 }
 
+// Animated vote counter component
+function AnimatedVoteCounter({ votes, previousVotes }: { votes: number; previousVotes?: number }) {
+  const hasIncreased = previousVotes !== undefined && votes > previousVotes;
+  const diff = previousVotes !== undefined ? votes - previousVotes : 0;
+  
+  return (
+    <div className="relative">
+      <motion.div
+        key={votes}
+        initial={{ scale: hasIncreased ? 1.3 : 1, color: hasIncreased ? '#E8BF1A' : undefined }}
+        animate={{ scale: 1, color: 'inherit' }}
+        transition={{ duration: 0.5 }}
+        className="flex items-center gap-2"
+      >
+        <Badge 
+          variant="outline" 
+          className={`text-lg px-3 py-1 ${hasIncreased ? 'border-[#E8BF1A] shadow-[0_0_10px_rgba(232,191,26,0.5)]' : ''}`}
+        >
+          <Star className="h-4 w-4 mr-1 text-[#E8BF1A]" />
+          {votes} votes
+        </Badge>
+      </motion.div>
+      <AnimatePresence>
+        {hasIncreased && diff > 0 && (
+          <motion.div
+            initial={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.5 }}
+            className="absolute -top-2 -right-2 text-[#E8BF1A] font-bold text-sm flex items-center"
+          >
+            <TrendingUp className="h-3 w-3 mr-1" />
+            +{diff}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function StudioSpotlight() {
   const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<SpotlightCampaign[]>([]);
   const [myEntries, setMyEntries] = useState<SpotlightEntry[]>([]);
   const [artistProfile, setArtistProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [previousVotes, setPreviousVotes] = useState<Record<string, number>>({});
   const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchData();
   }, [user]);
+
+  // Set up real-time subscription for vote updates
+  useEffect(() => {
+    if (!artistProfile?.id) return;
+
+    const channel = supabase
+      .channel('my-spotlight-votes')
+      .on(
+        'postgres_changes',
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'spotlight_votes',
+        },
+        () => {
+          // Refetch data when votes change
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [artistProfile?.id]);
 
   const fetchData = async () => {
     if (!user) return;
@@ -85,6 +152,22 @@ export default function StudioSpotlight() {
         .order('created_at', { ascending: false });
 
       if (entriesError) throw entriesError;
+      
+      // Track previous votes for animation
+      const newVotes: Record<string, number> = {};
+      (entriesData || []).forEach(entry => {
+        newVotes[entry.id] = entry.total_votes;
+      });
+      
+      // Only update previous votes after first load
+      if (myEntries.length > 0) {
+        const oldVotes: Record<string, number> = {};
+        myEntries.forEach(entry => {
+          oldVotes[entry.id] = entry.total_votes;
+        });
+        setPreviousVotes(oldVotes);
+      }
+      
       setMyEntries(entriesData || []);
     } catch (error) {
       console.error('Error fetching spotlight data:', error);
@@ -146,7 +229,11 @@ export default function StudioSpotlight() {
               const myEntry = myEntries.find(e => e.campaign_id === campaign.id);
 
               return (
-                <Card key={campaign.id}>
+                <Card key={campaign.id} className="relative overflow-hidden">
+                  {/* Gold glow effect for entries with votes */}
+                  {myEntry && myEntry.status === 'approved' && myEntry.total_votes > 0 && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#E8BF1A]/5 to-transparent pointer-events-none" />
+                  )}
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div>
@@ -163,7 +250,7 @@ export default function StudioSpotlight() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground mb-4">{campaign.description}</p>
                     {hasSubmitted && myEntry ? (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">Your submission:</span>
                           {getStatusBadge(myEntry.status)}
@@ -172,7 +259,10 @@ export default function StudioSpotlight() {
                           {myEntry.title || myEntry.tracks.title}
                         </p>
                         {myEntry.status === 'approved' && (
-                          <Badge variant="outline">{myEntry.total_votes} votes</Badge>
+                          <AnimatedVoteCounter 
+                            votes={myEntry.total_votes} 
+                            previousVotes={previousVotes[myEntry.id]}
+                          />
                         )}
                       </div>
                     ) : (
@@ -218,7 +308,10 @@ export default function StudioSpotlight() {
                         <CardDescription>{entry.spotlight_campaigns.name}</CardDescription>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{entry.total_votes} votes</Badge>
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Star className="h-3 w-3 text-[#E8BF1A]" />
+                          {entry.total_votes} votes
+                        </Badge>
                         {entry.cached_rank && (
                           <Badge variant="secondary">Final Rank: #{entry.cached_rank}</Badge>
                         )}
@@ -242,7 +335,15 @@ export default function StudioSpotlight() {
           <h2 className="text-2xl font-semibold mb-4">Current Spotlight Entries</h2>
           <div className="grid gap-4">
             {myEntries.map((entry) => (
-              <Card key={entry.id}>
+              <Card key={entry.id} className="relative overflow-hidden">
+                {/* Subtle pulse animation for approved entries */}
+                {entry.status === 'approved' && entry.total_votes > 0 && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-[#E8BF1A]/10 to-transparent pointer-events-none"
+                    animate={{ opacity: [0.3, 0.1, 0.3] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  />
+                )}
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div>
@@ -252,7 +353,10 @@ export default function StudioSpotlight() {
                     <div className="flex items-center gap-2">
                       {getStatusBadge(entry.status)}
                       {entry.status === 'approved' && (
-                        <Badge variant="outline">{entry.total_votes} votes</Badge>
+                        <AnimatedVoteCounter 
+                          votes={entry.total_votes} 
+                          previousVotes={previousVotes[entry.id]}
+                        />
                       )}
                     </div>
                   </div>

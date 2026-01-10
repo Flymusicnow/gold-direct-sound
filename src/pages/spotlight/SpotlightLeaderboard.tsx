@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Trophy, Medal, Award, ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 
 interface Entry {
   id: string;
@@ -16,6 +17,7 @@ interface Entry {
   };
   artist_profiles: {
     artist_name: string;
+    user_id?: string;
   };
 }
 
@@ -51,7 +53,7 @@ export default function SpotlightLeaderboard() {
           .select(`
             *,
             tracks (title),
-            artist_profiles (artist_name)
+            artist_profiles (artist_name, user_id)
           `)
           .eq('campaign_id', campaignId)
           .eq('status', 'approved')
@@ -119,16 +121,17 @@ export default function SpotlightLeaderboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(`/spotlight/${campaignId}`)}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Campaign
-        </Button>
+      {/* Sticky Back Button */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3">
+        <div className="container mx-auto px-4">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+        </div>
+      </div>
 
+      <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <Trophy className="h-12 w-12 text-[#E8BF1A] mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-foreground mb-2">Leaderboard</h1>
@@ -163,12 +166,19 @@ export default function SpotlightLeaderboard() {
                       {entry.artist_profiles.artist_name}
                     </p>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={index < 3 ? 'border-[#E8BF1A] text-[#E8BF1A]' : ''}
-                  >
-                    {entry.total_votes} votes
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={index < 3 ? 'border-[#E8BF1A] text-[#E8BF1A]' : ''}
+                    >
+                      {entry.total_votes} votes
+                    </Badge>
+                    <SpotlightVoteButton
+                      entryId={entry.id}
+                      artistUserId={entry.artist_profiles.user_id}
+                      onVoteSuccess={fetchData}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

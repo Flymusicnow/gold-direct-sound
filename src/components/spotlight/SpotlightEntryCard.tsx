@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play, Share2 } from "lucide-react";
+import { Play } from "lucide-react";
+import { Share2 } from "lucide-react";
 import SpotlightVoteButton from "./SpotlightVoteButton";
 import SpotlightShareModal from "./SpotlightShareModal";
 import { supabase } from "@/integrations/supabase/client";
+import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 
 interface Entry {
   id: string;
@@ -21,6 +23,7 @@ interface Entry {
   artist_profiles: {
     id: string;
     artist_name: string;
+    user_id?: string;
   };
 }
 
@@ -33,6 +36,7 @@ interface SpotlightEntryCardProps {
 export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }: SpotlightEntryCardProps) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [campaignName, setCampaignName] = useState('');
+  const { playNow } = useFlightdeck();
 
   useEffect(() => {
     const fetchCampaignName = async () => {
@@ -53,9 +57,17 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }:
   }, [campaignId]);
 
   const handlePlay = () => {
-    // This would integrate with your existing AudioPlayer
-    // For now, we'll show a toast
-    console.log('Play track:', entry.tracks.audio_url);
+    const flightdeckItem: FlightdeckItem = {
+      id: entry.track_id,
+      type: 'track',
+      title: entry.title || entry.tracks.title,
+      artistId: entry.artist_profiles.id,
+      artistName: entry.artist_profiles.artist_name,
+      artistUserId: entry.artist_profiles.user_id || entry.artist_profiles.id,
+      coverUrl: entry.tracks.cover_url || undefined,
+      mediaUrl: entry.tracks.audio_url,
+    };
+    playNow(flightdeckItem);
   };
 
   return (
@@ -105,6 +117,7 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }:
             </Button>
             <SpotlightVoteButton
               entryId={entry.id}
+              artistUserId={entry.artist_profiles.user_id}
               onVoteSuccess={onVoteSuccess}
             />
           </div>

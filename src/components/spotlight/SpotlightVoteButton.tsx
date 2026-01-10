@@ -3,21 +3,26 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Heart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
 interface SpotlightVoteButtonProps {
   entryId: string;
+  artistUserId?: string;
   onVoteSuccess: () => void;
 }
 
-export default function SpotlightVoteButton({ entryId, onVoteSuccess }: SpotlightVoteButtonProps) {
+export default function SpotlightVoteButton({ entryId, artistUserId, onVoteSuccess }: SpotlightVoteButtonProps) {
   const { user } = useAuth();
   const location = useLocation();
   const [hasVoted, setHasVoted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  // Check if this is the user's own entry
+  const isOwnEntry = user?.id === artistUserId;
 
   useEffect(() => {
     if (user) {
@@ -107,6 +112,15 @@ export default function SpotlightVoteButton({ entryId, onVoteSuccess }: Spotligh
       setLoading(false);
     }
   };
+
+  // Show "Your Entry" badge instead of vote button for own entries
+  if (isOwnEntry) {
+    return (
+      <Badge variant="outline" className="text-muted-foreground">
+        Your Entry
+      </Badge>
+    );
+  }
 
   return (
     <>

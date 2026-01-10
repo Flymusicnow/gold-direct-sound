@@ -9,6 +9,7 @@ import { ArrowLeft, Sparkles, Trophy } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import SpotlightEntryCard from "@/components/spotlight/SpotlightEntryCard";
+import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 import SpotlightSupporterBadge from "@/components/spotlight/SpotlightSupporterBadge";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
@@ -35,6 +36,7 @@ interface Entry {
   artist_profiles: {
     id: string;
     artist_name: string;
+    user_id?: string;
   };
 }
 
@@ -74,7 +76,7 @@ export default function SpotlightCampaign() {
           .select(`
             *,
             tracks (title, cover_url, audio_url),
-            artist_profiles (id, artist_name)
+            artist_profiles (id, artist_name, user_id)
           `)
           .eq('campaign_id', campaignId)
           .eq('status', 'approved')
@@ -224,7 +226,14 @@ export default function SpotlightCampaign() {
                       <p className="font-medium">{entry.title || entry.tracks.title}</p>
                       <p className="text-sm text-muted-foreground">{entry.artist_profiles.artist_name}</p>
                     </div>
-                    <Badge variant="outline">{entry.total_votes} votes</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{entry.total_votes} votes</Badge>
+                      <SpotlightVoteButton
+                        entryId={entry.id}
+                        artistUserId={entry.artist_profiles.user_id}
+                        onVoteSuccess={fetchData}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
