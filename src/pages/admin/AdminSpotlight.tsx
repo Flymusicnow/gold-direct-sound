@@ -69,10 +69,38 @@ export default function AdminSpotlight() {
   };
 
   const handleCreateCampaign = async () => {
+    // Validate required fields
+    if (!formData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Campaign name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!formData.start_date || !formData.end_date) {
+      toast({
+        title: "Error",
+        description: "Start and end dates are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
+      // Convert datetime-local format to ISO 8601 with timezone
+      const campaignData = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
+        status: formData.status,
+        start_date: new Date(formData.start_date).toISOString(),
+        end_date: new Date(formData.end_date).toISOString(),
+      };
+
       const { error } = await supabase
         .from('spotlight_campaigns')
-        .insert([formData]);
+        .insert([campaignData]);
 
       if (error) throw error;
 
