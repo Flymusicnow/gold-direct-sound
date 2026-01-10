@@ -121,7 +121,7 @@ export default function StudioSpotlight() {
 
   return (
     <>
-      <div className="h-screen overflow-hidden flex">
+      <div className="h-screen overflow-hidden flex pt-16">
         <StudioSidebar />
         <MobileStudioNav />
         

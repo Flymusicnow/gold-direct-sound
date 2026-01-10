@@ -453,7 +453,7 @@ export default function StudioVideos() {
 
   return (
     <>
-      <div className="h-screen overflow-hidden flex w-full">
+      <div className="h-screen overflow-hidden flex w-full pt-16">
         <StudioSidebar />
         <MobileStudioNav />
 
