@@ -30,6 +30,7 @@ interface AddModeratorDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   communityId: string | null;
+  artistId?: string; // Fallback for direct artist-based lookup
   currentUserId: string;
   existingModeratorIds: string[];
   onAdd: (userId: string, permissions: ModeratorPermissions) => void;
@@ -46,6 +47,7 @@ export const AddModeratorDialog: React.FC<AddModeratorDialogProps> = ({
   open,
   onOpenChange,
   communityId,
+  artistId,
   currentUserId,
   existingModeratorIds,
   onAdd,
@@ -58,30 +60,48 @@ export const AddModeratorDialog: React.FC<AddModeratorDialogProps> = ({
 
   // Fetch fans when dialog opens
   useEffect(() => {
-    if (!open || !communityId) return;
+    if (!open) return;
+    // Need either communityId or artistId
+    if (!communityId && !artistId) return;
 
     async function fetchFans() {
       setIsLoading(true);
       try {
-        // Get community to find artist_id
-        const { data: community } = await supabase
-          .from('communities')
-          .select('artist_id')
-          .eq('id', communityId)
-          .single();
+        let targetArtistId = artistId;
 
-        if (!community) return;
+        // If we have communityId but no artistId, get artist_id from community
+        if (communityId && !targetArtistId) {
+          const { data: community } = await supabase
+            .from('communities')
+            .select('artist_id')
+            .eq('id', communityId)
+            .single();
+
+          if (!community) {
+            setFans([]);
+            setIsLoading(false);
+            return;
+          }
+          targetArtistId = community.artist_id;
+        }
+
+        if (!targetArtistId) {
+          setFans([]);
+          setIsLoading(false);
+          return;
+        }
 
         // Fetch followers
         const { data: followers } = await supabase
           .from('follows')
           .select('fan_id')
-          .eq('artist_id', community.artist_id);
+          .eq('artist_id', targetArtistId);
 
         const fanIds = (followers || []).map((f) => f.fan_id);
 
         if (fanIds.length === 0) {
           setFans([]);
+          setIsLoading(false);
           return;
         }
 
@@ -95,7 +115,7 @@ export const AddModeratorDialog: React.FC<AddModeratorDialogProps> = ({
         const { data: subscriptions } = await supabase
           .from('supporter_subscriptions')
           .select('fan_user_id, tier')
-          .eq('artist_id', community.artist_id)
+          .eq('artist_id', targetArtistId)
           .eq('status', 'active');
 
         const supporterMap = new Map(
@@ -127,7 +147,7 @@ export const AddModeratorDialog: React.FC<AddModeratorDialogProps> = ({
     }
 
     fetchFans();
-  }, [open, communityId, currentUserId, existingModeratorIds]);
+  }, [open, communityId, artistId, currentUserId, existingModeratorIds]);
 
   // Filter fans by search query
   const filteredFans = fans.filter((fan) =>
