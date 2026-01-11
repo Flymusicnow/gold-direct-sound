@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Loader2, Trophy, Star, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, Star, Users, Heart } from "lucide-react";
 import { format } from "date-fns";
 import { FanAchievementBadge } from "@/components/fan/FanAchievementBadge";
 import { FanAchievement, FanAchievementType } from "@/hooks/useFanAchievements";
@@ -35,6 +35,7 @@ interface FanStats {
   totalXP: number;
   supporterLevel: 'none' | 'bronze' | 'silver' | 'gold';
   artistsFollowed: number;
+  entriesSupported: number;
 }
 
 export default function FanPublicProfile() {
@@ -110,11 +111,24 @@ export default function FanPublicProfile() {
           // Table may not exist, continue without follow count
         }
 
+        // Fetch supported entries count
+        let supportedCount = 0;
+        try {
+          const { count } = await supabase
+            .from('spotlight_votes')
+            .select('*', { count: 'exact', head: true })
+            .eq('fan_user_id', userId);
+          supportedCount = count || 0;
+        } catch {
+          // Continue without supported count
+        }
+
         setStats({
           achievementCount: achievementData?.length || 0,
           totalXP,
           supporterLevel,
           artistsFollowed: followCount || 0,
+          entriesSupported: supportedCount,
         });
       } catch (error) {
         console.error('Error fetching fan profile:', error);
@@ -191,7 +205,7 @@ export default function FanPublicProfile() {
 
         {/* Stats Grid */}
         {stats && (
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
             <Card className="p-4 text-center">
               <Trophy className="h-5 w-5 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold text-primary">{stats.achievementCount}</p>
@@ -206,6 +220,14 @@ export default function FanPublicProfile() {
               <Users className="h-5 w-5 mx-auto mb-2 text-primary" />
               <p className="text-2xl font-bold">{stats.artistsFollowed}</p>
               <p className="text-xs text-muted-foreground">Following</p>
+            </Card>
+            <Card 
+              className="p-4 text-center cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => navigate(`/fan/${userId}/votes`)}
+            >
+              <Heart className="h-5 w-5 mx-auto mb-2 text-primary" />
+              <p className="text-2xl font-bold text-primary">{stats.entriesSupported}</p>
+              <p className="text-xs text-muted-foreground">Supported</p>
             </Card>
           </div>
         )}

@@ -124,6 +124,7 @@ import FanMissions from "./pages/fan/FanMissions";
 import FanVote from "./pages/fan/FanVote";
 import FanWrapped from "./pages/fan/FanWrapped";
 import FanPublicProfile from "./pages/fan/FanPublicProfile";
+import FanVotingHistory from "./pages/fan/FanVotingHistory";
 import Search from "./pages/Search";
 import Discover from "./pages/Discover";
 import Learn from "./pages/Learn";
@@ -293,6 +294,7 @@ const App = () => (
             <Route path="/live/:streamId" element={<LiveStream />} />
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/fan/profile/:userId" element={<FanPublicProfile />} />
+            <Route path="/fan/:userId/votes" element={<FanVotingHistory />} />
             
             {/* Studio (Artist) protected routes */}
             <Route path="/studio/onboarding" element={

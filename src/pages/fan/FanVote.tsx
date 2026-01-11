@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { SpotlightVoteProvider } from "@/contexts/SpotlightVoteContext";
+import { SpotlightVoteProvider, useSpotlightVotesOptional } from "@/contexts/SpotlightVoteContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
@@ -13,8 +13,9 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Music, Heart } from "lucide-react";
+import { Sparkles, Music, Heart, RefreshCw, Users } from "lucide-react";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
+import { YourVotesCard } from "@/components/spotlight/YourVotesCard";
 
 interface SpotlightEntry {
   id: string;
@@ -42,11 +43,11 @@ interface Campaign {
   status: string;
 }
 
-export default function FanVote() {
+function VotePageContent() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const voteContext = useSpotlightVotesOptional();
   const [entries, setEntries] = useState<SpotlightEntry[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export default function FanVote() {
         artist_id,
         track_id,
         status,
-        vote_count,
+        total_votes,
         tracks (
           id,
           title,
@@ -104,11 +105,12 @@ export default function FanVote() {
       `)
       .eq('campaign_id', campaignId)
       .eq('status', 'approved')
-      .order('vote_count', { ascending: false });
+      .order('total_votes', { ascending: false });
 
     if (entriesData) {
       const formatted = entriesData.map((entry: any) => ({
         ...entry,
+        vote_count: entry.total_votes,
         track: entry.tracks,
         artist_profile: entry.artist_profiles,
       }));
@@ -129,10 +131,11 @@ export default function FanVote() {
     }
   };
 
-  const renderContent = () => {
+  // Section A: Vote Now
+  const renderVoteNowSection = () => {
     if (loading) {
       return (
-        <div className="max-w-4xl mx-auto">
+        <div className="mb-12">
           {/* Header skeleton */}
           <div className="mb-8">
             <Skeleton className="h-9 w-48 mb-2" />
@@ -160,12 +163,12 @@ export default function FanVote() {
 
     if (campaigns.length === 0) {
       return (
-        <div className="max-w-4xl mx-auto">
+        <div className="mb-12">
           <Card className="p-12 text-center">
             <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <h2 className="text-xl font-semibold mb-2">{t('fan.noActiveCampaigns')}</h2>
             <p className="text-muted-foreground mb-6">{t('fan.checkBackLater')}</p>
-            <Button onClick={() => navigate('/fan/artists')}>
+            <Button onClick={() => navigate('/fan/artists')} className="min-h-[44px]">
               {t('fan.discoverArtists')}
             </Button>
           </Card>
@@ -174,7 +177,7 @@ export default function FanVote() {
     }
 
     return (
-      <PageTransition className="max-w-4xl mx-auto">
+      <div className="mb-12">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
@@ -193,7 +196,7 @@ export default function FanVote() {
                 variant={selectedCampaign === campaign.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleCampaignChange(campaign.id)}
-                className="whitespace-nowrap"
+                className="whitespace-nowrap min-h-[44px]"
               >
                 {campaign.name}
               </Button>
@@ -264,9 +267,126 @@ export default function FanVote() {
             ))}
           </div>
         )}
-      </PageTransition>
+      </div>
     );
   };
+
+  // Section B: Your Votes
+  const renderYourVotesSection = () => {
+    const votedEntries = voteContext?.votedEntries || [];
+    const isLoadingVotes = voteContext?.votedEntriesLoading ?? true;
+    const hasError = voteContext?.votedEntriesError ?? false;
+
+    return (
+      <div>
+        {/* Section Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+            <Heart className="h-6 w-6 text-primary" />
+            Your Votes
+          </h2>
+          <p className="text-muted-foreground">The entries you've supported in Spotlight.</p>
+        </div>
+
+        {/* Loading State */}
+        {isLoadingVotes && (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="p-4">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-14 w-14 rounded-lg" />
+                  <div className="flex-1">
+                    <Skeleton className="h-5 w-32 mb-2" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <Skeleton className="h-6 w-12" />
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {!isLoadingVotes && hasError && (
+          <Card className="p-8 text-center">
+            <RefreshCw className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Couldn't load your votes</h3>
+            <p className="text-muted-foreground mb-4">Please try again in a moment.</p>
+            <Button 
+              variant="outline" 
+              onClick={() => voteContext?.refreshVotes()}
+              className="min-h-[44px]"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+          </Card>
+        )}
+
+        {/* Empty State */}
+        {!isLoadingVotes && !hasError && votedEntries.length === 0 && (
+          <Card className="p-8 text-center">
+            <Heart className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No votes yet</h3>
+            <p className="text-muted-foreground mb-6">
+              When you vote in Spotlight, the entries you supported will show up here.
+            </p>
+            <Button 
+              onClick={() => navigate('/fan/artists')} 
+              variant="outline"
+              className="min-h-[44px]"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Explore Artists
+            </Button>
+          </Card>
+        )}
+
+        {/* Voted Entries List */}
+        {!isLoadingVotes && !hasError && votedEntries.length > 0 && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {votedEntries.map((entry) => (
+              <YourVotesCard key={entry.entry_id} entry={entry} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <PageTransition className="max-w-4xl mx-auto">
+      {renderVoteNowSection()}
+      {renderYourVotesSection()}
+    </PageTransition>
+  );
+}
+
+export default function FanVote() {
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
+
+  // Fetch active campaign ID for the provider
+  useEffect(() => {
+    const fetchActiveCampaign = async () => {
+      const { data } = await supabase
+        .from('spotlight_campaigns')
+        .select('id')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data) {
+        setSelectedCampaign(data.id);
+      }
+    };
+    
+    if (user) {
+      fetchActiveCampaign();
+    }
+  }, [user]);
 
   return (
     <>
@@ -276,7 +396,7 @@ export default function FanVote() {
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           <SpotlightVoteProvider campaignId={selectedCampaign}>
-            {renderContent()}
+            <VotePageContent />
           </SpotlightVoteProvider>
         </main>
       </div>
