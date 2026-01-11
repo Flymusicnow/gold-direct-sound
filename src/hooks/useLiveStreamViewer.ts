@@ -197,6 +197,15 @@ export function useLiveStreamViewer({
 
     // Send join signal
     sendJoinSignal();
+    
+    // Set up timeout - if no connection after 15 seconds, show retry option
+    const timeout = setTimeout(() => {
+      if (connectionState === 'connecting') {
+        console.log('[Viewer] Connection timeout - no offer received');
+        setError('Connection timed out. The artist may not be streaming yet.');
+        setConnectionState('failed');
+      }
+    }, 15000);
 
     const channel = supabase
       .channel(`viewer:${streamId}:${user.id}`)
@@ -206,15 +215,20 @@ export function useLiveStreamViewer({
           event: 'INSERT',
           schema: 'public',
           table: 'webrtc_signals',
-          filter: `room_id=eq.${streamId}`,
         },
         async (payload) => {
           const signal = payload.new as {
+            room_id: string;
             sender_id: string;
             target_id: string;
             signal_type: string;
             signal_data: any;
           };
+          
+          console.log('[Viewer] Received signal:', signal.signal_type, 'from:', signal.sender_id);
+          
+          // Only process signals for our stream
+          if (signal.room_id !== streamId) return;
           
           // Only process signals intended for us
           if (signal.target_id !== user.id) return;
@@ -224,6 +238,7 @@ export function useLiveStreamViewer({
           
           switch (signal.signal_type) {
             case 'offer':
+              console.log('[Viewer] Processing offer from artist');
               await handleOffer(signal.signal_data);
               break;
             case 'ice-candidate':
@@ -235,10 +250,11 @@ export function useLiveStreamViewer({
       .subscribe();
 
     return () => {
+      clearTimeout(timeout);
       supabase.removeChannel(channel);
       closeConnection();
     };
-  }, [user, streamId, artistUserId, enabled, sendJoinSignal, handleOffer, handleIceCandidate, closeConnection]);
+  }, [user, streamId, artistUserId, enabled, sendJoinSignal, handleOffer, handleIceCandidate, closeConnection, connectionState]);
 
   return {
     remoteStream,

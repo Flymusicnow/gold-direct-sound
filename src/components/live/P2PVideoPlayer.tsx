@@ -44,9 +44,9 @@ export function P2PVideoPlayer({
           artistAvatar={artistAvatar}
         />
         {/* Connection status indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 px-4 py-2 rounded-full">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/80 px-4 py-2 rounded-full border border-primary/30">
           <Wifi className="h-4 w-4 text-primary animate-pulse" />
-          <span className="text-sm text-white">Connecting via P2P...</span>
+          <span className="text-sm text-white">Connecting to artist stream...</span>
         </div>
       </div>
     );
