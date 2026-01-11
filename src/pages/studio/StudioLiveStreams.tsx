@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveStreamCard } from "@/components/artist/LiveStreamCard";
 import { GoLiveDialog } from "@/components/artist/GoLiveDialog";
+import { EditStreamDialog } from "@/components/artist/EditStreamDialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Radio } from "lucide-react";
@@ -26,6 +27,7 @@ export default function StudioLiveStreams() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [streams, setStreams] = useState<LiveStream[]>([]);
+  const [editingStream, setEditingStream] = useState<LiveStream | null>(null);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -210,6 +212,7 @@ export default function StudioLiveStreams() {
                     stream={stream}
                     artistId={artistId || undefined}
                     isOwner
+                    onEdit={() => setEditingStream(stream)}
                     onDelete={() => handleDelete(stream.id)}
                   />
                   <Button
@@ -236,6 +239,7 @@ export default function StudioLiveStreams() {
                     stream={stream}
                     artistId={artistId || undefined}
                     isOwner
+                    onEdit={() => setEditingStream(stream)}
                     onDelete={() => handleDelete(stream.id)}
                   />
                   <Button
@@ -261,12 +265,24 @@ export default function StudioLiveStreams() {
                   stream={stream}
                   artistId={artistId || undefined}
                   isOwner
+                  onEdit={() => setEditingStream(stream)}
                   onDelete={() => handleDelete(stream.id)}
                 />
               ))}
             </div>
           </div>
         )}
+
+        {/* Edit Stream Dialog */}
+        <EditStreamDialog
+          stream={editingStream}
+          open={!!editingStream}
+          onOpenChange={(open) => !open && setEditingStream(null)}
+          onSuccess={() => {
+            setEditingStream(null);
+            if (artistId) fetchStreams(artistId);
+          }}
+        />
 
         {/* Empty State */}
         {streams.length === 0 && (

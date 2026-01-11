@@ -10,10 +10,13 @@ import { useSessionSupport } from "@/hooks/useSessionSupport";
 import { useFanInvites } from "@/hooks/useFanInvites";
 import { useStageRequests } from "@/hooks/useStageRequests";
 import { useLocalCamera } from "@/hooks/useLocalCamera";
+import { useLiveStreamBroadcast } from "@/hooks/useLiveStreamBroadcast";
+import { useLiveStreamViewer } from "@/hooks/useLiveStreamViewer";
 import { LiveLayout } from "@/components/live/LiveLayout";
 import { SafeVideoStage } from "@/components/live/SafeVideoStage";
 import { HLSPlayer } from "@/components/live/HLSPlayer";
 import { ArtistCameraPreview } from "@/components/live/ArtistCameraPreview";
+import { P2PVideoPlayer } from "@/components/live/P2PVideoPlayer";
 import { StreamConnectingPlaceholder } from "@/components/live/StreamConnectingPlaceholder";
 import { RaiseHandButton } from "@/components/live/RaiseHandButton";
 import { FanOnStage } from "@/components/live/FanOnStage";
@@ -72,6 +75,20 @@ export default function LivePage() {
 
   // Local camera hook for artist
   const localCamera = useLocalCamera();
+
+  // WebRTC P2P broadcast hook for artist
+  const broadcast = useLiveStreamBroadcast({
+    streamId: stream?.id || null,
+    localStream: localCamera.stream,
+    enabled: isArtist && stream?.status === 'live',
+  });
+
+  // WebRTC P2P viewer hook for fans
+  const viewer = useLiveStreamViewer({
+    streamId: stream?.id || null,
+    artistUserId: stream?.artist_profiles?.user_id || null,
+    enabled: !isArtist && stream?.status === 'live',
+  });
 
   // Hooks
   const { recentReactions, sendReaction, isRateLimited } = useLiveReactions(stream?.id || '');
@@ -271,16 +288,21 @@ export default function LivePage() {
             />
           )}
           
-          {/* Fan view: HLS player or connecting placeholder */}
+          {/* Fan view: P2P video or HLS fallback */}
           {!isArtist && (
             <>
-              {hlsUrl ? (
-                <HLSPlayer hlsUrl={hlsUrl} />
-              ) : (
-                <StreamConnectingPlaceholder
+              {/* Try P2P first, fall back to HLS if available */}
+              {stream.stream_mode === 'webrtc_interactive' || !hlsUrl ? (
+                <P2PVideoPlayer
+                  stream={viewer.remoteStream}
+                  connectionState={viewer.connectionState}
+                  error={viewer.error}
+                  onRetry={viewer.retry}
                   artistName={stream.artist_profiles?.artist_name}
                   artistAvatar={stream.artist_profiles?.avatar_url}
                 />
+              ) : (
+                <HLSPlayer hlsUrl={hlsUrl} />
               )}
             </>
           )}
