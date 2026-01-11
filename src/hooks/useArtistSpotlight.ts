@@ -17,6 +17,8 @@ export interface SpotlightMedia {
   link_label: string | null;
   template_id: string | null;
   template_data: Record<string, unknown>;
+  scheduled_for: string | null;
+  publish_status: 'draft' | 'scheduled' | 'published';
   created_at: string;
 }
 
