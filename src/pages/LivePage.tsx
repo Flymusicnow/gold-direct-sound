@@ -9,9 +9,12 @@ import { useStreamControls } from "@/hooks/useStreamControls";
 import { useSessionSupport } from "@/hooks/useSessionSupport";
 import { useFanInvites } from "@/hooks/useFanInvites";
 import { useStageRequests } from "@/hooks/useStageRequests";
+import { useLocalCamera } from "@/hooks/useLocalCamera";
 import { LiveLayout } from "@/components/live/LiveLayout";
 import { SafeVideoStage } from "@/components/live/SafeVideoStage";
 import { HLSPlayer } from "@/components/live/HLSPlayer";
+import { ArtistCameraPreview } from "@/components/live/ArtistCameraPreview";
+import { StreamConnectingPlaceholder } from "@/components/live/StreamConnectingPlaceholder";
 import { RaiseHandButton } from "@/components/live/RaiseHandButton";
 import { FanOnStage } from "@/components/live/FanOnStage";
 import { GiftOverlayZone } from "@/components/live/GiftOverlayZone";
@@ -67,9 +70,12 @@ export default function LivePage() {
   // Artist video ref for fan-on-stage
   const artistVideoRef = useRef<HTMLVideoElement>(null);
 
+  // Local camera hook for artist
+  const localCamera = useLocalCamera();
+
   // Hooks
   const { recentReactions, sendReaction, isRateLimited } = useLiveReactions(stream?.id || '');
-  const streamControls = useStreamControls(stream?.id || null);
+  const streamControls = useStreamControls(stream?.id || null, localCamera.stream);
   const { topSupporters, giftCount } = useSessionSupport(stream?.id || null);
   const fanInvites = useFanInvites(stream?.id || null, stream?.artist_id || null);
   const { 
@@ -93,6 +99,20 @@ export default function LivePage() {
       navigate(`/artist/${artistId}`);
     }
   }, [stream?.status, artistId, navigate]);
+
+  // Request camera when artist goes live
+  useEffect(() => {
+    if (isArtist && stream?.status === 'live' && !localCamera.stream && !localCamera.isLoading) {
+      localCamera.requestPermission();
+    }
+  }, [isArtist, stream?.status, localCamera.stream, localCamera.isLoading]);
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      localCamera.stopStream();
+    };
+  }, []);
 
   const fetchActiveStream = async () => {
     try {
@@ -141,6 +161,7 @@ export default function LivePage() {
   const handleEndStream = async () => {
     const success = await streamControls.endStream();
     if (success) {
+      localCamera.stopStream();
       navigate(`/artist/${artistId}`);
     }
     return success;
@@ -239,10 +260,32 @@ export default function LivePage() {
       {/* Stage - Video zone */}
       <LiveLayout.Stage>
         <SafeVideoStage layout={fanOnStageStream ? (orientation === 'portrait' ? 'pip' : 'split') : 'solo'}>
-          {stream.stream_mode === 'hls' && hlsUrl && !fanOnStageStream && (
-            <HLSPlayer hlsUrl={hlsUrl} />
+          {/* Artist sees their own camera */}
+          {isArtist && (
+            <ArtistCameraPreview
+              stream={localCamera.stream}
+              isMuted={localCamera.isMuted}
+              isCameraOff={localCamera.isCameraOff}
+              error={localCamera.error}
+              isLoading={localCamera.isLoading}
+            />
           )}
           
+          {/* Fan view: HLS player or connecting placeholder */}
+          {!isArtist && (
+            <>
+              {hlsUrl ? (
+                <HLSPlayer hlsUrl={hlsUrl} />
+              ) : (
+                <StreamConnectingPlaceholder
+                  artistName={stream.artist_profiles?.artist_name}
+                  artistAvatar={stream.artist_profiles?.avatar_url}
+                />
+              )}
+            </>
+          )}
+          
+          {/* Fan on stage overlay */}
           {fanOnStageStream && (
             <FanOnStage
               artistVideoRef={artistVideoRef}
@@ -250,10 +293,6 @@ export default function LivePage() {
               layout={orientation === 'portrait' ? 'pip' : 'split'}
               pipPosition="bottom-right"
             />
-          )}
-          
-          {stream.stream_mode === 'webrtc_interactive' && !fanOnStageStream && hlsUrl && (
-            <HLSPlayer hlsUrl={hlsUrl} />
           )}
         </SafeVideoStage>
         
@@ -328,14 +367,14 @@ export default function LivePage() {
 
                 <Separator />
 
-                {/* Zone 1: Core Performance Controls */}
+                {/* Zone 1: Core Performance Controls - Connected to real camera */}
                 <CorePerformanceControls
-                  isMuted={streamControls.isMuted}
-                  isCameraOff={streamControls.isCameraOff}
+                  isMuted={localCamera.isMuted}
+                  isCameraOff={localCamera.isCameraOff}
                   isPaused={streamControls.isPaused}
                   isEnding={streamControls.isEnding}
-                  onToggleMute={streamControls.toggleMute}
-                  onToggleCamera={streamControls.toggleCamera}
+                  onToggleMute={localCamera.toggleMute}
+                  onToggleCamera={localCamera.toggleCamera}
                   onPause={streamControls.pauseStream}
                   onResume={streamControls.resumeStream}
                   onEndStream={handleEndStream}
