@@ -294,14 +294,17 @@ export type Database = {
         Row: {
           actual_start: string | null
           artist_id: string
+          available_qualities: Json | null
           created_at: string | null
           description: string | null
           ended_at: string | null
+          hls_url: string | null
           id: string
           is_ticketed: boolean | null
           recording_url: string | null
           scheduled_start: string | null
           status: string
+          stream_mode: string | null
           stream_type: string
           stream_url: string | null
           thumbnail_url: string | null
@@ -313,14 +316,17 @@ export type Database = {
         Insert: {
           actual_start?: string | null
           artist_id: string
+          available_qualities?: Json | null
           created_at?: string | null
           description?: string | null
           ended_at?: string | null
+          hls_url?: string | null
           id?: string
           is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
           status?: string
+          stream_mode?: string | null
           stream_type?: string
           stream_url?: string | null
           thumbnail_url?: string | null
@@ -332,14 +338,17 @@ export type Database = {
         Update: {
           actual_start?: string | null
           artist_id?: string
+          available_qualities?: Json | null
           created_at?: string | null
           description?: string | null
           ended_at?: string | null
+          hls_url?: string | null
           id?: string
           is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
           status?: string
+          stream_mode?: string | null
           stream_type?: string
           stream_url?: string | null
           thumbnail_url?: string | null
@@ -3175,6 +3184,7 @@ export type Database = {
       live_gifts: {
         Row: {
           created_at: string | null
+          gift_tier: string | null
           gift_type: string
           id: string
           sender_user_id: string
@@ -3183,6 +3193,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          gift_tier?: string | null
           gift_type: string
           id?: string
           sender_user_id: string
@@ -3191,6 +3202,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          gift_tier?: string | null
           gift_type?: string
           id?: string
           sender_user_id?: string
@@ -3200,6 +3212,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "live_gifts_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_reactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          reaction_type: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          reaction_type: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          reaction_type?: string
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_reactions_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "artist_live_streams"
@@ -3239,6 +3283,53 @@ export type Database = {
           },
           {
             foreignKeyName: "live_spotlight_votes_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stage_requests: {
+        Row: {
+          approved_at: string | null
+          created_at: string | null
+          denied_at: string | null
+          id: string
+          kick_reason: string | null
+          kicked_at: string | null
+          requested_at: string | null
+          status: string | null
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string | null
+          denied_at?: string | null
+          id?: string
+          kick_reason?: string | null
+          kicked_at?: string | null
+          requested_at?: string | null
+          status?: string | null
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string | null
+          denied_at?: string | null
+          id?: string
+          kick_reason?: string | null
+          kicked_at?: string | null
+          requested_at?: string | null
+          status?: string | null
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stage_requests_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "artist_live_streams"
@@ -5626,6 +5717,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      webrtc_signals: {
+        Row: {
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          room_id: string
+          sender_id: string
+          signal_data: Json
+          signal_type: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          room_id: string
+          sender_id: string
+          signal_data: Json
+          signal_type: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          room_id?: string
+          sender_id?: string
+          signal_data?: Json
+          signal_type?: string
+          target_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
