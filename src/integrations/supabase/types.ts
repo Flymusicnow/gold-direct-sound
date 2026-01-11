@@ -300,6 +300,7 @@ export type Database = {
           ended_at: string | null
           hls_url: string | null
           id: string
+          is_paused: boolean | null
           is_ticketed: boolean | null
           recording_url: string | null
           scheduled_start: string | null
@@ -322,6 +323,7 @@ export type Database = {
           ended_at?: string | null
           hls_url?: string | null
           id?: string
+          is_paused?: boolean | null
           is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
@@ -344,6 +346,7 @@ export type Database = {
           ended_at?: string | null
           hls_url?: string | null
           id?: string
+          is_paused?: boolean | null
           is_ticketed?: boolean | null
           recording_url?: string | null
           scheduled_start?: string | null
@@ -3174,6 +3177,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "live_clips_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "artist_live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_fan_invites: {
+        Row: {
+          artist_id: string
+          id: string
+          invited_at: string | null
+          invited_user_id: string
+          responded_at: string | null
+          status: string | null
+          stream_id: string
+        }
+        Insert: {
+          artist_id: string
+          id?: string
+          invited_at?: string | null
+          invited_user_id: string
+          responded_at?: string | null
+          status?: string | null
+          stream_id: string
+        }
+        Update: {
+          artist_id?: string
+          id?: string
+          invited_at?: string | null
+          invited_user_id?: string
+          responded_at?: string | null
+          status?: string | null
+          stream_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_fan_invites_stream_id_fkey"
             columns: ["stream_id"]
             isOneToOne: false
             referencedRelation: "artist_live_streams"
