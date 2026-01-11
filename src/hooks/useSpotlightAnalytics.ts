@@ -13,6 +13,12 @@ function getSessionId(): string {
   return sessionId;
 }
 
+interface TrackViewOptions {
+  templateId?: string;
+  abTestId?: string;
+  abVariant?: 'A' | 'B';
+}
+
 export function useSpotlightAnalytics() {
   const { user } = useAuth();
   const viewStartTimes = useRef<Map<string, number>>(new Map());
@@ -21,7 +27,8 @@ export function useSpotlightAnalytics() {
   const trackView = useCallback(async (
     spotlightMediaId: string, 
     artistId: string,
-    source?: string
+    source?: string,
+    options?: TrackViewOptions
   ) => {
     // Prevent duplicate tracking in same session
     const viewKey = `${spotlightMediaId}-${getSessionId()}`;
@@ -38,6 +45,9 @@ export function useSpotlightAnalytics() {
         session_id: getSessionId(),
         source: source || 'organic',
         referrer_url: document.referrer || null,
+        template_id: options?.templateId || null,
+        ab_test_id: options?.abTestId || null,
+        ab_variant: options?.abVariant || null,
       });
     } catch (error) {
       console.error('Error tracking spotlight view:', error);

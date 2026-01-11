@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, ExternalLink, Music, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,15 +7,19 @@ import { SpotlightMedia } from "@/hooks/useArtistSpotlight";
 import { useSpotlightAnalytics } from "@/hooks/useSpotlightAnalytics";
 import { SpotlightMediaItem } from "./SpotlightMediaItem";
 import { ExternalLinkConfirmDialog } from "./ExternalLinkConfirmDialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { getABVariant, ABTest } from "@/hooks/useABTests";
 
 interface SpotlightCarouselProps {
   media: SpotlightMedia[];
   artistId: string;
   artistName: string;
+  activeABTest?: ABTest | null;
 }
 
-export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCarouselProps) {
+export function SpotlightCarousel({ media, artistId, artistName, activeABTest }: SpotlightCarouselProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const { trackView, trackViewDuration, trackLinkClick } = useSpotlightAnalytics();
   const [showExternalConfirm, setShowExternalConfirm] = useState(false);
@@ -24,7 +28,37 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
   const timerRef = useRef<NodeJS.Timeout>();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const currentMedia = media[currentIndex];
+  // Determine which media to show based on A/B test
+  const displayMedia = useMemo(() => {
+    if (!activeABTest || !user?.id) return media;
+
+    const variant = getABVariant(activeABTest.id, user.id);
+    const variantMediaId = variant === 'A' 
+      ? activeABTest.variant_a_media_id 
+      : activeABTest.variant_b_media_id;
+
+    // Filter to show only the assigned variant, plus non-test media
+    return media.filter(m => 
+      m.id === variantMediaId || 
+      (m.id !== activeABTest.variant_a_media_id && m.id !== activeABTest.variant_b_media_id)
+    );
+  }, [media, activeABTest, user?.id]);
+
+  const currentMedia = displayMedia[currentIndex];
+
+  // Get A/B test info for current media
+  const getABTestInfo = () => {
+    if (!activeABTest || !user?.id || !currentMedia) return null;
+    
+    if (currentMedia.id === activeABTest.variant_a_media_id || 
+        currentMedia.id === activeABTest.variant_b_media_id) {
+      return {
+        testId: activeABTest.id,
+        variant: getABVariant(activeABTest.id, user.id)
+      };
+    }
+    return null;
+  };
 
   // Auto-advance for images (videos control their own duration)
   useEffect(() => {
@@ -33,18 +67,23 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
     const duration = (currentMedia.display_duration_seconds || 5) * 1000;
     
     timerRef.current = setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % media.length);
+      setCurrentIndex((prev) => (prev + 1) % displayMedia.length);
     }, duration);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [currentIndex, media.length, currentMedia]);
+  }, [currentIndex, displayMedia.length, currentMedia]);
 
   // Track view when slide changes
   useEffect(() => {
     if (currentMedia) {
-      trackView(currentMedia.id, artistId);
+      const abInfo = getABTestInfo();
+      trackView(currentMedia.id, artistId, undefined, {
+        templateId: currentMedia.template_id || undefined,
+        abTestId: abInfo?.testId,
+        abVariant: abInfo?.variant,
+      });
     }
     
     return () => {
@@ -55,15 +94,15 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
   }, [currentIndex, currentMedia?.id, artistId, trackView, trackViewDuration]);
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + media.length) % media.length);
+    setCurrentIndex((prev) => (prev - 1 + displayMedia.length) % displayMedia.length);
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % media.length);
+    setCurrentIndex((prev) => (prev + 1) % displayMedia.length);
   };
 
   const handleVideoEnd = () => {
-    setCurrentIndex((prev) => (prev + 1) % media.length);
+    setCurrentIndex((prev) => (prev + 1) % displayMedia.length);
   };
 
   const handleLinkClick = () => {
@@ -89,7 +128,7 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
     setPendingPlatform(null);
   };
 
-  if (!media.length) return null;
+  if (!displayMedia.length) return null;
 
   return (
     <div className="w-full max-w-[280px] mx-auto">
@@ -111,7 +150,7 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
         />
 
         {/* Navigation Arrows */}
-        {media.length > 1 && (
+        {displayMedia.length > 1 && (
           <>
             <button
               onClick={handlePrev}
@@ -157,9 +196,9 @@ export function SpotlightCarousel({ media, artistId, artistName }: SpotlightCaro
         )}
 
         {/* Dot Indicators */}
-        {media.length > 1 && (
+        {displayMedia.length > 1 && (
           <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
-            {media.map((_, i) => (
+            {displayMedia.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrentIndex(i)}
