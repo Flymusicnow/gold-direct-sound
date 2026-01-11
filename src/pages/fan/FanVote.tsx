@@ -20,6 +20,8 @@ import { YourVotesCard } from "@/components/spotlight/YourVotesCard";
 import { ShareSupportedCard } from "@/components/spotlight/ShareSupportedCard";
 import { MiniAudioPreview } from "@/components/audio/MiniAudioPreview";
 import { SwipeVoteCard } from "@/components/spotlight/SwipeVoteCard";
+import VotingStreakBadge from "@/components/spotlight/VotingStreakBadge";
+import YourRewardsComingSoon from "@/components/spotlight/YourRewardsComingSoon";
 
 interface SpotlightEntry {
   id: string;
@@ -225,10 +227,13 @@ function VotePageContent() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center gap-3">
-              <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
-              {t('nav.vote')}
-            </h1>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+                <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
+                {t('nav.vote')}
+              </h1>
+              <VotingStreakBadge />
+            </div>
             <p className="text-sm sm:text-base text-muted-foreground">{t('fan.voteSubtitle')}</p>
           </div>
           <Button 
@@ -496,10 +501,10 @@ function VotePageContent() {
   };
 
   return (
-    <PageTransition className="max-w-4xl mx-auto">
+    <PageTransition className="max-w-4xl mx-auto space-y-12">
       {renderVoteNowSection()}
       {renderYourVotesSection()}
-      
+      <YourRewardsComingSoon />
       {/* Share Modal */}
       {user && fanProfile && (
         <ShareSupportedCard
