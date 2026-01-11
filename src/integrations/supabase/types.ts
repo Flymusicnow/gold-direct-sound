@@ -4686,6 +4686,7 @@ export type Database = {
           entry_id: string
           fan_user_id: string
           id: string
+          rank_at_vote: number | null
           vote_type: string
         }
         Insert: {
@@ -4694,6 +4695,7 @@ export type Database = {
           entry_id: string
           fan_user_id: string
           id?: string
+          rank_at_vote?: number | null
           vote_type?: string
         }
         Update: {
@@ -4702,6 +4704,7 @@ export type Database = {
           entry_id?: string
           fan_user_id?: string
           id?: string
+          rank_at_vote?: number | null
           vote_type?: string
         }
         Relationships: [

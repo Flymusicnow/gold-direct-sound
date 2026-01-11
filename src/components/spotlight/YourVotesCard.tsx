@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from "date-fns";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Music, Heart, Sparkles } from "lucide-react";
+import { Music, Heart, Sparkles, ArrowUp, ArrowDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VotedEntry } from "@/contexts/SpotlightVoteContext";
 
@@ -11,6 +11,26 @@ interface YourVotesCardProps {
 
 export function YourVotesCard({ entry }: YourVotesCardProps) {
   const votedTimeAgo = formatDistanceToNow(new Date(entry.voted_at), { addSuffix: true });
+
+  const getRankChangeIndicator = () => {
+    if (!entry.rank_change || entry.rank_change === 'same') return null;
+
+    if (entry.rank_change === 'up') {
+      return (
+        <div className="flex items-center gap-1 text-green-500">
+          <ArrowUp className="h-3 w-3" />
+          <span className="text-xs font-medium">Rising</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1 text-red-400">
+        <ArrowDown className="h-3 w-3" />
+        <span className="text-xs font-medium">Dropped</span>
+      </div>
+    );
+  };
 
   return (
     <Card className="p-4 bg-card/50 border-primary/10 hover:border-primary/20 transition-colors">
@@ -49,7 +69,7 @@ export function YourVotesCard({ entry }: YourVotesCardProps) {
           </div>
         </div>
 
-        {/* Vote count + timestamp */}
+        {/* Vote count + rank + timestamp */}
         <div className="flex flex-col items-end gap-1 flex-shrink-0">
           <div className="flex items-center gap-1.5 text-primary">
             <Heart className="h-4 w-4 fill-current" />
@@ -65,6 +85,17 @@ export function YourVotesCard({ entry }: YourVotesCardProps) {
               </motion.span>
             </AnimatePresence>
           </div>
+          
+          {/* Current rank badge */}
+          {entry.current_rank && (
+            <Badge variant="outline" className="text-xs px-1.5 py-0">
+              #{entry.current_rank}
+            </Badge>
+          )}
+          
+          {/* Rank change indicator */}
+          {getRankChangeIndicator()}
+          
           <span className="text-xs text-muted-foreground whitespace-nowrap">
             {votedTimeAgo}
           </span>

@@ -13,9 +13,10 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Music, Heart, RefreshCw, Users } from "lucide-react";
+import { Sparkles, Music, Heart, RefreshCw, Users, Share2 } from "lucide-react";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 import { YourVotesCard } from "@/components/spotlight/YourVotesCard";
+import { ShareSupportedCard } from "@/components/spotlight/ShareSupportedCard";
 
 interface SpotlightEntry {
   id: string;
@@ -52,6 +53,8 @@ function VotePageContent() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [fanProfile, setFanProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -59,7 +62,20 @@ function VotePageContent() {
       return;
     }
     fetchCampaignsAndEntries();
+    fetchFanProfile();
   }, [user, navigate]);
+
+  const fetchFanProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (data) {
+      setFanProfile(data);
+    }
+  };
 
   const fetchCampaignsAndEntries = async () => {
     setLoading(true);
@@ -280,12 +296,24 @@ function VotePageContent() {
     return (
       <div>
         {/* Section Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
-            <Heart className="h-6 w-6 text-primary" />
-            Your Votes
-          </h2>
-          <p className="text-muted-foreground">The entries you've supported in Spotlight.</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
+              <Heart className="h-6 w-6 text-primary" />
+              Your Votes
+            </h2>
+            <p className="text-muted-foreground">The entries you've supported in Spotlight.</p>
+          </div>
+          {votedEntries.length > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={() => setShowShareModal(true)}
+              className="min-h-[44px]"
+            >
+              <Share2 className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -358,6 +386,18 @@ function VotePageContent() {
     <PageTransition className="max-w-4xl mx-auto">
       {renderVoteNowSection()}
       {renderYourVotesSection()}
+      
+      {/* Share Modal */}
+      {user && fanProfile && (
+        <ShareSupportedCard
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          votedEntries={voteContext?.votedEntries || []}
+          fanName={fanProfile.display_name || 'Fan'}
+          fanAvatar={fanProfile.avatar_url}
+          fanId={user.id}
+        />
+      )}
     </PageTransition>
   );
 }

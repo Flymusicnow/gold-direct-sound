@@ -13,6 +13,9 @@ export interface VotedEntry {
   artist_name: string;
   artist_id: string;
   total_votes: number;
+  current_rank?: number;
+  rank_at_vote?: number;
+  rank_change?: 'up' | 'down' | 'same' | null;
 }
 
 interface SpotlightVoteContextType {
@@ -58,7 +61,7 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
       // Build query - if campaignId is provided, filter by it; otherwise get recent votes
       let votesQuery = supabase
         .from('spotlight_votes')
-        .select('entry_id, campaign_id, created_at')
+        .select('entry_id, campaign_id, created_at, rank_at_vote')
         .eq('fan_user_id', user.id)
         .order('created_at', { ascending: false });
       
@@ -79,6 +82,7 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
       // Now fetch full entry details for each voted entry
       if (votesData && votesData.length > 0) {
         const entryIdsList = votesData.map(v => v.entry_id);
+        const votedCampaignIds = [...new Set(votesData.map(v => v.campaign_id))];
         
         const { data: entriesData, error: entriesError } = await supabase
           .from('spotlight_entries')
@@ -99,9 +103,40 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
 
         if (entriesError) throw entriesError;
 
-        // Map entries with vote timestamps
+        // Get all entries for ranking calculation (per campaign)
+        const rankMaps = new Map<string, Map<string, number>>();
+        
+        for (const cId of votedCampaignIds) {
+          const { data: allCampaignEntries } = await supabase
+            .from('spotlight_entries')
+            .select('id, total_votes')
+            .eq('campaign_id', cId)
+            .eq('status', 'approved')
+            .order('total_votes', { ascending: false });
+          
+          if (allCampaignEntries) {
+            const rankMap = new Map<string, number>();
+            allCampaignEntries.forEach((e, idx) => {
+              rankMap.set(e.id, idx + 1);
+            });
+            rankMaps.set(cId, rankMap);
+          }
+        }
+
+        // Map entries with vote timestamps and rank data
         const votedEntriesFormatted: VotedEntry[] = votesData.map(vote => {
           const entry = entriesData?.find(e => e.id === vote.entry_id);
+          const campaignRanks = rankMaps.get(vote.campaign_id);
+          const currentRank = campaignRanks?.get(vote.entry_id);
+          const rankAtVote = (vote as any).rank_at_vote as number | null;
+          
+          let rankChange: 'up' | 'down' | 'same' | null = null;
+          if (currentRank && rankAtVote) {
+            if (currentRank < rankAtVote) rankChange = 'up';
+            else if (currentRank > rankAtVote) rankChange = 'down';
+            else rankChange = 'same';
+          }
+          
           return {
             entry_id: vote.entry_id,
             campaign_id: vote.campaign_id,
@@ -111,6 +146,9 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
             artist_name: (entry?.artist_profiles as any)?.artist_name || 'Unknown Artist',
             artist_id: entry?.artist_id || '',
             total_votes: entry?.total_votes || 0,
+            current_rank: currentRank,
+            rank_at_vote: rankAtVote ?? undefined,
+            rank_change: rankChange,
           };
         });
 
@@ -206,6 +244,17 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
     setVotedEntryIds(prev => new Set([...prev, entryId]));
 
     try {
+      // Calculate current rank before inserting vote
+      const { data: rankedEntries } = await supabase
+        .from('spotlight_entries')
+        .select('id')
+        .eq('campaign_id', campaignId)
+        .eq('status', 'approved')
+        .order('total_votes', { ascending: false });
+      
+      const currentRank = rankedEntries?.findIndex(e => e.id === entryId);
+      const rankAtVote = currentRank !== undefined && currentRank !== -1 ? currentRank + 1 : null;
+
       const { error } = await supabase
         .from('spotlight_votes')
         .insert({
@@ -213,6 +262,7 @@ export function SpotlightVoteProvider({ campaignId, children }: SpotlightVotePro
           entry_id: entryId,
           campaign_id: campaignId,
           vote_type: 'free',
+          rank_at_vote: rankAtVote,
         });
 
       if (error) throw error;
