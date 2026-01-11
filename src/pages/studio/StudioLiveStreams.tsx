@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { LiveStreamCard } from "@/components/artist/LiveStreamCard";
@@ -23,6 +24,7 @@ interface LiveStream {
 export default function StudioLiveStreams() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [streams, setStreams] = useState<LiveStream[]>([]);
   const [artistId, setArtistId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -89,7 +91,10 @@ export default function StudioLiveStreams() {
         description: "You are now live!",
       });
 
-      if (artistId) fetchStreams(artistId);
+      // Auto-navigate to Live Page
+      if (artistId) {
+        navigate(`/live/${artistId}`);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -203,13 +208,14 @@ export default function StudioLiveStreams() {
                 <div key={stream.id} className="space-y-2">
                   <LiveStreamCard
                     stream={stream}
+                    artistId={artistId || undefined}
                     isOwner
                     onDelete={() => handleDelete(stream.id)}
                   />
                   <Button
                     onClick={() => handleEndStream(stream.id)}
                     variant="destructive"
-                    className="w-full"
+                    className="w-full min-h-[44px]"
                   >
                     End Stream
                   </Button>
@@ -228,17 +234,16 @@ export default function StudioLiveStreams() {
                 <div key={stream.id} className="space-y-2">
                   <LiveStreamCard
                     stream={stream}
+                    artistId={artistId || undefined}
                     isOwner
                     onDelete={() => handleDelete(stream.id)}
                   />
-                  {stream.stream_url && (
-                    <Button
-                      onClick={() => handleGoLive(stream.id)}
-                      className="w-full bg-red-500 hover:bg-red-600"
-                    >
-                      Go Live
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleGoLive(stream.id)}
+                    className="w-full min-h-[44px] bg-red-500 hover:bg-red-600"
+                  >
+                    Go Live
+                  </Button>
                 </div>
               ))}
             </div>
@@ -254,6 +259,7 @@ export default function StudioLiveStreams() {
                 <LiveStreamCard
                   key={stream.id}
                   stream={stream}
+                  artistId={artistId || undefined}
                   isOwner
                   onDelete={() => handleDelete(stream.id)}
                 />
