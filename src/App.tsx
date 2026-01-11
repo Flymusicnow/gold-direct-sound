@@ -61,7 +61,7 @@ import StudioCommunity from "./pages/studio/StudioCommunity";
 import StudioOpportunities from "./pages/studio/StudioOpportunities";
 import PromoPreview from "./pages/PromoPreview";
 import PublicPresskit from "./pages/PublicPresskit";
-import LiveStream from "./pages/LiveStream";
+import LivePage from "./pages/LivePage";
 import FanPortal from "./pages/FanPortal";
 import FanDashboard from "./pages/FanDashboard";
 import FanOnboarding from "./pages/fan/FanOnboarding";
@@ -293,7 +293,7 @@ const App = () => (
             <Route path="/spotlight/:campaignId/leaderboard" element={<SpotlightLeaderboard />} />
             
             {/* Other public routes */}
-            <Route path="/live/:streamId" element={<LiveStream />} />
+            <Route path="/live/:artistId" element={<LivePage />} />
             <Route path="/collections/:collectionId" element={<VideoCollectionDetail />} />
             <Route path="/fan/profile/:userId" element={<FanPublicProfile />} />
             <Route path="/fan/:userId/votes" element={<FanVotingHistory />} />

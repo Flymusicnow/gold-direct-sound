@@ -38,21 +38,19 @@ export function LiveLayout({ children, orientation, className }: LiveLayoutProps
     <LiveLayoutContext.Provider value={{ orientation }}>
       <div
         className={cn(
-          "h-dvh min-h-dvh w-full bg-background",
-          // Safe area insets for notches
-          "pt-safe pb-safe",
+          "h-dvh min-h-dvh w-full bg-background overflow-hidden",
           // Grid layout based on orientation
           orientation === 'portrait' 
-            ? "grid grid-rows-[auto_1fr_minmax(200px,35vh)]" 
-            : "grid grid-cols-[1fr_minmax(280px,380px)] grid-rows-1",
+            ? "grid grid-rows-[auto_1fr_minmax(180px,40vh)]" 
+            : "grid grid-cols-[1fr_minmax(300px,400px)] grid-rows-1",
           className
         )}
         style={{
           // CSS custom properties for safe zones
-          '--stage-safe-top': 'max(env(safe-area-inset-top, 0px), 16px)',
-          '--stage-safe-bottom': 'max(env(safe-area-inset-bottom, 0px), 16px)',
-          '--stage-safe-left': 'max(env(safe-area-inset-left, 0px), 16px)',
-          '--stage-safe-right': 'max(env(safe-area-inset-right, 0px), 16px)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingLeft: 'env(safe-area-inset-left, 0px)',
+          paddingRight: 'env(safe-area-inset-right, 0px)',
         } as React.CSSProperties}
       >
         {children}
