@@ -356,6 +356,9 @@ export default function LivePage() {
             {/* Fan actions */}
             {!isArtist && (
               <>
+                {/* Spotlight Boost - Full width on its own row */}
+                <LiveSpotlightBoost streamId={stream.id} artistId={stream.artist_id} />
+                
                 <ReactionButtons 
                   onReact={sendReaction} 
                   isRateLimited={isRateLimited} 
@@ -363,7 +366,6 @@ export default function LivePage() {
                 <div className="flex items-center gap-2">
                   {liveOsV2Enabled && <LiveGiftButton streamId={stream.id} />}
                   <RaiseHandButton streamId={stream.id} />
-                  <LiveSpotlightBoost streamId={stream.id} artistId={stream.artist_id} />
                 </div>
               </>
             )}

@@ -178,13 +178,19 @@ export function useLiveStreamBroadcast({
 
   // Subscribe to incoming signals (viewer_join, answer, ice-candidate)
   useEffect(() => {
-    if (!user || !streamId || !enabled || !localStream) {
+    if (!user || !streamId || !enabled) {
       closeAllConnections();
+      return;
+    }
+
+    if (!localStream) {
+      console.log('[Broadcast] Waiting for local camera stream...');
       return;
     }
 
     setIsActive(true);
     console.log('[Broadcast] Artist broadcast active, listening for viewers on stream:', streamId);
+    console.log('[Broadcast] Local stream tracks:', localStream.getTracks().map(t => `${t.kind}:${t.enabled}`));
 
     const channel = supabase
       .channel(`broadcast:${streamId}:${user.id}`)
