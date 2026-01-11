@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { SpotlightMedia } from "@/hooks/useArtistSpotlight";
+import { SpotlightTemplateOverlay } from "./SpotlightTemplateOverlay";
 
 interface SpotlightMediaItemProps {
   item: SpotlightMedia;
@@ -17,6 +18,8 @@ export function SpotlightMediaItem({ item, onVideoEnd }: SpotlightMediaItemProps
     setVideoError(false);
   }, [item.id]);
 
+  const hasTemplateOverlay = item.template_id && item.template_data;
+
   if (item.media_type === 'video') {
     if (videoError) {
       return (
@@ -27,17 +30,22 @@ export function SpotlightMediaItem({ item, onVideoEnd }: SpotlightMediaItemProps
     }
 
     return (
-      <video
-        ref={videoRef}
-        src={item.media_url}
-        className="absolute inset-0 w-full h-full object-cover"
-        autoPlay
-        muted
-        playsInline
-        loop={false}
-        onEnded={onVideoEnd}
-        onError={() => setVideoError(true)}
-      />
+      <>
+        <video
+          ref={videoRef}
+          src={item.media_url}
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay
+          muted
+          playsInline
+          loop={false}
+          onEnded={onVideoEnd}
+          onError={() => setVideoError(true)}
+        />
+        {hasTemplateOverlay && (
+          <SpotlightTemplateOverlay templateData={item.template_data} />
+        )}
+      </>
     );
   }
 
@@ -50,12 +58,17 @@ export function SpotlightMediaItem({ item, onVideoEnd }: SpotlightMediaItemProps
   }
 
   return (
-    <img
-      src={item.media_url}
-      alt="Spotlight"
-      className="absolute inset-0 w-full h-full object-cover"
-      onError={() => setImageError(true)}
-      loading="eager"
-    />
+    <>
+      <img
+        src={item.media_url}
+        alt="Spotlight"
+        className="absolute inset-0 w-full h-full object-cover"
+        onError={() => setImageError(true)}
+        loading="eager"
+      />
+      {hasTemplateOverlay && (
+        <SpotlightTemplateOverlay templateData={item.template_data} />
+      )}
+    </>
   );
 }

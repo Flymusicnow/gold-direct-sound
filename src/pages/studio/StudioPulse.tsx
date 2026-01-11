@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Eye, BarChart3, Link2 } from "lucide-react";
+import { Sparkles, Eye, BarChart3, Link2, Clock, FlaskConical, LayoutTemplate } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList } from "@/components/ui/tabs";
@@ -12,12 +12,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useArtistProfile } from "@/hooks/useArtistProfile";
 import { useArtistSpotlightManagement } from "@/hooks/useArtistSpotlight";
 import { useSpotlightStats } from "@/hooks/useSpotlightStats";
+import { useScheduledSpotlights } from "@/hooks/useScheduledSpotlights";
+import { useABTests } from "@/hooks/useABTests";
 import { StudioLayout } from "@/components/layouts/StudioLayout";
 import { SpotlightMediaList } from "@/components/studio/spotlight/SpotlightMediaList";
 import { SpotlightUploadZone } from "@/components/studio/spotlight/SpotlightUploadZone";
 import { SpotlightAnalyticsCard } from "@/components/studio/spotlight/SpotlightAnalyticsCard";
 import { SpotlightTemplateGallery } from "@/components/studio/spotlight/SpotlightTemplateGallery";
 import { DeepLinkGenerator } from "@/components/studio/spotlight/DeepLinkGenerator";
+import { TemplateAnalyticsCard } from "@/components/studio/spotlight/TemplateAnalyticsCard";
+import { ABTestCreator } from "@/components/studio/spotlight/ABTestCreator";
+import { ABTestResults } from "@/components/studio/spotlight/ABTestResults";
+import { ScheduledSpotlightsList } from "@/components/studio/spotlight/ScheduledSpotlightsList";
 
 export default function StudioPulse() {
   const navigate = useNavigate();
@@ -25,6 +31,8 @@ export default function StudioPulse() {
   const { profile: artistProfile } = useArtistProfile();
   const { data: spotlightMedia, refetch } = useArtistSpotlightManagement(artistProfile?.id);
   const { data: stats } = useSpotlightStats(artistProfile?.id);
+  const { data: scheduledSpotlights } = useScheduledSpotlights(artistProfile?.id);
+  const { data: abTests } = useABTests(artistProfile?.id);
   const [uploading, setUploading] = useState(false);
 
   const handleUpload = async (file: File, duration: number) => {
@@ -145,6 +153,9 @@ export default function StudioPulse() {
     }
   };
 
+  const activeTests = abTests?.filter(t => t.status === 'active') || [];
+  const completedTests = abTests?.filter(t => t.status === 'completed') || [];
+
   return (
     <StudioLayout>
       <div className="max-w-4xl mx-auto space-y-6">
@@ -178,6 +189,12 @@ export default function StudioPulse() {
               <AnimatedTabTrigger value="media" icon={<Sparkles className="w-4 h-4" />} layoutId="studioPulseTabs">
                 Media
               </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="scheduled" icon={<Clock className="w-4 h-4" />} layoutId="studioPulseTabs">
+                Scheduled
+              </AnimatedTabTrigger>
+              <AnimatedTabTrigger value="abtests" icon={<FlaskConical className="w-4 h-4" />} layoutId="studioPulseTabs">
+                A/B Tests
+              </AnimatedTabTrigger>
               <AnimatedTabTrigger value="analytics" icon={<BarChart3 className="w-4 h-4" />} layoutId="studioPulseTabs">
                 Analytics
               </AnimatedTabTrigger>
@@ -196,7 +213,10 @@ export default function StudioPulse() {
             />
 
             {/* Template Gallery Trigger */}
-            <SpotlightTemplateGallery />
+            <SpotlightTemplateGallery 
+              artistId={artistProfile?.id}
+              onPublish={refetch}
+            />
 
             {/* Media List */}
             <Card>
@@ -225,9 +245,86 @@ export default function StudioPulse() {
             </Card>
           </TabsContent>
 
+          {/* Scheduled Tab */}
+          <TabsContent value="scheduled" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="h-5 w-5" />
+                  Scheduled Spotlights
+                </CardTitle>
+                <CardDescription>
+                  Upcoming spotlights that will publish automatically
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ScheduledSpotlightsList 
+                  spotlights={scheduledSpotlights || []}
+                  onUpdate={refetch}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* A/B Tests Tab */}
+          <TabsContent value="abtests" className="space-y-6">
+            {artistProfile && spotlightMedia && (
+              <ABTestCreator 
+                artistId={artistProfile.id}
+                spotlightMedia={spotlightMedia}
+              />
+            )}
+
+            {activeTests.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Active Tests</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {activeTests.map(test => (
+                    <ABTestResults 
+                      key={test.id} 
+                      test={test}
+                      artistId={artistProfile?.id || ''}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {completedTests.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Completed Tests</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {completedTests.map(test => (
+                    <ABTestResults 
+                      key={test.id} 
+                      test={test}
+                      artistId={artistProfile?.id || ''}
+                    />
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {(!abTests || abTests.length === 0) && (
+              <div className="text-center py-12 text-muted-foreground">
+                <FlaskConical className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p>No A/B tests yet</p>
+                <p className="text-sm">Create a test to compare different spotlight versions</p>
+              </div>
+            )}
+          </TabsContent>
+
           {/* Analytics Tab */}
-          <TabsContent value="analytics">
+          <TabsContent value="analytics" className="space-y-6">
             <SpotlightAnalyticsCard stats={stats} />
+            
+            {artistProfile && (
+              <TemplateAnalyticsCard artistId={artistProfile.id} />
+            )}
           </TabsContent>
 
           {/* Deep Links Tab */}

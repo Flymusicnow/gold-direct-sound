@@ -2,7 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { 
   GripVertical, Trash2, Calendar, Link2, ExternalLink, 
-  Music, Clock, Eye, EyeOff, MoreVertical 
+  Music, Clock, Eye, EyeOff, MoreVertical, LayoutTemplate
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +71,10 @@ export function SpotlightMediaCard({
   const [endDate, setEndDate] = useState(item.end_date || '');
 
   const getStatus = () => {
+    // Check publish_status first for scheduled/draft items
+    if (item.publish_status === 'scheduled') return 'scheduled';
+    if (item.publish_status === 'draft') return 'draft';
+    
     if (!item.is_active) return 'inactive';
     const now = new Date();
     if (item.start_date && new Date(item.start_date) > now) return 'scheduled';
@@ -79,6 +83,11 @@ export function SpotlightMediaCard({
   };
 
   const status = getStatus();
+
+  // Get template name from template_data if available
+  const templateName = item.template_data && typeof item.template_data === 'object' 
+    ? (item.template_data as Record<string, unknown>).templateName as string | undefined
+    : undefined;
 
   const handleSaveLink = () => {
     onUpdate(item.id, {
@@ -129,18 +138,20 @@ export function SpotlightMediaCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge 
             variant={status === 'active' ? 'default' : 'secondary'}
             className={cn(
               "text-xs",
               status === 'scheduled' && "bg-blue-500/20 text-blue-600",
+              status === 'draft' && "bg-amber-500/20 text-amber-600",
               status === 'expired' && "bg-muted text-muted-foreground",
               status === 'inactive' && "bg-muted text-muted-foreground"
             )}
           >
             {status === 'active' && <Eye className="h-3 w-3 mr-1" />}
             {status === 'inactive' && <EyeOff className="h-3 w-3 mr-1" />}
+            {status === 'scheduled' && <Clock className="h-3 w-3 mr-1" />}
             {status.charAt(0).toUpperCase() + status.slice(1)}
           </Badge>
           <Badge variant="outline" className="text-xs">
@@ -152,10 +163,21 @@ export function SpotlightMediaCard({
               {item.display_duration_seconds}s
             </Badge>
           )}
+          {templateName && (
+            <Badge variant="outline" className="text-xs gap-1">
+              <LayoutTemplate className="h-3 w-3" />
+              {templateName}
+            </Badge>
+          )}
         </div>
 
         {/* Schedule Info */}
-        {(item.start_date || item.end_date) && (
+        {item.scheduled_for && (
+          <p className="text-xs text-blue-600">
+            Scheduled for {format(new Date(item.scheduled_for), 'MMM d, yyyy h:mm a')}
+          </p>
+        )}
+        {(item.start_date || item.end_date) && !item.scheduled_for && (
           <p className="text-xs text-muted-foreground">
             {item.start_date && `From ${format(new Date(item.start_date), 'MMM d, yyyy')}`}
             {item.start_date && item.end_date && ' → '}
