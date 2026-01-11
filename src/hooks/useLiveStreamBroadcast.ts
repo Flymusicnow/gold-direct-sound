@@ -184,7 +184,7 @@ export function useLiveStreamBroadcast({
     }
 
     setIsActive(true);
-    console.log('Artist broadcast active, listening for viewers on stream:', streamId);
+    console.log('[Broadcast] Artist broadcast active, listening for viewers on stream:', streamId);
 
     const channel = supabase
       .channel(`broadcast:${streamId}:${user.id}`)
@@ -194,25 +194,34 @@ export function useLiveStreamBroadcast({
           event: 'INSERT',
           schema: 'public',
           table: 'webrtc_signals',
-          filter: `room_id=eq.${streamId}`,
         },
         async (payload) => {
           const signal = payload.new as {
+            room_id: string;
             sender_id: string;
             target_id: string;
             signal_type: string;
             signal_data: any;
           };
           
-          // Only process signals intended for us (the artist)
-          if (signal.target_id !== user.id) return;
+          console.log('[Broadcast] Received signal:', signal.signal_type, 'from:', signal.sender_id, 'room:', signal.room_id);
+          
+          // Only process signals for our stream
+          if (signal.room_id !== streamId) return;
           
           // Don't process our own signals
           if (signal.sender_id === user.id) return;
           
+          // Only process signals intended for us (the artist)
+          if (signal.target_id !== user.id) {
+            console.log('[Broadcast] Signal not for us, target:', signal.target_id);
+            return;
+          }
+          
           switch (signal.signal_type) {
             case 'viewer_join':
               // New viewer wants to connect
+              console.log('[Broadcast] New viewer joining:', signal.sender_id);
               await createPeerForViewer(signal.sender_id);
               break;
             case 'answer':

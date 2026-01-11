@@ -38,11 +38,11 @@ export function LiveLayout({ children, orientation, className }: LiveLayoutProps
     <LiveLayoutContext.Provider value={{ orientation }}>
       <div
         className={cn(
-          "h-dvh min-h-dvh w-full bg-background overflow-hidden",
+          "h-dvh min-h-dvh w-full bg-background overflow-hidden overflow-x-hidden",
           // Grid layout based on orientation
           orientation === 'portrait' 
             ? "grid grid-rows-[auto_1fr_minmax(180px,40vh)]" 
-            : "grid grid-cols-[1fr_minmax(300px,400px)] grid-rows-1",
+            : "grid grid-cols-[1fr_minmax(320px,420px)] grid-rows-1",
           className
         )}
         style={{
@@ -101,7 +101,7 @@ function InteractionRail({ children, className }: InteractionRailProps) {
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden bg-card/50",
+        "flex flex-col overflow-hidden overflow-x-hidden bg-card/50",
         // Order and sizing based on orientation
         orientation === 'portrait' 
           ? "row-start-3 border-t border-border/50" 
