@@ -9,7 +9,10 @@ interface StreamControlsState {
   isEnding: boolean;
 }
 
-export const useStreamControls = (streamId: string | null) => {
+export const useStreamControls = (
+  streamId: string | null,
+  localStream?: MediaStream | null
+) => {
   const [state, setState] = useState<StreamControlsState>({
     isMuted: false,
     isCameraOff: false,
@@ -18,20 +21,38 @@ export const useStreamControls = (streamId: string | null) => {
   });
 
   const toggleMute = useCallback(() => {
+    // Toggle actual audio tracks if local stream exists
+    if (localStream) {
+      const audioTracks = localStream.getAudioTracks();
+      const newMutedState = !state.isMuted;
+      audioTracks.forEach((track) => {
+        track.enabled = !newMutedState;
+      });
+    }
+
     setState(prev => {
       const newMuted = !prev.isMuted;
       toast.info(newMuted ? "Microphone muted" : "Microphone unmuted");
       return { ...prev, isMuted: newMuted };
     });
-  }, []);
+  }, [localStream, state.isMuted]);
 
   const toggleCamera = useCallback(() => {
+    // Toggle actual video tracks if local stream exists
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks();
+      const newCameraOffState = !state.isCameraOff;
+      videoTracks.forEach((track) => {
+        track.enabled = !newCameraOffState;
+      });
+    }
+
     setState(prev => {
       const newCameraOff = !prev.isCameraOff;
       toast.info(newCameraOff ? "Camera off" : "Camera on");
       return { ...prev, isCameraOff: newCameraOff };
     });
-  }, []);
+  }, [localStream, state.isCameraOff]);
 
   const pauseStream = useCallback(async () => {
     if (!streamId) return;
