@@ -850,6 +850,54 @@ export type Database = {
           },
         ]
       }
+      artist_saved_templates: {
+        Row: {
+          artist_id: string
+          base_template_id: string
+          created_at: string | null
+          id: string
+          name: string
+          template_data: Json
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          base_template_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          template_data: Json
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          base_template_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          template_data?: Json
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_saved_templates_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artist_saved_templates_base_template_id_fkey"
+            columns: ["base_template_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_shoutouts: {
         Row: {
           artist_id: string
@@ -900,6 +948,8 @@ export type Database = {
           link_url: string | null
           media_type: string
           media_url: string
+          publish_status: string | null
+          scheduled_for: string | null
           start_date: string | null
           template_data: Json | null
           template_id: string | null
@@ -919,6 +969,8 @@ export type Database = {
           link_url?: string | null
           media_type: string
           media_url: string
+          publish_status?: string | null
+          scheduled_for?: string | null
           start_date?: string | null
           template_data?: Json | null
           template_id?: string | null
@@ -938,6 +990,8 @@ export type Database = {
           link_url?: string | null
           media_type?: string
           media_url?: string
+          publish_status?: string | null
+          scheduled_for?: string | null
           start_date?: string | null
           template_data?: Json | null
           template_id?: string | null
@@ -4480,6 +4534,67 @@ export type Database = {
           },
         ]
       }
+      spotlight_ab_tests: {
+        Row: {
+          artist_id: string
+          created_at: string | null
+          end_date: string | null
+          id: string
+          name: string
+          start_date: string | null
+          status: string | null
+          variant_a_media_id: string
+          variant_b_media_id: string
+          winner_variant: string | null
+        }
+        Insert: {
+          artist_id: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          start_date?: string | null
+          status?: string | null
+          variant_a_media_id: string
+          variant_b_media_id: string
+          winner_variant?: string | null
+        }
+        Update: {
+          artist_id?: string
+          created_at?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          start_date?: string | null
+          status?: string | null
+          variant_a_media_id?: string
+          variant_b_media_id?: string
+          winner_variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_ab_tests_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_ab_tests_variant_a_media_id_fkey"
+            columns: ["variant_a_media_id"]
+            isOneToOne: false
+            referencedRelation: "artist_spotlight_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_ab_tests_variant_b_media_id_fkey"
+            columns: ["variant_b_media_id"]
+            isOneToOne: false
+            referencedRelation: "artist_spotlight_media"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spotlight_campaigns: {
         Row: {
           admin_notes: string | null
@@ -4624,6 +4739,8 @@ export type Database = {
       }
       spotlight_views: {
         Row: {
+          ab_test_id: string | null
+          ab_variant: string | null
           artist_id: string
           clicked_link: boolean | null
           created_at: string | null
@@ -4633,10 +4750,13 @@ export type Database = {
           session_id: string
           source: string | null
           spotlight_media_id: string
+          template_id: string | null
           user_id: string | null
           view_duration_ms: number | null
         }
         Insert: {
+          ab_test_id?: string | null
+          ab_variant?: string | null
           artist_id: string
           clicked_link?: boolean | null
           created_at?: string | null
@@ -4646,10 +4766,13 @@ export type Database = {
           session_id: string
           source?: string | null
           spotlight_media_id: string
+          template_id?: string | null
           user_id?: string | null
           view_duration_ms?: number | null
         }
         Update: {
+          ab_test_id?: string | null
+          ab_variant?: string | null
           artist_id?: string
           clicked_link?: boolean | null
           created_at?: string | null
@@ -4659,10 +4782,18 @@ export type Database = {
           session_id?: string
           source?: string | null
           spotlight_media_id?: string
+          template_id?: string | null
           user_id?: string | null
           view_duration_ms?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "spotlight_views_ab_test_id_fkey"
+            columns: ["ab_test_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_ab_tests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "spotlight_views_artist_id_fkey"
             columns: ["artist_id"]
@@ -4675,6 +4806,13 @@ export type Database = {
             columns: ["spotlight_media_id"]
             isOneToOne: false
             referencedRelation: "artist_spotlight_media"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "spotlight_views_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_templates"
             referencedColumns: ["id"]
           },
         ]
