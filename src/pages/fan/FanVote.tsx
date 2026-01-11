@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { SpotlightVoteProvider, useSpotlightVotesOptional } from "@/contexts/SpotlightVoteContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { FanSidebar } from "@/components/fan/FanSidebar";
@@ -13,10 +14,12 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Music, Heart, RefreshCw, Users, Share2, Trophy } from "lucide-react";
+import { Sparkles, Music, Heart, RefreshCw, Users, Share2, Trophy, Play, Pause } from "lucide-react";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 import { YourVotesCard } from "@/components/spotlight/YourVotesCard";
 import { ShareSupportedCard } from "@/components/spotlight/ShareSupportedCard";
+import { MiniAudioPreview } from "@/components/audio/MiniAudioPreview";
+import { SwipeVoteCard } from "@/components/spotlight/SwipeVoteCard";
 
 interface SpotlightEntry {
   id: string;
@@ -29,6 +32,7 @@ interface SpotlightEntry {
     id: string;
     title: string;
     cover_url: string | null;
+    audio_url?: string | null;
   } | null;
   artist_profile: {
     id: string;
@@ -48,6 +52,8 @@ function VotePageContent() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { playNow, currentItem, isPlaying, togglePlay } = useFlightdeck();
   const voteContext = useSpotlightVotesOptional();
   const [entries, setEntries] = useState<SpotlightEntry[]>([]);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -55,6 +61,7 @@ function VotePageContent() {
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const [fanProfile, setFanProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
+  const [swipeIndex, setSwipeIndex] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -110,7 +117,8 @@ function VotePageContent() {
         tracks (
           id,
           title,
-          cover_url
+          cover_url,
+          audio_url
         ),
         artist_profiles (
           id,
@@ -131,6 +139,7 @@ function VotePageContent() {
         artist_profile: entry.artist_profiles,
       }));
       setEntries(formatted);
+      setSwipeIndex(0);
     }
   };
 
@@ -145,6 +154,25 @@ function VotePageContent() {
     if (selectedCampaign) {
       fetchEntriesForCampaign(selectedCampaign);
     }
+  };
+
+  const handlePlayFull = (entry: SpotlightEntry) => {
+    if (entry.track?.audio_url) {
+      playNow({
+        id: entry.track.id,
+        type: 'track',
+        title: entry.track.title,
+        artistId: entry.artist_profile?.id || '',
+        artistName: entry.artist_profile?.artist_name || 'Unknown Artist',
+        artistUserId: entry.artist_profile?.user_id || '',
+        coverUrl: entry.track.cover_url || undefined,
+        mediaUrl: entry.track.audio_url,
+      });
+    }
+  };
+
+  const isCurrentlyPlaying = (entry: SpotlightEntry) => {
+    return currentItem?.id === entry.track?.id && isPlaying;
   };
 
   // Section A: Vote Now
@@ -195,18 +223,18 @@ function VotePageContent() {
     return (
       <div className="mb-12">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-              <Sparkles className="h-8 w-8 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 flex items-center gap-3">
+              <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 text-primary" />
               {t('nav.vote')}
             </h1>
-            <p className="text-muted-foreground">{t('fan.voteSubtitle')}</p>
+            <p className="text-sm sm:text-base text-muted-foreground">{t('fan.voteSubtitle')}</p>
           </div>
           <Button 
             variant="outline" 
             onClick={() => navigate('/fan/leaderboard')}
-            className="gap-2 min-h-[44px]"
+            className="gap-2 min-h-[44px] w-full sm:w-auto"
           >
             <Trophy className="h-4 w-4" />
             {t('nav.leaderboard')}
@@ -215,14 +243,14 @@ function VotePageContent() {
 
         {/* Campaign selector (if multiple) */}
         {campaigns.length > 1 && (
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
             {campaigns.map((campaign) => (
               <Button
                 key={campaign.id}
                 variant={selectedCampaign === campaign.id ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleCampaignChange(campaign.id)}
-                className="whitespace-nowrap min-h-[44px]"
+                className="whitespace-nowrap min-h-[44px] flex-shrink-0"
               >
                 {campaign.name}
               </Button>
@@ -230,64 +258,139 @@ function VotePageContent() {
           </div>
         )}
 
-        {/* Entries list */}
+        {/* Entries */}
         {entries.length === 0 ? (
           <Card className="p-8 text-center">
             <Music className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">{t('fan.noEntriesInCampaign')}</p>
           </Card>
+        ) : isMobile ? (
+          /* Mobile: Swipe Card View */
+          <div className="py-4">
+            {entries[swipeIndex] && (
+              <SwipeVoteCard
+                entry={entries[swipeIndex]}
+                onVote={async () => {
+                  await voteContext?.castVote(entries[swipeIndex].id);
+                  handleVoteSuccess();
+                  // Move to next after voting
+                  setTimeout(() => {
+                    setSwipeIndex(prev => Math.min(prev + 1, entries.length - 1));
+                  }, 500);
+                }}
+                onSkip={() => {
+                  setSwipeIndex(prev => Math.min(prev + 1, entries.length - 1));
+                }}
+                hasVoted={voteContext?.hasVotedFor(entries[swipeIndex].id) ?? false}
+                currentIndex={swipeIndex}
+                totalEntries={entries.length}
+                onPlayFull={() => handlePlayFull(entries[swipeIndex])}
+              />
+            )}
+            
+            {swipeIndex >= entries.length && (
+              <Card className="p-8 text-center">
+                <Heart className="h-12 w-12 text-primary mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">You've seen all entries!</h3>
+                <p className="text-muted-foreground mb-4">Check back later for more tracks.</p>
+                <Button variant="outline" onClick={() => setSwipeIndex(0)} className="min-h-[44px]">
+                  Start Over
+                </Button>
+              </Card>
+            )}
+          </div>
         ) : (
+          /* Desktop: List View with Audio Preview */
           <div className="space-y-4">
             {entries.map((entry, index) => (
               <Card 
                 key={entry.id} 
                 className="p-4 interactive-card"
               >
-                <div className="flex items-center gap-4">
-                  {/* Rank */}
-                  <div className="flex-shrink-0 w-8 text-center">
-                    <span className={`text-lg font-bold ${index < 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-                      #{index + 1}
-                    </span>
+                <div className="flex flex-col gap-3">
+                  {/* Top row: Rank, Play, Cover, Info, Votes, Button */}
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    {/* Rank */}
+                    <div className="flex-shrink-0 w-8 text-center">
+                      <span className={`text-lg font-bold ${index < 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+                        #{index + 1}
+                      </span>
+                    </div>
+
+                    {/* Play button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        if (isCurrentlyPlaying(entry)) {
+                          togglePlay();
+                        } else {
+                          handlePlayFull(entry);
+                        }
+                      }}
+                      disabled={!entry.track?.audio_url}
+                      className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex-shrink-0"
+                    >
+                      {isCurrentlyPlaying(entry) ? (
+                        <Pause className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Play className="h-4 w-4 text-primary ml-0.5" />
+                      )}
+                    </Button>
+
+                    {/* Cover */}
+                    <div className="flex-shrink-0">
+                      {entry.track?.cover_url ? (
+                        <img
+                          src={entry.track.cover_url}
+                          alt={entry.track.title}
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Music className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm sm:text-base line-clamp-1">
+                        {entry.track?.title || 'Unknown Track'}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                        {entry.artist_profile?.artist_name || 'Unknown Artist'}
+                      </p>
+                    </div>
+
+                    {/* Vote count */}
+                    <div className="flex items-center gap-1 text-muted-foreground flex-shrink-0">
+                      <Heart className="h-4 w-4" />
+                      <span className="text-sm font-medium">{entry.vote_count}</span>
+                    </div>
+
+                    {/* Vote button */}
+                    <SpotlightVoteButton
+                      entryId={entry.id}
+                      artistUserId={entry.artist_profile?.user_id}
+                      onVoteSuccess={handleVoteSuccess}
+                    />
                   </div>
 
-                  {/* Cover */}
-                  <div className="flex-shrink-0">
-                    {entry.track?.cover_url ? (
-                      <img
-                        src={entry.track.cover_url}
-                        alt={entry.track.title}
-                        className="w-14 h-14 rounded-lg object-cover"
+                  {/* Audio Preview Row (Desktop) */}
+                  {entry.track?.audio_url && (
+                    <div className="hidden sm:block pl-12 pr-2">
+                      <MiniAudioPreview
+                        audioUrl={entry.track.audio_url}
+                        trackId={entry.track.id}
+                        title={entry.track.title}
+                        artistName={entry.artist_profile?.artist_name || 'Unknown'}
+                        artistId={entry.artist_profile?.id || ''}
+                        coverUrl={entry.track.cover_url || undefined}
+                        onPlayFull={() => handlePlayFull(entry)}
                       />
-                    ) : (
-                      <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <Music className="h-6 w-6 text-primary" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold truncate">
-                      {entry.track?.title || 'Unknown Track'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {entry.artist_profile?.artist_name || 'Unknown Artist'}
-                    </p>
-                  </div>
-
-                  {/* Vote count */}
-                  <div className="flex items-center gap-1 text-muted-foreground">
-                    <Heart className="h-4 w-4" />
-                    <span className="text-sm font-medium">{entry.vote_count}</span>
-                  </div>
-
-                  {/* Vote button */}
-                  <SpotlightVoteButton
-                    entryId={entry.id}
-                    artistUserId={entry.artist_profile?.user_id}
-                    onVoteSuccess={handleVoteSuccess}
-                  />
+                    </div>
+                  )}
                 </div>
               </Card>
             ))}
@@ -306,19 +409,19 @@ function VotePageContent() {
     return (
       <div>
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-bold mb-1 flex items-center gap-2">
-              <Heart className="h-6 w-6 text-primary" />
+            <h2 className="text-xl sm:text-2xl font-bold mb-1 flex items-center gap-2">
+              <Heart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               Your Votes
             </h2>
-            <p className="text-muted-foreground">The entries you've supported in Spotlight.</p>
+            <p className="text-sm text-muted-foreground">The entries you've supported in Spotlight.</p>
           </div>
           {votedEntries.length > 0 && (
             <Button 
               variant="outline" 
               onClick={() => setShowShareModal(true)}
-              className="min-h-[44px]"
+              className="min-h-[44px] w-full sm:w-auto"
             >
               <Share2 className="h-4 w-4 mr-2" />
               Share

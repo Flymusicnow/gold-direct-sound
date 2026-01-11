@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rss, Users, ListMusic, Menu, Award, Target, Sparkles } from "lucide-react";
+import { Home, Rss, Menu, Sparkles, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -9,7 +9,7 @@ const mainNavItems = [
   { icon: Home, label: "Home", path: "/fan/dashboard" },
   { icon: Rss, label: "Feed", path: "/fan/feed" },
   { icon: Sparkles, label: "Vote", path: "/fan/vote" },
-  { icon: Award, label: "Journey", path: "/fan/achievements" },
+  { icon: Trophy, label: "Board", path: "/fan/leaderboard" },
 ];
 
 export function BottomNavBarFan() {

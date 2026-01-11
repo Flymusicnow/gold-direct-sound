@@ -1,8 +1,10 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useFlightdeck } from "@/contexts/FlightdeckContext";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
@@ -12,20 +14,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Medal, Award, ArrowLeft, Music, Heart } from "lucide-react";
+import { Trophy, ArrowLeft, Music, Heart, Play, Pause } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { SpotlightVoteProvider } from "@/contexts/SpotlightVoteContext";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
+import { MiniAudioPreview } from "@/components/audio/MiniAudioPreview";
+import { AnimatedRankBadge } from "@/components/spotlight/AnimatedRankBadge";
+import { cn } from "@/lib/utils";
 
 interface Entry {
   id: string;
   title: string | null;
   total_votes: number;
   tracks: {
+    id: string;
     title: string;
     cover_url: string | null;
+    audio_url?: string | null;
   };
   artist_profiles: {
+    id: string;
     artist_name: string;
     user_id?: string;
   };
@@ -36,11 +44,14 @@ export default function FanCampaignLeaderboard() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const isMobile = useIsMobile();
+  const { playNow, currentItem, isPlaying, togglePlay } = useFlightdeck();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [campaignName, setCampaignName] = useState("");
   const [loading, setLoading] = useState(true);
-  const [previousVotes, setPreviousVotes] = useState<Record<string, number>>({});
+  const [previousPositions, setPreviousPositions] = useState<Record<string, number>>({});
+  const [rankChanges, setRankChanges] = useState<Record<string, number>>({});
   const [changedEntries, setChangedEntries] = useState<Set<string>>(new Set());
+  const isFirstLoad = useRef(true);
 
   const fetchData = useCallback(async () => {
     if (!campaignId) return;
@@ -56,8 +67,8 @@ export default function FanCampaignLeaderboard() {
           .from('spotlight_entries')
           .select(`
             *,
-            tracks (title, cover_url),
-            artist_profiles (artist_name, user_id)
+            tracks (id, title, cover_url, audio_url),
+            artist_profiles (id, artist_name, user_id)
           `)
           .eq('campaign_id', campaignId)
           .eq('status', 'approved')
@@ -69,25 +80,44 @@ export default function FanCampaignLeaderboard() {
 
       setCampaignName(campaignRes.data.name);
       
-      // Track vote changes for animation
       const newEntries = entriesRes.data || [];
-      const changed = new Set<string>();
       
-      newEntries.forEach(entry => {
-        if (previousVotes[entry.id] !== undefined && previousVotes[entry.id] !== entry.total_votes) {
-          changed.add(entry.id);
-        }
+      // Calculate position changes (skip on first load)
+      if (!isFirstLoad.current) {
+        const changed = new Set<string>();
+        const changes: Record<string, number> = {};
+        
+        newEntries.forEach((entry, index) => {
+          const currentPosition = index + 1;
+          const previousPosition = previousPositions[entry.id];
+          
+          if (previousPosition !== undefined && previousPosition !== currentPosition) {
+            changed.add(entry.id);
+            changes[entry.id] = previousPosition - currentPosition; // Positive = moved up
+          }
+        });
+        
+        setChangedEntries(changed);
+        setRankChanges(changes);
+        
+        // Clear animations after delay
+        setTimeout(() => {
+          setChangedEntries(new Set());
+        }, 2000);
+        
+        setTimeout(() => {
+          setRankChanges({});
+        }, 3000);
+      } else {
+        isFirstLoad.current = false;
+      }
+      
+      // Update previous positions for next comparison
+      const positionsMap: Record<string, number> = {};
+      newEntries.forEach((entry, index) => {
+        positionsMap[entry.id] = index + 1;
       });
-      
-      setChangedEntries(changed);
-      setTimeout(() => setChangedEntries(new Set()), 2000);
-      
-      // Update previous votes
-      const votesMap: Record<string, number> = {};
-      newEntries.forEach(entry => {
-        votesMap[entry.id] = entry.total_votes;
-      });
-      setPreviousVotes(votesMap);
+      setPreviousPositions(positionsMap);
       
       setEntries(newEntries);
     } catch (error) {
@@ -100,7 +130,7 @@ export default function FanCampaignLeaderboard() {
     } finally {
       setLoading(false);
     }
-  }, [campaignId, previousVotes]);
+  }, [campaignId, previousPositions]);
 
   useEffect(() => {
     if (campaignId) {
@@ -122,7 +152,6 @@ export default function FanCampaignLeaderboard() {
           table: 'spotlight_votes',
         },
         () => {
-          // Refetch entries when votes change
           fetchData();
         }
       )
@@ -133,17 +162,23 @@ export default function FanCampaignLeaderboard() {
     };
   }, [campaignId, fetchData]);
 
-  const getRankIcon = (index: number) => {
-    switch (index) {
-      case 0:
-        return <Trophy className="h-6 w-6 text-[#FFD700]" />;
-      case 1:
-        return <Medal className="h-6 w-6 text-[#C0C0C0]" />;
-      case 2:
-        return <Award className="h-6 w-6 text-[#CD7F32]" />;
-      default:
-        return null;
+  const handlePlayFull = (entry: Entry) => {
+    if (entry.tracks?.audio_url) {
+      playNow({
+        id: entry.tracks.id,
+        type: 'track',
+        title: entry.tracks.title,
+        artistId: entry.artist_profiles?.id || '',
+        artistName: entry.artist_profiles?.artist_name || 'Unknown Artist',
+        artistUserId: entry.artist_profiles?.user_id || '',
+        coverUrl: entry.tracks.cover_url || undefined,
+        mediaUrl: entry.tracks.audio_url,
+      });
     }
+  };
+
+  const isCurrentlyPlaying = (entry: Entry) => {
+    return currentItem?.id === entry.tracks?.id && isPlaying;
   };
 
   if (loading) {
@@ -195,7 +230,7 @@ export default function FanCampaignLeaderboard() {
             <Button 
               variant="ghost" 
               onClick={() => navigate('/fan/leaderboard')} 
-              className="mb-6 gap-2"
+              className="mb-6 gap-2 min-h-[44px]"
             >
               <ArrowLeft className="h-4 w-4" />
               {t('common.back')}
@@ -204,7 +239,7 @@ export default function FanCampaignLeaderboard() {
             {/* Header */}
             <div className="text-center mb-8">
               <Trophy className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-foreground mb-2">{t('nav.leaderboard')}</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{t('nav.leaderboard')}</h1>
               <p className="text-muted-foreground">{campaignName}</p>
             </div>
 
@@ -214,66 +249,133 @@ export default function FanCampaignLeaderboard() {
                 <CardTitle>Rankings</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {entries.map((entry, index) => (
-                    <div
-                      key={entry.id}
-                      className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                        index < 3 ? 'bg-gradient-to-r from-primary/10 to-transparent' : 'hover:bg-muted/50'
-                      } ${changedEntries.has(entry.id) ? 'animate-pulse ring-2 ring-primary/50' : ''}`}
-                    >
-                      {/* Rank */}
-                      <div className="flex items-center justify-center w-12 h-12">
-                        {getRankIcon(index) || (
-                          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted text-foreground font-bold">
-                            {index + 1}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Cover */}
-                      <div className="flex-shrink-0">
-                        {entry.tracks.cover_url ? (
-                          <img
-                            src={entry.tracks.cover_url}
-                            alt={entry.tracks.title}
-                            className="w-12 h-12 rounded-lg object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Music className="h-5 w-5 text-primary" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold truncate">
-                          {entry.title || entry.tracks.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate">
-                          {entry.artist_profiles.artist_name}
-                        </p>
-                      </div>
-
-                      {/* Votes & Button */}
-                      <div className="flex items-center gap-3">
-                        <Badge
-                          variant="outline"
-                          className={`flex items-center gap-1 ${index < 3 ? 'border-primary text-primary' : ''}`}
+                <LayoutGroup>
+                  <div className="space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {entries.map((entry, index) => (
+                        <motion.div
+                          key={entry.id}
+                          layout
+                          layoutId={entry.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ 
+                            opacity: 1, 
+                            scale: 1,
+                          }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ 
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 30,
+                            layout: { duration: 0.4 }
+                          }}
+                          className="relative"
                         >
-                          <Heart className="h-3 w-3" />
-                          {entry.total_votes}
-                        </Badge>
-                        <SpotlightVoteButton
-                          entryId={entry.id}
-                          artistUserId={entry.artist_profiles.user_id}
-                          onVoteSuccess={fetchData}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                          <div
+                            className={cn(
+                              "flex flex-col gap-3 p-4 rounded-lg transition-all",
+                              index < 3 
+                                ? "bg-gradient-to-r from-primary/10 to-transparent" 
+                                : "hover:bg-muted/50",
+                              changedEntries.has(entry.id) && "ring-2 ring-primary/50 animate-pulse"
+                            )}
+                          >
+                            {/* Main Row */}
+                            <div className="flex items-center gap-3 sm:gap-4">
+                              {/* Rank with animation */}
+                              <AnimatedRankBadge
+                                rank={index + 1}
+                                previousRank={previousPositions[entry.id]}
+                                showChange={!!rankChanges[entry.id]}
+                                size={isMobile ? "sm" : "md"}
+                              />
+
+                              {/* Play button */}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  if (isCurrentlyPlaying(entry)) {
+                                    togglePlay();
+                                  } else {
+                                    handlePlayFull(entry);
+                                  }
+                                }}
+                                disabled={!entry.tracks?.audio_url}
+                                className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex-shrink-0"
+                              >
+                                {isCurrentlyPlaying(entry) ? (
+                                  <Pause className="h-4 w-4 text-primary" />
+                                ) : (
+                                  <Play className="h-4 w-4 text-primary ml-0.5" />
+                                )}
+                              </Button>
+
+                              {/* Cover */}
+                              <div className="flex-shrink-0">
+                                {entry.tracks?.cover_url ? (
+                                  <img
+                                    src={entry.tracks.cover_url}
+                                    alt={entry.tracks.title}
+                                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <Music className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm sm:text-base line-clamp-1">
+                                  {entry.title || entry.tracks?.title}
+                                </p>
+                                <p className="text-xs sm:text-sm text-muted-foreground line-clamp-1">
+                                  {entry.artist_profiles?.artist_name}
+                                </p>
+                              </div>
+
+                              {/* Votes & Button */}
+                              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "flex items-center gap-1",
+                                    index < 3 && "border-primary text-primary"
+                                  )}
+                                >
+                                  <Heart className="h-3 w-3" />
+                                  <span className="text-xs sm:text-sm">{entry.total_votes}</span>
+                                </Badge>
+                                <SpotlightVoteButton
+                                  entryId={entry.id}
+                                  artistUserId={entry.artist_profiles?.user_id}
+                                  onVoteSuccess={fetchData}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Audio Preview Row (Desktop only) */}
+                            {!isMobile && entry.tracks?.audio_url && (
+                              <div className="pl-14 pr-2">
+                                <MiniAudioPreview
+                                  audioUrl={entry.tracks.audio_url}
+                                  trackId={entry.tracks.id}
+                                  title={entry.tracks.title}
+                                  artistName={entry.artist_profiles?.artist_name || 'Unknown'}
+                                  artistId={entry.artist_profiles?.id || ''}
+                                  coverUrl={entry.tracks.cover_url || undefined}
+                                  onPlayFull={() => handlePlayFull(entry)}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </LayoutGroup>
 
                 {entries.length === 0 && (
                   <div className="text-center py-12">
