@@ -116,6 +116,8 @@ import SpotlightLeaderboard from "./pages/spotlight/SpotlightLeaderboard";
 import SpotlightArchive from "./pages/spotlight/SpotlightArchive";
 import SpotlightResults from "./pages/spotlight/SpotlightResults";
 import FanLeaderboard from "./pages/spotlight/FanLeaderboard";
+import FanLeaderboardIndex from "./pages/fan/FanLeaderboardIndex";
+import FanCampaignLeaderboard from "./pages/fan/FanCampaignLeaderboard";
 import FanPlaylists from "./pages/FanPlaylists";
 import PlaylistDetail from "./pages/PlaylistDetail";
 import FanSupporter from "./pages/FanSupporter";
@@ -477,6 +479,16 @@ const App = () => (
             <Route path="/fan/vote" element={
               <ProtectedRoute allowedRoles={['fan']}>
                 <FanVote />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/leaderboard" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanLeaderboardIndex />
+              </ProtectedRoute>
+            } />
+            <Route path="/fan/leaderboard/:campaignId" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <FanCampaignLeaderboard />
               </ProtectedRoute>
             } />
             <Route path="/fan/wrapped" element={

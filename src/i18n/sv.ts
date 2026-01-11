@@ -151,6 +151,7 @@ export const sv = {
     comments: 'Kommentarer',
     testimonials: 'Omdömen',
     promo: 'Promo',
+    leaderboard: 'Topplista',
     menu: 'Meny',
     howItWorks: 'Hur det fungerar',
     topArtists: 'Topp artister',

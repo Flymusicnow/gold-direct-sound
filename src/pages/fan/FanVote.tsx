@@ -13,7 +13,7 @@ import { PageTransition } from "@/components/ui/PageTransition";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Music, Heart, RefreshCw, Users, Share2 } from "lucide-react";
+import { Sparkles, Music, Heart, RefreshCw, Users, Share2, Trophy } from "lucide-react";
 import SpotlightVoteButton from "@/components/spotlight/SpotlightVoteButton";
 import { YourVotesCard } from "@/components/spotlight/YourVotesCard";
 import { ShareSupportedCard } from "@/components/spotlight/ShareSupportedCard";
@@ -54,7 +54,7 @@ function VotePageContent() {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [fanProfile, setFanProfile] = useState<{ display_name: string; avatar_url: string | null } | null>(null);
+  const [fanProfile, setFanProfile] = useState<{ full_name: string | null; avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -69,7 +69,7 @@ function VotePageContent() {
     if (!user) return;
     const { data } = await supabase
       .from('profiles')
-      .select('display_name, avatar_url')
+      .select('full_name, avatar_url')
       .eq('id', user.id)
       .maybeSingle();
     if (data) {
@@ -195,12 +195,22 @@ function VotePageContent() {
     return (
       <div className="mb-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-            <Sparkles className="h-8 w-8 text-primary" />
-            {t('nav.vote')}
-          </h1>
-          <p className="text-muted-foreground">{t('fan.voteSubtitle')}</p>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+              <Sparkles className="h-8 w-8 text-primary" />
+              {t('nav.vote')}
+            </h1>
+            <p className="text-muted-foreground">{t('fan.voteSubtitle')}</p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/fan/leaderboard')}
+            className="gap-2 min-h-[44px]"
+          >
+            <Trophy className="h-4 w-4" />
+            {t('nav.leaderboard')}
+          </Button>
         </div>
 
         {/* Campaign selector (if multiple) */}
@@ -393,7 +403,7 @@ function VotePageContent() {
           isOpen={showShareModal}
           onClose={() => setShowShareModal(false)}
           votedEntries={voteContext?.votedEntries || []}
-          fanName={fanProfile.display_name || 'Fan'}
+          fanName={fanProfile.full_name || 'Fan'}
           fanAvatar={fanProfile.avatar_url}
           fanId={user.id}
         />

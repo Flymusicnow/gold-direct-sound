@@ -151,6 +151,7 @@ export const en = {
     comments: 'Comments',
     testimonials: 'Testimonials',
     promo: 'Promo',
+    leaderboard: 'Leaderboard',
     menu: 'Menu',
     howItWorks: 'How It Works',
     topArtists: 'Top Artists',
