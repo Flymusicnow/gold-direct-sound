@@ -351,8 +351,8 @@ export default function LivePage() {
             />
           </div>
           
-          {/* Action bar */}
-          <div className="p-3 border-t border-border/50 space-y-3">
+          {/* Action bar - with padding for global music player */}
+          <div className="p-3 pb-24 sm:pb-3 border-t border-border/50 space-y-3">
             {/* Fan actions */}
             {!isArtist && (
               <>

@@ -4,7 +4,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import { Search, ArrowLeft } from "lucide-react";
+import { Search, ArrowLeft, Radio } from "lucide-react";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePreviewMode } from "@/hooks/usePreviewMode";
@@ -24,6 +24,7 @@ export default function Explore() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
+  const [liveArtistIds, setLiveArtistIds] = useState<Set<string>>(new Set());
   const { t } = useLanguage();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -55,6 +56,17 @@ export default function Explore() {
     } else {
       setArtists(data || []);
     }
+
+    // Fetch live streams
+    const { data: liveStreams } = await supabase
+      .from('artist_live_streams')
+      .select('artist_id')
+      .eq('status', 'live');
+
+    if (liveStreams) {
+      setLiveArtistIds(new Set(liveStreams.map(s => s.artist_id)));
+    }
+
     setLoading(false);
   };
 
@@ -118,9 +130,22 @@ export default function Explore() {
               {filteredArtists.map((artist) => (
                 <Card
                   key={artist.id}
-                  className="p-6 hover:border-primary/50 transition-all cursor-pointer"
+                  className="p-6 hover:border-primary/50 transition-all cursor-pointer relative"
                   onClick={() => navigate(`/artist/${artist.user_id}`)}
                 >
+                  {/* LIVE Badge */}
+                  {liveArtistIds.has(artist.id) && (
+                    <div 
+                      className="absolute top-3 right-3 flex items-center gap-1 bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full text-xs font-medium animate-pulse cursor-pointer z-10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/live/${artist.user_id}`);
+                      }}
+                    >
+                      <Radio className="h-3 w-3" />
+                      LIVE
+                    </div>
+                  )}
                   <div className="flex items-center gap-4 mb-4">
                     {artist.avatar_url ? (
                       <img
