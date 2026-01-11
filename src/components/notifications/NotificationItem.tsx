@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy, Video, Bell, Pin } from "lucide-react";
+import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy, Video, Bell, Pin, Radio } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
@@ -59,6 +59,8 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
         return <Pin className="h-4 w-4 text-primary" />;
       case 'community_milestone':
         return <Trophy className="h-4 w-4 text-primary" />;
+      case 'artist_going_live':
+        return <Radio className="h-4 w-4 text-red-500 animate-pulse" />;
       default:
         return <Sparkles className="h-4 w-4 text-primary" />;
     }

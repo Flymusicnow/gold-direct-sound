@@ -16,12 +16,13 @@ interface LiveStreamCardProps {
     viewer_count: number;
     thumbnail_url?: string;
   };
+  artistId?: string;
   isOwner?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-export function LiveStreamCard({ stream, isOwner, onEdit, onDelete }: LiveStreamCardProps) {
+export function LiveStreamCard({ stream, artistId, isOwner, onEdit, onDelete }: LiveStreamCardProps) {
   const getStatusBadge = () => {
     switch (stream.status) {
       case "live":
@@ -112,9 +113,9 @@ export function LiveStreamCard({ stream, isOwner, onEdit, onDelete }: LiveStream
           </div>
         )}
 
-        {stream.status === "live" && (
-          <Link to={`/live/${stream.id}`}>
-            <Button className="w-full bg-red-500 hover:bg-red-600 text-white">
+        {stream.status === "live" && artistId && (
+          <Link to={`/live/${artistId}`}>
+            <Button className="w-full min-h-[44px] bg-red-500 hover:bg-red-600 text-white">
               Watch Now
             </Button>
           </Link>

@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,7 +18,9 @@ interface GoLiveDialogProps {
 export function GoLiveDialog({ artistId, onSuccess }: GoLiveDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [goLiveImmediately, setGoLiveImmediately] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -37,15 +41,16 @@ export function GoLiveDialog({ artistId, onSuccess }: GoLiveDialogProps) {
         description: formData.description || null,
         stream_url: formData.stream_url || null,
         thumbnail_url: formData.thumbnail_url || null,
-        scheduled_start: formData.scheduled_start || null,
-        status: "scheduled",
+        scheduled_start: goLiveImmediately ? null : formData.scheduled_start || null,
+        status: goLiveImmediately ? "live" : "scheduled",
+        actual_start: goLiveImmediately ? new Date().toISOString() : null,
       });
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Live stream scheduled successfully",
+        description: goLiveImmediately ? "You are now live!" : "Live stream scheduled successfully",
       });
 
       setOpen(false);
@@ -56,7 +61,13 @@ export function GoLiveDialog({ artistId, onSuccess }: GoLiveDialogProps) {
         thumbnail_url: "",
         scheduled_start: "",
       });
+      setGoLiveImmediately(false);
       onSuccess?.();
+
+      // Auto-navigate to Live Page if going live immediately
+      if (goLiveImmediately) {
+        navigate(`/live/${artistId}`);
+      }
     } catch (error: any) {
       toast({
         title: "Error",
@@ -71,17 +82,30 @@ export function GoLiveDialog({ artistId, onSuccess }: GoLiveDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-red-500 hover:bg-red-600 text-white">
+        <Button className="min-h-[44px] bg-red-500 hover:bg-red-600 text-white">
           <Radio className="h-4 w-4 mr-2" />
-          Schedule Stream
+          Go Live / Schedule
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Schedule Live Stream</DialogTitle>
+          <DialogTitle>{goLiveImmediately ? "Go Live Now" : "Schedule Live Stream"}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Go Live Now Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+            <div className="space-y-0.5">
+              <Label htmlFor="go-live-now" className="text-base font-medium">Go Live Now</Label>
+              <p className="text-sm text-muted-foreground">Start streaming immediately after creation</p>
+            </div>
+            <Switch
+              id="go-live-now"
+              checked={goLiveImmediately}
+              onCheckedChange={setGoLiveImmediately}
+            />
+          </div>
+
           <div>
             <Label htmlFor="title">Stream Title *</Label>
             <Input
@@ -129,22 +153,28 @@ export function GoLiveDialog({ artistId, onSuccess }: GoLiveDialogProps) {
             />
           </div>
 
-          <div>
-            <Label htmlFor="scheduled_start">Scheduled Start Time</Label>
-            <Input
-              id="scheduled_start"
-              type="datetime-local"
-              value={formData.scheduled_start}
-              onChange={(e) => setFormData({ ...formData, scheduled_start: e.target.value })}
-            />
-          </div>
+          {!goLiveImmediately && (
+            <div>
+              <Label htmlFor="scheduled_start">Scheduled Start Time</Label>
+              <Input
+                id="scheduled_start"
+                type="datetime-local"
+                value={formData.scheduled_start}
+                onChange={(e) => setFormData({ ...formData, scheduled_start: e.target.value })}
+              />
+            </div>
+          )}
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1 min-h-[44px]">
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1 bg-red-500 hover:bg-red-600">
-              {isLoading ? "Scheduling..." : "Schedule Stream"}
+            <Button 
+              type="submit" 
+              disabled={isLoading} 
+              className={`flex-1 min-h-[44px] ${goLiveImmediately ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-red-500 hover:bg-red-600'}`}
+            >
+              {isLoading ? "Creating..." : goLiveImmediately ? "🔴 Go Live Now" : "Schedule Stream"}
             </Button>
           </div>
         </form>
