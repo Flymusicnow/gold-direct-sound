@@ -54,22 +54,25 @@ export function useLiveStreamViewer({
     setConnectionState('connecting');
     setError(null);
 
-    console.log('Sending viewer_join to artist:', artistUserId);
+    console.log('[Viewer] Sending viewer_join to artist:', artistUserId, 'for stream:', streamId);
 
-    try {
-      await supabase.from('webrtc_signals').insert({
-        room_id: streamId,
-        sender_id: user.id,
-        target_id: artistUserId,
-        signal_type: 'viewer_join',
-        signal_data: { timestamp: Date.now() } as any,
-      });
-    } catch (err) {
-      console.error('Failed to send viewer_join:', err);
-      setError('Failed to connect to stream');
+    const { error: insertError } = await supabase.from('webrtc_signals').insert({
+      room_id: streamId,
+      sender_id: user.id,
+      target_id: artistUserId,
+      signal_type: 'viewer_join',
+      signal_data: { timestamp: Date.now() } as any,
+    });
+
+    if (insertError) {
+      console.error('[Viewer] Failed to send viewer_join:', insertError);
+      setError('Failed to connect to stream. Please try again.');
       setConnectionState('failed');
       hasJoinedRef.current = false;
+      return;
     }
+    
+    console.log('[Viewer] Successfully sent viewer_join signal, waiting for offer...');
   }, [user, streamId, artistUserId]);
 
   // Create peer connection and handle offer
