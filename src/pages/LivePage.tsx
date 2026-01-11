@@ -72,7 +72,14 @@ export default function LivePage() {
   const streamControls = useStreamControls(stream?.id || null);
   const { topSupporters, giftCount } = useSessionSupport(stream?.id || null);
   const fanInvites = useFanInvites(stream?.id || null, stream?.artist_id || null);
-  const { requests, onStage, approve, deny, kick } = useStageRequests(stream?.id || null);
+  const { 
+    pendingRequests, 
+    onStageUsers, 
+    approveRequest, 
+    denyRequest, 
+    kickFromStage,
+    panicCloseAll
+  } = useStageRequests(stream?.id || '', isArtist);
 
   useEffect(() => {
     if (artistId) {
@@ -140,19 +147,19 @@ export default function LivePage() {
   };
 
   // Map stage requests to the format expected by FanInteractionControls
-  const stageRequestsFormatted = requests.map(r => ({
+  const stageRequestsFormatted = pendingRequests.map(r => ({
     id: r.id,
     userId: r.user_id,
-    displayName: r.user_id.substring(0, 8),
-    avatarUrl: undefined,
-    requestedAt: r.created_at,
+    displayName: r.profile?.full_name || r.user_id.substring(0, 8),
+    avatarUrl: r.profile?.avatar_url,
+    requestedAt: r.requested_at,
   }));
 
-  const onStageUsersFormatted = onStage.map(u => ({
+  const onStageUsersFormatted = onStageUsers.map(u => ({
     id: u.id,
     userId: u.user_id,
-    displayName: u.user_id.substring(0, 8),
-    avatarUrl: undefined,
+    displayName: u.profile?.full_name || u.user_id.substring(0, 8),
+    avatarUrl: u.profile?.avatar_url,
     isMuted: false,
   }));
 
@@ -309,16 +316,14 @@ export default function LivePage() {
                   onStageUsers={onStageUsersFormatted}
                   onInviteFan={() => setShowInviteSheet(true)}
                   onViewSupporters={() => setShowInviteSheet(true)}
-                  onApproveRequest={(id) => approve(id)}
-                  onDenyRequest={(id) => deny(id)}
+                  onApproveRequest={(id) => approveRequest(id)}
+                  onDenyRequest={(id) => denyRequest(id)}
                   onMuteFan={() => {}} // TODO: Implement fan mute
                   onRemoveFan={(userId) => {
-                    const req = onStage.find(u => u.user_id === userId);
-                    if (req) kick(req.id);
+                    const req = onStageUsers.find(u => u.user_id === userId);
+                    if (req) kickFromStage(req.id);
                   }}
-                  onClearAllFromStage={() => {
-                    onStage.forEach(u => kick(u.id));
-                  }}
+                  onClearAllFromStage={panicCloseAll}
                 />
 
                 <Separator />
