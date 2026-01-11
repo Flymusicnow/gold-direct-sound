@@ -322,26 +322,6 @@ function VotePageContent() {
                       </span>
                     </div>
 
-                    {/* Play button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        if (isCurrentlyPlaying(entry)) {
-                          togglePlay();
-                        } else {
-                          handlePlayFull(entry);
-                        }
-                      }}
-                      disabled={!entry.track?.audio_url}
-                      className="h-10 w-10 rounded-full bg-primary/10 hover:bg-primary/20 flex-shrink-0"
-                    >
-                      {isCurrentlyPlaying(entry) ? (
-                        <Pause className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Play className="h-4 w-4 text-primary ml-0.5" />
-                      )}
-                    </Button>
 
                     {/* Cover */}
                     <div className="flex-shrink-0">

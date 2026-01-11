@@ -10,7 +10,7 @@ import { StatCard } from "@/components/StatCard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic, Trophy, FileText } from "lucide-react";
+import { Heart, Users, MessageSquare, Music, Settings, ArrowRight, TrendingUp, Sparkles, UserMinus, ListMusic, Trophy, FileText, Radio } from "lucide-react";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { TrendingSection } from "@/components/TrendingSection";
 import { useFlightdeck } from "@/contexts/FlightdeckContext";
@@ -65,6 +65,7 @@ export default function FanPortal() {
   const [commentsCount, setCommentsCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [supporterStats, setSupporterStats] = useState<{ tier: string; totalVotes: number } | null>(null);
+  const [liveArtistIds, setLiveArtistIds] = useState<Set<string>>(new Set());
   const { achievements, totalXP, supporterLevel, nextLevelXP, progressToNextLevel } = useFanAchievements();
 
   useEffect(() => {
@@ -197,6 +198,16 @@ export default function FanPortal() {
           tier: statsData.current_tier,
           totalVotes: statsData.total_votes,
         });
+      }
+
+      // Fetch live streams for followed artists
+      const { data: liveStreams } = await supabase
+        .from('artist_live_streams')
+        .select('artist_id')
+        .eq('status', 'live');
+
+      if (liveStreams) {
+        setLiveArtistIds(new Set(liveStreams.map(s => s.artist_id)));
       }
 
     } catch (error) {
@@ -457,7 +468,21 @@ export default function FanPortal() {
                         </div>
                       )}
                       <div className="flex-1">
-                        <h3 className="font-semibold">{artist.artist_name}</h3>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{artist.artist_name}</h3>
+                          {liveArtistIds.has(artist.id) && (
+                            <div 
+                              className="flex items-center gap-1 bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full text-xs font-medium animate-pulse cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/live/${artist.user_id}`);
+                              }}
+                            >
+                              <Radio className="h-2.5 w-2.5" />
+                              LIVE
+                            </div>
+                          )}
+                        </div>
                         {artist.genre && (
                           <p className="text-sm text-muted-foreground">{artist.genre}</p>
                         )}
