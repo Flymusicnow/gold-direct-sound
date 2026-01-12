@@ -170,6 +170,7 @@ export const CommunityFeed: React.FC<CommunityFeedProps> = ({ artistId, communit
               post={post}
               artist={artist}
               canAccess={canAccessTier(post.tier_required as SubscriptionTier)}
+              communityArtistUserId={artist?.user_id}
             />
           ))
         )}

@@ -20,6 +20,9 @@ interface FeedPost {
   artist_id: string;
   artist_name: string;
   avatar_url: string | null;
+  author_id: string;
+  author_type: 'artist' | 'fan';
+  artist_user_id?: string;
 }
 
 const POSTS_PER_PAGE = 20;
@@ -91,7 +94,7 @@ const FeedPage: React.FC = () => {
       const uniqueArtistIds = [...new Set(postsData?.map(p => communityArtistMap[p.community_id]) || [])];
       const { data: artistProfiles } = await supabase
         .from('artist_profiles')
-        .select('id, artist_name, avatar_url')
+        .select('id, artist_name, avatar_url, user_id')
         .in('id', uniqueArtistIds);
 
       const artistMap = Object.fromEntries(
@@ -101,7 +104,7 @@ const FeedPage: React.FC = () => {
       // Transform posts
       const transformedPosts: FeedPost[] = (postsData || []).map(post => {
         const artistId = communityArtistMap[post.community_id];
-        const artist = artistMap[artistId] || { artist_name: 'Unknown Artist', avatar_url: null };
+        const artist = artistMap[artistId] || { artist_name: 'Unknown Artist', avatar_url: null, user_id: undefined };
         return {
           id: post.id,
           content: post.content,
@@ -114,7 +117,10 @@ const FeedPage: React.FC = () => {
           community_id: post.community_id,
           artist_id: artistId,
           artist_name: artist.artist_name,
-          avatar_url: artist.avatar_url
+          avatar_url: artist.avatar_url,
+          author_id: post.author_id,
+          author_type: post.author_type as 'artist' | 'fan',
+          artist_user_id: artist.user_id
         };
       });
 
@@ -247,9 +253,10 @@ const FeedPostCard: React.FC<{
     <div className="relative">
       <PostCard
         post={post}
-        artist={{ artist_name: post.artist_name, avatar_url: post.avatar_url }}
+        artist={{ artist_name: post.artist_name, avatar_url: post.avatar_url, user_id: post.artist_user_id }}
         canAccess={canAccess}
         onCommentClick={() => onPostClick(post.id)}
+        communityArtistUserId={post.artist_user_id}
       />
       
       {!canAccess && post.tier_required !== 'free' && (
