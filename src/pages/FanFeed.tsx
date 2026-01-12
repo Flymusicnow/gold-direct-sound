@@ -17,7 +17,7 @@ import { TrackCard } from "@/components/TrackCard";
 import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Video, Play } from "lucide-react";
+import { Music, TrendingUp, Sparkles, Video, Play, Radio } from "lucide-react";
 import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
 import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
 import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
@@ -68,6 +68,7 @@ export default function FanFeed() {
   const [followedGenres, setFollowedGenres] = useState<string[]>([]);
   const [followedArtistIds, setFollowedArtistIds] = useState<string[]>([]);
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
+  const [liveArtistIds, setLiveArtistIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const isMobile = useIsMobile();
 
@@ -112,6 +113,52 @@ export default function FanFeed() {
     }
     fetchFeedData();
   }, [user, navigate]);
+
+  // Real-time subscription for live stream changes
+  useEffect(() => {
+    if (followedArtistIds.length === 0) return;
+
+    const channel = supabase
+      .channel('fan-feed-live-streams')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'artist_live_streams',
+        },
+        (payload) => {
+          const record = payload.new as { artist_id: string; status: string } | null;
+          const oldRecord = payload.old as { artist_id: string; status: string } | null;
+
+          const artistId = record?.artist_id || oldRecord?.artist_id;
+          if (!artistId || !followedArtistIds.includes(artistId)) return;
+
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            if (record?.status === 'live') {
+              setLiveArtistIds((prev) => new Set([...prev, artistId]));
+            } else {
+              setLiveArtistIds((prev) => {
+                const next = new Set(prev);
+                next.delete(artistId);
+                return next;
+              });
+            }
+          } else if (payload.eventType === 'DELETE') {
+            setLiveArtistIds((prev) => {
+              const next = new Set(prev);
+              next.delete(artistId);
+              return next;
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [followedArtistIds]);
 
   const fetchFeedData = async () => {
     if (!user) return;
@@ -182,9 +229,20 @@ export default function FanFeed() {
           `)
           .in('artist_id', artistIds)
           .order('created_at', { ascending: false })
-          .limit(10);
+        .limit(10);
 
         setVideoPosts(videosData || []);
+
+        // Fetch live streams for followed artists (use local artistIds, not state)
+        const { data: liveStreams } = await supabase
+          .from('artist_live_streams')
+          .select('artist_id')
+          .in('artist_id', artistIds)
+          .eq('status', 'live');
+
+        if (liveStreams) {
+          setLiveArtistIds(new Set(liveStreams.map((s) => s.artist_id)));
+        }
       }
 
       // Fetch user's liked tracks
@@ -276,6 +334,32 @@ export default function FanFeed() {
               </div>
               <DashboardFeedSwitch />
             </div>
+
+            {/* Live Now Banner */}
+            {liveArtistIds.size > 0 && (
+              <Card className="p-4 bg-gradient-to-r from-red-500/10 to-red-500/5 border-red-500/20">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Radio className="h-5 w-5 text-red-500 animate-pulse" />
+                      <span className="font-semibold text-red-500">LIVE NOW</span>
+                    </div>
+                    <span className="text-muted-foreground">
+                      {liveArtistIds.size === 1
+                        ? "1 artist you follow is live!"
+                        : `${liveArtistIds.size} artists you follow are live!`}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={() => navigate('/explore')}
+                    variant="outline"
+                    className="border-red-500/30 hover:bg-red-500/10 text-red-500"
+                  >
+                    Watch Now
+                  </Button>
+                </div>
+              </Card>
+            )}
 
             <div className="grid lg:grid-cols-3 gap-8">
               {/* Main Feed Column */}
