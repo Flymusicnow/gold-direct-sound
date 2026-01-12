@@ -131,45 +131,93 @@ export default function LivePage() {
     };
   }, []);
 
+  /**
+   * ID Contract for /live/:artistId route:
+   * - Primary: artistId = artist_profiles.id
+   * - Legacy/Fallback: artistId = artist_profiles.user_id
+   * - artist_live_streams.artist_id always stores artist_profiles.id
+   */
   const fetchActiveStream = async () => {
     try {
       setIsLoading(true);
-      
+
+      // Dual-lookup: First try artistId as artist_profiles.id
+      let resolvedProfileId: string | null = null;
+      let artistProfile: { id: string; artist_name: string; avatar_url: string | null; user_id: string } | null = null;
+
+      // Try primary lookup (artistId = artist_profiles.id)
+      const { data: profileById, error: primaryError } = await supabase
+        .from("artist_profiles")
+        .select("id, artist_name, avatar_url, user_id")
+        .eq("id", artistId)
+        .maybeSingle();
+
+      if (primaryError) {
+        console.error("Primary profile lookup error:", primaryError);
+      }
+
+      if (profileById) {
+        artistProfile = profileById;
+        resolvedProfileId = profileById.id;
+      } else {
+        // Fallback: try artistId as artist_profiles.user_id (legacy)
+        const { data: profileByUserId, error: fallbackError } = await supabase
+          .from("artist_profiles")
+          .select("id, artist_name, avatar_url, user_id")
+          .eq("user_id", artistId)
+          .maybeSingle();
+
+        if (fallbackError) {
+          console.error("Fallback profile lookup error:", fallbackError);
+        }
+
+        if (profileByUserId) {
+          artistProfile = profileByUserId;
+          resolvedProfileId = profileByUserId.id;
+        }
+      }
+
+      // No profile found via either lookup - exit cleanly
+      if (!resolvedProfileId || !artistProfile) {
+        console.warn("No artist profile found for:", artistId);
+        setStream(null);
+        return;
+      }
+
+      // Query live stream using resolved profile ID
       const { data: streamData, error: streamError } = await supabase
         .from("artist_live_streams")
         .select("*")
-        .eq("artist_id", artistId)
+        .eq("artist_id", resolvedProfileId)
         .eq("status", "live")
         .order("actual_start", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      if (streamError) throw streamError;
-      if (!streamData) {
-        setStream(null);
-        return;
+      if (streamError) {
+        console.error("Stream lookup error:", streamError);
+        throw streamError;
       }
 
-      const { data: artistProfile } = await supabase
-        .from("artist_profiles")
-        .select("artist_name, avatar_url, user_id")
-        .eq("id", artistId)
-        .single();
+      if (streamData) {
+        const streamWithProfile: LiveStream = {
+          ...streamData,
+          stream_mode: (streamData.stream_mode as LiveStream['stream_mode']) || 'hls',
+          available_qualities: (streamData.available_qualities as string[]) || ['auto', '360p', '480p', '720p', '1080p'],
+          artist_profiles: artistProfile || undefined,
+        };
+        setStream(streamWithProfile);
+      } else {
+        setStream(null);
+      }
 
-      const streamWithProfile: LiveStream = {
-        ...streamData,
-        stream_mode: (streamData.stream_mode as LiveStream['stream_mode']) || 'hls',
-        available_qualities: (streamData.available_qualities as string[]) || ['auto', '360p', '480p', '720p', '1080p'],
-        artist_profiles: artistProfile || undefined,
-      };
-
-      setStream(streamWithProfile);
-      
-      if (user && artistProfile?.user_id === user.id) {
+      // Set artist flag if current user owns this profile
+      if (user && artistProfile.user_id === user.id) {
         setIsArtist(true);
       }
     } catch (error) {
       console.error("Error fetching stream:", error);
+      setStream(null);
     } finally {
       setIsLoading(false);
     }
