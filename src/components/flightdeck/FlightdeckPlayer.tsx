@@ -390,11 +390,11 @@ export function FlightdeckPlayer() {
       <div 
         ref={playerRef}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300",
+          "fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300 pointer-events-none",
           // Desktop: hide if minimized, otherwise always show
-          !isMobile && isMinimized && "opacity-0 pointer-events-none translate-y-full",
+          !isMobile && isMinimized && "opacity-0 translate-y-full",
           // Mobile: hide when queue is open
-          isMobile && queueOpen && "opacity-0 pointer-events-none translate-y-full"
+          isMobile && queueOpen && "opacity-0 translate-y-full"
         )}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -405,15 +405,15 @@ export function FlightdeckPlayer() {
         {/* Close button - appears on hover (desktop only) */}
         <button
           onClick={() => setIsMinimized(true)}
-          className={`absolute -top-3 right-4 hidden md:flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all duration-200 ${
-            isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'
+          className={`absolute -top-3 right-4 hidden md:flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border shadow-md text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all duration-200 pointer-events-auto ${
+            isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
           }`}
         >
           <ChevronDown className="h-4 w-4" />
         </button>
 
         {/* Player Bar */}
-        <div className={`bg-card border-t border-border shadow-lg transition-transform duration-300 ease-in-out ${
+        <div className={`bg-card border-t border-border shadow-lg transition-transform duration-300 ease-in-out pointer-events-auto ${
           isMinimized ? 'translate-y-full' : ''
         }`}>
 
@@ -626,7 +626,7 @@ export function FlightdeckPlayer() {
         <div 
           ref={miniPlayerRef}
           className={cn(
-            "fixed z-[60] group animate-fade-in lg:hidden",
+            "fixed z-[60] group animate-fade-in lg:hidden pointer-events-auto",
             positionClasses[miniPlayerPosition]
           )}
           onTouchStart={handleMiniTouchStart}

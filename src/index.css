@@ -115,6 +115,8 @@ body {
 :root {
   --safe-area-top: env(safe-area-inset-top, 0px);
   --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --player-height: 120px;
+  --player-height-mobile: 100px;
 }
 
 .pt-safe {
@@ -135,6 +137,17 @@ body {
   .h-dvh {
     height: 100dvh;
     height: -webkit-fill-available;
+  }
+
+  /* Player clearance utility */
+  .pb-player {
+    padding-bottom: var(--player-height);
+  }
+  
+  @media (max-width: 768px) {
+    .pb-player {
+      padding-bottom: var(--player-height-mobile);
+    }
   }
 }
 
