@@ -512,7 +512,7 @@ export default function ArtistProfile() {
       {/* Preview mode banner for non-beta users */}
       {isPreviewMode && <PreviewModeBanner variant="sticky" />}
 
-      <div className={`min-h-screen pb-32 md:pb-28 ${isPreviewMode ? 'pt-24' : 'pt-16'}`}>
+      <div className={`min-h-screen pb-32 md:pb-28 ${isPreviewMode ? 'pt-nav-safe-preview' : 'pt-nav-safe'}`}>
       {/* "Viewing as Fan" Banner for artists viewing their own profile */}
       {isViewingOwnProfile && (
         <div className="bg-primary/10 border-b border-primary/20">
