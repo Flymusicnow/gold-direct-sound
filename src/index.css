@@ -128,6 +128,15 @@ body {
   padding-bottom: max(1rem, var(--safe-area-bottom));
 }
 
+/* Navigation + safe-area combined padding */
+.pt-nav-safe {
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
+.pt-nav-safe-preview {
+  padding-top: calc(6rem + env(safe-area-inset-top, 0px));
+}
+
 /* Dynamic viewport height utilities */
 @layer utilities {
   .min-h-dvh {
