@@ -473,9 +473,9 @@ export default function FanPortal() {
                           {liveArtistIds.has(artist.id) && (
                             <div 
                               className="flex items-center gap-1 bg-destructive text-destructive-foreground px-1.5 py-0.5 rounded-full text-xs font-medium animate-pulse cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/live/${artist.user_id}`);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/live/${artist.id}`);
                               }}
                             >
                               <Radio className="h-2.5 w-2.5" />

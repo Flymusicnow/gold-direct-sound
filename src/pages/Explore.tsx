@@ -139,7 +139,7 @@ export default function Explore() {
                       className="absolute top-3 right-3 flex items-center gap-1 bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full text-xs font-medium animate-pulse cursor-pointer z-10"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/live/${artist.user_id}`);
+                        navigate(`/live/${artist.id}`);
                       }}
                     >
                       <Radio className="h-3 w-3" />
