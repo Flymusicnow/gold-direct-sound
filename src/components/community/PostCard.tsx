@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { usePostReactions } from '@/hooks/usePostReactions';
+import { useAuthorIdentity } from '@/hooks/useAuthorIdentity';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -21,6 +22,8 @@ interface CommunityPost {
   comment_count: number;
   is_pinned?: boolean;
   artist_id?: string;
+  author_id: string;
+  author_type: 'artist' | 'fan';
 }
 
 interface PostCardProps {
@@ -28,10 +31,12 @@ interface PostCardProps {
   artist: {
     artist_name: string;
     avatar_url: string | null;
+    user_id?: string;
   };
   canAccess: boolean;
   onCommentClick?: () => void;
   artistId?: string;
+  communityArtistUserId?: string;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -47,12 +52,20 @@ export const PostCard: React.FC<PostCardProps> = ({
   artist,
   canAccess,
   onCommentClick,
-  artistId
+  artistId,
+  communityArtistUserId
 }) => {
   const navigate = useNavigate();
   const { reactionCount, hasReacted, isLoading, toggleReaction } = usePostReactions(post.id);
   const displayReactionCount = reactionCount;
   const displayCommentCount = post.comment_count;
+  
+  // Resolve actual author identity instead of always showing community artist
+  const authorIdentity = useAuthorIdentity(
+    post.author_id,
+    post.author_type,
+    communityArtistUserId || artist.user_id
+  );
 
   const handleShare = async () => {
     const url = `${window.location.origin}/post/${post.id}`;
@@ -90,11 +103,20 @@ export const PostCard: React.FC<PostCardProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={artist.avatar_url || undefined} />
-              <AvatarFallback>{artist.artist_name.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={authorIdentity.avatarUrl || undefined} />
+              <AvatarFallback>
+                {authorIdentity.displayName.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-medium">{artist.artist_name}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{authorIdentity.displayName}</p>
+                {authorIdentity.roleBadge === 'artist' && (
+                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                    Artist
+                  </Badge>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
               </p>
