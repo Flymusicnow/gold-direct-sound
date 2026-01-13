@@ -348,7 +348,7 @@ export default function StudioCommunity() {
 
   return (
     <StudioLayout>
-      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 pb-24 md:pb-8">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6 pb-28 md:pb-8">
         {/* Back Button */}
         <Button 
           variant="ghost" 

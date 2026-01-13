@@ -60,7 +60,7 @@ export default function FanAchievements() {
         <MobileFanNav />
         <div className="flex min-h-screen w-full pt-16">
           <FanSidebar />
-          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8 flex items-center justify-center">
+          <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8 flex items-center justify-center">
             <p className="text-muted-foreground">{t('fan.loadingAchievements')}</p>
           </main>
         </div>

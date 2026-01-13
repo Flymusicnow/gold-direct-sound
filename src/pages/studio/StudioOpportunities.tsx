@@ -170,7 +170,7 @@ export default function StudioOpportunities() {
     <div className="h-screen overflow-hidden bg-background flex pt-16">
       <StudioSidebar />
       
-      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide pb-24 md:pb-8">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide pb-28 md:pb-8">
         {/* Sticky Back Button */}
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border py-3 px-4 md:px-8">
           <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">

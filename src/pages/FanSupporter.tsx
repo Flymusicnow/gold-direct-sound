@@ -143,7 +143,7 @@ export default function FanSupporter() {
         <MobileFanNav />
         <div className="flex min-h-screen w-full pt-16">
           <FanSidebar />
-          <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8 flex items-center justify-center">
+          <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8 flex items-center justify-center">
             <p className="text-muted-foreground">{t('fan.loadingSupporterPass')}</p>
           </main>
         </div>
@@ -157,7 +157,7 @@ export default function FanSupporter() {
       <MobileFanNav />
       <div className="flex min-h-screen w-full pt-16">
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-24 md:pb-8">
+        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
           <PageTransition className="max-w-5xl mx-auto space-y-6 md:space-y-8">

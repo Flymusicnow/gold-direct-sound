@@ -146,7 +146,7 @@ export default function StudioPresskit() {
     <div className="h-screen overflow-hidden bg-background flex pt-16">
       <StudioSidebar />
       
-      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-24 md:pb-8">
+      <main className="flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide p-4 md:p-8 pb-28 md:pb-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
