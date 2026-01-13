@@ -280,16 +280,16 @@ export function VideoCommentItem({
       </div>
 
       {showReplyForm && (
-        <form onSubmit={handleReply} className="space-y-2">
+        <form onSubmit={handleReply} className="space-y-2 pointer-events-auto">
           <Textarea
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             placeholder="Write a reply..."
-            className="min-h-[60px]"
+            className="min-h-[60px] pointer-events-auto"
             disabled={loading}
           />
           <div className="flex gap-2">
-            <Button type="submit" size="sm" disabled={loading || !replyText.trim()}>
+            <Button type="submit" size="sm" disabled={loading || !replyText.trim()} className="pointer-events-auto">
               Post Reply
             </Button>
             <Button
@@ -297,6 +297,7 @@ export function VideoCommentItem({
               variant="ghost"
               size="sm"
               onClick={() => setShowReplyForm(false)}
+              className="pointer-events-auto"
             >
               Cancel
             </Button>

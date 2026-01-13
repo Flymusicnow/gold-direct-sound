@@ -70,12 +70,12 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
           </Button>
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-2 pointer-events-auto">
         <Textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder={parentCommentId ? "Write a reply..." : "Write a comment..."}
-          className="min-h-[60px] resize-none flex-1"
+          className="min-h-[60px] resize-none flex-1 pointer-events-auto"
           disabled={isSubmitting}
         />
         <Button
