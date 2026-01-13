@@ -1,11 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { useAppMode } from "@/hooks/useAppMode";
 import { Badge } from "@/components/ui/badge";
 
 export const Footer = () => {
   const { mode } = useAppMode();
+  const location = useLocation();
   const isPrivateBeta = mode === 'PRIVATE_BETA';
+  const isLandingPage = location.pathname === '/';
 
   return (
     <footer className="border-t border-border bg-background/95 py-12 px-4">
@@ -26,47 +28,49 @@ export const Footer = () => {
             </p>
           </div>
 
-          {/* Platform - Limited in beta */}
-          <div>
-            <h4 className="font-semibold mb-4">Platform</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/explore" className="text-muted-foreground hover:text-primary transition-colors">
-                  Explore Artists
-                </Link>
-              </li>
-              <li>
-                <Link to="/search" className="text-muted-foreground hover:text-primary transition-colors">
-                  Search
-                </Link>
-              </li>
-              {/* Hide these links in PRIVATE_BETA mode */}
-              {!isPrivateBeta && (
-                <>
-                  <li>
-                    <Link to="/how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
-                      How It Works
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/top-artists" className="text-muted-foreground hover:text-primary transition-colors">
-                      Top Artists
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
-                      Pricing
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/changelog" className="text-muted-foreground hover:text-primary transition-colors">
-                      Changelog
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
+          {/* Platform - Hidden on landing page */}
+          {!isLandingPage && (
+            <div>
+              <h4 className="font-semibold mb-4">Platform</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link to="/explore" className="text-muted-foreground hover:text-primary transition-colors">
+                    Explore Artists
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/search" className="text-muted-foreground hover:text-primary transition-colors">
+                    Search
+                  </Link>
+                </li>
+                {/* Hide these links in PRIVATE_BETA mode */}
+                {!isPrivateBeta && (
+                  <>
+                    <li>
+                      <Link to="/how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
+                        How It Works
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/top-artists" className="text-muted-foreground hover:text-primary transition-colors">
+                        Top Artists
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/pricing" className="text-muted-foreground hover:text-primary transition-colors">
+                        Pricing
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/changelog" className="text-muted-foreground hover:text-primary transition-colors">
+                        Changelog
+                      </Link>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+          )}
 
           {/* Trust - Always visible */}
           <div>
@@ -90,17 +94,19 @@ export const Footer = () => {
             </ul>
           </div>
 
-          {/* Partners */}
-          <div>
-            <h4 className="font-semibold mb-4">Partners</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link to="/brands" className="text-muted-foreground hover:text-primary transition-colors">
-                  Brand Portal
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Partners - Hidden on landing page */}
+          {!isLandingPage && (
+            <div>
+              <h4 className="font-semibold mb-4">Partners</h4>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link to="/brands" className="text-muted-foreground hover:text-primary transition-colors">
+                    Brand Portal
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          )}
 
           {/* Legal - Always visible */}
           <div>
