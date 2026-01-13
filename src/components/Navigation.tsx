@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard, Briefcase, Bug } from "lucide-react";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,11 @@ export const Navigation = () => {
   const { user, profile, signOut, refreshProfile, hasRole } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const { hasBetaAccess } = useBetaAccess();
+  
+  // Hide hamburger menu on landing page
+  const isLandingPage = location.pathname === '/';
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   
@@ -228,128 +232,130 @@ export const Navigation = () => {
           )}
         </div>
 
-        {/* Mobile Menu */}
-        <div className="md:hidden">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-[hsl(0,0%,6%)] border-border">
-              <DropdownMenuItem onClick={() => navigate('/explore')}>
-                {t('nav.explore')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/search')}>
-                <Search className="h-4 w-4 mr-2" />
-                {t('nav.search')}
-              </DropdownMenuItem>
-              
-              {user ? (
-                <>
-                  {/* Artist menu items */}
-                  {hasRole('artist') && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/studio/opportunities')}>
-                        <Briefcase className="h-4 w-4 mr-2" />
-                        {t('nav.brandOpportunities')}
+        {/* Mobile Menu - Hidden on landing page */}
+        {!isLandingPage && (
+          <div className="md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-[hsl(0,0%,6%)] border-border">
+                <DropdownMenuItem onClick={() => navigate('/explore')}>
+                  {t('nav.explore')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/search')}>
+                  <Search className="h-4 w-4 mr-2" />
+                  {t('nav.search')}
+                </DropdownMenuItem>
+                
+                {user ? (
+                  <>
+                    {/* Artist menu items */}
+                    {hasRole('artist') && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/studio/opportunities')}>
+                          <Briefcase className="h-4 w-4 mr-2" />
+                          {t('nav.brandOpportunities')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/studio')}>
+                          {t('nav.myStudio')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
+                    {/* Fan menu items (only if not artist or brand) */}
+                    {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
+                      <>
+                        <DropdownMenuItem onClick={() => navigate('/fan')}>
+                          {t('nav.fanPortal')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate('/fan/feed')}>
+                          {t('nav.feed')}
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    
+                    {/* Brand menu items */}
+                    {hasRole('brand') && (
+                      <DropdownMenuItem onClick={() => navigate('/brand')}>
+                        {t('nav.brandDashboard')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/studio')}>
-                        {t('nav.myStudio')}
+                    )}
+                    
+                    {hasRole('admin') && (
+                      <DropdownMenuItem onClick={() => navigate('/admin')}>
+                        {t('nav.admin')}
                       </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  {/* Fan menu items (only if not artist or brand) */}
-                  {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate('/fan')}>
-                        {t('nav.fanPortal')}
+                    )}
+                    
+                    {/* Settings based on role */}
+                    {hasRole('artist') ? (
+                      <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        {t('nav.settings')}
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => navigate('/fan/feed')}>
-                        {t('nav.feed')}
+                    ) : hasRole('fan') ? (
+                      <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        {t('nav.settings')}
                       </DropdownMenuItem>
-                    </>
-                  )}
-                  
-                  {/* Brand menu items */}
-                  {hasRole('brand') && (
-                    <DropdownMenuItem onClick={() => navigate('/brand')}>
-                      {t('nav.brandDashboard')}
+                    ) : hasRole('brand') ? (
+                      <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        {t('nav.settings')}
+                      </DropdownMenuItem>
+                    ) : null}
+                    
+                    {/* Report issue - visible to beta users and admins */}
+                    {canReportIssues && (
+                      <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                        <Bug className="mr-2 h-4 w-4" />
+                        {t('nav.reportIssue')}
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuItem onClick={() => signOut()}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {t('nav.signOut')}
                     </DropdownMenuItem>
-                  )}
-                  
-                  {hasRole('admin') && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      {t('nav.admin')}
+                  </>
+                ) : (
+                  <>
+                    <DropdownMenuItem onClick={() => navigate('/how-it-works')}>
+                      {t('nav.howItWorks')}
                     </DropdownMenuItem>
-                  )}
-                  
-                  {/* Settings based on role */}
-                  {hasRole('artist') ? (
-                    <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t('nav.settings')}
+                    <DropdownMenuItem onClick={() => navigate('/top-artists')}>
+                      {t('nav.topArtists')}
                     </DropdownMenuItem>
-                  ) : hasRole('fan') ? (
-                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t('nav.settings')}
+                    <DropdownMenuItem onClick={() => navigate('/trust')}>
+                      {t('nav.trust')}
                     </DropdownMenuItem>
-                  ) : hasRole('brand') ? (
-                    <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      {t('nav.settings')}
+                    <DropdownMenuItem onClick={() => navigate('/brands')}>
+                      {t('nav.forBrands')}
                     </DropdownMenuItem>
-                  ) : null}
-                  
-                  {/* Report issue - visible to beta users and admins */}
-                  {canReportIssues && (
-                    <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
-                      <Bug className="mr-2 h-4 w-4" />
-                      {t('nav.reportIssue')}
+                    <DropdownMenuItem onClick={() => navigate('/pricing')}>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      {t('nav.pricing')}
                     </DropdownMenuItem>
-                  )}
-                  
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t('nav.signOut')}
-                  </DropdownMenuItem>
-                </>
-              ) : (
-                <>
-                  <DropdownMenuItem onClick={() => navigate('/how-it-works')}>
-                    {t('nav.howItWorks')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/top-artists')}>
-                    {t('nav.topArtists')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/trust')}>
-                    {t('nav.trust')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/brands')}>
-                    {t('nav.forBrands')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/pricing')}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    {t('nav.pricing')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/signin/artist')}>
-                    {t('nav.signIn')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/join/fan')}>
-                    <Heart className="mr-2 h-4 w-4" />
-                    {t('nav.joinFan')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/join/artist')}>
-                    <Mic2 className="mr-2 h-4 w-4 text-primary" />
-                    {t('nav.joinArtist')}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                    <DropdownMenuItem onClick={() => navigate('/signin/artist')}>
+                      {t('nav.signIn')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/join/fan')}>
+                      <Heart className="mr-2 h-4 w-4" />
+                      {t('nav.joinFan')}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/join/artist')}>
+                      <Mic2 className="mr-2 h-4 w-4 text-primary" />
+                      {t('nav.joinArtist')}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
       
       {/* Report Issue Dialog */}
