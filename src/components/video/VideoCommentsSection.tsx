@@ -187,12 +187,12 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
         </div>
 
         <CollapsibleContent className="space-y-6 mt-4">
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3 pointer-events-auto">
             <Textarea
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Add a comment..."
-              className="min-h-[80px] bg-background/50 border-border"
+              className="min-h-[80px] bg-background/50 border-border pointer-events-auto"
               disabled={loading}
             />
             <div className="flex justify-between items-center">
@@ -200,7 +200,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
               <Button 
                 type="submit" 
                 disabled={loading || !newComment.trim()}
-                className="gap-2"
+                className="gap-2 pointer-events-auto"
               >
                 <Send className="w-4 h-4" />
                 Post Comment
