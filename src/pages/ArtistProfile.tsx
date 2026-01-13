@@ -751,6 +751,10 @@ export default function ArtistProfile() {
               </TabsContent>
 
               {/* About Tab */}
+              <TabsContent value="about" className="mt-0">
+                <ArtistAboutSection artist={artist} />
+              </TabsContent>
+
               {/* Community Tab */}
               <TabsContent value="community" className="mt-0">
                 <div className="text-center py-12 bg-card/50 rounded-xl border border-border">

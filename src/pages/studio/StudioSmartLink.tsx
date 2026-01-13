@@ -133,7 +133,7 @@ export default function StudioSmartLink() {
     <div className="flex min-h-screen bg-background">
       <StudioSidebar />
       
-      <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+      <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between">

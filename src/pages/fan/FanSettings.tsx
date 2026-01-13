@@ -25,7 +25,7 @@ export default function FanSettings() {
 
   return (
     <>
-      <div className="min-h-screen bg-background pt-16 pb-24 md:pb-8">
+      <div className="min-h-screen bg-background pt-16 pb-28 md:pb-8">
         <div className="container mx-auto px-4 py-8 max-w-3xl">
           <div className="mb-8">
             <h1 className="text-3xl font-bold flex items-center gap-2">
