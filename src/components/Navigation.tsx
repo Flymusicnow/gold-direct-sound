@@ -232,8 +232,122 @@ export const Navigation = () => {
           )}
         </div>
 
-        {/* Mobile Menu - Hidden on landing page */}
-        {!isLandingPage && (
+        {/* Mobile Inline Nav - Logged-in users (prioritized scroll) */}
+        {user && !isLandingPage && (
+          <div className="flex md:hidden items-center gap-2 flex-1 min-w-0 ml-2">
+            {/* Scrollable nav container */}
+            <div className="flex-1 overflow-x-auto scrollbar-hide flex items-center gap-3 px-1">
+              {/* Priority 1: My Studio (artists only) */}
+              {hasRole('artist') && (
+                <Link to="/studio" className="nav-link-mobile whitespace-nowrap">
+                  {t('nav.myStudio')}
+                </Link>
+              )}
+              
+              {/* Priority 2: My Artist Page (artists only) */}
+              {hasRole('artist') && (
+                <Link to={`/artist/${user?.id}`} className="nav-link-mobile whitespace-nowrap">
+                  {t('nav.myArtistPage')}
+                </Link>
+              )}
+              
+              {/* Fan priority: Dashboard, Feed */}
+              {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
+                <>
+                  <Link to="/fan/dashboard" className="nav-link-mobile whitespace-nowrap">
+                    {t('nav.dashboard')}
+                  </Link>
+                  <Link to="/fan/feed" className="nav-link-mobile whitespace-nowrap">
+                    {t('nav.feed')}
+                  </Link>
+                </>
+              )}
+              
+              {/* Brand priority: Dashboard */}
+              {hasRole('brand') && (
+                <Link to="/brand" className="nav-link-mobile whitespace-nowrap">
+                  {t('nav.brandDashboard')}
+                </Link>
+              )}
+              
+              {/* Priority 3: Explore Artists */}
+              <Link to="/explore" className="nav-link-mobile whitespace-nowrap">
+                {t('nav.explore')}
+              </Link>
+              
+              {/* Priority 4: Search */}
+              <Link to="/search" className="nav-link-mobile whitespace-nowrap flex items-center gap-1">
+                <Search className="h-3.5 w-3.5" />
+                {t('nav.search')}
+              </Link>
+              
+              {/* Priority 5: Brand Opportunities (artists only) */}
+              {hasRole('artist') && (
+                <Link to="/studio/opportunities" className="nav-link-mobile whitespace-nowrap flex items-center gap-1">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  {t('nav.opportunities')}
+                </Link>
+              )}
+              
+              {/* Priority 6: Trust (lowest) */}
+              <Link to="/trust" className="nav-link-mobile whitespace-nowrap">
+                {t('nav.trust')}
+              </Link>
+              
+              {/* Admin link */}
+              {hasRole('admin') && (
+                <Link to="/admin" className="nav-link-mobile whitespace-nowrap">
+                  {t('nav.admin')}
+                </Link>
+              )}
+            </div>
+            
+            {/* Fixed right icons - never scroll */}
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <NotificationBell />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-[hsl(0,0%,6%)] border-border">
+                  {hasRole('artist') ? (
+                    <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t('nav.settings')}
+                    </DropdownMenuItem>
+                  ) : hasRole('fan') ? (
+                    <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t('nav.settings')}
+                    </DropdownMenuItem>
+                  ) : hasRole('brand') ? (
+                    <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      {t('nav.settings')}
+                    </DropdownMenuItem>
+                  ) : null}
+                  
+                  {canReportIssues && (
+                    <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
+                      <Bug className="mr-2 h-4 w-4" />
+                      {t('nav.reportIssue')}
+                    </DropdownMenuItem>
+                  )}
+                  
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    {t('nav.signOut')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Hamburger - Unauthenticated users only */}
+        {!user && !isLandingPage && (
           <div className="md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -249,109 +363,33 @@ export const Navigation = () => {
                   <Search className="h-4 w-4 mr-2" />
                   {t('nav.search')}
                 </DropdownMenuItem>
-                
-                {user ? (
-                  <>
-                    {/* Artist menu items */}
-                    {hasRole('artist') && (
-                      <>
-                        <DropdownMenuItem onClick={() => navigate('/studio/opportunities')}>
-                          <Briefcase className="h-4 w-4 mr-2" />
-                          {t('nav.brandOpportunities')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/studio')}>
-                          {t('nav.myStudio')}
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    
-                    {/* Fan menu items (only if not artist or brand) */}
-                    {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
-                      <>
-                        <DropdownMenuItem onClick={() => navigate('/fan')}>
-                          {t('nav.fanPortal')}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate('/fan/feed')}>
-                          {t('nav.feed')}
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    
-                    {/* Brand menu items */}
-                    {hasRole('brand') && (
-                      <DropdownMenuItem onClick={() => navigate('/brand')}>
-                        {t('nav.brandDashboard')}
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {hasRole('admin') && (
-                      <DropdownMenuItem onClick={() => navigate('/admin')}>
-                        {t('nav.admin')}
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {/* Settings based on role */}
-                    {hasRole('artist') ? (
-                      <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        {t('nav.settings')}
-                      </DropdownMenuItem>
-                    ) : hasRole('fan') ? (
-                      <DropdownMenuItem onClick={() => navigate('/fan/settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        {t('nav.settings')}
-                      </DropdownMenuItem>
-                    ) : hasRole('brand') ? (
-                      <DropdownMenuItem onClick={() => navigate('/brand/settings')}>
-                        <Settings className="mr-2 h-4 w-4" />
-                        {t('nav.settings')}
-                      </DropdownMenuItem>
-                    ) : null}
-                    
-                    {/* Report issue - visible to beta users and admins */}
-                    {canReportIssues && (
-                      <DropdownMenuItem onClick={() => setReportDialogOpen(true)}>
-                        <Bug className="mr-2 h-4 w-4" />
-                        {t('nav.reportIssue')}
-                      </DropdownMenuItem>
-                    )}
-                    
-                    <DropdownMenuItem onClick={() => signOut()}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      {t('nav.signOut')}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <>
-                    <DropdownMenuItem onClick={() => navigate('/how-it-works')}>
-                      {t('nav.howItWorks')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/top-artists')}>
-                      {t('nav.topArtists')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/trust')}>
-                      {t('nav.trust')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/brands')}>
-                      {t('nav.forBrands')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/pricing')}>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      {t('nav.pricing')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/signin/artist')}>
-                      {t('nav.signIn')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/join/fan')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      {t('nav.joinFan')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/join/artist')}>
-                      <Mic2 className="mr-2 h-4 w-4 text-primary" />
-                      {t('nav.joinArtist')}
-                    </DropdownMenuItem>
-                  </>
-                )}
+                <DropdownMenuItem onClick={() => navigate('/how-it-works')}>
+                  {t('nav.howItWorks')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/top-artists')}>
+                  {t('nav.topArtists')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/trust')}>
+                  {t('nav.trust')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/brands')}>
+                  {t('nav.forBrands')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/pricing')}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  {t('nav.pricing')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/signin/artist')}>
+                  {t('nav.signIn')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/join/fan')}>
+                  <Heart className="mr-2 h-4 w-4" />
+                  {t('nav.joinFan')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/join/artist')}>
+                  <Mic2 className="mr-2 h-4 w-4 text-primary" />
+                  {t('nav.joinArtist')}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
