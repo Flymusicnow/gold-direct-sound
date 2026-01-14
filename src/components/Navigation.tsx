@@ -92,10 +92,12 @@ export const Navigation = () => {
           <Link to={getLogoRoute()} className="flex items-center">
             <FlyMusicLogo size="md" />
           </Link>
-          <TrustBadge />
+          {/* TrustBadge hidden on landing page for clean beta look */}
+          {!isLandingPage && <TrustBadge />}
         </div>
 
         <div className="hidden md:flex items-center gap-6">
+          {/* Explore and Search always visible */}
           <Link to="/explore" className={cn("nav-link-gold", location.pathname === '/explore' && 'nav-link-gold-active')}>
             {t('nav.explore')}
           </Link>
