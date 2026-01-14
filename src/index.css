@@ -424,16 +424,6 @@ All colors MUST be HSL.
     left: 100%;
   }
 
-  /* Active state for desktop nav links */
-  .nav-link-gold-active {
-    color: hsl(45 82% 55%);
-    text-shadow: 0 0 12px hsl(45 82% 55% / 0.3);
-  }
-
-  .nav-link-gold-active::after {
-    transform: scaleX(1);
-  }
-
   /* Golden Journey - Premium Navigation Background */
   .nav-premium {
     background: hsla(0, 0%, 4%, 0.7);

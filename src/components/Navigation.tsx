@@ -92,16 +92,14 @@ export const Navigation = () => {
           <Link to={getLogoRoute()} className="flex items-center">
             <FlyMusicLogo size="md" />
           </Link>
-          {/* TrustBadge hidden on landing page for clean beta look */}
-          {!isLandingPage && <TrustBadge />}
+          <TrustBadge />
         </div>
 
         <div className="hidden md:flex items-center gap-6">
-          {/* Explore and Search always visible */}
-          <Link to="/explore" className={cn("nav-link-gold", location.pathname === '/explore' && 'nav-link-gold-active')}>
+          <Link to="/explore" className="nav-link-gold">
             {t('nav.explore')}
           </Link>
-          <Link to="/search" className={cn("nav-link-gold flex items-center gap-1", location.pathname === '/search' && 'nav-link-gold-active')}>
+          <Link to="/search" className="nav-link-gold flex items-center gap-1">
             <Search className="h-4 w-4" />
             {t('nav.search')}
           </Link>
@@ -112,14 +110,14 @@ export const Navigation = () => {
               {/* Artist sees Brand Opportunities */}
               {hasRole('artist') && (
                 <>
-                  <Link to="/studio/opportunities" className={cn("nav-link-gold flex items-center gap-1", location.pathname === '/studio/opportunities' && 'nav-link-gold-active')}>
+                  <Link to="/studio/opportunities" className="nav-link-gold flex items-center gap-1">
                     <Briefcase className="h-4 w-4" />
                     {t('nav.brandOpportunities')}
                   </Link>
-                  <Link to={`/artist/${user?.id}`} className={cn("nav-link-gold", location.pathname === `/artist/${user?.id}` && 'nav-link-gold-active')}>
+                  <Link to={`/artist/${user?.id}`} className="nav-link-gold">
                     {t('nav.myArtistPage')}
                   </Link>
-                  <Link to="/studio" className={cn("nav-link-gold", location.pathname.startsWith('/studio') && 'nav-link-gold-active')}>
+                  <Link to="/studio" className="nav-link-gold">
                     {t('nav.myStudio')}
                   </Link>
                 </>
@@ -128,10 +126,10 @@ export const Navigation = () => {
               {/* Fan sees Fan Portal and Feed */}
               {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                 <>
-                  <Link to="/fan" className={cn("nav-link-gold", location.pathname === '/fan' && 'nav-link-gold-active')}>
+                  <Link to="/fan" className="nav-link-gold">
                     {t('nav.fanPortal')}
                   </Link>
-                  <Link to="/fan/feed" className={cn("nav-link-gold", location.pathname === '/fan/feed' && 'nav-link-gold-active')}>
+                  <Link to="/fan/feed" className="nav-link-gold">
                     {t('nav.feed')}
                   </Link>
                 </>
@@ -139,13 +137,13 @@ export const Navigation = () => {
               
               {/* Brand sees Brand Dashboard */}
               {hasRole('brand') && (
-                <Link to="/brand" className={cn("nav-link-gold", location.pathname.startsWith('/brand') && 'nav-link-gold-active')}>
+                <Link to="/brand" className="nav-link-gold">
                   {t('nav.brandDashboard')}
                 </Link>
               )}
               
               {hasRole('admin') && (
-                <Link to="/admin" className={cn("nav-link-gold", location.pathname.startsWith('/admin') && 'nav-link-gold-active')}>
+                <Link to="/admin" className="nav-link-gold">
                   {t('nav.admin')}
                 </Link>
               )}
@@ -194,61 +192,43 @@ export const Navigation = () => {
             </>
           ) : (
             <>
-          {/* Unauthenticated - Landing page: minimal sign-in only */}
-              {isLandingPage ? (
-                <div className="flex items-center gap-3">
-                  <Button variant="ghost" onClick={() => navigate('/signin/artist')}>
-                    {t('nav.signIn')}
-                  </Button>
-                  <Button 
-                    className="bg-gradient-gold" 
-                    onClick={() => navigate('/join/artist')}
-                  >
-                    <Mic2 className="h-4 w-4 mr-1" />
-                    {t('nav.joinArtist')}
-                  </Button>
-                </div>
-              ) : (
-                <>
-                  {/* Unauthenticated - Other pages: full navigation */}
-                  <Link to="/how-it-works" className={cn("nav-link-gold", location.pathname === '/how-it-works' && 'nav-link-gold-active')}>
-                    {t('nav.howItWorks')}
-                  </Link>
-                  <Link to="/top-artists" className={cn("nav-link-gold", location.pathname === '/top-artists' && 'nav-link-gold-active')}>
-                    {t('nav.topArtists')}
-                  </Link>
-                  <Link to="/trust" className={cn("nav-link-gold", location.pathname === '/trust' && 'nav-link-gold-active')}>
-                    {t('nav.trust')}
-                  </Link>
-                  <Link to="/brands" className={cn("nav-link-gold", location.pathname === '/brands' && 'nav-link-gold-active')}>
-                    {t('nav.forBrands')}
-                  </Link>
-                  <Link to="/pricing" className={cn("nav-link-gold flex items-center gap-1", location.pathname === '/pricing' && 'nav-link-gold-active')}>
-                    <CreditCard className="h-4 w-4" />
-                    {t('nav.pricing')}
-                  </Link>
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" onClick={() => navigate('/signin/artist')}>
-                      {t('nav.signIn')}
-                    </Button>
-                    <Button
-                      variant="ghost" 
-                      className="text-foreground/80"
-                      onClick={() => navigate('/join/fan')}
-                    >
-                      <Heart className="h-4 w-4 mr-1" />
-                      {t('nav.joinFan')}
-                    </Button>
-                    <Button 
-                      className="bg-gradient-gold" 
-                      onClick={() => navigate('/join/artist')}
-                    >
-                      <Mic2 className="h-4 w-4 mr-1" />
-                      {t('nav.joinArtist')}
-                    </Button>
-                  </div>
-                </>
-              )}
+              {/* Unauthenticated users see expanded navigation */}
+              <Link to="/how-it-works" className="nav-link-gold">
+                {t('nav.howItWorks')}
+              </Link>
+              <Link to="/top-artists" className="nav-link-gold">
+                {t('nav.topArtists')}
+              </Link>
+              <Link to="/trust" className="nav-link-gold">
+                {t('nav.trust')}
+              </Link>
+              <Link to="/brands" className="nav-link-gold">
+                {t('nav.forBrands')}
+              </Link>
+              <Link to="/pricing" className="nav-link-gold flex items-center gap-1">
+                <CreditCard className="h-4 w-4" />
+                {t('nav.pricing')}
+              </Link>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" onClick={() => navigate('/signin/artist')}>
+                  {t('nav.signIn')}
+                </Button>
+                <Button
+                  variant="ghost" 
+                  className="text-foreground/80"
+                  onClick={() => navigate('/join/fan')}
+                >
+                  <Heart className="h-4 w-4 mr-1" />
+                  {t('nav.joinFan')}
+                </Button>
+                <Button 
+                  className="bg-gradient-gold" 
+                  onClick={() => navigate('/join/artist')}
+                >
+                  <Mic2 className="h-4 w-4 mr-1" />
+                  {t('nav.joinArtist')}
+                </Button>
+              </div>
             </>
           )}
         </div>
@@ -282,7 +262,7 @@ export const Navigation = () => {
                   </Link>
                 )}
                 
-                {/* Fan priority: Dashboard, Feed, Vote, Board */}
+                {/* Fan priority: Dashboard, Feed */}
                 {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
                   <>
                     <Link 
@@ -296,18 +276,6 @@ export const Navigation = () => {
                       className={cn("nav-link-mobile whitespace-nowrap", location.pathname === '/fan/feed' && 'active')}
                     >
                       {t('nav.feed')}
-                    </Link>
-                    <Link 
-                      to="/fan/vote" 
-                      className={cn("nav-link-mobile whitespace-nowrap", location.pathname === '/fan/vote' && 'active')}
-                    >
-                      {t('nav.vote')}
-                    </Link>
-                    <Link 
-                      to="/fan/leaderboard" 
-                      className={cn("nav-link-mobile whitespace-nowrap", location.pathname.startsWith('/fan/leaderboard') && 'active')}
-                    >
-                      {t('nav.leaderboard')}
                     </Link>
                   </>
                 )}
