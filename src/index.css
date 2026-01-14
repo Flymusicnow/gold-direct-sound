@@ -101,6 +101,33 @@
   background: linear-gradient(to left, hsl(var(--background)) 0%, transparent 100%);
 }
 
+/* ============================================
+   Mobile Inline Navigation - Wave 2
+   ============================================ */
+
+.nav-link-mobile {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: hsl(0 0% 70%);
+  transition: color 200ms ease;
+  padding: 0.5rem 0.25rem;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  touch-action: manipulation;
+}
+
+.nav-link-mobile:hover,
+.nav-link-mobile:active {
+  color: hsl(45 82% 55%);
+}
+
+.nav-link-mobile.active {
+  color: hsl(45 82% 55%);
+  font-weight: 600;
+}
+
 /* Mobile Safari viewport fix - use dynamic viewport height */
 html {
   height: -webkit-fill-available;
