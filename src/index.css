@@ -105,27 +105,62 @@
    Mobile Inline Navigation - Wave 2
    ============================================ */
 
+/* Nav scroll fade hints */
+.nav-fade-right {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2.5rem;
+  background: linear-gradient(to left, hsl(0 0% 4% / 0.98) 0%, transparent 100%);
+  z-index: 10;
+}
+
+.nav-fade-left {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 1.5rem;
+  background: linear-gradient(to right, hsl(0 0% 4% / 0.98) 0%, transparent 100%);
+  z-index: 10;
+}
+
+/* Mobile nav link base styles */
 .nav-link-mobile {
   font-size: 0.8125rem;
   font-weight: 500;
   color: hsl(0 0% 70%);
-  transition: color 200ms ease;
-  padding: 0.5rem 0.25rem;
+  transition: all 200ms ease;
+  padding: 0.5rem 0.375rem;
   min-height: 44px;
   display: flex;
   align-items: center;
   flex-shrink: 0;
   touch-action: manipulation;
+  border-radius: 6px;
+  position: relative;
 }
 
-.nav-link-mobile:hover,
+/* Press state - micro-scale feedback */
 .nav-link-mobile:active {
+  transform: scale(0.96);
   color: hsl(45 82% 55%);
 }
 
+/* Hover state - subtle background lift */
+.nav-link-mobile:hover {
+  color: hsl(45 82% 55%);
+  background: hsl(45 82% 55% / 0.08);
+}
+
+/* Active route state - gold glow */
 .nav-link-mobile.active {
   color: hsl(45 82% 55%);
   font-weight: 600;
+  text-shadow: 0 0 12px hsl(45 82% 55% / 0.4);
 }
 
 /* Mobile Safari viewport fix - use dynamic viewport height */

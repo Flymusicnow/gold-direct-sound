@@ -1,5 +1,6 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Music, User, LogOut, Menu, Mic2, Heart, Search, Settings, CreditCard, Briefcase, Bug } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -235,71 +236,98 @@ export const Navigation = () => {
         {/* Mobile Inline Nav - Logged-in users (prioritized scroll) */}
         {user && !isLandingPage && (
           <div className="flex md:hidden items-center gap-2 flex-1 min-w-0 ml-2">
-            {/* Scrollable nav container */}
-            <div className="flex-1 overflow-x-auto scrollbar-hide flex items-center gap-3 px-1">
-              {/* Priority 1: My Studio (artists only) */}
-              {hasRole('artist') && (
-                <Link to="/studio" className="nav-link-mobile whitespace-nowrap">
-                  {t('nav.myStudio')}
-                </Link>
-              )}
+            {/* Scrollable nav container with fade hint */}
+            <div className="relative flex-1 min-w-0">
+              {/* Right fade gradient - hints more content */}
+              <div className="nav-fade-right" />
               
-              {/* Priority 2: My Artist Page (artists only) */}
-              {hasRole('artist') && (
-                <Link to={`/artist/${user?.id}`} className="nav-link-mobile whitespace-nowrap">
-                  {t('nav.myArtistPage')}
-                </Link>
-              )}
-              
-              {/* Fan priority: Dashboard, Feed */}
-              {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
-                <>
-                  <Link to="/fan/dashboard" className="nav-link-mobile whitespace-nowrap">
-                    {t('nav.dashboard')}
+              <div className="overflow-x-auto scrollbar-hide flex items-center gap-3 px-1 pr-6">
+                {/* Priority 1: My Studio (artists only) */}
+                {hasRole('artist') && (
+                  <Link 
+                    to="/studio" 
+                    className={cn("nav-link-mobile whitespace-nowrap", location.pathname.startsWith('/studio') && 'active')}
+                  >
+                    {t('nav.myStudio')}
                   </Link>
-                  <Link to="/fan/feed" className="nav-link-mobile whitespace-nowrap">
-                    {t('nav.feed')}
+                )}
+                
+                {/* Priority 2: My Artist Page (artists only) */}
+                {hasRole('artist') && (
+                  <Link 
+                    to={`/artist/${user?.id}`} 
+                    className={cn("nav-link-mobile whitespace-nowrap", location.pathname === `/artist/${user?.id}` && 'active')}
+                  >
+                    {t('nav.myArtistPage')}
                   </Link>
-                </>
-              )}
-              
-              {/* Brand priority: Dashboard */}
-              {hasRole('brand') && (
-                <Link to="/brand" className="nav-link-mobile whitespace-nowrap">
-                  {t('nav.brandDashboard')}
+                )}
+                
+                {/* Fan priority: Dashboard, Feed */}
+                {hasRole('fan') && !hasRole('artist') && !hasRole('brand') && (
+                  <>
+                    <Link 
+                      to="/fan/dashboard" 
+                      className={cn("nav-link-mobile whitespace-nowrap", location.pathname === '/fan/dashboard' && 'active')}
+                    >
+                      {t('nav.dashboard')}
+                    </Link>
+                    <Link 
+                      to="/fan/feed" 
+                      className={cn("nav-link-mobile whitespace-nowrap", location.pathname === '/fan/feed' && 'active')}
+                    >
+                      {t('nav.feed')}
+                    </Link>
+                  </>
+                )}
+                
+                {/* Brand priority: Dashboard */}
+                {hasRole('brand') && (
+                  <Link 
+                    to="/brand" 
+                    className={cn("nav-link-mobile whitespace-nowrap", location.pathname.startsWith('/brand') && 'active')}
+                  >
+                    {t('nav.brandDashboard')}
+                  </Link>
+                )}
+                
+                {/* Priority 3: Explore Artists */}
+                <Link 
+                  to="/explore" 
+                  className={cn("nav-link-mobile whitespace-nowrap", location.pathname === '/explore' && 'active')}
+                >
+                  {t('nav.explore')}
                 </Link>
-              )}
-              
-              {/* Priority 3: Explore Artists */}
-              <Link to="/explore" className="nav-link-mobile whitespace-nowrap">
-                {t('nav.explore')}
-              </Link>
-              
-              {/* Priority 4: Search */}
-              <Link to="/search" className="nav-link-mobile whitespace-nowrap flex items-center gap-1">
-                <Search className="h-3.5 w-3.5" />
-                {t('nav.search')}
-              </Link>
-              
-              {/* Priority 5: Brand Opportunities (artists only) */}
-              {hasRole('artist') && (
-                <Link to="/studio/opportunities" className="nav-link-mobile whitespace-nowrap flex items-center gap-1">
-                  <Briefcase className="h-3.5 w-3.5" />
-                  {t('nav.opportunities')}
+                
+                {/* Priority 4: Search */}
+                <Link 
+                  to="/search" 
+                  className={cn("nav-link-mobile whitespace-nowrap flex items-center gap-1", location.pathname === '/search' && 'active')}
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  {t('nav.search')}
                 </Link>
-              )}
-              
-              {/* Priority 6: Trust (lowest) */}
-              <Link to="/trust" className="nav-link-mobile whitespace-nowrap">
-                {t('nav.trust')}
-              </Link>
-              
-              {/* Admin link */}
-              {hasRole('admin') && (
-                <Link to="/admin" className="nav-link-mobile whitespace-nowrap">
-                  {t('nav.admin')}
-                </Link>
-              )}
+                
+                {/* Priority 5: Brand Opportunities (artists only - lowest priority) */}
+                {hasRole('artist') && (
+                  <Link 
+                    to="/studio/opportunities" 
+                    className={cn("nav-link-mobile whitespace-nowrap flex items-center gap-1", location.pathname === '/studio/opportunities' && 'active')}
+                  >
+                    <Briefcase className="h-3.5 w-3.5" />
+                    {t('nav.opportunities')}
+                  </Link>
+                )}
+                
+                {/* Admin link */}
+                {hasRole('admin') && (
+                  <Link 
+                    to="/admin" 
+                    className={cn("nav-link-mobile whitespace-nowrap", location.pathname.startsWith('/admin') && 'active')}
+                  >
+                    {t('nav.admin')}
+                  </Link>
+                )}
+              </div>
             </div>
             
             {/* Fixed right icons - never scroll */}
