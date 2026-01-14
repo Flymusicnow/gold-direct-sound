@@ -115,7 +115,7 @@ export default function Home() {
                   size="lg"
                   variant="outline"
                   className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10 hover:border-violet-500 min-w-[180px]"
-                  onClick={() => navigate('/fan')}
+                  onClick={() => navigate('/join/fan')}
                 >
                   <Heart className="h-5 w-5 mr-2" />
                   I'm a Fan
@@ -125,7 +125,7 @@ export default function Home() {
                 <Button 
                   size="lg" 
                   className="bg-gradient-gold min-w-[180px]"
-                  onClick={() => navigate('/artist')}
+                  onClick={() => navigate('/join/artist')}
                 >
                   <Mic2 className="h-5 w-5 mr-2" />
                   I'm an Artist
@@ -234,14 +234,14 @@ export default function Home() {
               size="lg" 
               variant="outline"
               className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
-              onClick={() => navigate('/fan')}
+              onClick={() => navigate('/join/fan')}
             >
               Join as Fan
             </Button>
             <Button 
               size="lg" 
               className="bg-gradient-gold"
-              onClick={() => navigate('/artist')}
+              onClick={() => navigate('/join/artist')}
             >
               Join as Artist
             </Button>
