@@ -21,6 +21,11 @@ export function NavigationWrapper() {
     return null;
   }
 
+  // Hide global navigation on gate pages (they have their own minimal header)
+  if (location.pathname === '/fan' || location.pathname === '/artist') {
+    return null;
+  }
+
   // Hide global navigation on trust pages (they have their own minimal header)
   if (location.pathname.startsWith('/trust') ||
       location.pathname === '/principles' ||
