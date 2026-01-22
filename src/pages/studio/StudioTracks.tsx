@@ -19,7 +19,9 @@ import { LockedFeatureModal } from "@/components/artist/LockedFeatureModal";
 import { EditTrackCoverDialog } from "@/components/artist/EditTrackCoverDialog";
 import { EditAlbumCoverDialog } from "@/components/artist/EditAlbumCoverDialog";
 import { EditAlbumDialog } from "@/components/artist/EditAlbumDialog";
+import { EditTrackMetadataDialog } from "@/components/artist/EditTrackMetadataDialog";
 import { useAchievements } from "@/hooks/useAchievements";
+import { Badge } from "@/components/ui/badge";
 import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -41,6 +43,10 @@ interface Track {
   album_id: string | null;
   track_order: number;
   created_at: string;
+  genre: string | null;
+  mood: string | null;
+  tags: string[] | null;
+  visibility: string | null;
 }
 
 interface Album {
@@ -79,6 +85,7 @@ export default function StudioTracks() {
   const [selectedTrackId, setSelectedTrackId] = useState<string | null>(null);
   const [showMultiUpload, setShowMultiUpload] = useState(false);
   const [editCoverTrack, setEditCoverTrack] = useState<Track | null>(null);
+  const [editMetadataTrack, setEditMetadataTrack] = useState<Track | null>(null);
   const [editAlbumBatch, setEditAlbumBatch] = useState<TrackBatch | null>(null);
   const [editAlbumInfo, setEditAlbumInfo] = useState<{ album: Album | null; batch: TrackBatch } | null>(null);
   const { checkAndUnlockAchievements } = useAchievements();
@@ -549,6 +556,7 @@ export default function StudioTracks() {
                                     track={track}
                                     trackNumber={trackIndex + 1}
                                     onEditCover={() => setEditCoverTrack(track)}
+                                    onEditMetadata={() => setEditMetadataTrack(track)}
                                     onAddCollaborator={() => {
                                       setSelectedTrackId(track.id);
                                       setShowCollaboratorSelector(true);
@@ -570,6 +578,7 @@ export default function StudioTracks() {
                         key={track.id} 
                         track={track}
                         onEditCover={() => setEditCoverTrack(track)}
+                        onEditMetadata={() => setEditMetadataTrack(track)}
                         onAddCollaborator={() => {
                           setSelectedTrackId(track.id);
                           setShowCollaboratorSelector(true);
@@ -626,6 +635,26 @@ export default function StudioTracks() {
         />
       )}
 
+      {/* Edit Track Metadata Dialog */}
+      {editMetadataTrack && (
+        <EditTrackMetadataDialog
+          open={!!editMetadataTrack}
+          onOpenChange={(open) => !open && setEditMetadataTrack(null)}
+          trackId={editMetadataTrack.id}
+          currentTrack={{
+            title: editMetadataTrack.title,
+            description: editMetadataTrack.description,
+            genre: editMetadataTrack.genre,
+            mood: editMetadataTrack.mood,
+            tags: editMetadataTrack.tags,
+            visibility: editMetadataTrack.visibility,
+            is_supporter_only: editMetadataTrack.is_supporter_only,
+            required_tier: editMetadataTrack.required_tier,
+          }}
+          onSuccess={fetchData}
+        />
+      )}
+
       {/* Edit Album Cover Dialog */}
       {editAlbumBatch && editAlbumBatch.batchId && (
         <EditAlbumCoverDialog
@@ -660,12 +689,14 @@ function SortableTrackRow({
   track,
   trackNumber,
   onEditCover, 
+  onEditMetadata,
   onAddCollaborator, 
   onDelete 
 }: { 
   track: Track;
   trackNumber: number;
   onEditCover: () => void;
+  onEditMetadata: () => void;
   onAddCollaborator: () => void;
   onDelete: () => void;
 }) {
@@ -717,12 +748,36 @@ function SortableTrackRow({
             <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
           )}
         </div>
-        {track.description && (
-          <p className="text-sm text-muted-foreground truncate">{track.description}</p>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {track.description && (
+            <p className="text-sm text-muted-foreground truncate">{track.description}</p>
+          )}
+          {track.tags && track.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {track.tags.slice(0, 2).map((tag, i) => (
+                <Badge key={i} variant="secondary" className="text-xs py-0 px-1.5">{tag}</Badge>
+              ))}
+              {track.tags.length > 2 && (
+                <Badge variant="outline" className="text-xs py-0 px-1.5">+{track.tags.length - 2}</Badge>
+              )}
+            </div>
+          )}
+          {track.mood && (
+            <Badge variant="outline" className="text-xs py-0 px-1.5">{track.mood}</Badge>
+          )}
+        </div>
       </div>
       
       <div className="flex items-center gap-2">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onEditMetadata}
+          className="flex-shrink-0"
+          title="Edit track details"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <Button
           size="sm"
           variant="outline"
@@ -749,11 +804,13 @@ function SortableTrackRow({
 function TrackRow({ 
   track, 
   onEditCover, 
+  onEditMetadata,
   onAddCollaborator, 
   onDelete 
 }: { 
   track: Track; 
   onEditCover: () => void;
+  onEditMetadata: () => void;
   onAddCollaborator: () => void;
   onDelete: () => void;
 }) {
@@ -782,12 +839,36 @@ function TrackRow({
             <SupporterExclusiveBadge tier={track.required_tier as "basic" | "gold"} />
           )}
         </div>
-        {track.description && (
-          <p className="text-sm text-muted-foreground truncate">{track.description}</p>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {track.description && (
+            <p className="text-sm text-muted-foreground truncate">{track.description}</p>
+          )}
+          {track.tags && track.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap">
+              {track.tags.slice(0, 2).map((tag, i) => (
+                <Badge key={i} variant="secondary" className="text-xs py-0 px-1.5">{tag}</Badge>
+              ))}
+              {track.tags.length > 2 && (
+                <Badge variant="outline" className="text-xs py-0 px-1.5">+{track.tags.length - 2}</Badge>
+              )}
+            </div>
+          )}
+          {track.mood && (
+            <Badge variant="outline" className="text-xs py-0 px-1.5">{track.mood}</Badge>
+          )}
+        </div>
       </div>
       
       <div className="flex items-center gap-2">
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={onEditMetadata}
+          className="flex-shrink-0"
+          title="Edit track details"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <Button
           size="sm"
           variant="outline"
