@@ -370,24 +370,34 @@ export default function ArtistProfile() {
   const fetchTopSupporters = async () => {
     if (!artist) return;
 
+    // Step 1: Fetch fan_support_scores (no nested select - no FK relation to profiles)
     const { data: supporters } = await supabase
       .from('fan_support_scores')
-      .select(`
-        fan_user_id,
-        score,
-        level,
-        profiles (
-          full_name,
-          email
-        )
-      `)
+      .select('fan_user_id, score, level')
       .eq('artist_id', artist.id)
       .order('score', { ascending: false })
       .limit(5);
 
-    if (supporters) {
-      setTopSupporters(supporters);
+    if (!supporters || supporters.length === 0) {
+      setTopSupporters([]);
+      return;
     }
+
+    // Step 2: Fetch profiles separately
+    const fanUserIds = supporters.map(s => s.fan_user_id);
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', fanUserIds);
+
+    // Step 3: Combine data
+    const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+    const enriched = supporters.map(s => ({
+      ...s,
+      profiles: profileMap.get(s.fan_user_id) || null
+    }));
+
+    setTopSupporters(enriched);
   };
 
   const handleFollow = async () => {
