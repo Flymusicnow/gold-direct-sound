@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
 
 interface CommentComposerProps {
   postId: string;
@@ -21,6 +22,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   onCancelReply,
 }) => {
   const { user } = useAuth();
+  const { startFlow, step, endFlow } = useFlightRecorder();
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,9 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   const handleSubmit = async () => {
     if (!content.trim() || !user) return;
 
+    startFlow('community_inline_reply');
+    step('submit_start', 'start', { postId, hasParent: !!parentCommentId });
+    
     setIsSubmitting(true);
     setError(null);
 
@@ -43,9 +48,14 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
 
       if (insertError) throw insertError;
 
+      step('db_insert', 'ok');
+      endFlow('ok', { postId });
+      
       setContent('');
       onCommentCreated?.();
     } catch (err) {
+      step('db_insert', 'fail', { error: String(err) });
+      endFlow('fail', { postId, error: String(err) });
       console.error('Error posting comment:', err);
       setError('Failed to post comment. Please try again.');
     } finally {
