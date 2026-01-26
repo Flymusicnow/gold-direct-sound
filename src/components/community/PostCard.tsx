@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaywallCard } from './PaywallCard';
+import { InlineComments } from './InlineComments';
 import { useNavigate } from 'react-router-dom';
+import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
 
 interface CommunityPost {
   id: string;
@@ -34,7 +36,6 @@ interface PostCardProps {
     user_id?: string;
   };
   canAccess: boolean;
-  onCommentClick?: () => void;
   artistId?: string;
   communityArtistUserId?: string;
 }
@@ -51,11 +52,13 @@ export const PostCard: React.FC<PostCardProps> = ({
   post,
   artist,
   canAccess,
-  onCommentClick,
   artistId,
   communityArtistUserId
 }) => {
   const navigate = useNavigate();
+  const { step } = useFlightRecorder();
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  
   const { reactionCount, hasReacted, isLoading, toggleReaction } = usePostReactions(post.id);
   const displayReactionCount = reactionCount;
   const displayCommentCount = post.comment_count;
@@ -66,6 +69,14 @@ export const PostCard: React.FC<PostCardProps> = ({
     post.author_type,
     communityArtistUserId || artist.user_id
   );
+
+  const handleCommentToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isCommentsExpanded) {
+      step('community_reply_open', 'ok', { postId: post.id });
+    }
+    setIsCommentsExpanded(!isCommentsExpanded);
+  };
 
   const handleShare = async () => {
     const url = `${window.location.origin}/post/${post.id}`;
@@ -180,7 +191,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       </CardContent>
       
       {canAccess && (
-        <CardFooter className="pt-0 border-t border-border/50 mt-4">
+        <CardFooter className="pt-0 border-t border-border/50 mt-4 flex-col items-stretch gap-0">
           <div className="flex items-center gap-4 w-full pt-3">
             <Button 
               variant="ghost" 
@@ -199,10 +210,13 @@ export const PostCard: React.FC<PostCardProps> = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="gap-2"
-              onClick={onCommentClick}
+              className={cn(
+                "gap-2",
+                isCommentsExpanded && "text-primary"
+              )}
+              onClick={handleCommentToggle}
             >
-              <MessageCircle className="h-4 w-4" />
+              <MessageCircle className={cn("h-4 w-4", isCommentsExpanded && "fill-current")} />
               <span>{displayCommentCount}</span>
             </Button>
 
@@ -216,6 +230,19 @@ export const PostCard: React.FC<PostCardProps> = ({
               Share
             </Button>
           </div>
+          
+          {/* Inline comments section */}
+          {isCommentsExpanded && (
+            <InlineComments
+              postId={post.id}
+              communityArtistUserId={communityArtistUserId}
+              maxVisible={3}
+              onViewAll={() => {
+                step('community_post_open_detail', 'ok', { postId: post.id, source: 'view_all' });
+                navigate(`/post/${post.id}`);
+              }}
+            />
+          )}
         </CardFooter>
       )}
     </Card>

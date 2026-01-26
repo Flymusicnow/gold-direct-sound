@@ -255,7 +255,6 @@ const FeedPostCard: React.FC<{
         post={post}
         artist={{ artist_name: post.artist_name, avatar_url: post.avatar_url, user_id: post.artist_user_id }}
         canAccess={canAccess}
-        onCommentClick={() => onPostClick(post.id)}
         communityArtistUserId={post.artist_user_id}
       />
       
