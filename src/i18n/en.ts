@@ -148,6 +148,7 @@ export const en = {
     presskit: 'Press Kit',
     smartLink: 'Smart Link',
     subscription: 'Subscription',
+    goals: 'Goals',
     comments: 'Comments',
     testimonials: 'Testimonials',
     promo: 'Promo',

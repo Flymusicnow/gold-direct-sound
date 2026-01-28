@@ -59,6 +59,7 @@ import StudioSettings from "./pages/studio/StudioSettings";
 import StudioPresskit from "./pages/studio/StudioPresskit";
 import StudioCommunity from "./pages/studio/StudioCommunity";
 import StudioOpportunities from "./pages/studio/StudioOpportunities";
+import StudioGoals from "./pages/studio/StudioGoals";
 import PromoPreview from "./pages/PromoPreview";
 import PublicPresskit from "./pages/PublicPresskit";
 import LivePage from "./pages/LivePage";
@@ -417,6 +418,11 @@ const App = () => (
             <Route path="/studio/community" element={
               <ProtectedRoute allowedRoles={['artist']}>
                 <StudioCommunity />
+              </ProtectedRoute>
+            } />
+            <Route path="/studio/goals" element={
+              <ProtectedRoute allowedRoles={['artist']}>
+                <StudioGoals />
               </ProtectedRoute>
             } />
             

@@ -145,6 +145,7 @@ export const artistNavConfig: NavConfig = {
       i18nKey: "nav.studioSections.monetize",
       items: [
         { icon: Crown, label: "Membership", path: "/studio/subscription", i18nKey: "nav.subscription" },
+        { icon: Target, label: "Goals", path: "/studio/goals", i18nKey: "nav.goals" },
         { icon: DollarSign, label: "Earnings", path: "/studio/earnings", i18nKey: "nav.earnings" },
       ],
     },
