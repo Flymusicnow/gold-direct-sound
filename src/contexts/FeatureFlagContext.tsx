@@ -9,7 +9,8 @@ export type FeatureFlagKey =
   | 'CONTEXTUAL_REPORTING_ENABLED'
   | 'COMMUNITY_FEED'
   | 'SUBSCRIPTION_TIERS'
-  | 'SPOTLIGHT_CAROUSEL';
+  | 'SPOTLIGHT_CAROUSEL'
+  | 'ARTIST_GOALS';
 
 export type UserTier = 'free' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'pro' | 'elite' | 'supporter' | 'enterprise';
 

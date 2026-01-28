@@ -1,15 +1,30 @@
 import { useState } from 'react';
 import { Target, Plus, Loader2 } from 'lucide-react';
-import { StudioLayout } from '@/components/artist/StudioLayout';
+import { StudioLayout } from '@/components/layouts/StudioLayout';
 import { Button } from '@/components/ui/button';
 import { useArtistGoals } from '@/hooks/useArtistGoals';
 import { GoalManagementCard } from '@/components/studio/GoalManagementCard';
 import { CreateGoalDialog } from '@/components/studio/CreateGoalDialog';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 export default function StudioGoals() {
   const { t } = useLanguage();
+  const isGoalsEnabled = useFeatureFlag('ARTIST_GOALS');
   const { goals, loading, activeGoal } = useArtistGoals();
+
+  // Feature flag gate
+  if (!isGoalsEnabled) {
+    return (
+      <StudioLayout>
+        <div className="p-6 text-center py-12">
+          <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-lg font-semibold mb-2">{t('goals.comingSoon') || 'Goals Coming Soon'}</h2>
+          <p className="text-muted-foreground">{t('goals.featureNotAvailable') || 'This feature is not yet available.'}</p>
+        </div>
+      </StudioLayout>
+    );
+  }
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingGoal, setEditingGoal] = useState<string | null>(null);
 

@@ -126,7 +126,7 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               {remaining > 0 
-                ? `${remaining.toLocaleString()} ${t('goals.flyCoinsRemaining') || 'FlyCoins remaining'}`
+                ? `${remaining.toLocaleString()} ${t('goals.remaining') || 'remaining to goal'}`
                 : t('goals.goalComplete') || 'Goal complete!'}
             </p>
           </div>
@@ -147,7 +147,10 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('goals.economyNote') || 'FlyCoins will be deducted from your balance'}
+              {t('goals.betaNote') || 'Support is tracked and shown on the goal progress'}
+            </p>
+            <p className="text-xs text-amber-500/80 mt-1">
+              ⚠️ {t('goals.simulatedBeta') || 'Simulated in beta mode'}
             </p>
           </div>
         </div>
