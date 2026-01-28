@@ -1,88 +1,64 @@
 
 
-## Åtgärdsplan: Aktivera Artist Goals-modulen
+## Åtgärdsplan: Fixa RLS-policy för artist_goals INSERT
 
-### Problem
-Feature-flaggan `ARTIST_GOALS` saknas i `feature_flags`-tabellen. Detta gör att hela Goals-modulen blockeras trots att koden är på plats.
+### Problemanalys
+
+RLS-policyn "Artists can manage own goals" på `artist_goals`-tabellen saknar en explicit `WITH CHECK`-klausul för INSERT-operationer.
+
+**Nuvarande policy:**
+```
+command: ALL (*)
+USING: artist_id IN (SELECT artist_profiles.id FROM artist_profiles WHERE user_id = auth.uid())
+WITH CHECK: null  <-- PROBLEMET
+```
+
+När `WITH CHECK` är null för en `ALL`-policy, används `USING`-uttrycket även för INSERT. Detta borde tekniskt fungera, men det kan finnas ett problem med hur PostgreSQL evaluerar subqueryn vid INSERT.
 
 ### Lösning
-Skapa feature-flaggan i databasen med `is_enabled = true` så att modulen blir synlig.
 
----
-
-### Steg 1: Skapa feature-flag i databasen
-
-Kör en SQL-migration som lägger till `ARTIST_GOALS` i `feature_flags`-tabellen:
+Skapa en explicit `WITH CHECK`-klausul som säkerställer att artisten bara kan skapa mål för sin egen profil:
 
 ```sql
-INSERT INTO feature_flags (
-  flag_key,
-  flag_name,
-  description,
-  is_enabled,
-  enabled_for_free,
-  enabled_for_pro,
-  enabled_for_elite,
-  enabled_for_artists,
-  enabled_for_brands,
-  requires_subscription,
-  requires_legal_approval,
-  requires_payment_setup,
-  config
-) VALUES (
-  'ARTIST_GOALS',
-  'Artist Goals',
-  'Enable the Artist Goals funding feature for artists to create and manage funding goals',
-  true,
-  true,
-  true,
-  true,
-  '[]'::jsonb,
-  false,
-  false,
-  false,
-  false,
-  '{}'::jsonb
+-- Ta bort befintlig policy
+DROP POLICY IF EXISTS "Artists can manage own goals" ON public.artist_goals;
+
+-- Skapa ny policy med explicit WITH CHECK
+CREATE POLICY "Artists can manage own goals" 
+ON public.artist_goals
+FOR ALL
+TO authenticated
+USING (
+  artist_id IN (
+    SELECT id FROM artist_profiles WHERE user_id = auth.uid()
+  )
+)
+WITH CHECK (
+  artist_id IN (
+    SELECT id FROM artist_profiles WHERE user_id = auth.uid()
+  )
 );
 ```
 
----
+### Teknisk förklaring
 
-### Steg 2: Verifiera att allt fungerar
+| Operation | Klausul som används |
+|-----------|---------------------|
+| SELECT | USING |
+| UPDATE | USING (för befintliga rader) + WITH CHECK (för nya värden) |
+| DELETE | USING |
+| INSERT | **WITH CHECK** (obligatorisk) |
 
-Efter migrationen:
-1. Navigera till **My Studio** → "Goals" ska nu visas under Monetize-sektionen
-2. Klicka på "Goals" → StudioGoals-sidan ska visa skapa-mål-gränssnittet (inte "Coming Soon")
-3. Skapa ett mål med status "active"
-4. Navigera till din artistsida → ArtistGoalCard ska visas mellan hero och tabs
+Genom att lägga till `WITH CHECK` med samma villkor som `USING`, tillåter vi artister att skapa nya mål där `artist_id` matchar deras egen artist-profil.
 
----
+### Steg
 
-### Tekniska detaljer
-
-**Vad som redan finns på plats:**
-| Komponent | Status | Plats |
-|-----------|--------|-------|
-| Navigation | ✅ Redo | `src/config/navigation.ts` rad 148 |
-| StudioGoals-sida | ✅ Redo | `src/pages/studio/StudioGoals.tsx` |
-| ArtistGoalCard | ✅ Redo | `src/components/artist/ArtistGoalCard.tsx` |
-| GoalDonationModal | ✅ Redo | `src/components/artist/GoalDonationModal.tsx` |
-| useArtistGoals hook | ✅ Redo | `src/hooks/useArtistGoals.ts` |
-| useActiveGoal hook | ✅ Redo | `src/hooks/useActiveGoal.ts` |
-| Databastabeller | ✅ Redo | `artist_goals`, `goal_donations` |
-| i18n (EN/SV) | ✅ Redo | Översättningar finns |
-
-**Vad som saknas:**
-| Komponent | Status | Åtgärd |
-|-----------|--------|--------|
-| Feature flag i DB | ❌ Saknas | Kör INSERT-migration |
-
----
+1. **Kör SQL-migration** som droppar och återskapar policyn med båda klausulerna
+2. **Verifiera** genom att skapa ett nytt mål i Studio
 
 ### Definition of Done
 
-- [ ] `ARTIST_GOALS` finns i `feature_flags` med `is_enabled = true`
-- [ ] "Goals" är synlig i Studio-menyn under Monetize
-- [ ] `/studio/goals` visar skapargränssnittet
-- [ ] Aktivt mål visas på artistprofilen
+- RLS-policy har både USING och WITH CHECK
+- Artist kan skapa nya mål i /studio/goals
+- Befintlig säkerhet bibehålls (artister kan bara hantera sina egna mål)
 
