@@ -290,6 +290,56 @@ export type Database = {
           },
         ]
       }
+      artist_goals: {
+        Row: {
+          artist_id: string
+          completed_at: string | null
+          created_at: string | null
+          current_amount: number | null
+          description: string | null
+          id: string
+          status: string | null
+          supporter_count: number | null
+          target_amount: number
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          artist_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          current_amount?: number | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          supporter_count?: number | null
+          target_amount: number
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          artist_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          current_amount?: number | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          supporter_count?: number | null
+          target_amount?: number
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artist_goals_artist_id_fkey"
+            columns: ["artist_id"]
+            isOneToOne: false
+            referencedRelation: "artist_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artist_live_streams: {
         Row: {
           actual_start: string | null
@@ -2792,6 +2842,38 @@ export type Database = {
             columns: ["fan_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_donations: {
+        Row: {
+          amount: number
+          created_at: string | null
+          fan_user_id: string
+          goal_id: string
+          id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          fan_user_id: string
+          goal_id: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          fan_user_id?: string
+          goal_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_donations_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "artist_goals"
             referencedColumns: ["id"]
           },
         ]

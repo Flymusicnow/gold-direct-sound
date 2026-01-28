@@ -41,6 +41,7 @@ import { SpotlightSection } from "@/components/spotlight/SpotlightSection";
 import { useArtistSpotlight } from "@/hooks/useArtistSpotlight";
 import { useInboundTracking } from "@/hooks/useInboundTracking";
 import { QuickAddButton } from "@/components/QuickAddButton";
+import { ArtistGoalCard } from "@/components/artist/ArtistGoalCard";
 
 interface Artist {
   id: string;
@@ -569,6 +570,9 @@ export default function ArtistProfile() {
 
       {/* Spotlight / Pulse Carousel */}
       <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+
+      {/* Artist Goal Card - Only renders if active goal exists */}
+      <ArtistGoalCard artistId={artist.id} />
 
       {/* Preview Mode CTA - shown after hero for non-beta users */}
       {isPreviewMode && (

@@ -148,6 +148,7 @@ export const sv = {
     presskit: 'Presskit',
     smartLink: 'Smart Link',
     subscription: 'Prenumeration',
+    goals: 'Mål',
     comments: 'Kommentarer',
     testimonials: 'Omdömen',
     promo: 'Promo',
