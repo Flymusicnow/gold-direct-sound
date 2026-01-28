@@ -80,7 +80,7 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
     }
 
     // Update goal amounts
-    const updateData: Record<string, unknown> = {
+    const updateData: Record<string, string | number> = {
       current_amount: goal.current_amount + amount,
       updated_at: new Date().toISOString(),
     };

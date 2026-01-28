@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { useActiveGoal } from '@/hooks/useActiveGoal';
 import { GoalDonationModal } from './GoalDonationModal';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useFeatureFlag } from '@/hooks/useFeatureFlag';
 
 interface ArtistGoalCardProps {
   artistId: string;
@@ -12,12 +13,13 @@ interface ArtistGoalCardProps {
 }
 
 export function ArtistGoalCard({ artistId, className }: ArtistGoalCardProps) {
+  const isGoalsEnabled = useFeatureFlag('ARTIST_GOALS');
   const { goal, loading } = useActiveGoal(artistId);
   const { t } = useLanguage();
   const [showDonationModal, setShowDonationModal] = useState(false);
 
-  // Don't render anything if no active goal or still loading
-  if (loading || !goal) {
+  // Don't render if feature is disabled, no active goal, or still loading
+  if (!isGoalsEnabled || loading || !goal) {
     return null;
   }
 
@@ -76,7 +78,7 @@ export function ArtistGoalCard({ artistId, className }: ArtistGoalCardProps) {
             <div className="flex items-center gap-1">
               <Coins className="h-4 w-4 text-primary" />
               <span className="font-medium">
-                {goal.current_amount.toLocaleString()} / {goal.target_amount.toLocaleString()} {t('goals.flyCoins') || 'FlyCoins'}
+                {goal.current_amount.toLocaleString()} / {goal.target_amount.toLocaleString()} {t('goals.supportPoints') || 'points'}
               </span>
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
