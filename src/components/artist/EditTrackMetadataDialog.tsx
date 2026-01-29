@@ -8,18 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Lock, Crown, X, Tag, Music, Sparkles } from "lucide-react";
-
-const GENRES = [
-  "Pop", "Hip-Hop", "R&B", "Rock", "Electronic", "Jazz", "Classical",
-  "Country", "Folk", "Indie", "Metal", "Reggae", "Soul", "Blues", "Other"
-];
-
-const MOODS = [
-  "Energetic", "Chill", "Happy", "Sad", "Romantic", "Aggressive",
-  "Peaceful", "Motivational", "Dark", "Uplifting", "Melancholic", "Party"
-];
+import { Lock, Crown, Music, Sparkles } from "lucide-react";
+import { TrackMetadataFields } from "./TrackMetadataFields";
 
 interface EditTrackMetadataDialogProps {
   open: boolean;
@@ -49,8 +39,7 @@ export function EditTrackMetadataDialog({
   const [description, setDescription] = useState(currentTrack.description || "");
   const [genre, setGenre] = useState(currentTrack.genre || "");
   const [mood, setMood] = useState(currentTrack.mood || "");
-  const [tagsInput, setTagsInput] = useState((currentTrack.tags || []).join(", "));
-  const [visibility, setVisibility] = useState(currentTrack.visibility || "public");
+  const [tags, setTags] = useState<string[]>(currentTrack.tags || []);
   const [isSupporterOnly, setIsSupporterOnly] = useState(currentTrack.is_supporter_only);
   const [requiredTier, setRequiredTier] = useState(currentTrack.required_tier || "basic");
   const [saving, setSaving] = useState(false);
@@ -64,12 +53,6 @@ export function EditTrackMetadataDialog({
     setSaving(true);
 
     try {
-      // Parse tags from comma-separated string
-      const tags = tagsInput
-        .split(",")
-        .map(t => t.trim())
-        .filter(t => t.length > 0);
-
       const { error } = await supabase
         .from("tracks")
         .update({
@@ -78,7 +61,6 @@ export function EditTrackMetadataDialog({
           genre: genre || null,
           mood: mood || null,
           tags: tags.length > 0 ? tags : null,
-          visibility: visibility,
           is_supporter_only: isSupporterOnly,
           required_tier: isSupporterOnly ? requiredTier : null,
         })
@@ -95,20 +77,6 @@ export function EditTrackMetadataDialog({
       setSaving(false);
     }
   };
-
-  const addTag = (tag: string) => {
-    const currentTags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
-    if (!currentTags.includes(tag)) {
-      setTagsInput([...currentTags, tag].join(", "));
-    }
-  };
-
-  const removeTag = (tagToRemove: string) => {
-    const currentTags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
-    setTagsInput(currentTags.filter(t => t !== tagToRemove).join(", "));
-  };
-
-  const parsedTags = tagsInput.split(",").map(t => t.trim()).filter(Boolean);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,82 +115,15 @@ export function EditTrackMetadataDialog({
             />
           </div>
 
-          {/* Genre */}
-          <div className="space-y-2">
-            <Label htmlFor="edit-genre">Genre</Label>
-            <Select value={genre} onValueChange={setGenre}>
-              <SelectTrigger id="edit-genre">
-                <SelectValue placeholder="Select a genre" />
-              </SelectTrigger>
-              <SelectContent>
-                {GENRES.map((g) => (
-                  <SelectItem key={g} value={g}>{g}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Mood */}
-          <div className="space-y-2">
-            <Label htmlFor="edit-mood">Mood</Label>
-            <Select value={mood} onValueChange={setMood}>
-              <SelectTrigger id="edit-mood">
-                <SelectValue placeholder="Select a mood" />
-              </SelectTrigger>
-              <SelectContent>
-                {MOODS.map((m) => (
-                  <SelectItem key={m} value={m}>{m}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <Tag className="h-4 w-4" />
-              Tags
-            </Label>
-            
-            {/* Current Tags */}
-            {parsedTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {parsedTags.map((tag, i) => (
-                  <Badge key={i} variant="secondary" className="pl-2 pr-1 py-1 gap-1">
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-1 hover:text-destructive"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            <Input
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
-              placeholder="Enter tags separated by commas"
-              className="text-sm"
-            />
-
-            {/* Quick Add Tags */}
-            <div className="flex flex-wrap gap-1 mt-2">
-              {["New Release", "Featured", "Remix", "Original", "Live", "Acoustic"].map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="cursor-pointer hover:bg-primary/10 transition-colors text-xs"
-                  onClick={() => addTag(tag)}
-                >
-                  + {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          {/* Genre, Mood & Tags */}
+          <TrackMetadataFields
+            genre={genre}
+            onGenreChange={setGenre}
+            mood={mood}
+            onMoodChange={setMood}
+            tags={tags}
+            onTagsChange={setTags}
+          />
 
           {/* Supporter Exclusive Settings */}
           <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">
