@@ -3580,6 +3580,7 @@ export type Database = {
           message: string
           metadata: Json | null
           read: boolean | null
+          severity: string | null
           title: string
           type: string
           user_id: string
@@ -3591,6 +3592,7 @@ export type Database = {
           message: string
           metadata?: Json | null
           read?: boolean | null
+          severity?: string | null
           title: string
           type: string
           user_id: string
@@ -3602,6 +3604,7 @@ export type Database = {
           message?: string
           metadata?: Json | null
           read?: boolean | null
+          severity?: string | null
           title?: string
           type?: string
           user_id?: string
@@ -6118,6 +6121,18 @@ export type Database = {
       redeem_referral_code: {
         Args: { _code: string; _user_id: string }
         Returns: Json
+      }
+      send_admin_notification: {
+        Args: {
+          p_link?: string
+          p_message: string
+          p_severity?: string
+          p_target_role?: string
+          p_target_user_ids?: string[]
+          p_title: string
+          p_type: string
+        }
+        Returns: number
       }
       set_app_mode: { Args: { _mode: string }; Returns: boolean }
       tier_level: { Args: { tier: string }; Returns: number }
