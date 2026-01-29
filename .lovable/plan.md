@@ -1,107 +1,150 @@
 
-## Åtgärdsplan: Fixa Goal-donationer, Anonymous-problem & UI-uppdateringar
+## Plan: Lägg till Tags vid Track-uppladdning
 
-### Identifierade Problem
+### Bakgrund
+Nuvarande uppladdningsformulär för enstaka låtar (Single Track Upload) saknar möjlighet att välja **genre**, **mood** och **tags**. Dessa fält finns endast:
+- I **BulkMetadataEditor** (för multi-upload)
+- I **EditTrackMetadataDialog** (för redigering efter uppladdning)
 
-**Problem 1: Goal-donationer visar 0 istället för 1000**
-- Databasen visar: `goal_donations.amount = 1000` men `artist_goals.current_amount = 0`
-- Rotorsak: Donationen gjordes INNAN `donate_to_goal` RPC-funktionen skapades
-- Målets status är felaktigt satt till "completed" trots 0 progress
+Artister måste idag ladda upp en låt först och sedan redigera den för att lägga till tags, vilket är ineffektivt.
 
-**Problem 2: Goal-kort visas inte på artistsidan**
-- `useActiveGoal` hämtar endast mål med `status = 'active'`
-- Eftersom målet har status "completed" (felaktigt), visas det inte
+### Nuvarande flöde
+```text
+Upload Form:
++---------------------------+
+| Track Title *             |
+| Description (optional)    |
+| Cover Image (optional)    |
+| Audio File *              |
+| Supporter Exclusive       |
+| [Upload Track]            |
++---------------------------+
+```
 
-**Problem 3: Anonymous i StudioSubscription**
-- `src/pages/studio/StudioSubscription.tsx` (rad 131-134) frågar `profiles`-tabellen direkt
-- RLS blockerar åtkomst till andra användares profiler → fallback till "Anonymous"
-- Bör använda `public_profiles` view istället
-
-**Problem 4: Fan-sidan saknar donation-historik**
-- Fan Dashboard visar ingen information om gjorda donationer
+### Nytt flöde (efter implementation)
+```text
+Upload Form:
++---------------------------+
+| Track Title *             |
+| Description (optional)    |
+| Genre (dropdown)          | <-- NY
+| Mood (dropdown)           | <-- NY
+| Tags (chips + input)      | <-- NY
++---------------------------+
+| Cover Image (optional)    |
+| Audio File *              |
+| Supporter Exclusive       |
+| [Upload Track]            |
++---------------------------+
+```
 
 ---
 
-### Lösningar
+## Teknisk Implementation
 
-#### Del 1: Datafix (SQL-migration)
+### Del 1: Uppdatera StudioTracks.tsx
 
-Skapa en engångs-migration som:
-1. Beräknar `current_amount` från faktiska donationer i `goal_donations`
-2. Beräknar `supporter_count` (unika fans)
-3. Justerar `status` baserat på om målet är uppfyllt eller inte
-
-```sql
--- Synkronisera artist_goals med faktiska donationer
-UPDATE artist_goals ag SET
-  current_amount = COALESCE(
-    (SELECT SUM(amount) FROM goal_donations WHERE goal_id = ag.id), 
-    0
-  ),
-  supporter_count = COALESCE(
-    (SELECT COUNT(DISTINCT fan_user_id) FROM goal_donations WHERE goal_id = ag.id), 
-    0
-  ),
-  status = CASE 
-    WHEN ag.status = 'completed' AND (SELECT SUM(amount) FROM goal_donations WHERE goal_id = ag.id) < ag.target_amount 
-    THEN 'active'
-    ELSE ag.status 
-  END,
-  updated_at = now();
-```
-
-#### Del 2: Fixa Anonymous i StudioSubscription
-
-Uppdatera `src/pages/studio/StudioSubscription.tsx` rad 131-134:
-
-**Före:**
+**Lägg till nya state-variabler:**
 ```typescript
-const { data: fanProfiles } = await supabase
-  .from("profiles")
-  .select("id, full_name, email")
-  .in("id", fanIds);
+const [trackGenre, setTrackGenre] = useState("");
+const [trackMood, setTrackMood] = useState("");
+const [trackTags, setTrackTags] = useState<string[]>([]);
 ```
 
-**Efter:**
+**Lägg till metadata-fält i formuläret (efter Description):**
+- Genre: Select-dropdown med fördefinierade genrer (Pop, Hip-Hop, R&B, etc.)
+- Mood: Select-dropdown med fördefinierade moods (Energetic, Chill, Happy, etc.)
+- Tags: Input-fält + chip-display för valda tags (samma mönster som EditTrackMetadataDialog)
+
+**Uppdatera INSERT-query:**
 ```typescript
-const { data: fanProfiles } = await supabase
-  .from("public_profiles")
-  .select("id, full_name")
-  .in("id", fanIds);
+await supabase.from('tracks').insert({
+  artist_id: artistProfile.id,
+  title: trackTitle,
+  description: trackDescription || null,
+  audio_url: publicUrl,
+  cover_url: coverUrl,
+  is_supporter_only: isSupporterOnly,
+  required_tier: isSupporterOnly ? requiredTier : null,
+  genre: trackGenre || null,        // NY
+  mood: trackMood || null,          // NY
+  tags: trackTags.length > 0 ? trackTags : null  // NY
+});
 ```
 
-OBS: Tar bort `email` eftersom det är PII och inte ska exponeras.
+### Del 2: Återanvänd UI-komponenter
 
-#### Del 3: Uppdatera useActiveGoal för att hantera olika status
+Extrahera genre/mood/tags UI från EditTrackMetadataDialog till en återanvändbar komponent:
 
-Modifiera `src/hooks/useActiveGoal.ts` för att:
-1. Hämta aktiva mål (befintligt beteende)
-2. Alternativt: Skapa en ny hook `useGoal(goalId)` för att visa specifika mål
+**Ny komponent: `TrackMetadataFields.tsx`**
+```typescript
+interface TrackMetadataFieldsProps {
+  genre: string;
+  onGenreChange: (genre: string) => void;
+  mood: string;
+  onMoodChange: (mood: string) => void;
+  tags: string[];
+  onTagsChange: (tags: string[]) => void;
+}
+```
 
-#### Del 4: Lägg till Donation-historik på Fan Dashboard (valfritt)
+Denna komponent kan sedan användas i:
+- StudioTracks.tsx (single upload)
+- EditTrackMetadataDialog.tsx
+- BulkMetadataEditor.tsx (eventuellt)
 
-Skapa en sektion i Fan Dashboard som visar:
-- Vilka artister fanen har stöttat
-- Totalt bidrag per artist
-- Senaste donation
+### Del 3: Responsiv design (mobil)
+
+- Säkerställ att Genre/Mood-selects fungerar bra på touch
+- Tags-chips måste vara klickbara/raderbar på mobil
+- Kompakt layout för mindre skärmar (stack vertikalt)
 
 ---
 
-### Teknisk Implementationsordning
+## Filer som påverkas
 
-| Steg | Uppgift | Filer |
-|------|---------|-------|
-| 1 | SQL-migration för att synka goal-data | `supabase/migrations/` |
-| 2 | Ändra StudioSubscription till public_profiles | `src/pages/studio/StudioSubscription.tsx` |
-| 3 | Verifiera att goal-kortet visas | `src/components/artist/ArtistGoalCard.tsx` |
-| 4 | (Valfritt) Lägg till donation-historik på Fan Dashboard | `src/pages/FanDashboard.tsx` |
+| Fil | Ändring |
+|-----|---------|
+| `src/pages/studio/StudioTracks.tsx` | Lägg till genre/mood/tags state och formulärfält |
+| `src/components/artist/TrackMetadataFields.tsx` | **NY** - Återanvändbar komponent |
+| `src/components/artist/EditTrackMetadataDialog.tsx` | Refaktorera att använda TrackMetadataFields |
 
 ---
 
-### Definition of Done
+## Konstanter (återanvänd existerande)
 
-- [x] `artist_goals.current_amount` visar faktiska 1000 FlyCoins
-- [x] `artist_goals.supporter_count` visar 1 supporter
-- [x] Goal-kortet visas på Topliners artistsida
-- [x] Studio Goals visar rätt progress (1000/50000)
-- [x] StudioSubscription använder `public_profiles` (inget Anonymous)
+Genrer och moods finns redan definierade i EditTrackMetadataDialog.tsx:
+
+```typescript
+const GENRES = [
+  "Pop", "Hip-Hop", "R&B", "Rock", "Electronic", "Jazz", "Classical",
+  "Country", "Folk", "Indie", "Metal", "Reggae", "Soul", "Blues", "Other"
+];
+
+const MOODS = [
+  "Energetic", "Chill", "Happy", "Sad", "Romantic", "Aggressive",
+  "Peaceful", "Motivational", "Dark", "Uplifting", "Melancholic", "Party"
+];
+```
+
+---
+
+## Definition of Done
+
+- [ ] Artist kan välja genre via dropdown vid single track upload
+- [ ] Artist kan välja mood via dropdown vid single track upload
+- [ ] Artist kan lägga till tags (kommaseparerat eller via quick-add badges)
+- [ ] Metadata sparas korrekt till databasen
+- [ ] UI fungerar på både desktop och mobil
+- [ ] Formuläret återställs korrekt efter lyckad uppladdning
+
+---
+
+## Övriga buggar som nämndes
+
+Utöver tags-funktionen nämndes även:
+1. **Community replies** - Önskan att kunna svara inline i community-fönstret utan att navigera bort
+2. **Mission progress** - Likes räknas inte korrekt för "like tracks"-mission
+3. **HTTP 406 errors** - spotlight_campaigns query-problem
+
+Dessa bör hanteras som separata ärenden efter att tags-funktionen är implementerad.
