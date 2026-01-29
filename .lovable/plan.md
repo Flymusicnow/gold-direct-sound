@@ -100,8 +100,8 @@ Skapa en sektion i Fan Dashboard som visar:
 
 ### Definition of Done
 
-- [x] `artist_goals.current_amount` visar faktiska 1000 FlyCoins
-- [x] `artist_goals.supporter_count` visar 1 supporter
-- [x] Goal-kortet visas på Topliners artistsida
-- [x] Studio Goals visar rätt progress (1000/50000)
-- [x] StudioSubscription använder `public_profiles` (inget Anonymous)
+- [x] `artist_goals.current_amount` visar faktiska 1000 FlyCoins ✅ DONE
+- [x] `artist_goals.supporter_count` visar 1 supporter ✅ DONE
+- [x] Goal-kortet visas på Topliners artistsida ✅ DONE (status=active)
+- [x] Studio Goals visar rätt progress (1000/50000) ✅ DONE
+- [x] StudioSubscription använder `public_profiles` (inget Anonymous) ✅ DONE

@@ -129,13 +129,13 @@ export default function StudioSubscription() {
       if (supportersData) {
         const fanIds = supportersData.map((s) => s.fan_user_id);
         const { data: fanProfiles } = await supabase
-          .from("profiles")
-          .select("id, full_name, email")
+          .from("public_profiles")
+          .select("id, full_name")
           .in("id", fanIds);
 
         const supportersWithFans = supportersData.map((supporter) => {
           const fan = fanProfiles?.find((f) => f.id === supporter.fan_user_id);
-          return { ...supporter, fan: { full_name: fan?.full_name || "Anonymous", email: fan?.email || "" } };
+          return { ...supporter, fan: { full_name: fan?.full_name || "Anonymous", email: "" } };
         });
         setSupporters(supportersWithFans);
       }
