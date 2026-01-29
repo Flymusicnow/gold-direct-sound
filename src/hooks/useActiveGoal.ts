@@ -55,55 +55,21 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
       return { success: false, error: 'Amount must be positive' };
     }
 
-    // Check if this is the fan's first donation to this goal
-    const { data: existingDonation } = await supabase
-      .from('goal_donations')
-      .select('id')
-      .eq('goal_id', goal.id)
-      .eq('fan_user_id', user.id)
-      .maybeSingle();
+    // Use the atomic RPC function to handle donation + goal update
+    const { data, error } = await supabase.rpc('donate_to_goal', {
+      p_goal_id: goal.id,
+      p_amount: amount,
+    });
 
-    const isFirstDonation = !existingDonation;
-
-    // Insert the donation
-    const { error: donationError } = await supabase
-      .from('goal_donations')
-      .insert({
-        goal_id: goal.id,
-        fan_user_id: user.id,
-        amount: amount,
-      });
-
-    if (donationError) {
-      console.error('[useActiveGoal] Donation insert error:', donationError);
-      return { success: false, error: donationError.message };
+    if (error) {
+      console.error('[useActiveGoal] RPC error:', error);
+      return { success: false, error: error.message };
     }
 
-    // Update goal amounts
-    const updateData: Record<string, string | number> = {
-      current_amount: goal.current_amount + amount,
-      updated_at: new Date().toISOString(),
-    };
-
-    // Increment supporter count only if first donation
-    if (isFirstDonation) {
-      updateData.supporter_count = goal.supporter_count + 1;
-    }
-
-    // Check if goal is now complete
-    if (goal.current_amount + amount >= goal.target_amount) {
-      updateData.status = 'completed';
-      updateData.completed_at = new Date().toISOString();
-    }
-
-    const { error: updateError } = await supabase
-      .from('artist_goals')
-      .update(updateData)
-      .eq('id', goal.id);
-
-    if (updateError) {
-      console.error('[useActiveGoal] Goal update error:', updateError);
-      return { success: false, error: updateError.message };
+    // Check the response from the function
+    const result = data as { success: boolean; error?: string };
+    if (!result.success) {
+      return { success: false, error: result.error || 'Donation failed' };
     }
 
     await fetchActiveGoal();

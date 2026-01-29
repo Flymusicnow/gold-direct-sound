@@ -5951,6 +5951,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      donate_to_goal: {
+        Args: { p_amount: number; p_goal_id: string }
+        Returns: Json
+      }
       generate_artist_referral_code: {
         Args: { _user_id: string }
         Returns: string

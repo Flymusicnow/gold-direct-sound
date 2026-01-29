@@ -3,6 +3,7 @@ import { X, GripVertical, Music, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
+import { useLikes } from "@/contexts/LikesContext";
 import { cn } from "@/lib/utils";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { Link } from "react-router-dom";
@@ -141,46 +142,7 @@ export function FlightdeckQueueSidebar() {
     setQueueOpen,
   } = useFlightdeck();
 
-  const { user } = useAuth();
-  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
-
-  // Fetch likes for all tracks in queue
-  useEffect(() => {
-    if (!user || queue.length === 0) return;
-    
-    const trackIds = queue.filter(i => i.type === 'track').map(i => i.id);
-    if (trackIds.length === 0) return;
-    
-    supabase
-      .from('likes')
-      .select('track_id')
-      .eq('user_id', user.id)
-      .in('track_id', trackIds)
-      .then(({ data }) => {
-        const map: Record<string, boolean> = {};
-        data?.forEach(like => { map[like.track_id] = true; });
-        setLikedTracks(map);
-      });
-  }, [user, queue]);
-
-  const handleToggleLike = async (trackId: string, artistId: string) => {
-    if (!user) {
-      toast.error("Please sign in to like tracks");
-      return;
-    }
-
-    const isCurrentlyLiked = likedTracks[trackId];
-    
-    if (isCurrentlyLiked) {
-      await supabase.from('likes').delete().eq('user_id', user.id).eq('track_id', trackId);
-      setLikedTracks(prev => ({ ...prev, [trackId]: false }));
-      toast.success("Removed from likes");
-    } else {
-      await supabase.from('likes').insert({ user_id: user.id, track_id: trackId });
-      setLikedTracks(prev => ({ ...prev, [trackId]: true }));
-      toast.success("Added to likes");
-    }
-  };
+  const { isLiked, toggleLike } = useLikes();
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -305,8 +267,8 @@ export function FlightdeckQueueSidebar() {
                     key={item.queueId || item.id}
                     item={item}
                     isCurrent={currentItem?.id === item.id}
-                    isLiked={likedTracks[item.id] || false}
-                    onToggleLike={() => handleToggleLike(item.id, item.artistId)}
+                    isLiked={isLiked(item.id)}
+                    onToggleLike={() => toggleLike(item.id, item.artistId)}
                     onRemove={() => removeFromQueue(item.queueId || item.id)}
                   />
                 ))}
