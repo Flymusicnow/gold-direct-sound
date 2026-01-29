@@ -26,6 +26,7 @@ import { CollaboratorSelector } from "@/components/artist/CollaboratorSelector";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
+import { TrackMetadataFields } from "@/components/artist/TrackMetadataFields";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -76,6 +77,9 @@ export default function StudioTracks() {
   const [loading, setLoading] = useState(true);
   const [trackTitle, setTrackTitle] = useState("");
   const [trackDescription, setTrackDescription] = useState("");
+  const [trackGenre, setTrackGenre] = useState("");
+  const [trackMood, setTrackMood] = useState("");
+  const [trackTags, setTrackTags] = useState<string[]>([]);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isSupporterOnly, setIsSupporterOnly] = useState(false);
@@ -269,6 +273,9 @@ export default function StudioTracks() {
         cover_url: coverUrl,
         is_supporter_only: isSupporterOnly,
         required_tier: isSupporterOnly ? requiredTier : null,
+        genre: trackGenre || null,
+        mood: trackMood || null,
+        tags: trackTags.length > 0 ? trackTags : null,
       });
 
       if (insertError) throw insertError;
@@ -276,6 +283,9 @@ export default function StudioTracks() {
       toast.success("Track uploaded successfully!");
       setTrackTitle("");
       setTrackDescription("");
+      setTrackGenre("");
+      setTrackMood("");
+      setTrackTags([]);
       setCoverFile(null);
       setIsSupporterOnly(false);
       setRequiredTier("basic");
@@ -398,6 +408,18 @@ export default function StudioTracks() {
                   rows={3}
                 />
               </div>
+              
+              {/* Genre, Mood & Tags */}
+              <TrackMetadataFields
+                genre={trackGenre}
+                onGenreChange={setTrackGenre}
+                mood={trackMood}
+                onMoodChange={setTrackMood}
+                tags={trackTags}
+                onTagsChange={setTrackTags}
+                compact
+              />
+
               <div>
                 <Label htmlFor="cover">Cover Image (optional)</Label>
                 <Input
