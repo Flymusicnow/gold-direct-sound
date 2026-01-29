@@ -17,6 +17,7 @@ import { RouteHistoryProvider } from "@/contexts/RouteHistoryContext";
 import { FlightRecorderProvider } from "@/contexts/FlightRecorderContext";
 import { ReproModeProvider } from "@/contexts/ReproModeContext";
 import { VerificationModeProvider } from "@/contexts/VerificationModeContext";
+import { LikesProvider } from "@/contexts/LikesContext";
 import { NavigationWrapper } from "@/components/NavigationWrapper";
 import { FlightdeckLayout } from "@/components/flightdeck/FlightdeckLayout";
 import { ReproDebugPanel } from "@/components/debug/ReproDebugPanel";
@@ -192,6 +193,7 @@ const App = () => (
         <FlightRecorderProvider>
         <VerificationModeProvider>
         <FanTasteProvider>
+        <LikesProvider>
         <VideoPlaybackProvider>
         <FlightdeckProvider>
         <AudioFocusProvider>
@@ -592,6 +594,7 @@ const App = () => (
         </AudioFocusProvider>
         </FlightdeckProvider>
         </VideoPlaybackProvider>
+        </LikesProvider>
         </FanTasteProvider>
         </VerificationModeProvider>
         </FlightRecorderProvider>

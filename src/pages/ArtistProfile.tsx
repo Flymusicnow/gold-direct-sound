@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
+import { useLikes } from "@/contexts/LikesContext";
 import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users, Video, Info } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
@@ -98,7 +99,7 @@ export default function ArtistProfile() {
   const [loading, setLoading] = useState(true);
   const [showShareModal, setShowShareModal] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
-  const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
+  const { isLiked, toggleLike } = useLikes();
   const [spotlightEntry, setSpotlightEntry] = useState<{
     campaignId: string;
     campaignName: string;
@@ -200,7 +201,6 @@ export default function ArtistProfile() {
     if (artist) {
       fetchTracks();
       checkFollowStatus();
-      fetchUserLikes();
       fetchSpotlightStatus();
       fetchBetaAccess();
       fetchTopSupporters();
@@ -300,32 +300,6 @@ export default function ArtistProfile() {
     setIsFollowing(!!data);
   };
 
-  const fetchUserLikes = async () => {
-    if (!user || !artist) return;
-
-    const { data: tracksData } = await supabase
-      .from('tracks')
-      .select('id')
-      .eq('artist_id', artist.id);
-
-    if (!tracksData) return;
-
-    const trackIds = tracksData.map(t => t.id);
-    if (trackIds.length === 0) return;
-
-    const { data: likes } = await supabase
-      .from('likes')
-      .select('track_id')
-      .eq('user_id', user.id)
-      .in('track_id', trackIds);
-
-    const likedMap: Record<string, boolean> = {};
-    likes?.forEach(like => {
-      likedMap[like.track_id] = true;
-    });
-    setLikedTracks(likedMap);
-  };
-
   const fetchSpotlightStatus = async () => {
     if (!artist) return;
 
@@ -384,11 +358,11 @@ export default function ArtistProfile() {
       return;
     }
 
-    // Step 2: Fetch profiles separately
+    // Step 2: Fetch profiles from public_profiles view (respects privacy)
     const fanUserIds = supporters.map(s => s.fan_user_id);
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, email')
+      .from('public_profiles')
+      .select('id, full_name')
       .in('id', fanUserIds);
 
     // Step 3: Combine data
@@ -424,10 +398,6 @@ export default function ArtistProfile() {
       setIsFollowing(true);
       toast.success("Following!");
     }
-  };
-
-  const handleLikeChange = (trackId: string, isLiked: boolean) => {
-    setLikedTracks({ ...likedTracks, [trackId]: isLiked });
   };
 
   if (loading) {
@@ -701,10 +671,11 @@ export default function ArtistProfile() {
                                           <PremiumTrackCard
                                             track={track}
                                             artistName={artist.artist_name}
-                                            isLiked={likedTracks[track.id]}
+                                            artistUserId={artist.user_id}
+                                            isLiked={isLiked(track.id)}
                                             onPlay={() => handlePlayTrack(track)}
                                             onAddToQueue={() => handleAddToQueue(track)}
-                                            onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                                            onLikeChange={() => toggleLike(track.id, artist.id)}
                                             showCollaborators={true}
                                           />
                                         </div>
@@ -734,10 +705,11 @@ export default function ArtistProfile() {
                                     key={track.id}
                                     track={track}
                                     artistName={artist.artist_name}
-                                    isLiked={likedTracks[track.id]}
+                                    artistUserId={artist.user_id}
+                                    isLiked={isLiked(track.id)}
                                     onPlay={() => handlePlayTrack(track)}
                                     onAddToQueue={() => handleAddToQueue(track)}
-                                    onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
+                                    onLikeChange={() => toggleLike(track.id, artist.id)}
                                     showCollaborators={true}
                                   />
                                 ))}

@@ -11,7 +11,6 @@ interface Supporter {
   level: 'bronze' | 'silver' | 'gold';
   profiles: {
     full_name: string | null;
-    email: string;
   };
 }
 
@@ -44,11 +43,11 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
         return;
       }
 
-      // Fetch profiles separately
+      // Fetch profiles from public_profiles view (respects privacy)
       const userIds = supportersData.map(s => s.fan_user_id);
       const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, full_name, email')
+        .from('public_profiles')
+        .select('id, full_name')
         .in('id', userIds);
 
       const profilesMap = new Map(profilesData?.map(p => [p.id, p]) || []);
@@ -56,7 +55,7 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
       const supportersWithProfiles = supportersData.map(supporter => ({
         ...supporter,
         level: supporter.level as 'bronze' | 'silver' | 'gold',
-        profiles: profilesMap.get(supporter.fan_user_id) || { full_name: null, email: '' },
+        profiles: profilesMap.get(supporter.fan_user_id) || { full_name: null },
       }));
 
       setSupporters(supportersWithProfiles);
@@ -129,9 +128,7 @@ export function TopSupportersWidget({ artistId }: TopSupportersWidgetProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {supporters.map((supporter, index) => {
-          const displayName = supporter.profiles?.full_name || 
-                              supporter.profiles?.email?.split('@')[0] || 
-                              'Anonymous';
+          const displayName = supporter.profiles?.full_name || 'Anonymous';
           const initial = displayName[0]?.toUpperCase() || '?';
 
           return (
