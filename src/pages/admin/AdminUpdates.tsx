@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Plus, Pencil, Trash2, Eye, EyeOff, Users, Shield, Megaphone, AlertTriangle, AlertCircle, Info, Search, Filter, Zap, ChevronDown, ChevronUp, History } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Users, Shield, Megaphone, AlertTriangle, AlertCircle, Info, Search, Filter, Zap, ChevronDown, ChevronUp, History, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { usePlatformUpdates, PlatformUpdate, UPDATE_CATEGORIES } from "@/hooks/usePlatformUpdates";
 import { useAdminActivityLog } from "@/hooks/useAdminActivityLog";
+import { SendNotificationDialog } from "@/components/admin/SendNotificationDialog";
 import { cn } from "@/lib/utils";
 
 const priorityConfig = {
@@ -49,6 +50,7 @@ export default function AdminUpdates() {
   // Dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUpdate, setEditingUpdate] = useState<PlatformUpdate | null>(null);
+  const [isNotificationDialogOpen, setIsNotificationDialogOpen] = useState(false);
   
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -222,6 +224,10 @@ export default function AdminUpdates() {
                 Activate All ({inactiveCount})
               </Button>
             )}
+            <Button variant="outline" onClick={() => setIsNotificationDialogOpen(true)}>
+              <Send className="h-4 w-4 mr-2" />
+              Send Notification
+            </Button>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button onClick={() => handleOpenDialog()}>
@@ -523,6 +529,12 @@ export default function AdminUpdates() {
           )}
         </div>
       </div>
+
+      {/* Send Notification Dialog */}
+      <SendNotificationDialog
+        open={isNotificationDialogOpen}
+        onOpenChange={setIsNotificationDialogOpen}
+      />
     </AdminLayout>
   );
 }

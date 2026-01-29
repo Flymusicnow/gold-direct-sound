@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy, Video, Bell, Pin, Radio } from "lucide-react";
+import { Sparkles, Heart, MessageSquare, Users, TrendingUp, Trophy, Video, Bell, Pin, Radio, Megaphone, CheckCircle2, Rocket } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface Notification {
@@ -10,6 +10,7 @@ interface Notification {
   link: string | null;
   read: boolean;
   created_at: string;
+  severity?: string;
 }
 
 interface NotificationItemProps {
@@ -61,10 +62,19 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
         return <Trophy className="h-4 w-4 text-primary" />;
       case 'artist_going_live':
         return <Radio className="h-4 w-4 text-red-500 animate-pulse" />;
+      // Admin notification types
+      case 'admin_update':
+        return <Megaphone className="h-4 w-4 text-blue-500" />;
+      case 'issue_fixed':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'release_note':
+        return <Rocket className="h-4 w-4 text-purple-500" />;
       default:
         return <Sparkles className="h-4 w-4 text-primary" />;
     }
   };
+
+  const isImportant = notification.severity === 'important';
 
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
 
@@ -73,10 +83,12 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
       onClick={handleClick}
       className={`p-4 hover:bg-muted/50 transition-colors cursor-pointer ${
         !notification.read ? 'bg-primary/5' : ''
-      }`}
+      } ${isImportant ? 'border-l-2 border-l-orange-500' : ''}`}
     >
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+          isImportant ? 'bg-orange-500/10' : 'bg-primary/10'
+        }`}>
           {getIcon()}
         </div>
         
@@ -86,7 +98,9 @@ export function NotificationItem({ notification, onRead, onClose }: Notification
               {notification.title}
             </p>
             {!notification.read && (
-              <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+              <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${
+                isImportant ? 'bg-orange-500' : 'bg-primary'
+              }`} />
             )}
           </div>
           
