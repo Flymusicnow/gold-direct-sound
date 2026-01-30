@@ -43,7 +43,7 @@ interface VideoComment {
   parent_comment_id: string | null;
   profiles?: {
     full_name: string | null;
-    email: string;
+    avatar_url?: string | null;
   };
 }
 

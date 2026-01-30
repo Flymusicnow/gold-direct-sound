@@ -165,8 +165,8 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
       // Batch fetch profiles and artist profiles
       const [profilesResult, artistProfilesResult] = await Promise.all([
         supabase
-          .from("profiles")
-          .select("id, full_name, avatar_url, email" as any)
+          .from("public_profiles")
+          .select("id, full_name, avatar_url")
           .in("id", userIds),
         supabase
           .from('artist_profiles')

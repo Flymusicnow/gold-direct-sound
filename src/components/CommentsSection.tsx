@@ -106,8 +106,8 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
     const userIds = commentsData.map((c) => c.user_id);
     
     const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("id, full_name, avatar_url, email" as any)
+      .from("public_profiles")
+      .select("id, full_name, avatar_url")
       .in("id", userIds);
 
     // Fetch artist profiles to know which commenters are artists
