@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useSupportScore } from '@/hooks/useSupportScore';
+import { useMissions } from '@/hooks/useMissions';
 
 interface LikesContextType {
   likedTracks: Record<string, boolean>;
@@ -17,6 +18,7 @@ const LikesContext = createContext<LikesContextType | undefined>(undefined);
 export function LikesProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { updateSupportScore } = useSupportScore();
+  const { updateMissionProgress } = useMissions();
   const [likedTracks, setLikedTracks] = useState<Record<string, boolean>>({});
   const [updatingTracks, setUpdatingTracks] = useState<Record<string, boolean>>({});
 
@@ -125,6 +127,9 @@ export function LikesProvider({ children }: { children: ReactNode }) {
         
         // Update support score for the artist
         updateSupportScore(artistId, 'like_track');
+        
+        // Update mission progress for daily likes
+        updateMissionProgress('daily_like_tracks');
       }
     } catch (error) {
       console.error('[LikesContext] Error toggling like:', error);
@@ -132,7 +137,7 @@ export function LikesProvider({ children }: { children: ReactNode }) {
     } finally {
       setUpdatingTracks(prev => ({ ...prev, [trackId]: false }));
     }
-  }, [user, likedTracks, updatingTracks, updateSupportScore]);
+  }, [user, likedTracks, updatingTracks, updateSupportScore, updateMissionProgress]);
 
   return (
     <LikesContext.Provider value={{

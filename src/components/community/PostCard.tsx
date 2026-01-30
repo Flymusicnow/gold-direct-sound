@@ -215,6 +215,7 @@ export const PostCard: React.FC<PostCardProps> = ({
                 isCommentsExpanded && "text-primary"
               )}
               onClick={handleCommentToggle}
+              title="Click to view and add comments"
             >
               <MessageCircle className={cn("h-4 w-4", isCommentsExpanded && "fill-current")} />
               <span>{displayCommentCount}</span>
