@@ -9,27 +9,18 @@ import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrackCard } from "@/components/TrackCard";
-import { DiscoverArtists } from "@/components/DiscoverArtists";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
-import { TrendingSection } from "@/components/TrendingSection";
-import { Music, TrendingUp, Sparkles, Video, Play, Radio } from "lucide-react";
-import { SpotlightTrendingCard } from "@/components/spotlight/SpotlightTrendingCard";
-import { SpotlightNewEntryCard } from "@/components/spotlight/SpotlightNewEntryCard";
-import { SpotlightRisingCard } from "@/components/spotlight/SpotlightRisingCard";
-import { UpcomingEventsCard } from "@/components/feed/UpcomingEventsCard";
-import SpotlightRankMilestoneCard from "@/components/spotlight/SpotlightRankMilestoneCard";
-import { VideoPostCard } from "@/components/feed/VideoPostCard";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { toast } from "sonner";
 import { DashboardFeedSwitch } from "@/components/fan/DashboardFeedSwitch";
 import { TrackCardSkeleton, CardSkeleton } from "@/components/ui/skeletons";
-import { StaggeredList } from "@/components/ui/StaggeredList";
 import { PageTransition } from "@/components/ui/PageTransition";
+import { FeedTabs, FeedTab } from "@/components/feed/FeedTabs";
+import { FeedMusicTab } from "@/components/feed/FeedMusicTab";
+import { FeedVideosTab } from "@/components/feed/FeedVideosTab";
+import { FeedSpotlightTab } from "@/components/feed/FeedSpotlightTab";
+import { FeedArtistsTab } from "@/components/feed/FeedArtistsTab";
+import { FeedSidebar } from "@/components/feed/FeedSidebar";
 
 interface NewTrack {
   id: string;
@@ -70,6 +61,7 @@ export default function FanFeed() {
   const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
   const [liveArtistIds, setLiveArtistIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<FeedTab>('music');
   const isMobile = useIsMobile();
 
   // Log page load in repro mode
@@ -208,7 +200,7 @@ export default function FanFeed() {
           `)
           .in('artist_id', artistIds)
           .order('created_at', { ascending: false })
-          .limit(10);
+          .limit(20);
 
         setNewTracks(tracksData || []);
 
@@ -229,11 +221,11 @@ export default function FanFeed() {
           `)
           .in('artist_id', artistIds)
           .order('created_at', { ascending: false })
-        .limit(10);
+          .limit(20);
 
         setVideoPosts(videosData || []);
 
-        // Fetch live streams for followed artists (use local artistIds, not state)
+        // Fetch live streams for followed artists
         const { data: liveStreams } = await supabase
           .from('artist_live_streams')
           .select('artist_id')
@@ -272,6 +264,36 @@ export default function FanFeed() {
     });
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'music':
+        return (
+          <FeedMusicTab
+            tracks={newTracks}
+            likedTrackIds={likedTrackIds}
+            onPlayAll={handlePlayAll}
+            onPlayTrack={handlePlayTrack}
+            onAddToQueue={handleAddToQueue}
+            onLikeChange={handleLikeChange}
+          />
+        );
+      case 'videos':
+        return <FeedVideosTab videos={videoPosts} />;
+      case 'spotlight':
+        return <FeedSpotlightTab onPlayTrack={playNow} />;
+      case 'artists':
+        return (
+          <FeedArtistsTab
+            followedGenres={followedGenres}
+            followedArtistIds={followedArtistIds}
+            liveArtistIds={liveArtistIds}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -280,31 +302,26 @@ export default function FanFeed() {
           <FanSidebar />
           <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
             <PageBreadcrumb role="fan" />
-            <div className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+            <div className="max-w-7xl mx-auto space-y-6">
               {/* Header skeleton */}
               <div className="space-y-2">
                 <Skeleton className="h-10 w-48" />
                 <Skeleton className="h-4 w-64" />
               </div>
 
-              <div className="grid lg:grid-cols-3 gap-8">
-                {/* Main Feed Column skeleton */}
-                <div className="lg:col-span-2 space-y-8">
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Skeleton className="h-6 w-6 rounded" />
-                      <Skeleton className="h-6 w-48" />
-                    </div>
-                    <div className="space-y-3">
-                      {[...Array(5)].map((_, i) => (
-                        <TrackCardSkeleton key={i} />
-                      ))}
-                    </div>
-                  </Card>
+              {/* Tabs skeleton */}
+              <Skeleton className="h-12 w-full max-w-md" />
+
+              <div className="grid lg:grid-cols-3 gap-6">
+                {/* Main Content skeleton */}
+                <div className="lg:col-span-2 space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <TrackCardSkeleton key={i} />
+                  ))}
                 </div>
 
                 {/* Sidebar skeleton */}
-                <div className="space-y-8">
+                <div className="hidden lg:block space-y-6">
                   <CardSkeleton lines={4} />
                   <CardSkeleton lines={3} />
                 </div>
@@ -325,190 +342,37 @@ export default function FanFeed() {
         <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
           <PageBreadcrumb role="fan" />
           
-          <PageTransition className="max-w-7xl mx-auto space-y-6 md:space-y-8">
+          <PageTransition className="max-w-7xl mx-auto space-y-5">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-bold mb-2">{t('fan.yourFeed')}</h1>
-                <p className="text-muted-foreground">{t('fan.discoverFromFavorites')}</p>
+                <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('fan.yourFeed')}</h1>
+                <p className="text-muted-foreground text-sm md:text-base">{t('fan.discoverFromFavorites')}</p>
               </div>
               <DashboardFeedSwitch />
             </div>
 
-            {/* Live Now Banner */}
-            {liveArtistIds.size > 0 && (
-              <Card className="p-4 bg-gradient-to-r from-red-500/10 to-red-500/5 border-red-500/20">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <Radio className="h-5 w-5 text-red-500 animate-pulse" />
-                      <span className="font-semibold text-red-500">LIVE NOW</span>
-                    </div>
-                    <span className="text-muted-foreground">
-                      {liveArtistIds.size === 1
-                        ? "1 artist you follow is live!"
-                        : `${liveArtistIds.size} artists you follow are live!`}
-                    </span>
-                  </div>
-                  <Button
-                    onClick={() => navigate('/explore')}
-                    variant="outline"
-                    className="border-red-500/30 hover:bg-red-500/10 text-red-500"
-                  >
-                    Watch Now
-                  </Button>
-                </div>
-              </Card>
-            )}
+            {/* Tab Navigation */}
+            <FeedTabs 
+              activeTab={activeTab} 
+              onTabChange={setActiveTab}
+              counts={{ music: newTracks.length, videos: videoPosts.length }}
+            />
 
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Main Feed Column */}
-              <div className="lg:col-span-2 space-y-8">
-                {/* New From Your Artists */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Music className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-semibold">{t('fan.newFromYourArtists')}</h2>
-                    <InfoTooltip
-                      title={t('fan.latestFromFollowed')}
-                      description={t('fan.latestFromFollowedDesc')}
-                      forRole="fan"
-                    />
-                  </div>
-
-                  {newTracks.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-muted-foreground mb-4">
-                        {t('fan.noNewTracksYet')}
-                      </p>
-                      <Button onClick={() => navigate('/explore')} className="bg-gradient-gold">
-                        {t('fan.discoverArtists')}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Play All Button */}
-                      <div className="flex items-center gap-3">
-                        <Button 
-                          onClick={handlePlayAll}
-                          className="bg-primary hover:bg-primary/90"
-                        >
-                          <Play className="h-4 w-4 mr-2" />
-                          {t('actions.playAll')} ({newTracks.length})
-                        </Button>
-                      </div>
-                      
-                    <StaggeredList className="space-y-3" staggerDelay={0.06}>
-                        {newTracks.map((track) => (
-                          <TrackCard
-                            key={track.id}
-                            track={track}
-                            artistName={track.artist_profiles.artist_name}
-                            isLiked={likedTrackIds.has(track.id)}
-                            onPlay={() => handlePlayTrack(track)}
-                            onAddToQueue={() => handleAddToQueue(track)}
-                            onLikeChange={(isLiked) => handleLikeChange(track.id, isLiked)}
-                          />
-                        ))}
-                      </StaggeredList>
-                    </div>
-                  )}
-                </Card>
-
-                {/* Video Posts */}
-                {videoPosts.length > 0 && (
-                  <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                      <Video className="h-6 w-6 text-primary" />
-                      <h2 className="text-2xl font-semibold">{t('fan.newVideosFromArtists')}</h2>
-                    </div>
-                    <div className="space-y-6">
-                      {videoPosts.map((video) => (
-                        <VideoPostCard
-                          key={video.id}
-                          videoId={video.id}
-                          videoUrl={video.video_url}
-                          caption={video.caption}
-                          createdAt={video.created_at}
-                          artist={video.artist_profiles}
-                        />
-                      ))}
-                    </div>
-                  </Card>
-                )}
-
-                {/* Upcoming Events */}
-                <UpcomingEventsCard followedArtistIds={followedArtistIds} />
-
-                {/* Trending in Spotlight */}
-                <SpotlightTrendingCard
-                  onPlayTrack={(url, title, artist, cover) => playNow({
-                    id: `spotlight-${url}`,
-                    type: 'track',
-                    title,
-                    artistId: '',
-                    artistName: artist,
-                    artistUserId: '',
-                    mediaUrl: url,
-                    coverUrl: cover,
-                  })}
-                />
-
-                {/* Recommended For You */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                    <h2 className="text-2xl font-semibold">{t('fan.recommendedForYou')}</h2>
-                  </div>
-
-                  <DiscoverArtists
-                    followedGenres={followedGenres}
-                    followedArtistIds={followedArtistIds}
-                    limit={6}
-                  />
-                </Card>
+            {/* Main Content Grid */}
+            <div className="grid lg:grid-cols-3 gap-6">
+              {/* Tab Content */}
+              <div className="lg:col-span-2">
+                {renderTabContent()}
               </div>
 
-              {/* Sidebar Column */}
-              <div className="space-y-8">
-                {/* Your Artists in Top 10 */}
-                <SpotlightRankMilestoneCard />
-
-                {/* Spotlight New Entries */}
-                <SpotlightNewEntryCard
-                  onPlayTrack={(url, title, artist, cover) => playNow({
-                    id: `spotlight-new-${url}`,
-                    type: 'track',
-                    title,
-                    artistId: '',
-                    artistName: artist,
-                    artistUserId: '',
-                    mediaUrl: url,
-                    coverUrl: cover,
-                  })}
+              {/* Sidebar - Desktop only */}
+              <div className="hidden lg:block">
+                <FeedSidebar
+                  followedArtistIds={followedArtistIds}
+                  onTrackPlay={playNow}
+                  followingCount={followedArtistIds.length}
                 />
-
-                {/* Your Artists Are Rising */}
-                <SpotlightRisingCard />
-
-                {/* Trending on FlyMusic */}
-                <Card className="p-6">
-                  <div className="flex items-center gap-2 mb-6">
-                    <TrendingUp className="h-6 w-6 text-primary" />
-                    <h2 className="text-xl font-semibold">{t('fan.trending')}</h2>
-                    <InfoTooltip
-                      title={t('fan.trendingContent')}
-                      description={t('fan.trendingContentDesc')}
-                      forRole="fan"
-                    />
-                  </div>
-
-                  <TrendingSection
-                    type="tracks"
-                    limit={10}
-                    onTrackPlay={(item) => playNow(item)}
-                  />
-                </Card>
               </div>
             </div>
           </PageTransition>
