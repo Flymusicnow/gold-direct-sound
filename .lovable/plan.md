@@ -1,151 +1,108 @@
 
-# Plan: Fixa Artistnamn i Kommentarer + Admin Inbox Scroll
+# Plan: Lägg till Kommentarer på Spotlight Entry-kort
 
-## Problem 1: Artistnamn visas som personnamn (Johan Kallén istället för Gung Kungen)
+## Designkoncept
 
-### Rotorsak
-När kommentarer hämtas så inkluderas inte `artist_name` från `artist_profiles`:
-
-```
-Nuvarande:
-.select('id, user_id')  ← saknar artist_name!
-
-Sedan används:
-profile?.full_name || 'Artist'  ← personnamn från public_profiles
-```
-
-### Påverkade filer
+En minimal, icke-störande kommentarsfunktion som följer samma mönster som Community posts - en klickbar ikon som expanderar en kompakt kommentarssektion direkt i kortet.
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│           ARTISTNAMN MÅSTE HÄMTAS FRÅN artist_profiles       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ✅ useAuthorIdentity.ts (Community posts)                  │
-│     └── Hämtar artist_name korrekt                          │
-│                                                             │
-│  ❌ CommentsSection.tsx (rad 114-118)                       │
-│     └── Saknar artist_name i select                         │
-│                                                             │
-│  ❌ CommentItem.tsx (rad 172-176)                           │
-│     └── Saknar artist_name i select                         │
-│                                                             │
-│  ❌ VideoCommentsSection.tsx (rad 91-94)                    │
-│     └── Saknar artist_name i select                         │
-│                                                             │
-│  ❌ getCommentAuthorInfo() (lib/utils/commentAuthor.ts)     │
-│     └── Tar inte emot artistName parameter                  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────┐
+│            [Cover Image]                 │
+│                                          │
+├─────────────────────────────────────────┤
+│  LUST                                    │
+│  TOPLINER                                │
+│  Description text...                     │
+│                                          │
+│  2 votes   💬 3   📤   [♥ Voted]         │
+│  ─────────────────────────────────────── │
+│  (Expanderad kommentarssektion)          │
+│  👤 Fan1: "Jättebra låt!"               │
+│  👤 Artist: "Tack så mycket!"           │
+│  [Skriv en kommentar...]         [Send]  │
+└─────────────────────────────────────────┘
 ```
 
-### Lösning
+## Steg 1: Skapa Databas-tabell
 
-**Steg 1:** Uppdatera `getCommentAuthorInfo` att ta emot artistnamn
+Ny tabell `spotlight_entry_comments`:
+
+| Kolumn | Typ | Beskrivning |
+|--------|-----|-------------|
+| id | UUID | Primärnyckel |
+| entry_id | UUID | FK till spotlight_entries |
+| user_id | UUID | Kommentarsförfattare |
+| content | TEXT | Kommentarstext |
+| created_at | TIMESTAMPTZ | Skapad tidpunkt |
+| is_deleted | BOOLEAN | Soft delete |
+
+Med RLS-policies:
+- Alla kan läsa kommentarer
+- Inloggade användare kan skapa
+- Användare kan ta bort sina egna
+
+## Steg 2: Skapa Kommentarskomponent
+
+Ny fil: `src/components/spotlight/SpotlightEntryComments.tsx`
+
+Funktioner:
+- Hämtar och visar senaste 3 kommentarer
+- Visar antal totala kommentarer
+- Enkel input för att skriva ny kommentar
+- Använder `public_profiles` view för namn/avatar (enligt identity-protocol)
+
+## Steg 3: Uppdatera SpotlightEntryCard
+
+Ändringar i `src/components/spotlight/SpotlightEntryCard.tsx`:
 
 ```tsx
-// lib/utils/commentAuthor.ts
-export function getCommentAuthorInfo(
-  profile: CommentProfile | null | undefined,
-  isCommenterArtist: boolean,
-  commenterArtistId: string | null | undefined,
-  artistName?: string | null  // NY parameter
-): CommentAuthorInfo {
-  // ...
-  if (isCommenterArtist && safeArtistId) {
-    return {
-      authorType: 'artist',
-      authorArtistId: safeArtistId,
-      displayName: artistName?.trim() || profile?.full_name?.trim() || 'Artist',  // Prioritera artistnamn
-      isNavigable: true,
-      targetPath: `/artist/${safeArtistId}`,
-    };
-  }
-  // ...
-}
+// Lägg till state för kommentarer
+const [commentsExpanded, setCommentsExpanded] = useState(false);
+const [commentCount, setCommentCount] = useState(0);
+
+// I footer, lägg till kommentarikon mellan Share och Vote:
+<Button
+  size="icon"
+  variant="ghost"
+  onClick={() => setCommentsExpanded(!commentsExpanded)}
+  className={cn(commentsExpanded && "text-primary")}
+>
+  <MessageCircle className={cn("h-4 w-4", commentsExpanded && "fill-current")} />
+  {commentCount > 0 && <span className="ml-1 text-xs">{commentCount}</span>}
+</Button>
+
+// Under footer, visa expanderbar kommentarssektion:
+{commentsExpanded && (
+  <SpotlightEntryComments 
+    entryId={entry.id}
+    onCommentAdded={() => setCommentCount(c => c + 1)}
+  />
+)}
 ```
 
-**Steg 2:** Uppdatera CommentsSection.tsx
+## Steg 4: Real-time uppdateringar (valfritt)
 
-```tsx
-// Hämta artist_name
-const { data: artistProfiles } = await supabase
-  .from('artist_profiles')
-  .select('id, user_id, artist_name')  // LÄGG TILL artist_name
-  .in('user_id', userIds)
-  .eq('status', 'approved');
+Prenumerera på `spotlight_entry_comments` för live-uppdateringar när andra kommenterar.
 
-// Skapa map med både id och namn
-const artistMap = new Map(
-  artistProfiles?.map(a => [a.user_id, { id: a.id, name: a.artist_name }]) || []
-);
+## Visuell flöde
 
-// Sätt commenterArtistName
-commenterArtistName: artistMap.get(comment.user_id)?.name || null,
+```text
+Användare ser kort → Klickar på 💬 → Kommentarer expanderar smidigt
+                                    ↓
+                     Skriver kommentar → Skickar → Visas direkt
 ```
 
-**Steg 3:** Samma ändring i CommentItem.tsx (för replies)
+## Filer som skapas/ändras
 
-**Steg 4:** Samma ändring i VideoCommentsSection.tsx
+| Fil | Åtgärd |
+|-----|--------|
+| Database migration | CREATE TABLE spotlight_entry_comments |
+| `SpotlightEntryComments.tsx` | Ny komponent |
+| `SpotlightEntryCard.tsx` | Lägg till kommentarstoggle och inline-sektion |
 
----
+## UX-fördelar
 
-## Problem 2: Admin Inbox Scroll-restoration
-
-### Rotorsak
-När man klickar på en issue i Admin Inbox och sedan går tillbaka, så scrollas listan till toppen istället för där man var.
-
-### Lösning
-Spara scroll-position i sessionStorage för `/admin/inbox`-routen.
-
-**Fil: AdminInbox.tsx**
-
-```tsx
-// Lägg till useRef och useEffect för scroll-restoration
-import { useRef, useEffect } from 'react';
-
-// I komponenten:
-const scrollContainerRef = useRef<HTMLDivElement>(null);
-const SCROLL_KEY = 'admin-inbox-scroll';
-
-// Spara scroll-position vid navigering
-useEffect(() => {
-  const container = scrollContainerRef.current;
-  if (!container) return;
-  
-  // Restore position
-  const savedPos = sessionStorage.getItem(SCROLL_KEY);
-  if (savedPos) {
-    container.scrollTop = parseInt(savedPos, 10);
-  }
-  
-  // Save on scroll
-  const handleScroll = () => {
-    sessionStorage.setItem(SCROLL_KEY, String(container.scrollTop));
-  };
-  container.addEventListener('scroll', handleScroll);
-  return () => container.removeEventListener('scroll', handleScroll);
-}, []);
-```
-
-Alternativt: Använd `useScrollRestoration` hooken som redan finns i projektet men kräver att AdminLayout exponerar scroll-containern via ref.
-
----
-
-## Sammanfattning av ändringar
-
-| Fil | Ändring |
-|-----|---------|
-| `src/lib/utils/commentAuthor.ts` | Lägg till `artistName` parameter |
-| `src/components/CommentsSection.tsx` | Hämta och skicka `artist_name` |
-| `src/components/CommentItem.tsx` | Hämta och skicka `artist_name` för replies |
-| `src/components/video/VideoCommentsSection.tsx` | Hämta och skicka `artist_name` |
-| `src/pages/admin/AdminInbox.tsx` | Lägg till scroll-restoration med sessionStorage |
-
----
-
-## Förväntat resultat
-
-**Efter fix:**
-- "Gung Kungen" visas istället för "Johan Kallén" i kommentarer
-- Admin Inbox behåller scroll-position när man går tillbaka från en issue-vy
+- Stör inte kortets visuella känsla
+- Kommentarer är dolda tills användaren aktivt klickar
+- Följer etablerat mönster från Community feed
+- Snabb, minimal interaktion
