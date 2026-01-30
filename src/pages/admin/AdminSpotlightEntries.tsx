@@ -56,7 +56,7 @@ export default function AdminSpotlightEntries() {
   const fetchCampaignAndEntries = async () => {
     try {
       const [campaignRes, entriesRes] = await Promise.all([
-        supabase.from('spotlight_campaigns').select('name, description, status').eq('id', campaignId).single(),
+        supabase.from('spotlight_campaigns').select('name, description, status').eq('id', campaignId).maybeSingle(),
         supabase
           .from('spotlight_entries')
           .select(`
