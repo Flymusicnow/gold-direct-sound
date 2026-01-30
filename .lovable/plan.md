@@ -1,127 +1,151 @@
 
-# Plan: Fix Comment Author Display Across All Comment Systems
+# Plan: Fixa Artistnamn i Kommentarer + Admin Inbox Scroll
 
-## Problem Summary
-User reports that:
-- Artist names show as "Artist" (fallback) instead of their real name
-- Fan comments show as "Anonymous" and aren't clickable
-- Profile pictures don't display
+## Problem 1: Artistnamn visas som personnamn (Johan Kallén istället för Gung Kungen)
 
-The root cause: Three comment components query the `profiles` table directly, which is blocked by RLS for other users' data. Per the "identity-resolution-privacy-protocol", all queries for other users must use `public_profiles` view.
+### Rotorsak
+När kommentarer hämtas så inkluderas inte `artist_name` från `artist_profiles`:
 
-## Components Affected
+```
+Nuvarande:
+.select('id, user_id')  ← saknar artist_name!
+
+Sedan används:
+profile?.full_name || 'Artist'  ← personnamn från public_profiles
+```
+
+### Påverkade filer
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
-│                    IDENTITY RESOLUTION                       │
+│           ARTISTNAMN MÅSTE HÄMTAS FRÅN artist_profiles       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  ✅ useAuthorIdentity.ts (ALREADY FIXED)                    │
-│     └── Uses public_profiles                                │
+│  ✅ useAuthorIdentity.ts (Community posts)                  │
+│     └── Hämtar artist_name korrekt                          │
 │                                                             │
-│  ✅ CommentThread.tsx (Community posts)                     │
-│     └── Uses fetchAuthorIdentities (now fixed)              │
+│  ❌ CommentsSection.tsx (rad 114-118)                       │
+│     └── Saknar artist_name i select                         │
 │                                                             │
-│  ❌ CommentsSection.tsx (Artist profile comments)           │
-│     └── Line 108-111: queries profiles directly             │
+│  ❌ CommentItem.tsx (rad 172-176)                           │
+│     └── Saknar artist_name i select                         │
 │                                                             │
-│  ❌ CommentItem.tsx (Reply loading)                         │
-│     └── Line 166-170: queries profiles directly             │
+│  ❌ VideoCommentsSection.tsx (rad 91-94)                    │
+│     └── Saknar artist_name i select                         │
 │                                                             │
-│  ❌ VideoCommentsSection.tsx (Video comments)               │
-│     └── Line 85-89: queries profiles directly               │
+│  ❌ getCommentAuthorInfo() (lib/utils/commentAuthor.ts)     │
+│     └── Tar inte emot artistName parameter                  │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Changes Required
+### Lösning
 
-### File 1: `src/components/CommentsSection.tsx`
+**Steg 1:** Uppdatera `getCommentAuthorInfo` att ta emot artistnamn
 
-**Change (lines 108-111):**
 ```tsx
-// BEFORE:
-const { data: profilesData } = await supabase
-  .from("profiles")
-  .select("id, full_name, avatar_url, email" as any)
-  .in("id", userIds);
-
-// AFTER:
-const { data: profilesData } = await supabase
-  .from("public_profiles")
-  .select("id, full_name, avatar_url")
-  .in("id", userIds);
+// lib/utils/commentAuthor.ts
+export function getCommentAuthorInfo(
+  profile: CommentProfile | null | undefined,
+  isCommenterArtist: boolean,
+  commenterArtistId: string | null | undefined,
+  artistName?: string | null  // NY parameter
+): CommentAuthorInfo {
+  // ...
+  if (isCommenterArtist && safeArtistId) {
+    return {
+      authorType: 'artist',
+      authorArtistId: safeArtistId,
+      displayName: artistName?.trim() || profile?.full_name?.trim() || 'Artist',  // Prioritera artistnamn
+      isNavigable: true,
+      targetPath: `/artist/${safeArtistId}`,
+    };
+  }
+  // ...
+}
 ```
 
-### File 2: `src/components/CommentItem.tsx`
+**Steg 2:** Uppdatera CommentsSection.tsx
 
-**Change (lines 166-170):**
 ```tsx
-// BEFORE:
-supabase
-  .from("profiles")
-  .select("id, full_name, avatar_url, email" as any)
-  .in("id", userIds),
+// Hämta artist_name
+const { data: artistProfiles } = await supabase
+  .from('artist_profiles')
+  .select('id, user_id, artist_name')  // LÄGG TILL artist_name
+  .in('user_id', userIds)
+  .eq('status', 'approved');
 
-// AFTER:
-supabase
-  .from("public_profiles")
-  .select("id, full_name, avatar_url")
-  .in("id", userIds),
+// Skapa map med både id och namn
+const artistMap = new Map(
+  artistProfiles?.map(a => [a.user_id, { id: a.id, name: a.artist_name }]) || []
+);
+
+// Sätt commenterArtistName
+commenterArtistName: artistMap.get(comment.user_id)?.name || null,
 ```
 
-### File 3: `src/components/video/VideoCommentsSection.tsx`
+**Steg 3:** Samma ändring i CommentItem.tsx (för replies)
 
-**Change (lines 85-89):**
+**Steg 4:** Samma ändring i VideoCommentsSection.tsx
+
+---
+
+## Problem 2: Admin Inbox Scroll-restoration
+
+### Rotorsak
+När man klickar på en issue i Admin Inbox och sedan går tillbaka, så scrollas listan till toppen istället för där man var.
+
+### Lösning
+Spara scroll-position i sessionStorage för `/admin/inbox`-routen.
+
+**Fil: AdminInbox.tsx**
+
 ```tsx
-// BEFORE:
-supabase
-  .from('profiles')
-  .select('id, full_name, email')
-  .in('id', userIds),
+// Lägg till useRef och useEffect för scroll-restoration
+import { useRef, useEffect } from 'react';
 
-// AFTER:
-supabase
-  .from('public_profiles')
-  .select('id, full_name, avatar_url')
-  .in('id', userIds),
+// I komponenten:
+const scrollContainerRef = useRef<HTMLDivElement>(null);
+const SCROLL_KEY = 'admin-inbox-scroll';
+
+// Spara scroll-position vid navigering
+useEffect(() => {
+  const container = scrollContainerRef.current;
+  if (!container) return;
+  
+  // Restore position
+  const savedPos = sessionStorage.getItem(SCROLL_KEY);
+  if (savedPos) {
+    container.scrollTop = parseInt(savedPos, 10);
+  }
+  
+  // Save on scroll
+  const handleScroll = () => {
+    sessionStorage.setItem(SCROLL_KEY, String(container.scrollTop));
+  };
+  container.addEventListener('scroll', handleScroll);
+  return () => container.removeEventListener('scroll', handleScroll);
+}, []);
 ```
 
-## Expected Results
+Alternativt: Använd `useScrollRestoration` hooken som redan finns i projektet men kräver att AdminLayout exponerar scroll-containern via ref.
 
-After these changes:
-- Artist names will display correctly (fetched from public_profiles.full_name)
-- Fan names will display correctly (no longer blocked by RLS)
-- Avatar URLs will be available for display
-- The `getCommentAuthorInfo` utility will work correctly with real data
-- Profile navigation will work for users with names
+---
 
-## Technical Flow (After Fix)
+## Sammanfattning av ändringar
 
-```text
-Comment Render Flow:
-┌─────────────────┐
-│   Supabase      │
-│ public_profiles │ ← RLS allows read
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ full_name found │
-│ avatar_url found│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│getCommentAuthor │
-│     Info()      │
-└────────┬────────┘
-         │
-    ┌────┴────┐
-    ▼         ▼
- Artist     Fan
- ├─name     ├─name
- ├─avatar   ├─avatar
- └─/artist/ └─(not navigable per current rule)
-   link
-```
+| Fil | Ändring |
+|-----|---------|
+| `src/lib/utils/commentAuthor.ts` | Lägg till `artistName` parameter |
+| `src/components/CommentsSection.tsx` | Hämta och skicka `artist_name` |
+| `src/components/CommentItem.tsx` | Hämta och skicka `artist_name` för replies |
+| `src/components/video/VideoCommentsSection.tsx` | Hämta och skicka `artist_name` |
+| `src/pages/admin/AdminInbox.tsx` | Lägg till scroll-restoration med sessionStorage |
+
+---
+
+## Förväntat resultat
+
+**Efter fix:**
+- "Gung Kungen" visas istället för "Johan Kallén" i kommentarer
+- Admin Inbox behåller scroll-position när man går tillbaka från en issue-vy
