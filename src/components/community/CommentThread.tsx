@@ -152,7 +152,10 @@ const CommentItem: React.FC<{
               </span>
             ) : (
               <button 
-                onClick={() => onProfileClick(comment.author_id, identity)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onProfileClick(comment.author_id, identity);
+                }}
                 className="text-sm font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
               >
                 {displayName}

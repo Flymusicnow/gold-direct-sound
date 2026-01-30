@@ -792,13 +792,13 @@ function SortableTrackRow({
       
       <div className="flex items-center gap-2">
         <Button
-          size="icon"
-          variant="ghost"
+          size="sm"
+          variant="outline"
           onClick={onEditMetadata}
-          className="flex-shrink-0"
-          title="Edit track details"
+          className="flex-shrink-0 gap-1"
         >
           <Pencil className="h-4 w-4" />
+          <span className="hidden sm:inline">Edit</span>
         </Button>
         <Button
           size="sm"
@@ -883,13 +883,13 @@ function TrackRow({
       
       <div className="flex items-center gap-2">
         <Button
-          size="icon"
-          variant="ghost"
+          size="sm"
+          variant="outline"
           onClick={onEditMetadata}
-          className="flex-shrink-0"
-          title="Edit track details"
+          className="flex-shrink-0 gap-1"
         >
           <Pencil className="h-4 w-4" />
+          <span className="hidden sm:inline">Edit</span>
         </Button>
         <Button
           size="sm"
