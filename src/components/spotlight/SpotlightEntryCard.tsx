@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
-import { Share2 } from "lucide-react";
+import { Play, Share2, MessageCircle } from "lucide-react";
 import SpotlightVoteButton from "./SpotlightVoteButton";
 import SpotlightShareModal from "./SpotlightShareModal";
+import SpotlightEntryComments from "./SpotlightEntryComments";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
+import { cn } from "@/lib/utils";
 
 interface Entry {
   id: string;
@@ -36,7 +37,23 @@ interface SpotlightEntryCardProps {
 export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }: SpotlightEntryCardProps) {
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [campaignName, setCampaignName] = useState('');
+  const [commentsExpanded, setCommentsExpanded] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
   const { playNow } = useFlightdeck();
+
+  // Fetch initial comment count
+  useEffect(() => {
+    const fetchCommentCount = async () => {
+      const { count } = await supabase
+        .from('spotlight_entry_comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('entry_id', entry.id)
+        .eq('is_deleted', false);
+      
+      setCommentCount(count || 0);
+    };
+    fetchCommentCount();
+  }, [entry.id]);
 
   useEffect(() => {
     const fetchCampaignName = async () => {
@@ -107,7 +124,18 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }:
         )}
         <div className="flex items-center justify-between">
           <Badge variant="outline">{entry.total_votes} votes</Badge>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setCommentsExpanded(!commentsExpanded)}
+              className={cn("h-9 w-9", commentsExpanded && "text-primary")}
+            >
+              <MessageCircle className={cn("h-4 w-4", commentsExpanded && "fill-current")} />
+              {commentCount > 0 && (
+                <span className="ml-0.5 text-xs">{commentCount}</span>
+              )}
+            </Button>
             <Button
               size="icon"
               variant="ghost"
@@ -122,6 +150,14 @@ export default function SpotlightEntryCard({ entry, onVoteSuccess, campaignId }:
             />
           </div>
         </div>
+
+        {/* Expandable comments section */}
+        {commentsExpanded && (
+          <SpotlightEntryComments
+            entryId={entry.id}
+            onCommentCountChange={setCommentCount}
+          />
+        )}
       </CardContent>
 
       {campaignId && (

@@ -4947,6 +4947,41 @@ export type Database = {
           },
         ]
       }
+      spotlight_entry_comments: {
+        Row: {
+          content: string
+          created_at: string
+          entry_id: string
+          id: string
+          is_deleted: boolean
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          is_deleted?: boolean
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          is_deleted?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spotlight_entry_comments_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "spotlight_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spotlight_templates: {
         Row: {
           category: string
