@@ -409,7 +409,26 @@ Please analyze this bug report and provide:
               {/* Payload details */}
               {message.payload && (
                 <div className="bg-muted rounded-lg p-4 space-y-2">
-                  <h4 className="font-medium text-sm">{t("details")}</h4>
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium text-sm">{t("details")}</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1.5"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(JSON.stringify(message.payload, null, 2));
+                          toast({ title: "Details copied!", description: "Issue details copied to clipboard" });
+                        } catch (err) {
+                          console.log('Details:', JSON.stringify(message.payload, null, 2));
+                          toast({ title: "Logged to console", description: "Clipboard access failed" });
+                        }
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      Copy
+                    </Button>
+                  </div>
                   <pre className="text-xs overflow-auto max-h-48">
                     {JSON.stringify(message.payload, null, 2)}
                   </pre>
