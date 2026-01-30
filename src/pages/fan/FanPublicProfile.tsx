@@ -151,7 +151,11 @@ export default function FanPublicProfile() {
   if (!profile) {
     return (
       <div className="min-h-screen bg-background p-6">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => window.history.length <= 2 ? navigate('/') : navigate(-1)} 
+          className="gap-2 mb-6"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
@@ -171,7 +175,11 @@ export default function FanPublicProfile() {
     <div className="min-h-screen bg-background pb-28">
       {/* Header */}
       <div className="container max-w-2xl mx-auto px-4 py-6">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2 mb-6">
+        <Button 
+          variant="ghost" 
+          onClick={() => window.history.length <= 2 ? navigate('/') : navigate(-1)} 
+          className="gap-2 mb-6"
+        >
           <ArrowLeft className="h-4 w-4" />
           Back
         </Button>
