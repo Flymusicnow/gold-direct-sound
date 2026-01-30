@@ -20,7 +20,7 @@ interface VideoComment {
   parent_comment_id: string | null;
   profiles?: {
     full_name: string | null;
-    email: string;
+    avatar_url?: string | null;
   };
 }
 
@@ -84,8 +84,8 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
         // Fetch profiles, artist profiles, and supporter levels in parallel
         const [profilesResult, artistProfilesResult, supportScoresResult] = await Promise.all([
           supabase
-            .from('profiles')
-            .select('id, full_name, email')
+            .from('public_profiles')
+            .select('id, full_name, avatar_url')
             .in('id', userIds),
           supabase
             .from('artist_profiles')
