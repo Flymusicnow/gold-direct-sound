@@ -1,220 +1,98 @@
 
+# Plan: Fixa 404 för "issue_fixed" notifikationer
 
-# Plan: Redesign Fan Feed med tydlig struktur och visuell hierarki
+## Problem
 
-## Nuvarande problem (baserat på screenshots)
+Trigger-funktionen `notify_reporter_on_issue_resolved()` skickar **alla** användare till `/studio/dashboard` oavsett deras roll. Fans har inte tillgång till denna route.
 
-1. **Spretig layout** - Många separata Card-sektioner utan tydlig gruppering
-2. **Blandad innehållstyp** - Tracks, videos, spotlight, events blandas utan logik
-3. **Ingen visuell hierarki** - Allt ser lika viktigt ut
-4. **Svårt att navigera** - För många sektioner att scrolla igenom
-5. **Inkonsekvent kortdesign** - Olika storlekar och stilar
+## Lösning
 
-## Ny struktur: "Tab-baserad Feed"
+Uppdatera trigger-funktionen att använda **den ursprungliga routen** där användaren rapporterade problemet, eller en roll-baserad dashboard som fallback.
 
-Istället för en lång lista med alla sektioner, introducera en horisontell tab-navigation som filtrerar innehållet:
+## Databasändring
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  🔥 Your Feed                          [Dashboard | Feed]   │
-│  Discover what's new from your favorite artists             │
-└─────────────────────────────────────────────────────────────┘
+Ersätt den hårdkodade länken med dynamisk routing:
 
-┌─────────────────────────────────────────────────────────────┐
-│  [ 🎵 Music ]  [ 📹 Videos ]  [ ⭐ Spotlight ]  [ 🎤 Artists ]│
-└─────────────────────────────────────────────────────────────┘
-
-  Unified Feed (vald tab)
-┌─────────────────────────────────────────────────────────────┐
-│                                                             │
-│  (Innehåll baserat på vald tab)                            │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+```sql
+CREATE OR REPLACE FUNCTION public.notify_reporter_on_issue_resolved()
+RETURNS TRIGGER AS $$
+DECLARE
+  reporter_user_id UUID;
+  reporter_role TEXT;
+  original_route TEXT;
+  notification_link TEXT;
+BEGIN
+  IF (NEW.status IN ('resolved', 'verified') AND 
+      (OLD.status IS NULL OR OLD.status NOT IN ('resolved', 'verified'))) THEN
+    
+    reporter_user_id := (NEW.payload->'ai_context'->>'user_id')::UUID;
+    reporter_role := NEW.payload->'ai_context'->>'user_role';
+    original_route := NEW.payload->'ai_context'->>'route';
+    
+    -- Bestäm länk baserat på roll och original route
+    notification_link := CASE
+      WHEN original_route IS NOT NULL AND original_route != '' THEN original_route
+      WHEN reporter_role = 'fan' THEN '/fan/dashboard'
+      WHEN reporter_role = 'artist' THEN '/studio/dashboard'
+      WHEN reporter_role = 'brand' THEN '/brand/dashboard'
+      ELSE '/role-selection'
+    END;
+    
+    IF reporter_user_id IS NOT NULL THEN
+      INSERT INTO notifications (user_id, type, title, message, link, metadata, severity)
+      VALUES (
+        reporter_user_id,
+        'issue_fixed',
+        '✅ Your reported issue has been fixed!',
+        COALESCE(NEW.resolution_summary, 'The issue you reported has been resolved.'),
+        notification_link,  -- Dynamisk länk istället för hårdkodad
+        jsonb_build_object(
+          'inbox_id', NEW.id,
+          'resolved_at', NEW.resolved_at,
+          'original_route', original_route
+        ),
+        'important'
+      );
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 ```
 
-## Design per tab
+## Logik
 
-### Tab 1: Music (Default)
+| Scenario | Länk |
+|----------|------|
+| Original route finns | `/fan/feed` (den ursprungliga routen) |
+| Fan utan route | `/fan/dashboard` |
+| Artist utan route | `/studio/dashboard` |
+| Brand utan route | `/brand/dashboard` |
+| Okänd roll | `/role-selection` |
 
-Visar nya låtar från följda artister i ett snyggt kortformat:
+## Tekniska detaljer
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  ▶ Play All (12 tracks)                    [Sort: Newest ▼] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────┐  Title of the Track                          │
-│  │  Cover   │  Artist Name • 2h ago                        │
-│  │   ▶      │  [♥] [+Queue] [...]                          │
-│  └──────────┘                                              │
-│                                                             │
-│  ┌──────────┐  Another Track Title                         │
-│  │  Cover   │  Different Artist • 5h ago                   │
-│  │   ▶      │  [♥] [+Queue] [...]                          │
-│  └──────────┘                                              │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+- **Fil:** Ny SQL-migration
+- **Funktion:** `notify_reporter_on_issue_resolved()`
+- **Trigger:** Ingen ändring behövs (redan kopplad)
+- **Befintliga notifikationer:** Kan uppdateras manuellt vid behov
+
+## Bonus: Uppdatera befintliga notifikationer
+
+För att fixa redan skapade notifikationer med fel länk:
+
+```sql
+UPDATE notifications n
+SET link = COALESCE(
+  (SELECT im.payload->'ai_context'->>'route' 
+   FROM inbox_messages im 
+   WHERE im.id = (n.metadata->>'inbox_id')::uuid),
+  CASE 
+    WHEN EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = n.user_id AND ur.role = 'fan') 
+    THEN '/fan/dashboard'
+    ELSE '/studio/dashboard'
+  END
+)
+WHERE n.type = 'issue_fixed';
 ```
-
-### Tab 2: Videos
-
-Visar videor i ett grid-format med konsekvent storlek:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  Videos from your artists                                   │
-├─────────────────────────────────────────────────────────────┤
-│  ┌────────────────┐  ┌────────────────┐                    │
-│  │                │  │                │                    │
-│  │   Video 1      │  │   Video 2      │                    │
-│  │                │  │                │                    │
-│  │ Artist • 2h    │  │ Artist • 5h    │                    │
-│  └────────────────┘  └────────────────┘                    │
-│                                                             │
-│  ┌────────────────┐  ┌────────────────┐                    │
-│  │   Video 3      │  │   Video 4      │                    │
-│  └────────────────┘  └────────────────┘                    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Tab 3: Spotlight
-
-Fokuserat på Spotlight-innehåll med tydlig rankning:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  ⭐ Trending in Spotlight              [Vote Now →]         │
-├─────────────────────────────────────────────────────────────┤
-│  🥇  Track Name - Artist          1,234 votes   [▶] [Vote] │
-│  🥈  Track Name - Artist            987 votes   [▶] [Vote] │
-│  🥉  Track Name - Artist            654 votes   [▶] [Vote] │
-│  4.  Track Name - Artist            432 votes   [▶] [Vote] │
-│  5.  Track Name - Artist            321 votes   [▶] [Vote] │
-├─────────────────────────────────────────────────────────────┤
-│  New Entries This Week                                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐                    │
-│  │  Entry   │ │  Entry   │ │  Entry   │                    │
-│  └──────────┘ └──────────┘ └──────────┘                    │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Tab 4: Artists
-
-Upptäck och hantera artistrelationer:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  🎤 Your Artists                                            │
-├─────────────────────────────────────────────────────────────┤
-│  Following (23)                         [See All →]         │
-│  ○ ○ ○ ○ ○ (horisontell scroll av avatarer)                │
-├─────────────────────────────────────────────────────────────┤
-│  Recommended For You                                        │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐                       │
-│  │ Avatar  │ │ Avatar  │ │ Avatar  │                       │
-│  │ Name    │ │ Name    │ │ Name    │                       │
-│  │[Follow] │ │[Follow] │ │[Follow] │                       │
-│  └─────────┘ └─────────┘ └─────────┘                       │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Sidebar (Desktop) - Förenklad
-
-Sidebar behålls men förenklas till endast essentiellt:
-
-```text
-┌───────────────────────┐
-│  ⭐ Top 10 Now         │
-│  (kompakt leaderboard) │
-├───────────────────────┤
-│  📅 Upcoming Events    │
-│  (nästa 3 events)      │
-├───────────────────────┤
-│  🏆 Your Stats         │
-│  Votes: 45             │
-│  Artists: 23           │
-└───────────────────────┘
-```
-
-## Tekniska ändringar
-
-### Ny komponent: `FeedTabs.tsx`
-
-```tsx
-type FeedTab = 'music' | 'videos' | 'spotlight' | 'artists';
-
-interface FeedTabsProps {
-  activeTab: FeedTab;
-  onTabChange: (tab: FeedTab) => void;
-  counts: { music: number; videos: number };
-}
-
-// Horisontellt scrollbar med animerad underline
-```
-
-### Uppdaterad `FanFeed.tsx`
-
-1. Lägg till tab-state: `const [activeTab, setActiveTab] = useState<FeedTab>('music')`
-2. Rendera endast relevant innehåll baserat på tab
-3. Behåll sidebar med förenklad info
-4. Lazy-load innehåll per tab
-
-### Ny komponent: `FeedMusicTab.tsx`
-
-- Renderar tracks med förbättrad TrackCard
-- Play All-funktion
-- Sorteringsalternativ
-
-### Ny komponent: `FeedVideosTab.tsx`
-
-- Grid-layout med 2 kolumner
-- Kompaktare VideoPostCard
-- Lazy loading
-
-### Ny komponent: `FeedSpotlightTab.tsx`
-
-- Trending leaderboard
-- New entries carousel
-- Rising stars sektion
-
-### Ny komponent: `FeedArtistsTab.tsx`
-
-- Following carousel
-- Recommendations grid
-- Live now indicator
-
-## Mobil-specifika förbättringar
-
-1. **Sticky tabs** - Tabs fastnar under header vid scroll
-2. **Swipe between tabs** - Touch-vänlig navigation
-3. **Kompakta kort** - Mindre padding, tightare layout
-4. **Bottom sheet** - För track-actions istället för inline-knappar
-
-## Visuella förbättringar
-
-1. **Konsekvent kortdesign** - Alla kort använder samma border-radius, skugga
-2. **Tydlig hierarki** - Större rubriker, bättre spacing
-3. **Gold accent** - Använd primary-färgen mer konsekvent
-4. **Micro-animationer** - Tab-övergångar, like-animationer
-
-## Filer att skapa/ändra
-
-| Fil | Åtgärd |
-|-----|--------|
-| `src/components/feed/FeedTabs.tsx` | Ny |
-| `src/components/feed/FeedMusicTab.tsx` | Ny |
-| `src/components/feed/FeedVideosTab.tsx` | Ny |
-| `src/components/feed/FeedSpotlightTab.tsx` | Ny |
-| `src/components/feed/FeedArtistsTab.tsx` | Ny |
-| `src/components/feed/CompactVideoCard.tsx` | Ny |
-| `src/pages/FanFeed.tsx` | Uppdatera med tabs |
-
-## Sammanfattning
-
-| Före | Efter |
-|------|-------|
-| 6+ separata sektioner | 4 fokuserade tabs |
-| Lång scroll | Filtrerat innehåll |
-| Blandade storlekar | Konsekvent design |
-| Överväldigande | Organiserat och tydligt |
-
