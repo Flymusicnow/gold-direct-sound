@@ -3,10 +3,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useSupportScore } from './useSupportScore';
+import { useMissions } from './useMissions';
 
 export function useLikeTrack(trackId: string, artistId: string, initialLiked: boolean = false) {
   const { user } = useAuth();
   const { updateSupportScore } = useSupportScore();
+  const { updateMissionProgress } = useMissions();
   const [liked, setLiked] = useState(initialLiked);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -39,6 +41,9 @@ export function useLikeTrack(trackId: string, artistId: string, initialLiked: bo
         
         // Update support score
         updateSupportScore(artistId, 'like_track');
+        
+        // Update mission progress for daily likes
+        updateMissionProgress('daily_like_tracks');
       }
     } catch (error) {
       console.error('Error updating like:', error);

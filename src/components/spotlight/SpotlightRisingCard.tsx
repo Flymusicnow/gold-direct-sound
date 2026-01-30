@@ -55,7 +55,7 @@ export function SpotlightRisingCard() {
         .from('spotlight_campaigns')
         .select('id, name')
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (!campaign) {
         setLoading(false);

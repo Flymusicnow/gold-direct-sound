@@ -49,7 +49,7 @@ export function SpotlightTrendingCard({ onPlayTrack }: SpotlightTrendingCardProp
         .from('spotlight_campaigns')
         .select('id, name')
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (!campaign) {
         setLoading(false);
