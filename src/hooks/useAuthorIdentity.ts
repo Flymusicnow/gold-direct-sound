@@ -88,23 +88,16 @@ export function useAuthorIdentity(
           }
         }
 
-        // Fall back to profile lookup
+        // Fall back to profile lookup - use public_profiles view for privacy
         const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, avatar_url, email')
+          .from('public_profiles')
+          .select('full_name, avatar_url')
           .eq('id', authorId)
           .maybeSingle();
 
         if (!cancelled) {
           // Resolve display name - NEVER use generic labels
-          let displayName = 'Fan';
-          
-          if (profile?.full_name?.trim()) {
-            displayName = profile.full_name.trim();
-          } else if (profile?.email) {
-            // Use email prefix as fallback
-            displayName = profile.email.split('@')[0];
-          }
+          const displayName = profile?.full_name?.trim() || 'Fan';
 
           // Determine role badge
           let roleBadge: AuthorRole = effectiveType || 'fan';
@@ -179,10 +172,10 @@ export async function fetchAuthorIdentities(
       (artistProfiles || []).map((a) => [a.user_id, a])
     );
 
-    // Batch fetch regular profiles
+    // Batch fetch regular profiles - use public_profiles view for privacy
     const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name, avatar_url, email')
+      .from('public_profiles')
+      .select('id, full_name, avatar_url')
       .in('id', uniqueIds);
 
     const profileById = new Map((profiles || []).map((p) => [p.id, p]));
@@ -214,12 +207,7 @@ export async function fetchAuthorIdentities(
           isLoading: false,
         });
       } else {
-        let displayName = 'Fan';
-        if (profile?.full_name?.trim()) {
-          displayName = profile.full_name.trim();
-        } else if (profile?.email) {
-          displayName = profile.email.split('@')[0];
-        }
+        const displayName = profile?.full_name?.trim() || 'Fan';
 
         identityMap.set(userId, {
           displayName,
