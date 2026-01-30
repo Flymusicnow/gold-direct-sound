@@ -1,238 +1,167 @@
 
-# Notifikationssystem för Admin-uppdateringar (Wave 1)
 
-## Nulägesanalys
+# Buggfix-plan: Community Replies, Mission Progress & HTTP 406 Errors
 
-Projektet har redan:
-- **`notifications`-tabell** med `user_id`, `type`, `title`, `message`, `link`, `read`, `metadata`
-- **`NotificationBell`-komponent** som redan visas i StudioSidebar för artister
-- **`inbox_messages`-tabell** för admin-issues med status (unread/in_progress/resolved/verified)
-- **`platform_updates`-tabell** med `target_roles` för roll-baserade uppdateringar
-- **Realtime-prenumeration** för notifikationer
+## Sammanfattning av buggar
 
-## Vad som saknas
-
-1. **Automatisk notifikation vid issue-resolution** - ingen trigger finns när admin markerar issue som "resolved"
-2. **Severity-fält** på notifikationer (`info` / `important`)
-3. **Admin-endpoint för att skapa notifikationer till specifika användare/roller**
-4. **Nya notifikationstyper** (`admin_update`, `issue_fixed`, `release_note`)
+| Bugg | Orsak | Prioritet |
+|------|-------|-----------|
+| Mission progress för likes | `updateMissionProgress` anropas aldrig | Hög |
+| HTTP 406 på spotlight_campaigns | `.single()` returnerar 406 om 0 eller >1 rader | Medium |
+| Community replies | UX-problem: användare missar inline-svar | Låg |
 
 ---
 
-## Teknisk Implementation
+## Bugg 1: Mission Progress för Likes (KRITISK)
 
-### Del 1: Databasändringar
+### Problemanalys
+- Mission `daily_like_tracks` finns i databasen med `target_count: 3`
+- `updateMissionProgress(missionKey)` finns i `useMissions.ts` men anropas **aldrig**
+- `LikesContext.tsx` anropar `updateSupportScore` men inte `updateMissionProgress`
 
-Lägg till severity-kolumn och nya typer i befintlig `notifications`-tabell:
+### Lösning
+Integrera missions-uppdatering i LikesContext:
 
-```sql
--- Lägg till severity-kolumn
-ALTER TABLE public.notifications 
-ADD COLUMN IF NOT EXISTS severity TEXT DEFAULT 'info' 
-CHECK (severity IN ('info', 'important'));
-
--- Lägg till index för rollfrågor
-CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
-```
-
-### Del 2: Database Trigger för Issue Resolution
-
-Skapa trigger som automatiskt skapar notifikationer när en issue löses:
-
-```sql
-CREATE OR REPLACE FUNCTION notify_reporter_on_issue_resolved()
-RETURNS TRIGGER AS $$
-DECLARE
-  reporter_user_id UUID;
-  issue_title TEXT;
-BEGIN
-  -- Endast trigga vid statusändring till 'resolved' eller 'verified'
-  IF (NEW.status IN ('resolved', 'verified') AND 
-      (OLD.status IS NULL OR OLD.status NOT IN ('resolved', 'verified'))) THEN
-    
-    -- Hämta reporter_id från payload (om contextual_report)
-    reporter_user_id := (NEW.payload->'ai_context'->>'user_id')::UUID;
-    
-    IF reporter_user_id IS NOT NULL THEN
-      INSERT INTO notifications (user_id, type, title, message, link, metadata, severity)
-      VALUES (
-        reporter_user_id,
-        'issue_fixed',
-        '✅ Your reported issue has been fixed!',
-        COALESCE(NEW.resolution_summary, 'The issue you reported has been resolved.'),
-        '/studio/dashboard',
-        jsonb_build_object(
-          'inbox_id', NEW.id,
-          'resolved_at', NEW.resolved_at
-        ),
-        'important'
-      );
-    END IF;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
-
--- Trigger på inbox_messages
-CREATE TRIGGER on_inbox_resolved_notify_reporter
-  AFTER UPDATE OF status ON inbox_messages
-  FOR EACH ROW
-  EXECUTE FUNCTION notify_reporter_on_issue_resolved();
-```
-
-### Del 3: RPC-funktion för Admin-notifikationer
-
-Skapa säker funktion för att låta admin skicka notifikationer:
-
-```sql
-CREATE OR REPLACE FUNCTION send_admin_notification(
-  p_type TEXT,
-  p_title TEXT,
-  p_message TEXT,
-  p_target_user_ids UUID[] DEFAULT NULL,
-  p_target_role TEXT DEFAULT NULL,
-  p_link TEXT DEFAULT NULL,
-  p_severity TEXT DEFAULT 'info'
-)
-RETURNS INTEGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  user_record RECORD;
-  inserted_count INTEGER := 0;
-BEGIN
-  -- Verifiera att anroparen är admin
-  IF NOT public.is_admin() THEN
-    RAISE EXCEPTION 'Only admins can send notifications';
-  END IF;
-  
-  -- Om specifika user_ids anges
-  IF p_target_user_ids IS NOT NULL THEN
-    INSERT INTO notifications (user_id, type, title, message, link, severity)
-    SELECT unnest(p_target_user_ids), p_type, p_title, p_message, p_link, p_severity;
-    GET DIAGNOSTICS inserted_count = ROW_COUNT;
-    
-  -- Om target_role anges (t.ex. 'artist')
-  ELSIF p_target_role IS NOT NULL THEN
-    FOR user_record IN 
-      SELECT DISTINCT user_id FROM user_roles WHERE role::text = p_target_role
-    LOOP
-      INSERT INTO notifications (user_id, type, title, message, link, severity)
-      VALUES (user_record.user_id, p_type, p_title, p_message, p_link, p_severity);
-      inserted_count := inserted_count + 1;
-    END LOOP;
-  END IF;
-  
-  RETURN inserted_count;
-END;
-$$;
-```
-
-### Del 4: Frontend-uppdateringar
-
-#### 4a. Uppdatera NotificationItem.tsx
-
-Lägg till ikoner och styling för nya typer:
+**Fil: `src/contexts/LikesContext.tsx`**
 
 ```typescript
-// Nya cases i getIcon()
-case 'admin_update':
-  return <Megaphone className="h-4 w-4 text-blue-500" />;
-case 'issue_fixed':
-  return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-case 'release_note':
-  return <Rocket className="h-4 w-4 text-purple-500" />;
-```
+// Lägg till import
+import { useMissions } from '@/hooks/useMissions';
 
-#### 4b. Skapa Admin Notification Dialog
+// I LikesProvider
+const { updateMissionProgress } = useMissions();
 
-Ny komponent för att skicka notifikationer från admin:
-
-**Fil:** `src/components/admin/SendNotificationDialog.tsx`
-
-```typescript
-interface SendNotificationDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+// I toggleLike(), efter successful like:
+if (!currentlyLiked) {
+  // Like
+  // ... befintlig kod ...
+  
+  // Uppdatera support score
+  updateSupportScore(artistId, 'like_track');
+  
+  // NY: Uppdatera mission progress
+  updateMissionProgress('daily_like_tracks');
 }
-
-// Formulärfält:
-// - Type (admin_update / release_note)
-// - Title
-// - Message
-// - Target (All Artists / Specific users)
-// - Severity (info / important)
-// - Link (optional)
 ```
 
-#### 4c. Lägg till i AdminUpdates.tsx
+### OBS: Circular Dependency Risk
+`useMissions` anropar `useAuth` som inte finns i providers-kedjan innan `LikesProvider`. Kontrollera provider-ordning i `App.tsx`.
 
-En knapp "Send Notification" som öppnar dialogen.
+**Alternativ lösning (säkrare):**
+Skapa en separat hook `useMissionTracker` som exponerar en enkel `trackAction(actionKey)` funktion:
 
----
-
-## Filstruktur
-
-| Fil | Ändring |
-|-----|---------|
-| `supabase/migrations/XXXX_admin_notifications.sql` | Databasändringar + trigger + RPC |
-| `src/components/notifications/NotificationItem.tsx` | Nya ikoner för admin-typer |
-| `src/components/admin/SendNotificationDialog.tsx` | **NY** - Dialog för admin |
-| `src/pages/admin/AdminUpdates.tsx` | Lägg till "Send Notification" knapp |
-
----
-
-## Flödesdiagram
-
-```text
-Admin markerar issue som "resolved"
-           │
-           ▼
-   ┌───────────────────┐
-   │ inbox_messages    │
-   │ status = resolved │
-   └─────────┬─────────┘
-             │
-             ▼
-   ┌───────────────────────────────┐
-   │ TRIGGER: notify_reporter...  │
-   │ Hämtar reporter_user_id      │
-   │ från payload->ai_context     │
-   └─────────┬─────────────────────┘
-             │
-             ▼
-   ┌───────────────────────────────┐
-   │ INSERT INTO notifications    │
-   │ type = 'issue_fixed'         │
-   │ user_id = reporter           │
-   └─────────┬─────────────────────┘
-             │
-             ▼
-   ┌───────────────────────────────┐
-   │ NotificationBell (realtime)  │
-   │ Artist ser ny notifikation   │
-   └───────────────────────────────┘
+```typescript
+// src/hooks/useMissionTracker.ts
+export function useMissionTracker() {
+  const trackLike = useCallback(() => {
+    // Direkt supabase-anrop utan att gå via useMissions context
+  }, []);
+  
+  return { trackLike };
+}
 ```
 
 ---
 
-## Säkerhetsmodell
+## Bugg 2: HTTP 406 Errors på spotlight_campaigns
 
-- **RLS på notifications**: Användare kan endast läsa/uppdatera egna notifikationer
-- **SECURITY DEFINER på trigger**: Triggen kan infoga notifikationer för alla användare
-- **is_admin() check**: RPC-funktionen validerar admin-status innan bulk-insert
-- **Identity separation**: Admin kan inte läsa artisters notifikationer via NotificationBell
+### Problemanalys
+- Flera komponenter använder `.single()` på spotlight_campaigns
+- Om ingen aktiv kampanj finns returnerar `.single()` HTTP 406 (Not Acceptable)
+- Påverkade filer:
+  - `SpotlightTrendingCard.tsx`
+  - `SpotlightRisingCard.tsx`
+  - `SpotlightNewEntryCard.tsx`
+
+### Lösning
+Byt från `.single()` till `.maybeSingle()`:
+
+**Före:**
+```typescript
+const { data: campaign } = await supabase
+  .from('spotlight_campaigns')
+  .select('id, name')
+  .eq('status', 'active')
+  .single(); // Fel om 0 eller >1 rader
+```
+
+**Efter:**
+```typescript
+const { data: campaign } = await supabase
+  .from('spotlight_campaigns')
+  .select('id, name')
+  .eq('status', 'active')
+  .maybeSingle(); // Returnerar null om 0 rader, error bara vid >1
+
+if (!campaign) {
+  setLoading(false);
+  return; // Graceful exit
+}
+```
+
+### Filer att uppdatera
+| Fil | Rad | Ändring |
+|-----|-----|---------|
+| `src/components/spotlight/SpotlightTrendingCard.tsx` | 52 | `.single()` → `.maybeSingle()` |
+| `src/components/spotlight/SpotlightRisingCard.tsx` | 58 | `.single()` → `.maybeSingle()` |
+| `src/components/spotlight/SpotlightNewEntryCard.tsx` | 68 | `.single()` → `.maybeSingle()` |
+
+---
+
+## Bugg 3: Community Replies UX
+
+### Nuvarande beteende (fungerar!)
+1. Användaren klickar på kommentar-ikonen (💬)
+2. `InlineComments` expanderar med senaste kommentarer
+3. `CommentComposer` visas längst ner för att skriva svar
+4. "View all X comments" navigerar till fullständig vy
+
+### Användarens förväntning
+"Man borde kunna trycka på pratbubblan för att se replies och kunna reply direkt i tråden i community-fönstret"
+
+### Analys
+Funktionen finns redan! Men det kan finnas UX-förbättringar:
+1. Kommentar-ikonen kanske inte är tillräckligt synlig
+2. Användaren förväntar sig kanske att kommentarer visas direkt utan klick
+
+### Föreslagna UX-förbättringar
+1. **Visa kommentarantal tydligare** - Lägg till tooltip "Click to view replies"
+2. **Auto-expand vid få kommentarer** - Om < 3 kommentarer, visa dem direkt
+3. **Visuell feedback** - Animera expandering mjukt
+
+**Fil: `src/components/community/PostCard.tsx`**
+
+```typescript
+// Lägg till tooltip på kommentar-knappen
+<Button 
+  variant="ghost" 
+  size="sm" 
+  className={cn("gap-2", isCommentsExpanded && "text-primary")}
+  onClick={handleCommentToggle}
+  title="Click to view and add comments" // NY
+>
+  <MessageCircle className={cn("h-4 w-4", isCommentsExpanded && "fill-current")} />
+  <span>{displayCommentCount}</span>
+</Button>
+```
+
+---
+
+## Implementationsordning
+
+| Steg | Uppgift | Komplexitet |
+|------|---------|-------------|
+| 1 | Fixa HTTP 406 (`.maybeSingle()`) | Enkel |
+| 2 | Integrera mission progress i LikesContext | Medium |
+| 3 | UX-förbättringar för community | Enkel |
 
 ---
 
 ## Definition of Done
 
-- [ ] Admin-trigger skapar automatiskt notifikation när issue markeras resolved
-- [ ] RPC-funktion `send_admin_notification` fungerar för batch-utskick
-- [ ] NotificationItem visar rätt ikon/styling för admin_update, issue_fixed, release_note
-- [ ] SendNotificationDialog tillåter admin att skicka till alla artister eller specifika users
-- [ ] Mobile-first UI med subtila övergångar
-- [ ] Ingen påverkan på ekonomi eller ranking-system
+- [ ] Likes uppdaterar mission progress (`daily_like_tracks`)
+- [ ] Toast visar "+1 progress" vid like (synlig feedback)
+- [ ] Inga HTTP 406 errors vid avsaknad av aktiv spotlight-kampanj
+- [ ] Kommentar-knappen har tydlig affordance (tooltip)
+- [ ] Alla ändringar fungerar på både desktop och mobil
+
