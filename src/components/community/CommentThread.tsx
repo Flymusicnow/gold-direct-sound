@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, MessageCircle, Pin, ChevronDown, ChevronUp, CornerDownRight } from 'lucide-react';
+import { Loader2, MessageCircle, Pin, ChevronDown, ChevronUp, CornerDownRight, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { fetchAuthorIdentities, type AuthorIdentity } from '@/hooks/useAuthorIdentity';
 import { toast } from 'sonner';
+import { usePostCommentLikes } from '@/hooks/usePostCommentLikes';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Comment {
   id: string;
@@ -79,7 +81,9 @@ const CommentItem: React.FC<{
   identityMap: Map<string, AuthorIdentity>;
   communityArtistUserId?: string;
   onProfileClick: (authorId: string, identity: AuthorIdentity | undefined) => void;
-}> = ({ 
+  getLikeData: (commentId: string) => { likeCount: number; hasLiked: boolean };
+  toggleLike: (commentId: string) => void;
+}> = ({
   comment, 
   depth, 
   maxDepth, 
@@ -90,14 +94,22 @@ const CommentItem: React.FC<{
   identityMap,
   communityArtistUserId,
   onProfileClick,
+  getLikeData,
+  toggleLike,
 }) => {
+  const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
+  // Get like data for this comment
+  const { likeCount, hasLiked } = getLikeData(comment.id);
   // Get resolved identity - never use generic names
   const identity = identityMap.get(comment.author_id);
   const displayName = identity?.displayName || comment.author?.full_name || 'User';
   const avatarUrl = identity?.avatarUrl || comment.author?.avatar_url;
   const roleBadge = identity?.roleBadge || comment.author_type || null;
+  
+  // Check if user is anonymous (no real name)
+  const isAnonymous = !identity || displayName === 'Fan' || displayName === 'Unknown User';
   
   const canReply = depth < maxDepth;
   const hasReplies = comment.replies && comment.replies.length > 0;
@@ -134,12 +146,18 @@ const CommentItem: React.FC<{
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <button 
-              onClick={() => onProfileClick(comment.author_id, identity)}
-              className="text-sm font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
-            >
-              {displayName}
-            </button>
+            {isAnonymous ? (
+              <span className="text-sm font-medium text-muted-foreground">
+                {displayName}
+              </span>
+            ) : (
+              <button 
+                onClick={() => onProfileClick(comment.author_id, identity)}
+                className="text-sm font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+              >
+                {displayName}
+              </button>
+            )}
             <RoleBadge role={roleBadge} />
             {comment.is_pinned && (
               <Pin className="h-3 w-3 text-primary" />
@@ -161,6 +179,20 @@ const CommentItem: React.FC<{
           </p>
           
           <div className="flex items-center gap-2 mt-2">
+            {/* Like button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "h-7 px-2 gap-1",
+                hasLiked ? "text-primary" : "text-muted-foreground"
+              )}
+              onClick={() => user ? toggleLike(comment.id) : toast.error('Please sign in to like')}
+            >
+              <Heart className={cn("h-3.5 w-3.5", hasLiked && "fill-current")} />
+              {likeCount > 0 && <span>{likeCount}</span>}
+            </Button>
+            
             {canReply && (
               <Button
                 variant="ghost"
@@ -227,6 +259,8 @@ const CommentItem: React.FC<{
           identityMap={identityMap}
           communityArtistUserId={communityArtistUserId}
           onProfileClick={onProfileClick}
+          getLikeData={getLikeData}
+          toggleLike={toggleLike}
         />
       ))}
     </div>
@@ -243,6 +277,21 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [identityMap, setIdentityMap] = useState<Map<string, AuthorIdentity>>(new Map());
+  
+  // Get all comment IDs for likes hook (including nested)
+  const allCommentIds = useMemo(() => {
+    const ids: string[] = [];
+    const collectIds = (commentList: Comment[]) => {
+      commentList.forEach(c => {
+        ids.push(c.id);
+        if (c.replies) collectIds(c.replies);
+      });
+    };
+    collectIds(comments);
+    return ids;
+  }, [comments]);
+  
+  const { getLikeData, toggleLike } = usePostCommentLikes(allCommentIds);
 
   const handleProfileClick = (authorId: string, identity: AuthorIdentity | undefined) => {
     if (identity?.artistProfileId) {
@@ -367,6 +416,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           identityMap={identityMap}
           communityArtistUserId={communityArtistUserId}
           onProfileClick={handleProfileClick}
+          getLikeData={getLikeData}
+          toggleLike={toggleLike}
         />
       ))}
     </div>

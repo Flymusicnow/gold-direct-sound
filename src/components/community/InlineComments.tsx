@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, MessageCircle, ChevronRight } from 'lucide-react';
+import { Loader2, MessageCircle, ChevronRight, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils';
 import { fetchAuthorIdentities, type AuthorIdentity } from '@/hooks/useAuthorIdentity';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
+import { usePostCommentLikes } from '@/hooks/usePostCommentLikes';
+import { toast } from 'sonner';
 
 interface Comment {
   id: string;
@@ -59,6 +61,10 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [identityMap, setIdentityMap] = useState<Map<string, AuthorIdentity>>(new Map());
   const [optimisticComment, setOptimisticComment] = useState<Comment | null>(null);
+  
+  // Get comment IDs for likes
+  const commentIds = useMemo(() => comments.map(c => c.id), [comments]);
+  const { getLikeData, toggleLike } = usePostCommentLikes(commentIds);
 
   const fetchComments = useCallback(async () => {
     try {
@@ -118,6 +124,11 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
   }, [fetchComments, step, postId]);
 
   const handleProfileClick = (authorId: string, identity: AuthorIdentity | undefined) => {
+    // Check if user is anonymous
+    const isAnonymous = !identity || identity.displayName === 'Fan' || identity.displayName === 'Unknown User';
+    
+    if (isAnonymous) return; // Don't navigate for anonymous users
+    
     if (identity?.artistProfileId) {
       navigate(`/artist/${identity.artistProfileId}`);
     } else {
@@ -171,6 +182,8 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
             const avatarUrl = identity?.avatarUrl;
             const roleBadge = identity?.roleBadge || comment.author_type || null;
             const isOptimistic = optimisticComment?.id === comment.id;
+            const isAnonymous = !identity || displayName === 'Fan' || displayName === 'Unknown User';
+            const { likeCount, hasLiked } = getLikeData(comment.id);
 
             return (
               <div
@@ -188,12 +201,18 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <button
-                      onClick={() => handleProfileClick(comment.author_id, identity)}
-                      className="text-xs font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
-                    >
-                      {displayName}
-                    </button>
+                    {isAnonymous ? (
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {displayName}
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleProfileClick(comment.author_id, identity)}
+                        className="text-xs font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+                      >
+                        {displayName}
+                      </button>
+                    )}
                     <RoleBadge role={roleBadge} />
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
@@ -202,6 +221,19 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
                   <p className="text-sm text-foreground mt-0.5 break-words">
                     {comment.content}
                   </p>
+                  {/* Like button */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-6 px-1.5 gap-1 mt-1",
+                      hasLiked ? "text-primary" : "text-muted-foreground"
+                    )}
+                    onClick={() => user ? toggleLike(comment.id) : toast.error('Please sign in to like')}
+                  >
+                    <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
+                    {likeCount > 0 && <span className="text-xs">{likeCount}</span>}
+                  </Button>
                 </div>
               </div>
             );

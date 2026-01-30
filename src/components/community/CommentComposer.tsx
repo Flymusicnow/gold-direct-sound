@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
@@ -81,18 +82,24 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
         </div>
       )}
       <div className="flex gap-2 pointer-events-auto">
-        <Textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder={parentCommentId ? "Write a reply..." : "Write a comment..."}
-          className="min-h-[60px] resize-none flex-1 pointer-events-auto"
-          disabled={isSubmitting}
-        />
+        <div className="flex-1 space-y-1">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={parentCommentId ? "Write a reply..." : "Write a comment..."}
+            className="min-h-[60px] resize-none pointer-events-auto"
+            disabled={isSubmitting}
+          />
+          <div className="flex items-center gap-2">
+            <EmojiPicker onEmojiSelect={(emoji) => setContent(prev => prev + emoji)} />
+            <span className="text-xs text-muted-foreground">{content.length}/1000</span>
+          </div>
+        </div>
         <Button
           onClick={handleSubmit}
           disabled={!content.trim() || isSubmitting}
           size="icon"
-          className="shrink-0"
+          className="shrink-0 self-start"
         >
           <Send className="h-4 w-4" />
         </Button>
