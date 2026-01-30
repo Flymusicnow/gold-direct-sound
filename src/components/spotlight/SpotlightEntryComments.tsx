@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Pencil, Trash2, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { EmojiPicker } from '@/components/ui/emoji-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCommentAuthorInfo } from '@/lib/utils/commentAuthor';
@@ -35,11 +36,14 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
 
   const fetchComments = async () => {
     setIsLoading(true);
     
-    // Fetch comments
     const { data: commentsData, error } = await supabase
       .from('spotlight_entry_comments')
       .select('id, content, created_at, user_id')
@@ -53,16 +57,13 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
       return;
     }
 
-    // Get unique user IDs
     const userIds = [...new Set(commentsData.map(c => c.user_id))];
 
-    // Fetch profiles from public_profiles view
     const { data: profiles } = await supabase
       .from('public_profiles')
       .select('id, full_name, avatar_url')
       .in('id', userIds);
 
-    // Fetch artist profiles
     const { data: artistProfiles } = await supabase
       .from('artist_profiles')
       .select('id, user_id, artist_name')
@@ -91,7 +92,6 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
   useEffect(() => {
     fetchComments();
 
-    // Subscribe to realtime updates
     const channel = supabase
       .channel(`spotlight-comments-${entryId}`)
       .on(
@@ -133,6 +133,46 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
     }
 
     setIsSubmitting(false);
+  };
+
+  const startEdit = (comment: Comment) => {
+    setEditingId(comment.id);
+    setEditContent(comment.content);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
+  };
+
+  const handleUpdate = async () => {
+    if (!editContent.trim() || !editingId || !user) return;
+
+    const { error } = await supabase
+      .from('spotlight_entry_comments')
+      .update({ content: editContent.trim() })
+      .eq('id', editingId)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      setEditingId(null);
+      setEditContent('');
+      fetchComments();
+    }
+  };
+
+  const handleDelete = async (commentId: string) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('spotlight_entry_comments')
+      .update({ is_deleted: true })
+      .eq('id', commentId)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      fetchComments();
+    }
   };
 
   const handleAuthorClick = (comment: Comment, e: React.MouseEvent) => {
@@ -180,9 +220,11 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
               comment.artistId,
               comment.artistName
             );
+            const isOwner = user?.id === comment.user_id;
+            const isEditing = editingId === comment.id;
             
             return (
-              <div key={comment.id} className="flex gap-2 items-start">
+              <div key={comment.id} className="flex gap-2 items-start group">
                 <Avatar className="h-6 w-6 flex-shrink-0">
                   <AvatarImage src={comment.profile?.avatar_url || undefined} />
                   <AvatarFallback className="text-xs">
@@ -203,8 +245,61 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
                     <span className="text-xs text-muted-foreground flex-shrink-0">
                       {formatTime(comment.created_at)}
                     </span>
+                    {isOwner && !isEditing && (
+                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5"
+                          onClick={() => startEdit(comment)}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-5 w-5 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(comment.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-foreground break-words">{comment.content}</p>
+                  
+                  {isEditing ? (
+                    <div className="mt-1 space-y-2">
+                      <Input
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="h-8 text-sm"
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-1">
+                        <EmojiPicker onEmojiSelect={(emoji) => setEditContent(prev => prev + emoji)} />
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          onClick={cancelEdit}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Avbryt
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={handleUpdate}
+                          disabled={!editContent.trim()}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Spara
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-foreground break-words">{comment.content}</p>
+                  )}
                 </div>
               </div>
             );
@@ -214,7 +309,7 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
 
       {/* Comment input */}
       {user ? (
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        <form onSubmit={handleSubmit} className="flex gap-2 items-center">
           <Input
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
@@ -222,6 +317,7 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
             className="flex-1 h-8 text-sm"
             disabled={isSubmitting}
           />
+          <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
           <Button
             type="submit"
             size="icon"
