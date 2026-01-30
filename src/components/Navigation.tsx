@@ -15,7 +15,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { getDisplayName } from "@/lib/displayName";
 
 export const Navigation = () => {
   const { user, profile, signOut, refreshProfile, hasRole } = useAuth();
@@ -159,6 +162,31 @@ export const Navigation = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {/* User Identity Section */}
+                    <DropdownMenuLabel className="font-normal">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {getDisplayName(profile)}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email}
+                        </p>
+                        {hasRole('artist') && (
+                          <p className="text-xs text-primary">Artist</p>
+                        )}
+                        {hasRole('fan') && !hasRole('artist') && (
+                          <p className="text-xs text-primary">Fan</p>
+                        )}
+                        {hasRole('brand') && (
+                          <p className="text-xs text-primary">Brand</p>
+                        )}
+                        {hasRole('admin') && (
+                          <p className="text-xs text-amber-500">Admin</p>
+                        )}
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    
                     {/* Show only one Settings option - prefer artist settings if has both roles */}
                     {hasRole('artist') ? (
                       <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
@@ -185,6 +213,7 @@ export const Navigation = () => {
                       </DropdownMenuItem>
                     )}
                     
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => signOut()}>
                       <LogOut className="mr-2 h-4 w-4" />
                       {t('nav.signOut')}
@@ -343,6 +372,31 @@ export const Navigation = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-[hsl(0,0%,6%)] border-border">
+                  {/* User Identity Section */}
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {getDisplayName(profile)}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                      {hasRole('artist') && (
+                        <p className="text-xs text-primary">Artist</p>
+                      )}
+                      {hasRole('fan') && !hasRole('artist') && (
+                        <p className="text-xs text-primary">Fan</p>
+                      )}
+                      {hasRole('brand') && (
+                        <p className="text-xs text-primary">Brand</p>
+                      )}
+                      {hasRole('admin') && (
+                        <p className="text-xs text-amber-500">Admin</p>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  
                   {hasRole('artist') ? (
                     <DropdownMenuItem onClick={() => navigate('/studio/settings')}>
                       <Settings className="mr-2 h-4 w-4" />
@@ -367,6 +421,7 @@ export const Navigation = () => {
                     </DropdownMenuItem>
                   )}
                   
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />
                     {t('nav.signOut')}
