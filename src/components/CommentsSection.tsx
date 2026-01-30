@@ -110,15 +110,15 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       .select("id, full_name, avatar_url")
       .in("id", userIds);
 
-    // Fetch artist profiles to know which commenters are artists
+    // Fetch artist profiles to know which commenters are artists (including artist_name)
     const { data: artistProfiles } = await supabase
       .from('artist_profiles')
-      .select('id, user_id')
+      .select('id, user_id, artist_name')
       .in('user_id', userIds)
       .eq('status', 'approved');
 
     const artistMap = new Map(
-      artistProfiles?.map(a => [a.user_id, a.id]) || []
+      artistProfiles?.map(a => [a.user_id, { id: a.id, name: a.artist_name }]) || []
     );
 
     // Fetch supporter levels (XP-based)
@@ -153,7 +153,8 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
         supporterLevel: supporterLevels.get(comment.user_id) || 'none',
         paidTier: paidTiers.get(comment.user_id) || null,
         isCommenterArtist: artistMap.has(comment.user_id),
-        commenterArtistId: artistMap.get(comment.user_id) || null,
+        commenterArtistId: artistMap.get(comment.user_id)?.id || null,
+        commenterArtistName: artistMap.get(comment.user_id)?.name || null,
       };
     });
 
@@ -280,6 +281,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
                     paidTier={(comment as any).paidTier || null}
                     isCommenterArtist={(comment as any).isCommenterArtist || false}
                     commenterArtistId={(comment as any).commenterArtistId || null}
+                    commenterArtistName={(comment as any).commenterArtistName || null}
                   />
                 ))}
                 

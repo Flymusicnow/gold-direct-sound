@@ -35,7 +35,8 @@ interface CommentProfile {
 export function getCommentAuthorInfo(
   profile: CommentProfile | null | undefined,
   isCommenterArtist: boolean,
-  commenterArtistId: string | null | undefined
+  commenterArtistId: string | null | undefined,
+  artistName?: string | null
 ): CommentAuthorInfo {
   const hasName = !!profile?.full_name?.trim();
   const safeArtistId = commenterArtistId || null;
@@ -45,7 +46,7 @@ export function getCommentAuthorInfo(
     return {
       authorType: 'artist',
       authorArtistId: safeArtistId,
-      displayName: profile?.full_name?.trim() || 'Artist',
+      displayName: artistName?.trim() || profile?.full_name?.trim() || 'Artist',
       isNavigable: true,
       targetPath: `/artist/${safeArtistId}`,
     };

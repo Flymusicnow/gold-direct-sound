@@ -57,6 +57,7 @@ interface VideoCommentItemProps {
   supporterLevel?: 'none' | 'bronze' | 'silver' | 'gold';
   isCommenterArtist?: boolean;
   commenterArtistId?: string | null;
+  commenterArtistName?: string | null;
 }
 
 export function VideoCommentItem({
@@ -69,6 +70,7 @@ export function VideoCommentItem({
   supporterLevel = 'none',
   isCommenterArtist = false,
   commenterArtistId = null,
+  commenterArtistName = null,
 }: VideoCommentItemProps) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -84,7 +86,8 @@ export function VideoCommentItem({
   const authorInfo = getCommentAuthorInfo(
     comment.profiles,
     isCommenterArtist,
-    commenterArtistId
+    commenterArtistId,
+    commenterArtistName
   );
 
   // Check if commenter is THE page artist (for badge display)
@@ -327,6 +330,9 @@ export function VideoCommentItem({
               onReply={onReply}
               depth={depth + 1}
               supporterLevel="none"
+              isCommenterArtist={(reply as any).isCommenterArtist || false}
+              commenterArtistId={(reply as any).commenterArtistId || null}
+              commenterArtistName={(reply as any).commenterArtistName || null}
             />
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { useInboxMessages, InboxMessage } from "@/hooks/useInboxMessages";
@@ -35,12 +35,34 @@ import { sv, enUS } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+const SCROLL_KEY = 'admin-inbox-scroll';
+
 export default function AdminInbox() {
   const [activeTab, setActiveTab] = useState<"all" | "qa">("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [testingTelegram, setTestingTelegram] = useState(false);
   const { language, setLanguage, t } = useInboxLanguage();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll restoration
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Restore scroll position
+    const savedPos = sessionStorage.getItem(SCROLL_KEY);
+    if (savedPos) {
+      container.scrollTop = parseInt(savedPos, 10);
+    }
+
+    // Save scroll position on scroll
+    const handleScroll = () => {
+      sessionStorage.setItem(SCROLL_KEY, String(container.scrollTop));
+    };
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // QA tab always enforces: type = 'contextual_report', excludeResolved = true
   const isQaTab = activeTab === "qa";
@@ -248,7 +270,7 @@ export default function AdminInbox() {
       </div>
 
       {/* Message list */}
-      <div className="space-y-3">
+      <div ref={scrollContainerRef} className="space-y-3 max-h-[calc(100vh-320px)] overflow-y-auto">
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="p-4">
