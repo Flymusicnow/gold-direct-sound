@@ -538,8 +538,6 @@ export default function ArtistProfile() {
         onShare={() => setShowShareModal(true)}
       />
 
-      {/* Spotlight / Pulse Carousel */}
-      <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
 
       {/* Artist Goal Card - Only renders if active goal exists */}
       <ArtistGoalCard artistId={artist.id} />
@@ -763,6 +761,9 @@ export default function ArtistProfile() {
 
           {/* Sidebar - 1/3 width on desktop */}
           <div className="space-y-6">
+            {/* Spotlight Carousel - FIRST in sidebar for focus */}
+            <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+
             {/* Artist Stats Card */}
             <ArtistStatsCard artistId={artist.id} />
 

@@ -131,7 +131,7 @@ export function SpotlightCarousel({ media, artistId, artistName, activeABTest }:
   if (!displayMedia.length) return null;
 
   return (
-    <div className="w-full max-w-[280px] mx-auto">
+    <div className="w-full">
       {/* Label */}
       <div className="flex items-center justify-center gap-2 mb-2">
         <Sparkles className="h-4 w-4 text-primary" />

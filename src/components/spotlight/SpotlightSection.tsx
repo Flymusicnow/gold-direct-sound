@@ -15,7 +15,7 @@ export function SpotlightSection({ artistId, artistName }: SpotlightSectionProps
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <div className="w-full">
       <SpotlightCarousel 
         media={spotlightMedia} 
         artistId={artistId}
