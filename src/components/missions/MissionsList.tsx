@@ -36,7 +36,7 @@ export function MissionsList() {
         </TabsList>
       </ScrollableTabsList>
 
-      <TabsContent value="daily" className="space-y-3 mt-0">
+      <TabsContent value="daily" className="space-y-3 mt-2">
         {dailyMissions.map(mission => (
           <MissionCard
             key={mission.id}
@@ -47,7 +47,7 @@ export function MissionsList() {
         ))}
       </TabsContent>
 
-      <TabsContent value="weekly" className="space-y-3 mt-0">
+      <TabsContent value="weekly" className="space-y-3 mt-2">
         {weeklyMissions.map(mission => (
           <MissionCard
             key={mission.id}

@@ -72,8 +72,25 @@ export function useMissions() {
   const updateMissionProgress = useCallback(async (missionKey: string, increment: number = 1) => {
     if (!user) return;
 
-    const mission = missions.find(m => m.mission_key === missionKey);
-    if (!mission) return;
+    // Try to find mission in local state first
+    let mission = missions.find(m => m.mission_key === missionKey);
+    
+    // If not found (race condition), fetch directly from database
+    if (!mission) {
+      console.log(`[useMissions] Mission ${missionKey} not in state, fetching from DB`);
+      const { data, error } = await supabase
+        .from('missions')
+        .select('*')
+        .eq('mission_key', missionKey)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (error || !data) {
+        console.error('[useMissions] Failed to fetch mission:', error);
+        return null;
+      }
+      mission = data as Mission;
+    }
 
     const periodStart = mission.mission_type === 'daily' 
       ? new Date().toISOString().split('T')[0]
