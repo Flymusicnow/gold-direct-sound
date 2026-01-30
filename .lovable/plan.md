@@ -1,90 +1,113 @@
 
-# Plan: "Gå till sidan"-knapp för resolved issues
+
+# Plan: Flytta Spotlight Carousel till Sidebaren
 
 ## Problem
-När en issue är markerad som **resolved**, försvinner "Test Fix on Affected Page"-knappen. Administratörer vill snabbt kunna navigera till den påverkade sidan för att verifiera att fixen fungerar.
+SpotlightCarousel visas centrerat på full-width toppen (efter hero) vilket ser "off" ut på desktop. Användaren föreslår att den ska vara i sidebaren för bättre fokus och flöde.
 
-## Nuvarande beteende
+## Nuvarande Layout (Desktop)
 ```text
-┌──────────────────────────────────┐
-│ Actions                          │
-├──────────────────────────────────┤
-│ [🧠 Generate fix plan]           │ ← Alltid synlig
-│ [✓ Test Fix on Affected Page]   │ ← DOLD när resolved
-│ [Assignment dropdown]            │ ← DOLD när resolved
-│ [Status selector]                │ ← DOLD när resolved
-│ [Quick Resolve]                  │ ← DOLD när resolved
-│                                  │
-│   ✓ Resolved                     │ ← Visas när resolved
-│   by Admin Name                  │
-│   2026-01-30 12:00               │
-└──────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│               Hero Section                       │
+├─────────────────────────────────────────────────┤
+│       [SpotlightCarousel centrerad]             │  ← SER "OFF" UT
+│              max-w-280px                         │
+├─────────────────────────────────────────────────┤
+│                                  │              │
+│  ┌─────────────────────┐        │ Stats Card   │
+│  │                     │        │              │
+│  │    TABS Content     │        │ Spotlight    │
+│  │ (Tracks, Videos...) │        │ Card (votes) │
+│  │                     │        │              │
+│  │                     │        │ Supporter    │
+│  └─────────────────────┘        │ Button       │
+│         (2/3)                   │    (1/3)     │
+└─────────────────────────────────────────────────┘
 ```
 
-## Önskat beteende
+## Ny Layout (Desktop)
 ```text
-┌──────────────────────────────────┐
-│ Actions                          │
-├──────────────────────────────────┤
-│   ✓ Resolved                     │
-│   by Admin Name                  │
-│   2026-01-30 12:00               │
-│                                  │
-│ [🔍 Gå till sidan & testa]      │ ← NY KNAPP (prominent)
-│                                  │
-│ Rutt: /fan/missions              │ ← Visar vilken rutt
-└──────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│               Hero Section                       │
+├─────────────────────────────────────────────────┤
+│                                  │              │
+│  ┌─────────────────────┐        │[Spotlight    │  ← FÖRST I SIDEBAR
+│  │                     │        │ Carousel]    │     MED FOKUS
+│  │    TABS Content     │        │              │
+│  │ (Tracks, Videos...) │        │ Stats Card   │
+│  │                     │        │              │
+│  │                     │        │ Spotlight    │
+│  │                     │        │ Card (votes) │
+│  └─────────────────────┘        │              │
+│         (2/3)                   │    (1/3)     │
+└─────────────────────────────────────────────────┘
 ```
 
-## Lösning
+## Ändringar
 
-### Fil: `src/pages/admin/AdminInboxDetail.tsx`
+### Fil: `src/pages/ArtistProfile.tsx`
 
-**Ändring 1:** Lägg till en "Test Fix"-knapp som visas när issuen är resolved/verified
-
-Efter resolved status display (rad ~635), lägg till:
-
+**Ändring 1:** Ta bort SpotlightSection från full-width toppen (rad 541-542)
 ```tsx
-{/* Test Fix button - visible for resolved issues */}
-{isClosed && message.type === 'contextual_report' && verifyUrl && (
-  <div className="pt-3 space-y-2">
-    <Button
-      className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
-      onClick={handleOpenVerify}
-    >
-      <ExternalLink className="h-4 w-4 mr-2" />
-      🔍 Gå till sidan & testa
-    </Button>
-    
-    {/* Show the affected route */}
-    {aiContext?.route && (
-      <p className="text-xs text-center text-muted-foreground">
-        Rutt: <code className="bg-muted px-1 rounded">{aiContext.route}</code>
-      </p>
-    )}
-  </div>
-)}
+// TA BORT dessa rader:
+{/* Spotlight / Pulse Carousel */}
+<SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
 ```
 
-**Ändring 2:** Gör "Developer Tools"-kortet mer synligt för resolved issues genom att flytta det högre upp (optional)
+**Ändring 2:** Lägg till SpotlightSection först i sidebaren (rad 765-766)
+```tsx
+{/* Sidebar - 1/3 width on desktop */}
+<div className="space-y-6">
+  {/* Spotlight Carousel - FIRST in sidebar for focus */}
+  <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+  
+  {/* Artist Stats Card */}
+  <ArtistStatsCard artistId={artist.id} />
+  
+  {/* ... resten oförändrat */}
+```
+
+### Fil: `src/components/spotlight/SpotlightSection.tsx`
+
+**Ändring 3:** Ta bort container padding/max-width (anpassa för sidebar)
+```tsx
+// FÖRE:
+return (
+  <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <SpotlightCarousel ... />
+  </div>
+);
+
+// EFTER:
+return (
+  <div className="w-full">
+    <SpotlightCarousel ... />
+  </div>
+);
+```
+
+### Fil: `src/components/spotlight/SpotlightCarousel.tsx`
+
+**Ändring 4:** Ta bort max-width begränsning (fyller sidebar-bredden)
+```tsx
+// FÖRE (rad 134):
+<div className="w-full max-w-[280px] mx-auto">
+
+// EFTER:
+<div className="w-full">
+```
 
 ## Resultat
 
-- ✅ Prominent knapp för att gå direkt till påverkad sida efter resolve
-- ✅ Visar tydligt vilken rutt som påverkades
-- ✅ Öppnar sidan i ny flik med verify-mode (`?__verify=1`)
-- ✅ Fungerar för både resolved och verified status
+- Spotlight Carousel visas i sidebaren på desktop (naturligt fokus)
+- Fyller sidebar-bredden (~320px på lg breakpoint)
+- Ligger före Stats och Votes för att vara "i fokus"
+- På mobil (1-kolumn layout) visas allt i ordning vertikalt
+- Behåller all befintlig funktionalitet (A/B test, analytics, links)
 
-## Teknisk sammanfattning
+## Mobil-upplevelse
 
-```text
-AdminInboxDetail.tsx
-    │
-    └── Actions Card
-        ├── isResolved/isVerified status display (befintlig)
-        │
-        └── NY: "Gå till sidan & testa" knapp
-            ├── Villkor: isClosed && contextual_report && verifyUrl
-            ├── Visar rutten under knappen
-            └── Öppnar i ny flik med __verify=1
-```
+På mobil (under lg breakpoint) kollapsar griden till 1 kolumn där sidebaren-innehållet visas under tabs-innehållet. SpotlightCarousel kommer då visas efter Tabs men fortfarande i naturlig scroll-ordning.
+
+Om ni vill ha Spotlight högre upp på mobil kan vi överväga conditional rendering, men nuvarande förslag håller koden enkel.
+
