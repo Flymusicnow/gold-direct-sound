@@ -1,9 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Send, Pencil, Trash2, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { EmojiPicker } from '@/components/ui/emoji-picker';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { getCommentAuthorInfo } from '@/lib/utils/commentAuthor';
@@ -40,6 +50,13 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  
+  // Delete confirmation state
+  const [deleteCommentId, setDeleteCommentId] = useState<string | null>(null);
+  
+  // Refs for auto-resize
+  const newCommentRef = useRef<HTMLTextAreaElement>(null);
+  const editCommentRef = useRef<HTMLTextAreaElement>(null);
 
   const fetchComments = async () => {
     setIsLoading(true);
@@ -113,6 +130,16 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
     };
   }, [entryId]);
 
+  // Auto-resize textarea
+  const handleTextareaChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>
+  ) => {
+    setter(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !newComment.trim() || isSubmitting) return;
@@ -129,6 +156,10 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
 
     if (!error) {
       setNewComment('');
+      // Reset textarea height
+      if (newCommentRef.current) {
+        newCommentRef.current.style.height = 'auto';
+      }
       fetchComments();
     }
 
@@ -161,18 +192,19 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
     }
   };
 
-  const handleDelete = async (commentId: string) => {
-    if (!user) return;
+  const handleDelete = async () => {
+    if (!user || !deleteCommentId) return;
 
     const { error } = await supabase
       .from('spotlight_entry_comments')
       .update({ is_deleted: true })
-      .eq('id', commentId)
+      .eq('id', deleteCommentId)
       .eq('user_id', user.id);
 
     if (!error) {
       fetchComments();
     }
+    setDeleteCommentId(null);
   };
 
   const handleAuthorClick = (comment: Comment, e: React.MouseEvent) => {
@@ -246,11 +278,11 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
                       {formatTime(comment.created_at)}
                     </span>
                     {isOwner && !isEditing && (
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">
+                      <div className="flex gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity ml-auto">
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-5 w-5"
+                          className="h-6 w-6 sm:h-5 sm:w-5"
                           onClick={() => startEdit(comment)}
                         >
                           <Pencil className="h-3 w-3" />
@@ -258,8 +290,8 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="h-5 w-5 text-destructive hover:text-destructive"
-                          onClick={() => handleDelete(comment.id)}
+                          className="h-6 w-6 sm:h-5 sm:w-5 text-destructive hover:text-destructive"
+                          onClick={() => setDeleteCommentId(comment.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -269,10 +301,12 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
                   
                   {isEditing ? (
                     <div className="mt-1 space-y-2">
-                      <Input
+                      <Textarea
+                        ref={editCommentRef}
                         value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        className="h-8 text-sm"
+                        onChange={(e) => handleTextareaChange(e, setEditContent)}
+                        className="min-h-[40px] max-h-[120px] text-sm resize-none"
+                        rows={1}
                         autoFocus
                       />
                       <div className="flex items-center gap-1">
@@ -309,19 +343,21 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
 
       {/* Comment input */}
       {user ? (
-        <form onSubmit={handleSubmit} className="flex gap-2 items-center">
-          <Input
+        <form onSubmit={handleSubmit} className="flex gap-2 items-end">
+          <Textarea
+            ref={newCommentRef}
             value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
+            onChange={(e) => handleTextareaChange(e, setNewComment)}
             placeholder="Skriv en kommentar..."
-            className="flex-1 h-8 text-sm"
+            className="flex-1 min-h-[40px] max-h-[120px] text-sm resize-none"
+            rows={1}
             disabled={isSubmitting}
           />
           <EmojiPicker onEmojiSelect={(emoji) => setNewComment(prev => prev + emoji)} />
           <Button
             type="submit"
             size="icon"
-            className="h-8 w-8"
+            className="h-10 w-10 flex-shrink-0"
             disabled={!newComment.trim() || isSubmitting}
           >
             <Send className="h-3.5 w-3.5" />
@@ -332,6 +368,24 @@ export default function SpotlightEntryComments({ entryId, onCommentCountChange }
           Logga in för att kommentera
         </p>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={!!deleteCommentId} onOpenChange={(open) => !open && setDeleteCommentId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ta bort kommentar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Denna åtgärd kan inte ångras.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Ta bort
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
