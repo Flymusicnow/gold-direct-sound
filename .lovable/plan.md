@@ -1,111 +1,127 @@
 
-# Plan: Fixa Klickbara Kommentarsnamn
+# Plan: Fix Comment Author Display Across All Comment Systems
 
-## Problem
-I kommentarsfältet på `/post/...` kan man inte klicka på användarnamn för att navigera till deras profil. Rotorsaken är att `fetchAuthorIdentities` i `useAuthorIdentity.ts` frågar `profiles`-tabellen direkt, som har RLS-begränsningar som blockerar åtkomst till andra användares data.
+## Problem Summary
+User reports that:
+- Artist names show as "Artist" (fallback) instead of their real name
+- Fan comments show as "Anonymous" and aren't clickable
+- Profile pictures don't display
 
-## Rotorsak
-Enligt systemets "identity-resolution-privacy-protocol" MÅSTE queries för andra användares identiteter använda `public_profiles`-vyn, inte `profiles`-tabellen.
+The root cause: Three comment components query the `profiles` table directly, which is blocked by RLS for other users' data. Per the "identity-resolution-privacy-protocol", all queries for other users must use `public_profiles` view.
+
+## Components Affected
 
 ```text
-Nuvarande (FEL):
-profiles table → RLS blockerar → null returneras → displayName = "Fan" → isAnonymous = true → ej klickbar
-
-Korrekt:
-public_profiles view → tillåter läsning → displayName hämtas → isAnonymous = false → klickbar
+┌─────────────────────────────────────────────────────────────┐
+│                    IDENTITY RESOLUTION                       │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ✅ useAuthorIdentity.ts (ALREADY FIXED)                    │
+│     └── Uses public_profiles                                │
+│                                                             │
+│  ✅ CommentThread.tsx (Community posts)                     │
+│     └── Uses fetchAuthorIdentities (now fixed)              │
+│                                                             │
+│  ❌ CommentsSection.tsx (Artist profile comments)           │
+│     └── Line 108-111: queries profiles directly             │
+│                                                             │
+│  ❌ CommentItem.tsx (Reply loading)                         │
+│     └── Line 166-170: queries profiles directly             │
+│                                                             │
+│  ❌ VideoCommentsSection.tsx (Video comments)               │
+│     └── Line 85-89: queries profiles directly               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Lösning
+## Changes Required
 
-### Fil: `src/hooks/useAuthorIdentity.ts`
+### File 1: `src/components/CommentsSection.tsx`
 
-**Ändring 1:** I `fetchAuthorIdentities`-funktionen (rad 183-188), byt ut `profiles` mot `public_profiles`:
-
+**Change (lines 108-111):**
 ```tsx
-// FÖRE (rad 183-186):
-const { data: profiles } = await supabase
-  .from('profiles')
-  .select('id, full_name, avatar_url, email')
-  .in('id', uniqueIds);
+// BEFORE:
+const { data: profilesData } = await supabase
+  .from("profiles")
+  .select("id, full_name, avatar_url, email" as any)
+  .in("id", userIds);
 
-// EFTER:
-const { data: profiles } = await supabase
+// AFTER:
+const { data: profilesData } = await supabase
+  .from("public_profiles")
+  .select("id, full_name, avatar_url")
+  .in("id", userIds);
+```
+
+### File 2: `src/components/CommentItem.tsx`
+
+**Change (lines 166-170):**
+```tsx
+// BEFORE:
+supabase
+  .from("profiles")
+  .select("id, full_name, avatar_url, email" as any)
+  .in("id", userIds),
+
+// AFTER:
+supabase
+  .from("public_profiles")
+  .select("id, full_name, avatar_url")
+  .in("id", userIds),
+```
+
+### File 3: `src/components/video/VideoCommentsSection.tsx`
+
+**Change (lines 85-89):**
+```tsx
+// BEFORE:
+supabase
+  .from('profiles')
+  .select('id, full_name, email')
+  .in('id', userIds),
+
+// AFTER:
+supabase
   .from('public_profiles')
   .select('id, full_name, avatar_url')
-  .in('id', uniqueIds);
+  .in('id', userIds),
 ```
 
-**Ändring 2:** Ta bort email-fallback (rad 220-222) eftersom public_profiles inte har email-kolumn:
+## Expected Results
 
-```tsx
-// FÖRE (rad 217-222):
-let displayName = 'Fan';
-if (profile?.full_name?.trim()) {
-  displayName = profile.full_name.trim();
-} else if (profile?.email) {
-  displayName = profile.email.split('@')[0];
-}
+After these changes:
+- Artist names will display correctly (fetched from public_profiles.full_name)
+- Fan names will display correctly (no longer blocked by RLS)
+- Avatar URLs will be available for display
+- The `getCommentAuthorInfo` utility will work correctly with real data
+- Profile navigation will work for users with names
 
-// EFTER:
-let displayName = profile?.full_name?.trim() || 'Fan';
-```
-
-**Ändring 3:** Samma ändring i `useAuthorIdentity` hook (rad 92-107):
-
-```tsx
-// FÖRE (rad 92-96):
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('full_name, avatar_url, email')
-  .eq('id', authorId)
-  .maybeSingle();
-
-// EFTER:
-const { data: profile } = await supabase
-  .from('public_profiles')
-  .select('full_name, avatar_url')
-  .eq('id', authorId)
-  .maybeSingle();
-```
-
-**Ändring 4:** Ta bort email-fallback i single fetch (rad 100-107):
-
-```tsx
-// FÖRE:
-let displayName = 'Fan';
-if (profile?.full_name?.trim()) {
-  displayName = profile.full_name.trim();
-} else if (profile?.email) {
-  displayName = profile.email.split('@')[0];
-}
-
-// EFTER:
-const displayName = profile?.full_name?.trim() || 'Fan';
-```
-
-## Resultat
-
-- Kommentarsnamn blir klickbara för användare med full_name i public_profiles
-- Artists navigerar till `/artist/{artistProfileId}`
-- Fans navigerar till `/fan/profile/{userId}` (om inte anonyma)
-- Anonyma användare (utan namn) förblir icke-klickbara
-
-## Teknisk sammanfattning
+## Technical Flow (After Fix)
 
 ```text
-useAuthorIdentity.ts
-    │
-    ├── useAuthorIdentity() hook
-    │   └── ÄNDRA: profiles → public_profiles
-    │   └── TA BORT: email fallback
-    │
-    └── fetchAuthorIdentities() batch function
-        └── ÄNDRA: profiles → public_profiles
-        └── TA BORT: email fallback
+Comment Render Flow:
+┌─────────────────┐
+│   Supabase      │
+│ public_profiles │ ← RLS allows read
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ full_name found │
+│ avatar_url found│
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│getCommentAuthor │
+│     Info()      │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+ Artist     Fan
+ ├─name     ├─name
+ ├─avatar   ├─avatar
+ └─/artist/ └─(not navigable per current rule)
+   link
 ```
-
-## Notering om övriga issues
-
-**Issue #2 (Edit track-knapp):** Knappen finns redan i koden (`StudioTracks.tsx` rad 885-893). Den har en penna-ikon (Pencil) och texten "Edit" som är synlig på desktop (hidden på mobil: `hidden sm:inline`).
-
-**Issue #3 (Musikspelare blockerad):** Detta är avsiktligt beteende enligt "global-playback-and-audio-focus-protocol" - video och musik är ömsesidigt uteslutande. En enhancement för att tillåta parallell kontroll skulle kräva en större arkitekturändring.
