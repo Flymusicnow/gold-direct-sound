@@ -633,6 +633,26 @@ Please analyze this bug report and provide:
                   </p>
                 </div>
               )}
+
+              {/* Test Fix button - visible for resolved/verified issues */}
+              {isClosed && message.type === 'contextual_report' && verifyUrl && (
+                <div className="pt-3 space-y-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white"
+                    onClick={handleOpenVerify}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    🔍 Gå till sidan & testa
+                  </Button>
+                  
+                  {/* Show the affected route */}
+                  {aiContext?.route && (
+                    <p className="text-xs text-center text-muted-foreground">
+                      Rutt: <code className="bg-muted px-1 rounded">{aiContext.route}</code>
+                    </p>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
