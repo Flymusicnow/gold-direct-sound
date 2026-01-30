@@ -90,10 +90,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
             className="min-h-[60px] resize-none pointer-events-auto"
             disabled={isSubmitting}
           />
-          <div className="flex items-center gap-2">
-            <EmojiPicker onEmojiSelect={(emoji) => setContent(prev => prev + emoji)} />
-            <span className="text-xs text-muted-foreground">{content.length}/1000</span>
-          </div>
+          <EmojiPicker onEmojiSelect={(emoji) => setContent(prev => prev + emoji)} />
         </div>
         <Button
           onClick={handleSubmit}
