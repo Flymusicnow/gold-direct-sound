@@ -1,113 +1,120 @@
 
 
-# Plan: Flytta Spotlight Carousel till Sidebaren
+# Plan: Visa Inloggad Användare i Dropdown-menyn
 
 ## Problem
-SpotlightCarousel visas centrerat på full-width toppen (efter hero) vilket ser "off" ut på desktop. Användaren föreslår att den ska vara i sidebaren för bättre fokus och flöde.
+När man klickar på användarikonen i navigationen visas bara:
+- Settings
+- Report Issue
+- Sign Out
 
-## Nuvarande Layout (Desktop)
+Man kan inte se **vem** som är inloggad, vilket gör det svårt att veta vilken konto som används.
+
+## Nuvarande UI
 ```text
-┌─────────────────────────────────────────────────┐
-│               Hero Section                       │
-├─────────────────────────────────────────────────┤
-│       [SpotlightCarousel centrerad]             │  ← SER "OFF" UT
-│              max-w-280px                         │
-├─────────────────────────────────────────────────┤
-│                                  │              │
-│  ┌─────────────────────┐        │ Stats Card   │
-│  │                     │        │              │
-│  │    TABS Content     │        │ Spotlight    │
-│  │ (Tracks, Videos...) │        │ Card (votes) │
-│  │                     │        │              │
-│  │                     │        │ Supporter    │
-│  └─────────────────────┘        │ Button       │
-│         (2/3)                   │    (1/3)     │
-└─────────────────────────────────────────────────┘
+┌─────────────────┐
+│ ⚙️ Settings     │
+│ 🐛 Report Issue │
+│ → Sign Out      │
+└─────────────────┘
 ```
 
-## Ny Layout (Desktop)
+## Ny UI
 ```text
-┌─────────────────────────────────────────────────┐
-│               Hero Section                       │
-├─────────────────────────────────────────────────┤
-│                                  │              │
-│  ┌─────────────────────┐        │[Spotlight    │  ← FÖRST I SIDEBAR
-│  │                     │        │ Carousel]    │     MED FOKUS
-│  │    TABS Content     │        │              │
-│  │ (Tracks, Videos...) │        │ Stats Card   │
-│  │                     │        │              │
-│  │                     │        │ Spotlight    │
-│  │                     │        │ Card (votes) │
-│  └─────────────────────┘        │              │
-│         (2/3)                   │    (1/3)     │
-└─────────────────────────────────────────────────┘
+┌─────────────────────┐
+│ 👤 Topliner         │  ← Namn
+│ lajomusiq@gmail.com │  ← Email
+│ 🎤 Artist           │  ← Roll
+├─────────────────────┤
+│ ⚙️ Settings         │
+│ 🐛 Report Issue     │
+├─────────────────────┤
+│ → Sign Out          │
+└─────────────────────┘
 ```
 
 ## Ändringar
 
-### Fil: `src/pages/ArtistProfile.tsx`
+### Fil: `src/components/Navigation.tsx`
 
-**Ändring 1:** Ta bort SpotlightSection från full-width toppen (rad 541-542)
+**Ändring 1:** Uppdatera imports (rad 13-18)
 ```tsx
-// TA BORT dessa rader:
-{/* Spotlight / Pulse Carousel */}
-<SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,      // NY
+  DropdownMenuSeparator,  // NY
+} from "@/components/ui/dropdown-menu";
 ```
 
-**Ändring 2:** Lägg till SpotlightSection först i sidebaren (rad 765-766)
+**Ändring 2:** Desktop dropdown - Lägg till användarinfo (rad 161, efter `<DropdownMenuContent align="end">`)
 ```tsx
-{/* Sidebar - 1/3 width on desktop */}
-<div className="space-y-6">
-  {/* Spotlight Carousel - FIRST in sidebar for focus */}
-  <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+<DropdownMenuContent align="end">
+  {/* User Identity Section */}
+  <DropdownMenuLabel className="font-normal">
+    <div className="flex flex-col space-y-1">
+      <p className="text-sm font-medium leading-none">
+        {profile?.full_name || 'User'}
+      </p>
+      <p className="text-xs leading-none text-muted-foreground">
+        {user?.email}
+      </p>
+      {hasRole('artist') && (
+        <p className="text-xs text-primary">Artist</p>
+      )}
+      {hasRole('fan') && !hasRole('artist') && (
+        <p className="text-xs text-primary">Fan</p>
+      )}
+      {hasRole('brand') && (
+        <p className="text-xs text-primary">Brand</p>
+      )}
+      {hasRole('admin') && (
+        <p className="text-xs text-amber-500">Admin</p>
+      )}
+    </div>
+  </DropdownMenuLabel>
+  <DropdownMenuSeparator />
   
-  {/* Artist Stats Card */}
-  <ArtistStatsCard artistId={artist.id} />
-  
-  {/* ... resten oförändrat */}
+  {/* Settings option - existing code */}
+  ...
 ```
 
-### Fil: `src/components/spotlight/SpotlightSection.tsx`
-
-**Ändring 3:** Ta bort container padding/max-width (anpassa för sidebar)
+**Ändring 3:** Lägg till separator före Sign Out
 ```tsx
-// FÖRE:
-return (
-  <div className="container mx-auto px-4 py-6 max-w-6xl">
-    <SpotlightCarousel ... />
-  </div>
-);
-
-// EFTER:
-return (
-  <div className="w-full">
-    <SpotlightCarousel ... />
-  </div>
-);
+<DropdownMenuSeparator />
+<DropdownMenuItem onClick={() => signOut()}>
+  <LogOut className="mr-2 h-4 w-4" />
+  {t('nav.signOut')}
+</DropdownMenuItem>
 ```
 
-### Fil: `src/components/spotlight/SpotlightCarousel.tsx`
-
-**Ändring 4:** Ta bort max-width begränsning (fyller sidebar-bredden)
-```tsx
-// FÖRE (rad 134):
-<div className="w-full max-w-[280px] mx-auto">
-
-// EFTER:
-<div className="w-full">
-```
+**Ändring 4:** Samma ändringar för mobil dropdown (rad ~340-375)
+Identisk struktur med användarinfo + separators i mobilmenyn.
 
 ## Resultat
 
-- Spotlight Carousel visas i sidebaren på desktop (naturligt fokus)
-- Fyller sidebar-bredden (~320px på lg breakpoint)
-- Ligger före Stats och Votes för att vara "i fokus"
-- På mobil (1-kolumn layout) visas allt i ordning vertikalt
-- Behåller all befintlig funktionalitet (A/B test, analytics, links)
+- Visar användarens namn tydligt
+- Visar email för identifikation
+- Visar aktuell roll (Artist/Fan/Brand/Admin)
+- Tydlig separation mellan sektioner
+- Fungerar på både desktop och mobil
 
-## Mobil-upplevelse
+## Teknisk sammanfattning
 
-På mobil (under lg breakpoint) kollapsar griden till 1 kolumn där sidebaren-innehållet visas under tabs-innehållet. SpotlightCarousel kommer då visas efter Tabs men fortfarande i naturlig scroll-ordning.
-
-Om ni vill ha Spotlight högre upp på mobil kan vi överväga conditional rendering, men nuvarande förslag håller koden enkel.
+```text
+Navigation.tsx
+    │
+    ├── Desktop Dropdown (rad ~155-193)
+    │   ├── NY: DropdownMenuLabel med namn/email/roll
+    │   ├── NY: DropdownMenuSeparator
+    │   ├── Settings
+    │   ├── Report Issue
+    │   ├── NY: DropdownMenuSeparator
+    │   └── Sign Out
+    │
+    └── Mobile Dropdown (rad ~340-375)
+        └── Samma struktur
+```
 
