@@ -40,11 +40,12 @@ interface CommentItemProps {
   paidTier?: 'basic' | 'gold' | null;
   isCommenterArtist?: boolean;
   commenterArtistId?: string | null;
+  commenterArtistName?: string | null;
 }
 
 // Note: getDisplayName and getAvatarFallback are now imported from @/lib/displayName
 
-export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null, isCommenterArtist = false, commenterArtistId = null }: CommentItemProps) => {
+export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment, supporterLevel = 'none', paidTier = null, isCommenterArtist = false, commenterArtistId = null, commenterArtistName = null }: CommentItemProps) => {
   const [showReply, setShowReply] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [replies, setReplies] = useState<any[]>([]);
@@ -162,7 +163,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
     if (repliesData && repliesData.length > 0) {
       const userIds = repliesData.map((r) => r.user_id);
       
-      // Batch fetch profiles and artist profiles
+      // Batch fetch profiles and artist profiles (including artist_name)
       const [profilesResult, artistProfilesResult] = await Promise.all([
         supabase
           .from("public_profiles")
@@ -170,21 +171,22 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
           .in("id", userIds),
         supabase
           .from('artist_profiles')
-          .select('id, user_id')
+          .select('id, user_id, artist_name')
           .in('user_id', userIds)
           .eq('status', 'approved')
       ]);
 
       const artistMap = new Map(
-        artistProfilesResult.data?.map(a => [a.user_id, a.id]) || []
+        artistProfilesResult.data?.map(a => [a.user_id, { id: a.id, name: a.artist_name }]) || []
       );
 
       // Merge profiles with replies
       const repliesWithProfiles = repliesData.map((reply) => ({
         ...reply,
-        profiles: (profilesResult.data as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null, email: null },
+        profiles: (profilesResult.data as any)?.find((p: any) => p.id === reply.user_id) || { full_name: null, avatar_url: null },
         isCommenterArtist: artistMap.has(reply.user_id),
-        commenterArtistId: artistMap.get(reply.user_id) || null,
+        commenterArtistId: artistMap.get(reply.user_id)?.id || null,
+        commenterArtistName: artistMap.get(reply.user_id)?.name || null,
       }));
 
       setReplies(repliesWithProfiles);
@@ -213,7 +215,8 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
               const authorInfo = getCommentAuthorInfo(
                 comment.profiles,
                 isCommenterArtist,
-                commenterArtistId
+                commenterArtistId,
+                commenterArtistName
               );
               
               if (authorInfo.isNavigable && authorInfo.targetPath) {
@@ -342,6 +345,7 @@ export const CommentItem = ({ comment, currentUserId, artistId, isArtistComment,
                       supporterLevel="none"
                       isCommenterArtist={reply.isCommenterArtist || false}
                       commenterArtistId={reply.commenterArtistId || null}
+                      commenterArtistName={reply.commenterArtistName || null}
                     />
                   ))}
                 </div>

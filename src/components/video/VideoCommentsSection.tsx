@@ -81,7 +81,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
       if (commentsData && commentsData.length > 0) {
         const userIds = [...new Set(commentsData.map(c => c.user_id))];
         
-        // Fetch profiles, artist profiles, and supporter levels in parallel
+        // Fetch profiles, artist profiles (including artist_name), and supporter levels in parallel
         const [profilesResult, artistProfilesResult, supportScoresResult] = await Promise.all([
           supabase
             .from('public_profiles')
@@ -89,7 +89,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
             .in('id', userIds),
           supabase
             .from('artist_profiles')
-            .select('id, user_id')
+            .select('id, user_id, artist_name')
             .in('user_id', userIds)
             .eq('status', 'approved'),
           supabase
@@ -100,7 +100,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
         ]);
 
         const profilesMap = new Map(profilesResult.data?.map(p => [p.id, p]) || []);
-        const artistMap = new Map(artistProfilesResult.data?.map(a => [a.user_id, a.id]) || []);
+        const artistMap = new Map(artistProfilesResult.data?.map(a => [a.user_id, { id: a.id, name: a.artist_name }]) || []);
         const supporterLevels = new Map(
           supportScoresResult.data?.map(s => [s.fan_user_id, s.level as 'bronze' | 'silver' | 'gold']) || []
         );
@@ -110,7 +110,8 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
           profiles: profilesMap.get(comment.user_id),
           supporterLevel: supporterLevels.get(comment.user_id) || 'none',
           isCommenterArtist: artistMap.has(comment.user_id),
-          commenterArtistId: artistMap.get(comment.user_id) || null,
+          commenterArtistId: artistMap.get(comment.user_id)?.id || null,
+          commenterArtistName: artistMap.get(comment.user_id)?.name || null,
         }));
         setComments(commentsWithProfiles);
       } else {
@@ -220,6 +221,7 @@ export function VideoCommentsSection({ videoId, artistId }: VideoCommentsSection
                 supporterLevel={(comment as any).supporterLevel || 'none'}
                 isCommenterArtist={(comment as any).isCommenterArtist || false}
                 commenterArtistId={(comment as any).commenterArtistId || null}
+                commenterArtistName={(comment as any).commenterArtistName || null}
               />
             ))}
 
