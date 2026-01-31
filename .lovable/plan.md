@@ -1,156 +1,68 @@
 
-# Plan: Fix Audio Playback in LyricsTimeSyncEditor
+# Plan: Fixa Audio Loading i LyricsTimeSyncEditor
 
 ## Problem
-The Play button doesn't work - audio stays at 0:00/0:00. This indicates the audio is either not loading or the `play()` call is silently failing.
+Spinnern snurrar för evigt eftersom audio-elementet finns inuti `DialogContent` som bara renderas när `open={true}`. Men `useEffect` som laddar audion kör bara när `audioUrl` ändras - INTE när dialogen öppnas.
 
-## Root Causes
+## Rotorsak (Steg för steg)
+1. `LyricsTimeSyncEditor` renderas (open=false)
+2. Audio-elementet finns INTE (DialogContent renderas inte)
+3. useEffect körs med `[audioUrl]` → `audioRef.current` är null → returnerar tidigt
+4. Användaren klickar "Sync with Music" → open=true
+5. DialogContent renderas → audio-element skapas
+6. MEN useEffect körs INTE igen (audioUrl ändrades inte)
+7. Resultat: isLoading=true för alltid, spinnern snurrar
 
-### 1. Event Listeners Not Re-attached
-```tsx
-// Current code - runs once on mount, doesn't re-run when audioUrl changes
-useEffect(() => {
-  const audio = audioRef.current;
-  // event listeners setup...
-}, []); // ❌ Empty dependency array
-```
+## Lösning
+Lägg till `open` i dependency-arrayen så att useEffect körs när dialogen öppnas:
 
-### 2. No Error Handling on play()
-```tsx
-// Current code - doesn't handle Promise rejection
-audio.play(); // ❌ Browser can reject this
-setIsPlaying(!isPlaying);
-```
-
-### 3. No Audio Load Error Detection
-No `error` event listener means failed loads go unnoticed.
-
----
-
-## Technical Changes
-
-### File: `src/components/artist/LyricsTimeSyncEditor.tsx`
-
-**1. Add audioUrl to event listener dependency**
 ```tsx
 useEffect(() => {
   const audio = audioRef.current;
-  if (!audio) return;
+  if (!audio || !open) return; // Returnera om stängd eller inget audio-element
 
-  const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-  const handleLoadedMetadata = () => {
-    console.log('[LyricsSync] Audio loaded, duration:', audio.duration);
-    setDuration(audio.duration);
-  };
-  const handleEnded = () => setIsPlaying(false);
-  const handleError = (e: Event) => {
-    console.error('[LyricsSync] Audio error:', e);
-    toast.error('Failed to load audio file');
-  };
-  const handleCanPlay = () => {
-    console.log('[LyricsSync] Audio can play');
-  };
+  setIsLoading(true);
+  setLoadError(null);
+  
+  // ... resten av koden ...
+  
+  audio.load();
+  
+  return () => { /* cleanup */ };
+}, [audioUrl, open]); // ← Lägg till 'open' här
+```
 
-  audio.addEventListener('timeupdate', handleTimeUpdate);
-  audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-  audio.addEventListener('ended', handleEnded);
-  audio.addEventListener('error', handleError);
-  audio.addEventListener('canplay', handleCanPlay);
+## Tekniska Ändringar
 
-  // Force reload if src changed
+### Fil: `src/components/artist/LyricsTimeSyncEditor.tsx`
+
+**Ändring 1:** Uppdatera useEffect-beroendet
+
+Rad 46-89 - Ändra dependency array:
+
+```tsx
+// Audio time update - re-run when dialog opens or audioUrl changes
+useEffect(() => {
+  const audio = audioRef.current;
+  if (!audio || !open) return; // ← Lägg till !open check
+
+  setIsLoading(true);
+  setLoadError(null);
+
+  // ... befintlig kod för event listeners ...
+  
   audio.load();
 
   return () => {
-    audio.removeEventListener('timeupdate', handleTimeUpdate);
-    audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.removeEventListener('ended', handleEnded);
-    audio.removeEventListener('error', handleError);
-    audio.removeEventListener('canplay', handleCanPlay);
+    // ... cleanup ...
   };
-}, [audioUrl]); // ✅ Re-run when audioUrl changes
+}, [audioUrl, open]); // ← Lägg till 'open'
 ```
 
-**2. Handle play() Promise with error handling**
-```tsx
-const togglePlayPause = useCallback(async () => {
-  const audio = audioRef.current;
-  if (!audio) return;
+## Sammanfattning
 
-  if (isPlaying) {
-    audio.pause();
-    setIsPlaying(false);
-  } else {
-    try {
-      await audio.play();
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('[LyricsSync] Play failed:', error);
-      toast.error('Could not play audio. Try again.');
-    }
-  }
-}, [isPlaying]);
-```
-
-**3. Add loading state and feedback**
-```tsx
-const [isLoading, setIsLoading] = useState(true);
-const [loadError, setLoadError] = useState<string | null>(null);
-
-// In useEffect
-const handleLoadedMetadata = () => {
-  setDuration(audio.duration);
-  setIsLoading(false);
-  setLoadError(null);
-};
-const handleError = () => {
-  setIsLoading(false);
-  setLoadError('Failed to load audio');
-};
-```
-
-**4. Disable Play button while loading**
-```tsx
-<Button
-  variant="outline"
-  size="icon"
-  onClick={togglePlayPause}
-  className="h-10 w-10"
-  disabled={isLoading || !!loadError}
->
-  {isLoading ? (
-    <Loader2 className="h-5 w-5 animate-spin" />
-  ) : isPlaying ? (
-    <Pause className="h-5 w-5" />
-  ) : (
-    <Play className="h-5 w-5" />
-  )}
-</Button>
-```
-
-**5. Show error state if audio fails to load**
-```tsx
-{loadError && (
-  <div className="text-center text-destructive text-sm py-2 bg-destructive/10 rounded-lg">
-    ❌ {loadError}
-  </div>
-)}
-```
-
----
-
-## Summary
-
-| Issue | Fix |
-|-------|-----|
-| Events not firing | Add `audioUrl` to dependency array + call `audio.load()` |
-| Play silently fails | Wrap `play()` in try/catch, use async/await |
-| No load feedback | Add loading state and error display |
-| Button always enabled | Disable during loading or on error |
-
----
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/components/artist/LyricsTimeSyncEditor.tsx` | Fix audio event handling and add error states |
+| Före | Efter |
+|------|-------|
+| `useEffect(..., [audioUrl])` | `useEffect(..., [audioUrl, open])` |
+| Audio aldrig laddas | Audio laddas när dialog öppnas |
+| Evig spinner | Fungerande uppspelning |
