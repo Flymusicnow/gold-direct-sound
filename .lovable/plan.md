@@ -1,187 +1,137 @@
 
-# Plan: Fixa Mobila Problem i NowPlayingScreen och Feed
 
-## Identifierade Problem
+# Plan: Karaoke-stil Synkroniserade Lyrics
 
-### 1. ❌ Share-knappen fungerar inte
-**Orsak:** `ShareModal` i `NowPlayingScreen` delar artist-profil URL istället för låten. Den försöker också använda `useSupportScore` hook som kan krascha om providern saknas.
+## Vad behövs
 
-### 2. ❌ Lyrics-knappen är avaktiverad
-**Orsak:** Knappen fungerar - den är bara disabled när låten saknar lyrics (`disabled={!lyrics}`). Men artister har INGET SÄTT att lägga in lyrics!
+För att lyrics ska följa musiken behöver vi:
+1. **Tidsstämplar** på varje textrad (LRC-format)
+2. **Synkroniserad visning** som markerar aktuell rad
+3. **Editor för artister** att synka text med musik
 
-### 3. ❌ Artister kan inte lägga till lyrics
-**Orsak:** Varken `StudioTracks` (uppladdningsformulär) eller `EditTrackMetadataDialog` har ett lyrics-fält. Databasen har kolumnen (`tracks.lyrics` = text), men det finns ingen UI för att fylla i den.
+## LRC-format (Standard för synkade lyrics)
 
-### 4. ❌ Kan inte svepa till nästa låt
-**Orsak:** `NowPlayingScreen` har inga horisontella swipe-gester. Bara skip-knappar finns.
+```text
+[00:00.00]Intro...
+[00:15.50]First verse line here
+[00:18.20]Second verse line here
+[00:22.00]And so on...
+```
 
-### 5. ❌ Feed visas avklippt på mobil
-**Orsak:** Top-nav överlappar innehållet. Behöver justera scroll-container.
+Varje rad har en tidsstämpel `[mm:ss.ms]` som anger när den ska visas.
 
 ---
 
 ## Tekniska Ändringar
 
-### Fil 1: `src/components/flightdeck/NowPlayingScreen.tsx`
+### 1. Skapa SyncedLyricsDisplay komponent
 
-**Ändringar:**
-1. **Lägg till swipe-gester** för att byta låt (vänster = nästa, höger = föregående)
-2. **Fixa Share-funktionen** - dela låt-URL istället för artist-profil
-3. **Förbättra lyrics-knappen** - visa tooltip om lyrics saknas
+**Ny fil:** `src/components/flightdeck/SyncedLyricsDisplay.tsx`
 
-**Ny kod:**
-```typescript
-// Import för swipe-gester
-import { useRef, useCallback } from 'react';
+Funktionalitet:
+- Parsar LRC-format till array av `{time, text}`
+- Lyssnar på `currentTime` från spelaren
+- Highlightar och auto-scrollar till aktuell rad
+- Stödjer fallback till vanlig text (bakåtkompatibelt)
 
-// Swipe-state i komponenten
-const touchStartX = useRef<number | null>(null);
-const touchStartY = useRef<number | null>(null);
-
-// Swipe-handlers för att byta låt
-const handleTouchStart = useCallback((e: React.TouchEvent) => {
-  touchStartX.current = e.touches[0].clientX;
-  touchStartY.current = e.touches[0].clientY;
-}, []);
-
-const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-  if (touchStartX.current === null || touchStartY.current === null) return;
-  
-  const deltaX = e.changedTouches[0].clientX - touchStartX.current;
-  const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-  
-  // Horisontell swipe (inte vertikal)
-  if (Math.abs(deltaX) > 80 && deltaY < 80) {
-    if (deltaX < 0) {
-      // Swipe vänster = nästa låt
-      playNext();
-    } else {
-      // Swipe höger = föregående låt
-      playPrev();
-    }
-  }
-  
-  touchStartX.current = null;
-  touchStartY.current = null;
-}, [playNext, playPrev]);
+```text
+┌────────────────────────────────────┐
+│    tidigare rad (dimmed)           │
+│    tidigare rad (dimmed)           │
+│  ▸ AKTUELL RAD (highlighted)  ◀   │  ← Auto-scroll hit
+│    nästa rad (dimmed)              │
+│    nästa rad (dimmed)              │
+└────────────────────────────────────┘
 ```
 
-**Share-fix:**
-```typescript
-// Dela låt-URL istället för artist-profil
-<ShareModal
-  isOpen={showShareModal}
-  onClose={() => setShowShareModal(false)}
-  artistName={currentItem.artistName}
-  shareUrl={`${window.location.origin}/track/${currentItem.id}`}  // Ändrat!
-  artistId={currentItem.artistId}
-/>
+### 2. Uppdatera NowPlayingScreen
+
+**Fil:** `src/components/flightdeck/NowPlayingScreen.tsx`
+
+Ändringar:
+- Ersätt enkel `<pre>` med `<SyncedLyricsDisplay>`
+- Skicka `currentTime` och `lyrics` som props
+- Behåll fallback för icke-synkade lyrics
+
+### 3. Skapa LRC Editor för artister
+
+**Ny fil:** `src/components/artist/LyricsTimeSyncEditor.tsx`
+
+Funktionalitet för Studio:
+- Spela upp låten
+- Klicka/tryck på varje rad när den sjungs
+- Automatiskt generera tidsstämplar
+- Exportera som LRC-format
+
+```text
+┌─────────────────────────────────────────────┐
+│  🎵 Playing: 0:15 / 3:45    [▶ Play/Pause]  │
+├─────────────────────────────────────────────┤
+│  [TAP] First verse line here       [00:15]  │
+│  [TAP] Second verse line here      [00:18]  │
+│  [TAP] Third line...               [ -- ]   │  ← Inte synkad än
+│  [TAP] Fourth line...              [ -- ]   │
+└─────────────────────────────────────────────┘
 ```
+
+### 4. Uppdatera EditTrackMetadataDialog
+
+**Fil:** `src/components/artist/EditTrackMetadataDialog.tsx`
+
+Ändringar:
+- Lägg till knapp "Sync Lyrics with Music"
+- Öppnar `LyricsTimeSyncEditor` i dialog
+- Sparar LRC-format till databasen
 
 ---
 
-### Fil 2: `src/components/artist/EditTrackMetadataDialog.tsx`
+## Dataformat
 
-**Ändringar:**
-Lägg till lyrics-textarea så artister kan redigera lyrics för befintliga låtar.
+**Befintlig kolumn:** `tracks.lyrics` (text) - ingen databasändring behövs!
 
-**Ny kod:**
-```typescript
-// Ny state
-const [lyrics, setLyrics] = useState(currentTrack.lyrics || "");
+**Nytt stöd för två format:**
 
-// Ny UI-sektion
-<div className="space-y-2">
-  <Label htmlFor="edit-lyrics" className="flex items-center gap-2">
-    <AlignLeft className="h-4 w-4 text-primary" />
-    Lyrics
-  </Label>
-  <Textarea
-    id="edit-lyrics"
-    value={lyrics}
-    onChange={(e) => setLyrics(e.target.value)}
-    placeholder="Add song lyrics..."
-    rows={8}
-    className="font-mono text-sm"
-  />
-  <p className="text-xs text-muted-foreground">
-    Lyrics will display when fans play your track
-  </p>
-</div>
+| Format | Exempel | Användning |
+|--------|---------|------------|
+| Plain text | `First line\nSecond line` | Statisk visning |
+| LRC | `[00:15.00]First line\n[00:18.00]Second line` | Karaoke-synk |
 
-// Uppdatera save-funktionen
-const { error } = await supabase
-  .from("tracks")
-  .update({
-    // ... existing fields
-    lyrics: lyrics.trim() || null,  // Lägg till!
-  })
-  .eq("id", trackId);
-```
+Komponenten detekterar automatiskt format baserat på om texten börjar med `[`.
 
 ---
 
-### Fil 3: `src/pages/studio/StudioTracks.tsx`
+## Användarflöde för artist
 
-**Ändringar:**
-Lägg till lyrics-fält i single-track upload formuläret.
-
-**Ny kod:**
-```typescript
-// Ny state
-const [trackLyrics, setTrackLyrics] = useState("");
-
-// Ny UI efter description
-<div>
-  <Label htmlFor="lyrics">Lyrics (optional)</Label>
-  <Textarea
-    id="lyrics"
-    value={trackLyrics}
-    onChange={(e) => setTrackLyrics(e.target.value)}
-    rows={6}
-    placeholder="Add your song lyrics..."
-    className="font-mono text-sm"
-  />
-</div>
-
-// Uppdatera insert
-const { error: insertError } = await supabase.from('tracks').insert({
-  // ... existing fields
-  lyrics: trackLyrics.trim() || null,  // Lägg till!
-});
-
-// Reset efter upload
-setTrackLyrics("");
-```
+1. Gå till **Studio → Tracks**
+2. Klicka **Edit** på en låt
+3. Skriv in lyrics (vanlig text)
+4. Klicka **"Sync with Music"**
+5. Låten spelas - tryck på varje rad när den sjungs
+6. Spara - lyrics konverteras till LRC-format
 
 ---
 
-### Fil 4: Interface-uppdateringar
+## Filer att skapa/ändra
 
-**`EditTrackMetadataDialogProps.currentTrack`** behöver inkludera `lyrics`:
-```typescript
-currentTrack: {
-  // ... existing fields
-  lyrics: string | null;  // Lägg till!
-}
-```
+| Fil | Åtgärd |
+|-----|--------|
+| `src/components/flightdeck/SyncedLyricsDisplay.tsx` | **Ny** - Karaoke-visning |
+| `src/components/artist/LyricsTimeSyncEditor.tsx` | **Ny** - Synk-verktyg |
+| `src/components/flightdeck/NowPlayingScreen.tsx` | **Ändra** - Använd SyncedLyricsDisplay |
+| `src/components/artist/EditTrackMetadataDialog.tsx` | **Ändra** - Lägg till sync-knapp |
+| `src/lib/lrc-parser.ts` | **Ny** - LRC parse/format utilities |
 
 ---
 
-## Sammanfattning
+## Fas 1 vs Fas 2
 
-| Problem | Fil | Lösning |
-|---------|-----|---------|
-| Share fungerar inte | NowPlayingScreen.tsx | Dela låt-URL, inte artist-URL |
-| Lyrics disabled | EditTrackMetadataDialog.tsx | Lägg till lyrics-fält |
-| Kan inte lägga till lyrics | StudioTracks.tsx | Lägg till lyrics i upload-formulär |
-| Kan inte svepa till nästa | NowPlayingScreen.tsx | Lägg till horisontella swipe-gester |
-| Feed avklippt | Redan fixat | pb-44 applicerat |
+**Fas 1 (denna plan):**
+- SyncedLyricsDisplay med rad-för-rad highlighting
+- Enkel tap-to-sync editor
+- LRC-format stöd
 
-## Beroenden
+**Fas 2 (framtida):**
+- Ord-för-ord highlighting (som Apple Music)
+- Automatisk sync via AI/ljudanalys
+- Import från externa LRC-filer
 
-Inga nya paket behövs - framer-motion och touch events finns redan.
-
-## Tidsuppskattning
-
-~4 ändringar i befintliga filer, ingen ny infrastruktur krävs.
