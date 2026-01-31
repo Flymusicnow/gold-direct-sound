@@ -22,6 +22,7 @@ export function LyricsTimeSyncEditor({
   onSave,
 }: LyricsTimeSyncEditorProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const currentLineRef = useRef<HTMLButtonElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -85,6 +86,16 @@ export function LyricsTimeSyncEditor({
       setCurrentIndex(currentIndex + 1);
     }
   }, [currentIndex, currentTime, lines.length]);
+
+  // Auto-scroll to current line
+  useEffect(() => {
+    if (currentLineRef.current) {
+      currentLineRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [currentIndex]);
 
   const handleReset = useCallback(() => {
     const audio = audioRef.current;
@@ -157,7 +168,7 @@ export function LyricsTimeSyncEditor({
         </div>
 
         {/* Lines to sync */}
-        <ScrollArea className="flex-1 min-h-[200px] max-h-[300px]">
+        <ScrollArea className="flex-1 min-h-[300px] max-h-[50vh]">
           <div className="space-y-2 p-2">
             {lines.map((line, index) => {
               const isSynced = line.time >= 0;
@@ -167,6 +178,7 @@ export function LyricsTimeSyncEditor({
               return (
                 <button
                   key={index}
+                  ref={isCurrent ? currentLineRef : null}
                   onClick={() => handleTapLine(index)}
                   disabled={!isCurrent || !isPlaying}
                   className={cn(
