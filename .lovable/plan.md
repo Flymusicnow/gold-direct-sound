@@ -1,98 +1,110 @@
 
-# Plan: Fixa 404 för "issue_fixed" notifikationer
 
-## Problem
+# Plan: Gör useLikes defensiv mot saknad kontext
 
-Trigger-funktionen `notify_reporter_on_issue_resolved()` skickar **alla** användare till `/studio/dashboard` oavsett deras roll. Fans har inte tillgång till denna route.
+## Problemanalys
 
-## Lösning
+Felet `useLikes must be used within a LikesProvider` uppstår när:
+1. En provider tidigare i kedjan (`AuthProvider`, `useSupportScore`, etc.) kastar ett fel
+2. `LikesProvider` misslyckas att rendera
+3. Komponenter som `ArtistProfile` försöker anropa `useLikes()` men får `undefined`
 
-Uppdatera trigger-funktionen att använda **den ursprungliga routen** där användaren rapporterade problemet, eller en roll-baserad dashboard som fallback.
+Det här är ett **kaskadfels-mönster** - ett fel någonstans i provider-trädet tar ner hela appen.
 
-## Databasändring
+## Lösning: Defensiv hook med fallback
 
-Ersätt den hårdkodade länken med dynamisk routing:
+Istället för att krascha hela appen när kontexten saknas, returnera en "säker" no-op version:
 
-```sql
-CREATE OR REPLACE FUNCTION public.notify_reporter_on_issue_resolved()
-RETURNS TRIGGER AS $$
-DECLARE
-  reporter_user_id UUID;
-  reporter_role TEXT;
-  original_route TEXT;
-  notification_link TEXT;
-BEGIN
-  IF (NEW.status IN ('resolved', 'verified') AND 
-      (OLD.status IS NULL OR OLD.status NOT IN ('resolved', 'verified'))) THEN
-    
-    reporter_user_id := (NEW.payload->'ai_context'->>'user_id')::UUID;
-    reporter_role := NEW.payload->'ai_context'->>'user_role';
-    original_route := NEW.payload->'ai_context'->>'route';
-    
-    -- Bestäm länk baserat på roll och original route
-    notification_link := CASE
-      WHEN original_route IS NOT NULL AND original_route != '' THEN original_route
-      WHEN reporter_role = 'fan' THEN '/fan/dashboard'
-      WHEN reporter_role = 'artist' THEN '/studio/dashboard'
-      WHEN reporter_role = 'brand' THEN '/brand/dashboard'
-      ELSE '/role-selection'
-    END;
-    
-    IF reporter_user_id IS NOT NULL THEN
-      INSERT INTO notifications (user_id, type, title, message, link, metadata, severity)
-      VALUES (
-        reporter_user_id,
-        'issue_fixed',
-        '✅ Your reported issue has been fixed!',
-        COALESCE(NEW.resolution_summary, 'The issue you reported has been resolved.'),
-        notification_link,  -- Dynamisk länk istället för hårdkodad
-        jsonb_build_object(
-          'inbox_id', NEW.id,
-          'resolved_at', NEW.resolved_at,
-          'original_route', original_route
-        ),
-        'important'
-      );
-    END IF;
-  END IF;
+```text
+┌─────────────────────────────────────────────────────────────┐
+│  FÖRE: useLikes() kastar fel                                │
+│                                                             │
+│  if (context === undefined) {                               │
+│    throw new Error('useLikes must be used...')  ← CRASH    │
+│  }                                                          │
+├─────────────────────────────────────────────────────────────┤
+│  EFTER: useLikes() returnerar fallback                      │
+│                                                             │
+│  if (context === undefined) {                               │
+│    console.warn('[useLikes] Called outside LikesProvider')  │
+│    return {                                                 │
+│      likedTracks: {},                                       │
+│      isLiked: () => false,                                  │
+│      toggleLike: async () => {},  ← No-op                  │
+│      isUpdating: () => false,                               │
+│      refreshLikes: async () => {},                          │
+│    };                                                       │
+│  }                                                          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Tekniska ändringar
+
+### Fil: `src/contexts/LikesContext.tsx`
+
+1. **Ta bort throw-satsen** i `useLikes()`
+2. **Lägg till fallback-objekt** med tomma/no-op funktioner
+3. **Logga varning** för debugging utan att krascha appen
+4. **Behåll full funktionalitet** när kontexten finns
+
+### Ny kod för useLikes:
+
+```typescript
+// Fallback för när kontexten saknas (t.ex. under provider-fel)
+const FALLBACK_CONTEXT: LikesContextType = {
+  likedTracks: {},
+  isLiked: () => false,
+  toggleLike: async () => {
+    console.warn('[useLikes] toggleLike called without LikesProvider');
+  },
+  isUpdating: () => false,
+  refreshLikes: async () => {},
+};
+
+export function useLikes() {
+  const context = useContext(LikesContext);
   
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+  if (context === undefined) {
+    // Log warning instead of crashing
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('[useLikes] Called outside LikesProvider - using fallback');
+    }
+    return FALLBACK_CONTEXT;
+  }
+  
+  return context;
+}
 ```
 
-## Logik
+## Fördelar
 
-| Scenario | Länk |
-|----------|------|
-| Original route finns | `/fan/feed` (den ursprungliga routen) |
-| Fan utan route | `/fan/dashboard` |
-| Artist utan route | `/studio/dashboard` |
-| Brand utan route | `/brand/dashboard` |
-| Okänd roll | `/role-selection` |
+| Före | Efter |
+|------|-------|
+| Appen kraschar om en provider misslyckas | Appen fortsätter fungera (degraderat) |
+| Användaren ser "Something went wrong" | Användaren kan fortsätta navigera |
+| Svårt att debugga kaskadfel | Tydlig warning i console |
+| Likes-knappar kraschar sidan | Likes-knappar fungerar inte men kraschar inte |
 
-## Tekniska detaljer
+## Alternativ lösning (bonus)
 
-- **Fil:** Ny SQL-migration
-- **Funktion:** `notify_reporter_on_issue_resolved()`
-- **Trigger:** Ingen ändring behövs (redan kopplad)
-- **Befintliga notifikationer:** Kan uppdateras manuellt vid behov
+För ännu bättre felhantering kan vi också skapa en `useLikesOptional()` hook:
 
-## Bonus: Uppdatera befintliga notifikationer
+```typescript
+// Returner null istället för fallback om kontexten saknas
+export function useLikesOptional() {
+  return useContext(LikesContext) ?? null;
+}
 
-För att fixa redan skapade notifikationer med fel länk:
-
-```sql
-UPDATE notifications n
-SET link = COALESCE(
-  (SELECT im.payload->'ai_context'->>'route' 
-   FROM inbox_messages im 
-   WHERE im.id = (n.metadata->>'inbox_id')::uuid),
-  CASE 
-    WHEN EXISTS (SELECT 1 FROM user_roles ur WHERE ur.user_id = n.user_id AND ur.role = 'fan') 
-    THEN '/fan/dashboard'
-    ELSE '/studio/dashboard'
-  END
-)
-WHERE n.type = 'issue_fixed';
+// Användning i komponenter som vill hantera saknad kontext explicit
+const likes = useLikesOptional();
+if (!likes) {
+  return <div>Likes unavailable</div>;
+}
 ```
+
+## Filer att ändra
+
+| Fil | Ändring |
+|-----|---------|
+| `src/contexts/LikesContext.tsx` | Gör `useLikes()` defensiv med fallback |
+
