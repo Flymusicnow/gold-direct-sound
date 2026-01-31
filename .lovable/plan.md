@@ -1,246 +1,201 @@
 
-# Plan: Fixa Audio Loading + Scrollning + Lyrics Highlighting
+# Plan: Fixa Lyrics Display, Share & Menu för Fan-vy
 
-## Problem 1: Audio laddar aldrig (spinner snurrar)
+## Problem & Lösningar
 
-**Rotorsak:** Audio-elementet är inuti DialogContent (Portal). När `open` blir true:
-1. DialogContent renderas via Portal
-2. useEffect med `[audioUrl, open]` körs
-3. MEN `audioRef.current` är FORTFARANDE null (React har inte hunnit montera)
-4. useEffect returnerar tidigt → audio laddas aldrig
+### 1. Tidsstämplar visas i lyrics (mest kritiska)
+**Orsak:** LRC-parsern (`parseLrc`) kräver exakt format `[mm:ss.ms]Text` men:
+- Regex matchar `(.+)` efter timestamp, men om det finns dubbla brackets som `[00:02.02][VERSE 1]` behålls den andra
+- Plain text fallback visar RAW lyrics inklusive timestamps
 
-**Lösning:** Flytta audio-elementet UTANFÖR DialogContent så det alltid finns tillgängligt.
-
-### Fil: `src/components/artist/LyricsTimeSyncEditor.tsx`
-
-```tsx
-// FÖRE (rad 162-178): Audio är INUTI Dialog
-return (
-  <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-      <DialogHeader>...</DialogHeader>
-      
-      {/* Audio element INUTI - PROBLEM! */}
-      <audio ref={audioRef} src={audioUrl} preload="metadata" />
-      
-      ...
-    </DialogContent>
-  </Dialog>
-);
-
-// EFTER: Audio är UTANFÖR Dialog
-return (
-  <>
-    {/* Audio element UTANFÖR - alltid monterat */}
-    <audio 
-      ref={audioRef} 
-      src={audioUrl} 
-      preload="auto"
-      crossOrigin="anonymous"
-    />
-    
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-        ...
-      </DialogContent>
-    </Dialog>
-  </>
-);
-```
-
-**Ytterligare förbättringar:**
-- Ändra `preload="metadata"` till `preload="auto"` för snabbare laddning
-- Lägg till `crossOrigin="anonymous"` för CORS-stöd med Supabase Storage
-- Lägg till mer robust felhantering och debug-loggning
-
----
-
-## Problem 2: Kan inte skrolla ner för att se alla 45 rader
-
-**Orsak:** DialogContent har `flex flex-col` och ScrollArea har `flex-1 min-h-[300px] max-h-[50vh]`. Det borde fungera, men innehållet kanske tvingas ihop.
-
-**Lösning:** Ge ScrollArea mer explicit höjd och säkerställ att den kan skrolla.
-
-```tsx
-// FÖRE:
-<ScrollArea className="flex-1 min-h-[300px] max-h-[50vh]">
-
-// EFTER:
-<ScrollArea className="flex-1 h-[400px] overflow-y-auto">
-```
-
----
-
-## Problem 3: Förstärk aktiv lyrics-rad på fansidan
-
-**Nuvarande:** `SyncedLyricsDisplay` har redan grundläggande highlighting:
-- Aktiv rad: `text-primary font-semibold text-lg` + scale 1.05
-- Förflutna rader: `text-muted-foreground` + opacity 0.5
-- Kommande rader: `text-muted-foreground/70` + opacity 0.4
-
-**Förbättring:** Lägg till bakgrundsfärg och mer dramatisk animation för aktiv rad.
-
-### Fil: `src/components/flightdeck/SyncedLyricsDisplay.tsx`
-
-```tsx
-// FÖRE (rad 86-91):
-className={cn(
-  "text-center transition-all duration-300",
-  isActive && "text-primary font-semibold text-lg",
-  isPast && "text-muted-foreground text-base",
-  isFuture && "text-muted-foreground/70 text-base"
-)}
-
-// EFTER - mer synlig highlighting:
-className={cn(
-  "text-center transition-all duration-300 py-2 px-4 rounded-lg",
-  isActive && "text-primary font-bold text-xl bg-primary/15 shadow-lg shadow-primary/20",
-  isPast && "text-muted-foreground text-base opacity-60",
-  isFuture && "text-muted-foreground/60 text-base"
-)}
-```
-
-**Animation förbättring:**
-```tsx
-// FÖRE:
-animate={{
-  opacity: isActive ? 1 : isPast ? 0.5 : 0.4,
-  scale: isActive ? 1.05 : 1,
-}}
-
-// EFTER - mer dynamisk:
-animate={{
-  opacity: isActive ? 1 : isPast ? 0.5 : 0.35,
-  scale: isActive ? 1.08 : 1,
-  y: isActive ? -2 : 0, // Liten "lift" effekt
-}}
-```
-
----
-
-## Sammanfattning av alla ändringar
-
-| Problem | Fil | Lösning |
-|---------|-----|---------|
-| Audio laddar aldrig | LyricsTimeSyncEditor.tsx | Flytta `<audio>` utanför Dialog + preload="auto" |
-| Kan ej skrolla | LyricsTimeSyncEditor.tsx | Öka ScrollArea höjd |
-| Svag lyrics-highlight | SyncedLyricsDisplay.tsx | Starkare färg + bakgrund + animation |
-
----
-
-## Tekniska detaljer
-
-### LyricsTimeSyncEditor - Audio outside Dialog
-
-```tsx
-export function LyricsTimeSyncEditor({
-  open,
-  onOpenChange,
-  plainLyrics,
-  audioUrl,
-  onSave,
-}: LyricsTimeSyncEditorProps) {
-  const audioRef = useRef<HTMLAudioElement>(null);
-  // ... state declarations ...
-
-  // useEffect för audio - körs nu korrekt eftersom audio alltid är monterad
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !open) return;
-
-    console.log('[LyricsSync] Setting up audio for:', audioUrl);
-    setIsLoading(true);
-    setLoadError(null);
-
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => {
-      console.log('[LyricsSync] Audio loaded, duration:', audio.duration);
-      setDuration(audio.duration);
-      setIsLoading(false);
-    };
-    const handleEnded = () => setIsPlaying(false);
-    const handleError = (e: Event) => {
-      const target = e.target as HTMLAudioElement;
-      console.error('[LyricsSync] Audio error:', target.error?.code, target.error?.message);
-      setIsLoading(false);
-      setLoadError(`Audio error: ${target.error?.message || 'Unknown error'}`);
-    };
-    const handleCanPlayThrough = () => {
-      console.log('[LyricsSync] Audio ready to play');
-      setIsLoading(false);
-    };
-
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('ended', handleEnded);
-    audio.addEventListener('error', handleError);
-    audio.addEventListener('canplaythrough', handleCanPlayThrough);
-
-    // Tvinga omladdning
-    audio.load();
-
-    return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('ended', handleEnded);
-      audio.removeEventListener('error', handleError);
-      audio.removeEventListener('canplaythrough', handleCanPlayThrough);
-    };
-  }, [audioUrl, open]);
-
-  return (
-    <>
-      {/* Audio UTANFÖR Dialog - alltid tillgänglig */}
-      <audio 
-        ref={audioRef} 
-        src={audioUrl} 
-        preload="auto"
-        crossOrigin="anonymous"
-      />
-      
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-          {/* ... resten av innehållet ... */}
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+**Lösning i `src/lib/lrc-parser.ts`:**
+```typescript
+// Förbättra regex för att matcha alla timestamps på en rad
+// Och returnera enbart texten (utan brackets)
+export function parseLrc(lrcText: string): LrcLine[] {
+  const lines: LrcLine[] = [];
+  // Matcha rader som börjar med [timestamp]
+  const lineRegex = /^(\[[\d:.]+\])+(.*)$/gm;
+  // ...
+  // Strip alla [xx:xx.xx] mönster från texten
 }
 ```
 
-### SyncedLyricsDisplay - Enhanced highlighting
+**Lösning i `src/components/flightdeck/SyncedLyricsDisplay.tsx`:**
+- Lägg till en `stripTimestamps()` funktion för att rensa bort eventuella kvarvarande timestamps
+- Visa ALDRIG timestamps i fan-vyn
 
+### 2. Lyrics följer inte med (synkronisering trasig)
+
+**Orsak:** `currentTime` från FlightdeckContext uppdateras korrekt, men om `isSynced` är false pga parsing-fel, körs ingen highlighting.
+
+**Lösning:**
+- Fixa LRC-parsern så `isSynced = true`
+- `findCurrentLineIndex` fungerar redan korrekt
+
+### 3. Ingen färg på aktiv text
+
+**Orsak:** Highlighting-koden finns redan men aktiveras bara när `isSynced = true`.
+
+**Befintlig kod (redan fixad tidigare):**
 ```tsx
-<motion.div
-  key={index}
-  ref={isActive ? activeLineRef : null}
-  initial={{ opacity: 0.35 }}
-  animate={{
-    opacity: isActive ? 1 : isPast ? 0.5 : 0.35,
-    scale: isActive ? 1.08 : 1,
-    y: isActive ? -2 : 0,
-  }}
-  transition={{ duration: 0.3, ease: "easeOut" }}
-  className={cn(
-    "text-center transition-all duration-300 py-2 px-4 rounded-lg",
-    isActive && "text-primary font-bold text-xl bg-primary/15 shadow-lg shadow-primary/20",
-    isPast && "text-muted-foreground text-base",
-    isFuture && "text-muted-foreground/60 text-base"
-  )}
->
-  {line.text}
-</motion.div>
+isActive && "text-primary font-bold text-xl bg-primary/15 shadow-lg shadow-primary/20"
+```
+
+### 4. Share-knappen fungerar inte (mobil)
+
+**Orsak:** NowPlayingScreen är `z-[100]`, men ShareModal (Dialog) har `z-[150]`. På mobilen kan touch events blockeras.
+
+**Lösning i `src/components/flightdeck/NowPlayingScreen.tsx`:**
+```tsx
+// Wrap ShareModal i en portal med högre z-index
+<ShareModal
+  isOpen={showShareModal}
+  onClose={() => setShowShareModal(false)}
+  // ...props
+/>
+```
+
+**Lösning i `src/components/ShareModal.tsx`:**
+```tsx
+<DialogContent className="sm:max-w-md bg-card border-primary/20 z-[200]">
+```
+
+### 5. Tre-punkter-menyn fungerar inte (mobil)
+
+**Orsak:** Radix DropdownMenu kan ha problem med touch events inuti en fixed container.
+
+**Lösning i `src/components/flightdeck/NowPlayingScreen.tsx`:**
+```tsx
+<DropdownMenu modal={true}>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost" size="icon" className="relative z-[110]">
+      <MoreHorizontal className="h-6 w-6" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent 
+    align="end" 
+    className="z-[300] bg-card"
+    sideOffset={5}
+  >
+    ...
+  </DropdownMenuContent>
+</DropdownMenu>
 ```
 
 ---
 
+## Tekniska Ändringar
+
+### Fil 1: `src/lib/lrc-parser.ts`
+
+**Förbättra `parseLrc` för att hantera alla LRC-varianter:**
+```typescript
+export function parseLrc(lrcText: string): LrcLine[] {
+  const lines: LrcLine[] = [];
+  
+  // Split by newlines first
+  const rawLines = lrcText.split('\n');
+  
+  for (const rawLine of rawLines) {
+    // Match all timestamps at start of line
+    const timestampRegex = /\[(\d{1,2}):(\d{2})([.:])(\d{2,3})\]/g;
+    let lastMatch: RegExpExecArray | null = null;
+    let firstTime: number | null = null;
+    
+    // Find all timestamps
+    while ((match = timestampRegex.exec(rawLine)) !== null) {
+      if (firstTime === null) {
+        const mins = parseInt(match[1], 10);
+        const secs = parseInt(match[2], 10);
+        const ms = parseInt(match[4].padEnd(3, '0'), 10);
+        firstTime = mins * 60 + secs + ms / 1000;
+      }
+      lastMatch = match;
+    }
+    
+    if (firstTime !== null && lastMatch) {
+      // Text is everything after the last timestamp
+      const textStart = lastMatch.index + lastMatch[0].length;
+      const text = rawLine.slice(textStart).trim();
+      
+      if (text) {
+        lines.push({ time: firstTime, text });
+      }
+    }
+  }
+  
+  return lines.sort((a, b) => a.time - b.time);
+}
+
+// Helper att ta bort alla timestamps från text
+export function stripTimestamps(text: string): string {
+  return text.replace(/\[\d{1,2}:\d{2}[.:]\d{2,3}\]/g, '').trim();
+}
+```
+
+**Gör `isLrcFormat` mer flexibel:**
+```typescript
+export function isLrcFormat(text: string): boolean {
+  // Match variations: [00:00.00], [0:00.00], [00:00:00], [00:00.000]
+  return /\[\d{1,2}:\d{2}[.:]\d{2,3}\]/.test(text.trim());
+}
+```
+
+### Fil 2: `src/components/flightdeck/SyncedLyricsDisplay.tsx`
+
+**Strip timestamps från visad text:**
+```tsx
+import { parseLrc, isLrcFormat, findCurrentLineIndex, stripTimestamps } from '@/lib/lrc-parser';
+
+// I render:
+<motion.div ...>
+  {stripTimestamps(line.text)}
+</motion.div>
+```
+
+### Fil 3: `src/components/flightdeck/NowPlayingScreen.tsx`
+
+**Fixa DropdownMenu för mobil:**
+```tsx
+<DropdownMenu modal={true}>
+  <DropdownMenuTrigger asChild>
+    <Button variant="ghost" size="icon" className="relative z-[110]">
+      <MoreHorizontal className="h-6 w-6" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent 
+    align="end" 
+    className="z-[300] bg-card"
+    sideOffset={8}
+    onCloseAutoFocus={(e) => e.preventDefault()}
+  >
+```
+
+**Fixa ShareModal z-index:**
+Öka z-index på ShareModal's DialogContent
+
+### Fil 4: `src/components/ShareModal.tsx`
+
+**Höj z-index:**
+```tsx
+<Dialog open={isOpen} onOpenChange={onClose}>
+  <DialogContent className="sm:max-w-md bg-card border-primary/20 z-[250]">
+```
+
+---
+
+## Sammanfattning
+
+| Problem | Fil | Ändring |
+|---------|-----|---------|
+| Timestamps visas | lrc-parser.ts | Förbättra regex, lägg till stripTimestamps() |
+| Ingen synk/färg | SyncedLyricsDisplay.tsx | Använd stripTimestamps() på visad text |
+| Share funkar ej | ShareModal.tsx | Höj z-index till z-[250] |
+| Menu funkar ej | NowPlayingScreen.tsx | Lägg till modal={true}, höj z-index till z-[300] |
+
 ## Filer att ändra
-
-1. **`src/components/artist/LyricsTimeSyncEditor.tsx`**
-   - Flytta audio-element utanför Dialog
-   - Förbättra ScrollArea höjd
-   - Lägga till mer debug-loggning
-
-2. **`src/components/flightdeck/SyncedLyricsDisplay.tsx`**
-   - Förstärka aktiv rad med bakgrund och skugga
-   - Förbättra animation med y-offset
+1. `src/lib/lrc-parser.ts` - Förbättra LRC-parsing och lägg till stripTimestamps
+2. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Strip timestamps från visning
+3. `src/components/flightdeck/NowPlayingScreen.tsx` - Fixa DropdownMenu för mobil
+4. `src/components/ShareModal.tsx` - Höj z-index
