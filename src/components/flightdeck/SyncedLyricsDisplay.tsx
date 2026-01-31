@@ -64,10 +64,10 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     );
   }
 
-  // Synced karaoke display
+  // Synced karaoke display with enhanced highlighting
   return (
     <ScrollArea className={cn("h-64", className)}>
-      <div ref={containerRef} className="py-8 px-4 space-y-3">
+      <div ref={containerRef} className="py-8 px-4 space-y-2">
         {lines.map((line, index) => {
           const isActive = index === currentLineIndex;
           const isPast = index < currentLineIndex;
@@ -77,17 +77,18 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
             <motion.div
               key={index}
               ref={isActive ? activeLineRef : null}
-              initial={{ opacity: 0.4 }}
+              initial={{ opacity: 0.35 }}
               animate={{
-                opacity: isActive ? 1 : isPast ? 0.5 : 0.4,
-                scale: isActive ? 1.05 : 1,
+                opacity: isActive ? 1 : isPast ? 0.5 : 0.35,
+                scale: isActive ? 1.08 : 1,
+                y: isActive ? -2 : 0,
               }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
               className={cn(
-                "text-center transition-all duration-300",
-                isActive && "text-primary font-semibold text-lg",
+                "text-center transition-all duration-300 py-2 px-4 rounded-lg",
+                isActive && "text-primary font-bold text-xl bg-primary/15 shadow-lg shadow-primary/20",
                 isPast && "text-muted-foreground text-base",
-                isFuture && "text-muted-foreground/70 text-base"
+                isFuture && "text-muted-foreground/60 text-base"
               )}
             >
               {line.text}
