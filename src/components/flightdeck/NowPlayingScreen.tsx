@@ -368,7 +368,7 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
                 <SyncedLyricsDisplay 
                   lyrics={lyrics} 
                   currentTime={currentTime}
-                  className="h-64"
+                  className="h-72"
                 />
               </motion.div>
             )}

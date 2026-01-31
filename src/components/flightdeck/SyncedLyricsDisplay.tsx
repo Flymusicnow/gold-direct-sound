@@ -1,6 +1,5 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { parseLrc, isLrcFormat, findCurrentLineIndex, stripTimestamps } from '@/lib/lrc-parser';
 import { cn } from '@/lib/utils';
 
@@ -11,7 +10,7 @@ interface SyncedLyricsDisplayProps {
 }
 
 export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLyricsDisplayProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const activeLineRef = useRef<HTMLDivElement>(null);
 
   // Parse lyrics - handle both LRC and plain text
@@ -33,14 +32,25 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     return findCurrentLineIndex(lines, currentTime);
   }, [lines, currentTime, isSynced]);
 
-  // Auto-scroll to active line
+  // Robust auto-scroll - always center active line
   useEffect(() => {
-    if (activeLineRef.current && isSynced) {
-      activeLineRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
-    }
+    if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
+    
+    const container = scrollContainerRef.current;
+    const activeLine = activeLineRef.current;
+    
+    // Calculate position to center the active line
+    const containerHeight = container.clientHeight;
+    const lineOffsetTop = activeLine.offsetTop;
+    const lineHeight = activeLine.offsetHeight;
+    
+    // Scroll to position where active line is in the middle
+    const targetScroll = lineOffsetTop - (containerHeight / 2) + (lineHeight / 2);
+    
+    container.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth'
+    });
   }, [currentLineIndex, isSynced]);
 
   if (lines.length === 0) {
@@ -51,23 +61,30 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     );
   }
 
-  // Plain text (non-synced) display - strip any timestamps
+  // Plain text (non-synced) display
   if (!isSynced) {
     return (
-      <ScrollArea className={cn("h-64", className)}>
-        <div className="p-6">
+      <div 
+        ref={scrollContainerRef}
+        className={cn("h-64 overflow-y-auto", className)}
+      >
+        <div className="py-32 px-6">
           <pre className="whitespace-pre-wrap text-center text-base leading-relaxed font-sans">
             {stripTimestamps(lyrics)}
           </pre>
         </div>
-      </ScrollArea>
+      </div>
     );
   }
 
-  // Synced karaoke display with enhanced highlighting
+  // Synced karaoke display with centered scrolling
   return (
-    <ScrollArea className={cn("h-64", className)}>
-      <div ref={containerRef} className="py-8 px-4 space-y-2">
+    <div 
+      ref={scrollContainerRef}
+      className={cn("overflow-y-auto scroll-smooth", className)}
+    >
+      {/* Large padding so first/last lines can be centered */}
+      <div className="py-32 px-4 space-y-3">
         {lines.map((line, index) => {
           const isActive = index === currentLineIndex;
           const isPast = index < currentLineIndex;
@@ -85,7 +102,7 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
               }}
               transition={{ duration: 0.3, ease: "easeOut" }}
               className={cn(
-                "text-center transition-all duration-300 py-2 px-4 rounded-lg",
+                "text-center transition-all duration-300 py-3 px-4 rounded-lg",
                 isActive && "text-primary font-bold text-xl bg-primary/15 shadow-lg shadow-primary/20",
                 isPast && "text-muted-foreground text-base",
                 isFuture && "text-muted-foreground/60 text-base"
@@ -96,6 +113,6 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
           );
         })}
       </div>
-    </ScrollArea>
+    </div>
   );
 }
