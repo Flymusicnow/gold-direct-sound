@@ -680,6 +680,7 @@ export default function StudioTracks() {
           open={!!editMetadataTrack}
           onOpenChange={(open) => !open && setEditMetadataTrack(null)}
           trackId={editMetadataTrack.id}
+          audioUrl={editMetadataTrack.audio_url}
           currentTrack={{
             title: editMetadataTrack.title,
             description: editMetadataTrack.description,

@@ -8,13 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Lock, Crown, Music, Sparkles, AlignLeft } from "lucide-react";
+import { Lock, Crown, Music, Sparkles, AlignLeft, Timer } from "lucide-react";
 import { TrackMetadataFields } from "./TrackMetadataFields";
+import { LyricsTimeSyncEditor } from "./LyricsTimeSyncEditor";
+import { isLrcFormat } from "@/lib/lrc-parser";
 
 interface EditTrackMetadataDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trackId: string;
+  audioUrl: string;
   currentTrack: {
     title: string;
     description: string | null;
@@ -33,6 +36,7 @@ export function EditTrackMetadataDialog({
   open,
   onOpenChange,
   trackId,
+  audioUrl,
   currentTrack,
   onSuccess
 }: EditTrackMetadataDialogProps) {
@@ -45,6 +49,10 @@ export function EditTrackMetadataDialog({
   const [requiredTier, setRequiredTier] = useState(currentTrack.required_tier || "basic");
   const [lyrics, setLyrics] = useState(currentTrack.lyrics || "");
   const [saving, setSaving] = useState(false);
+  const [showSyncEditor, setShowSyncEditor] = useState(false);
+  
+  const hasPlainLyrics = lyrics.trim().length > 0 && !isLrcFormat(lyrics);
+  const isSynced = isLrcFormat(lyrics);
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -130,10 +138,28 @@ export function EditTrackMetadataDialog({
 
           {/* Lyrics */}
           <div className="space-y-2">
-            <Label htmlFor="edit-lyrics" className="flex items-center gap-2">
-              <AlignLeft className="h-4 w-4 text-primary" />
-              Lyrics
-            </Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-lyrics" className="flex items-center gap-2">
+                <AlignLeft className="h-4 w-4 text-primary" />
+                Lyrics
+                {isSynced && (
+                  <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                    Synced
+                  </span>
+                )}
+              </Label>
+              {hasPlainLyrics && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSyncEditor(true)}
+                >
+                  <Timer className="h-4 w-4 mr-1" />
+                  Sync with Music
+                </Button>
+              )}
+            </div>
             <Textarea
               id="edit-lyrics"
               value={lyrics}
@@ -143,7 +169,9 @@ export function EditTrackMetadataDialog({
               className="font-mono text-sm"
             />
             <p className="text-xs text-muted-foreground">
-              Lyrics will display when fans play your track
+              {isSynced 
+                ? "Lyrics are synced and will scroll with the music" 
+                : "Add lyrics, then click 'Sync with Music' for karaoke-style display"}
             </p>
           </div>
 
@@ -203,6 +231,15 @@ export function EditTrackMetadataDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* Lyrics Time Sync Editor */}
+      <LyricsTimeSyncEditor
+        open={showSyncEditor}
+        onOpenChange={setShowSyncEditor}
+        plainLyrics={lyrics}
+        audioUrl={audioUrl}
+        onSave={(syncedLyrics) => setLyrics(syncedLyrics)}
+      />
     </Dialog>
   );
 }

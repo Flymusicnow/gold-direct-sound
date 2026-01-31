@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import AddToPlaylistDialog from '@/components/playlists/AddToPlaylistDialog';
 import { ShareModal } from '@/components/ShareModal';
+import { SyncedLyricsDisplay } from './SyncedLyricsDisplay';
 
 interface NowPlayingScreenProps {
   isOpen: boolean;
@@ -321,7 +322,7 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
             </Button>
           </div>
 
-          {/* Lyrics Panel (expandable) */}
+          {/* Lyrics Panel (expandable) - Karaoke style synced display */}
           <AnimatePresence>
             {showLyrics && lyrics && (
               <motion.div
@@ -330,11 +331,11 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
                 exit={{ height: 0, opacity: 0 }}
                 className="absolute bottom-40 left-0 right-0 bg-card/95 backdrop-blur-lg overflow-hidden border-t border-border"
               >
-                <ScrollArea className="h-64 p-6">
-                  <pre className="whitespace-pre-wrap text-center text-base leading-relaxed font-sans">
-                    {lyrics}
-                  </pre>
-                </ScrollArea>
+                <SyncedLyricsDisplay 
+                  lyrics={lyrics} 
+                  currentTime={currentTime}
+                  className="h-64"
+                />
               </motion.div>
             )}
           </AnimatePresence>
