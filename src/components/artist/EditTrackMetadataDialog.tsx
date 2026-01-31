@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Lock, Crown, Music, Sparkles } from "lucide-react";
+import { Lock, Crown, Music, Sparkles, AlignLeft } from "lucide-react";
 import { TrackMetadataFields } from "./TrackMetadataFields";
 
 interface EditTrackMetadataDialogProps {
@@ -24,6 +24,7 @@ interface EditTrackMetadataDialogProps {
     visibility: string | null;
     is_supporter_only: boolean;
     required_tier: string | null;
+    lyrics: string | null;
   };
   onSuccess: () => void;
 }
@@ -42,6 +43,7 @@ export function EditTrackMetadataDialog({
   const [tags, setTags] = useState<string[]>(currentTrack.tags || []);
   const [isSupporterOnly, setIsSupporterOnly] = useState(currentTrack.is_supporter_only);
   const [requiredTier, setRequiredTier] = useState(currentTrack.required_tier || "basic");
+  const [lyrics, setLyrics] = useState(currentTrack.lyrics || "");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -63,6 +65,7 @@ export function EditTrackMetadataDialog({
           tags: tags.length > 0 ? tags : null,
           is_supporter_only: isSupporterOnly,
           required_tier: isSupporterOnly ? requiredTier : null,
+          lyrics: lyrics.trim() || null,
         })
         .eq("id", trackId);
 
@@ -124,6 +127,25 @@ export function EditTrackMetadataDialog({
             tags={tags}
             onTagsChange={setTags}
           />
+
+          {/* Lyrics */}
+          <div className="space-y-2">
+            <Label htmlFor="edit-lyrics" className="flex items-center gap-2">
+              <AlignLeft className="h-4 w-4 text-primary" />
+              Lyrics
+            </Label>
+            <Textarea
+              id="edit-lyrics"
+              value={lyrics}
+              onChange={(e) => setLyrics(e.target.value)}
+              placeholder="Add song lyrics..."
+              rows={8}
+              className="font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground">
+              Lyrics will display when fans play your track
+            </p>
+          </div>
 
           {/* Supporter Exclusive Settings */}
           <div className="space-y-4 p-4 border border-primary/20 rounded-lg bg-primary/5">

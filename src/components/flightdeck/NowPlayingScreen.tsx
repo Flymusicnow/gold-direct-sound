@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -55,6 +55,34 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
   const [isLikeUpdating, setIsLikeUpdating] = useState(false);
   const [showPlaylistDialog, setShowPlaylistDialog] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+
+  // Swipe gesture refs
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return;
+    
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+    
+    // Horizontal swipe (not vertical)
+    if (Math.abs(deltaX) > 80 && deltaY < 80) {
+      if (deltaX < 0) {
+        playNext();
+      } else {
+        playPrev();
+      }
+    }
+    
+    touchStartX.current = null;
+    touchStartY.current = null;
+  }, [playNext, playPrev]);
 
   // Fetch lyrics
   useEffect(() => {
@@ -157,9 +185,14 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
             </Button>
           </div>
 
-          {/* Album Art - Large */}
-          <div className="flex-1 flex items-center justify-center px-8 py-4">
+          {/* Album Art - Large (swipeable) */}
+          <div 
+            className="flex-1 flex items-center justify-center px-8 py-4"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             <motion.div
+              key={currentItem.id}
               className="w-full max-w-[320px] aspect-square relative"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -314,12 +347,12 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
             trackTitle={currentItem.title}
           />
 
-          {/* Share Modal */}
+          {/* Share Modal - shares track URL */}
           <ShareModal
             isOpen={showShareModal}
             onClose={() => setShowShareModal(false)}
             artistName={currentItem.artistName}
-            shareUrl={`${window.location.origin}/artist/${currentItem.artistUserId}`}
+            shareUrl={`${window.location.origin}/track/${currentItem.id}`}
             artistId={currentItem.artistId}
           />
         </motion.div>
