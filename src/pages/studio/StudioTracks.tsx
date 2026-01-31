@@ -48,6 +48,7 @@ interface Track {
   mood: string | null;
   tags: string[] | null;
   visibility: string | null;
+  lyrics: string | null;
 }
 
 interface Album {
@@ -80,6 +81,7 @@ export default function StudioTracks() {
   const [trackGenre, setTrackGenre] = useState("");
   const [trackMood, setTrackMood] = useState("");
   const [trackTags, setTrackTags] = useState<string[]>([]);
+  const [trackLyrics, setTrackLyrics] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [isSupporterOnly, setIsSupporterOnly] = useState(false);
@@ -276,6 +278,7 @@ export default function StudioTracks() {
         genre: trackGenre || null,
         mood: trackMood || null,
         tags: trackTags.length > 0 ? trackTags : null,
+        lyrics: trackLyrics.trim() || null,
       });
 
       if (insertError) throw insertError;
@@ -286,6 +289,7 @@ export default function StudioTracks() {
       setTrackGenre("");
       setTrackMood("");
       setTrackTags([]);
+      setTrackLyrics("");
       setCoverFile(null);
       setIsSupporterOnly(false);
       setRequiredTier("basic");
@@ -419,6 +423,19 @@ export default function StudioTracks() {
                 onTagsChange={setTrackTags}
                 compact
               />
+
+              {/* Lyrics */}
+              <div>
+                <Label htmlFor="lyrics">Lyrics (optional)</Label>
+                <Textarea
+                  id="lyrics"
+                  value={trackLyrics}
+                  onChange={(e) => setTrackLyrics(e.target.value)}
+                  rows={6}
+                  placeholder="Add your song lyrics..."
+                  className="font-mono text-sm"
+                />
+              </div>
 
               <div>
                 <Label htmlFor="cover">Cover Image (optional)</Label>
@@ -672,6 +689,7 @@ export default function StudioTracks() {
             visibility: editMetadataTrack.visibility,
             is_supporter_only: editMetadataTrack.is_supporter_only,
             required_tier: editMetadataTrack.required_tier,
+            lyrics: editMetadataTrack.lyrics,
           }}
           onSuccess={fetchData}
         />
