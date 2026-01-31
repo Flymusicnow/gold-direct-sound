@@ -152,10 +152,27 @@ export function LikesProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Fallback for when context is missing (e.g., during provider failures)
+const FALLBACK_CONTEXT: LikesContextType = {
+  likedTracks: {},
+  isLiked: () => false,
+  toggleLike: async () => {
+    console.warn('[useLikes] toggleLike called without LikesProvider');
+  },
+  isUpdating: () => false,
+  refreshLikes: async () => {},
+};
+
 export function useLikes() {
   const context = useContext(LikesContext);
+  
   if (context === undefined) {
-    throw new Error('useLikes must be used within a LikesProvider');
+    // Log warning instead of crashing
+    if (import.meta.env.DEV) {
+      console.warn('[useLikes] Called outside LikesProvider - using fallback');
+    }
+    return FALLBACK_CONTEXT;
   }
+  
   return context;
 }
