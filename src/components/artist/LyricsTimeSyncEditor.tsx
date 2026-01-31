@@ -133,8 +133,10 @@ export function LyricsTimeSyncEditor({
             <Music className="h-5 w-5 text-primary" />
             Sync Lyrics with Music
           </DialogTitle>
-          <DialogDescription>
-            Play the song and tap each line when it's sung to add timestamps.
+          <DialogDescription className="space-y-1">
+            <span className="block">1. Press Play to start the song</span>
+            <span className="block">2. Tap each line when you hear it sung</span>
+            <span className="block">3. The timestamp will be recorded automatically</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -166,6 +168,13 @@ export function LyricsTimeSyncEditor({
         <div className="text-sm text-muted-foreground text-center">
           {syncedCount} / {lines.length} lines synced
         </div>
+
+        {/* Warning when not playing */}
+        {!isPlaying && currentIndex < lines.length && (
+          <div className="text-center text-amber-500 text-sm py-2 bg-amber-500/10 rounded-lg">
+            ⚠️ Press Play first, then tap lines as they're sung
+          </div>
+        )}
 
         {/* Lines to sync */}
         <ScrollArea className="flex-1 min-h-[300px] max-h-[50vh]">

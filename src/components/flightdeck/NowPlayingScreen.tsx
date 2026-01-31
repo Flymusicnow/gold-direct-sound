@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronDown, 
@@ -14,9 +14,17 @@ import {
   MoreHorizontal,
   Shuffle,
   Repeat,
-  Repeat1
+  Repeat1,
+  ExternalLink,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFlightdeck } from '@/contexts/FlightdeckContext';
@@ -34,6 +42,7 @@ interface NowPlayingScreenProps {
 }
 
 export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     currentItem,
@@ -181,9 +190,29 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
               <ChevronDown className="h-6 w-6" />
             </Button>
             <span className="text-sm text-muted-foreground font-medium">Now Playing</span>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="h-6 w-6" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal className="h-6 w-6" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="z-[200] bg-card">
+                <DropdownMenuItem onClick={() => {
+                  onClose();
+                  navigate(`/track/${currentItem.id}`);
+                }}>
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Track Page
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  onClose();
+                  navigate(`/artist/${currentItem.artistUserId}`);
+                }}>
+                  <User className="h-4 w-4 mr-2" />
+                  Go to Artist
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Album Art - Large (swipeable) */}
@@ -329,7 +358,7 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="absolute bottom-40 left-0 right-0 bg-card/95 backdrop-blur-lg overflow-hidden border-t border-border"
+                className="fixed inset-x-0 bottom-40 z-[110] bg-card/95 backdrop-blur-lg overflow-hidden border-t border-border"
               >
                 <SyncedLyricsDisplay 
                   lyrics={lyrics} 
