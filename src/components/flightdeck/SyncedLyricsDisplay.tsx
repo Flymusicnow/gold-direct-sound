@@ -1,7 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { parseLrc, isLrcFormat, findCurrentLineIndex } from '@/lib/lrc-parser';
+import { parseLrc, isLrcFormat, findCurrentLineIndex, stripTimestamps } from '@/lib/lrc-parser';
 import { cn } from '@/lib/utils';
 
 interface SyncedLyricsDisplayProps {
@@ -19,10 +19,10 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     if (isLrcFormat(lyrics)) {
       return { lines: parseLrc(lyrics), isSynced: true };
     }
-    // Plain text fallback - split by newlines
+    // Plain text fallback - split by newlines and strip any accidental timestamps
     const plainLines = lyrics.split('\n').filter(line => line.trim());
     return { 
-      lines: plainLines.map((text, i) => ({ time: -1, text })), 
+      lines: plainLines.map((text) => ({ time: -1, text: stripTimestamps(text) })), 
       isSynced: false 
     };
   }, [lyrics]);
@@ -51,13 +51,13 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     );
   }
 
-  // Plain text (non-synced) display
+  // Plain text (non-synced) display - strip any timestamps
   if (!isSynced) {
     return (
       <ScrollArea className={cn("h-64", className)}>
         <div className="p-6">
           <pre className="whitespace-pre-wrap text-center text-base leading-relaxed font-sans">
-            {lyrics}
+            {stripTimestamps(lyrics)}
           </pre>
         </div>
       </ScrollArea>
@@ -91,7 +91,7 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
                 isFuture && "text-muted-foreground/60 text-base"
               )}
             >
-              {line.text}
+              {stripTimestamps(line.text)}
             </motion.div>
           );
         })}

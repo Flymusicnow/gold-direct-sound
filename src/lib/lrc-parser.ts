@@ -10,21 +10,49 @@ export interface LrcLine {
 }
 
 /**
+ * Strip all timestamp patterns from text
+ */
+export function stripTimestamps(text: string): string {
+  return text.replace(/\[\d{1,2}:\d{2}[.:]\d{2,3}\]/g, '').trim();
+}
+
+/**
  * Parse LRC format string into array of timed lines
+ * Handles variations: [00:00.00], [0:00.00], [00:00:00], [00:00.000]
+ * Also handles multiple timestamps per line
  */
 export function parseLrc(lrcText: string): LrcLine[] {
   const lines: LrcLine[] = [];
-  const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.+)/g;
+  const rawLines = lrcText.split('\n');
   
-  let match;
-  while ((match = regex.exec(lrcText)) !== null) {
-    const minutes = parseInt(match[1], 10);
-    const seconds = parseInt(match[2], 10);
-    const milliseconds = parseInt(match[3].padEnd(3, '0'), 10);
-    const text = match[4].trim();
+  for (const rawLine of rawLines) {
+    // Match all timestamps at start of line - handles [mm:ss.ms] and [mm:ss:ms]
+    const timestampRegex = /\[(\d{1,2}):(\d{2})[.:](\d{2,3})\]/g;
+    let match: RegExpExecArray | null;
+    let lastMatch: RegExpExecArray | null = null;
+    let firstTime: number | null = null;
     
-    const time = minutes * 60 + seconds + milliseconds / 1000;
-    lines.push({ time, text });
+    // Find all timestamps and use the first one for timing
+    while ((match = timestampRegex.exec(rawLine)) !== null) {
+      if (firstTime === null) {
+        const mins = parseInt(match[1], 10);
+        const secs = parseInt(match[2], 10);
+        const ms = parseInt(match[3].padEnd(3, '0'), 10);
+        firstTime = mins * 60 + secs + ms / 1000;
+      }
+      lastMatch = match;
+    }
+    
+    if (firstTime !== null && lastMatch) {
+      // Text is everything after the last timestamp, with any remaining timestamps stripped
+      const textStart = lastMatch.index + lastMatch[0].length;
+      const rawText = rawLine.slice(textStart);
+      const text = stripTimestamps(rawText).trim();
+      
+      if (text) {
+        lines.push({ time: firstTime, text });
+      }
+    }
   }
   
   return lines.sort((a, b) => a.time - b.time);
@@ -62,9 +90,10 @@ export function toLrcString(lines: LrcLine[]): string {
 
 /**
  * Check if text is in LRC format (has timestamps)
+ * Handles variations: [00:00.00], [0:00.00], [00:00:00], [00:00.000]
  */
 export function isLrcFormat(text: string): boolean {
-  return /^\[\d{2}:\d{2}\.\d{2,3}\]/.test(text.trim());
+  return /\[\d{1,2}:\d{2}[.:]\d{2,3}\]/.test(text.trim());
 }
 
 /**

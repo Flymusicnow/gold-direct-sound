@@ -190,13 +190,18 @@ export function NowPlayingScreen({ isOpen, onClose }: NowPlayingScreenProps) {
               <ChevronDown className="h-6 w-6" />
             </Button>
             <span className="text-sm text-muted-foreground font-medium">Now Playing</span>
-            <DropdownMenu>
+            <DropdownMenu modal={true}>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="relative z-[110]">
                   <MoreHorizontal className="h-6 w-6" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="z-[200] bg-card">
+              <DropdownMenuContent 
+                align="end" 
+                className="z-[300] bg-card"
+                sideOffset={8}
+                onCloseAutoFocus={(e) => e.preventDefault()}
+              >
                 <DropdownMenuItem onClick={() => {
                   onClose();
                   navigate(`/track/${currentItem.id}`);
