@@ -32,24 +32,27 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
     return findCurrentLineIndex(lines, currentTime);
   }, [lines, currentTime, isSynced]);
 
-  // Robust auto-scroll - always center active line
+  // Robust auto-scroll - always center active line (mobile compatible)
   useEffect(() => {
     if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
     
-    const container = scrollContainerRef.current;
-    const activeLine = activeLineRef.current;
-    
-    // Calculate position to center the active line
-    const containerHeight = container.clientHeight;
-    const lineOffsetTop = activeLine.offsetTop;
-    const lineHeight = activeLine.offsetHeight;
-    
-    // Scroll to position where active line is in the middle
-    const targetScroll = lineOffsetTop - (containerHeight / 2) + (lineHeight / 2);
-    
-    container.scrollTo({
-      top: targetScroll,
-      behavior: 'smooth'
+    // Use requestAnimationFrame to ensure layout is complete
+    requestAnimationFrame(() => {
+      const container = scrollContainerRef.current;
+      const activeLine = activeLineRef.current;
+      if (!container || !activeLine) return;
+      
+      // Use getBoundingClientRect for reliable cross-browser positioning
+      const containerRect = container.getBoundingClientRect();
+      const lineRect = activeLine.getBoundingClientRect();
+      
+      // Calculate scroll offset to center the active line
+      const scrollOffset = lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
+      
+      container.scrollTo({
+        top: container.scrollTop + scrollOffset,
+        behavior: 'smooth'
+      });
     });
   }, [currentLineIndex, isSynced]);
 
@@ -81,7 +84,7 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
   return (
     <div 
       ref={scrollContainerRef}
-      className={cn("overflow-y-auto scroll-smooth", className)}
+      className={cn("overflow-y-auto", className)}
     >
       {/* Large padding so first/last lines can be centered */}
       <div className="py-32 px-4 space-y-3">
