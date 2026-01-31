@@ -69,7 +69,7 @@ export const ShareModal = ({ isOpen, onClose, artistName, shareUrl, artistId }: 
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-card border-primary/20">
+      <DialogContent className="sm:max-w-md bg-card border-primary/20 z-[250]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary">Share Artist</DialogTitle>
         </DialogHeader>
