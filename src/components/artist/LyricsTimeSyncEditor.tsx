@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Play, Pause, RotateCcw, Check, Music } from 'lucide-react';
+import { Play, Pause, RotateCcw, Check, Music, Loader2 } from 'lucide-react';
 import { formatLrcTime, formatDisplayTime, toLrcString, plainTextToLines, type LrcLine } from '@/lib/lrc-parser';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 interface LyricsTimeSyncEditorProps {
   open: boolean;
@@ -28,6 +29,8 @@ export function LyricsTimeSyncEditor({
   const [duration, setDuration] = useState(0);
   const [lines, setLines] = useState<LrcLine[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Initialize lines from plain lyrics
   useEffect(() => {
@@ -40,36 +43,67 @@ export function LyricsTimeSyncEditor({
     }
   }, [open, plainLyrics]);
 
-  // Audio time update
+  // Audio time update - re-run when audioUrl changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    setIsLoading(true);
+    setLoadError(null);
+
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleLoadedMetadata = () => setDuration(audio.duration);
+    const handleLoadedMetadata = () => {
+      console.log('[LyricsSync] Audio loaded, duration:', audio.duration);
+      setDuration(audio.duration);
+      setIsLoading(false);
+      setLoadError(null);
+    };
     const handleEnded = () => setIsPlaying(false);
+    const handleError = () => {
+      console.error('[LyricsSync] Audio error for URL:', audioUrl);
+      setIsLoading(false);
+      setLoadError('Failed to load audio');
+      toast.error('Failed to load audio file');
+    };
+    const handleCanPlay = () => {
+      console.log('[LyricsSync] Audio can play');
+      setIsLoading(false);
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
+    audio.addEventListener('canplay', handleCanPlay);
+
+    // Force reload when audioUrl changes
+    audio.load();
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
+      audio.removeEventListener('canplay', handleCanPlay);
     };
-  }, []);
+  }, [audioUrl]);
 
-  const togglePlayPause = useCallback(() => {
+  const togglePlayPause = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
       audio.pause();
+      setIsPlaying(false);
     } else {
-      audio.play();
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('[LyricsSync] Play failed:', error);
+        toast.error('Could not play audio. Try again.');
+      }
     }
-    setIsPlaying(!isPlaying);
   }, [isPlaying]);
 
   const handleTapLine = useCallback((index: number) => {
@@ -151,8 +185,15 @@ export function LyricsTimeSyncEditor({
               size="icon"
               onClick={togglePlayPause}
               className="h-10 w-10"
+              disabled={isLoading || !!loadError}
             >
-              {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : isPlaying ? (
+                <Pause className="h-5 w-5" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
             </Button>
             <div className="text-sm font-mono">
               {formatDisplayTime(currentTime)} / {formatDisplayTime(duration)}
@@ -169,8 +210,15 @@ export function LyricsTimeSyncEditor({
           {syncedCount} / {lines.length} lines synced
         </div>
 
+        {/* Error state */}
+        {loadError && (
+          <div className="text-center text-destructive text-sm py-2 bg-destructive/10 rounded-lg">
+            ❌ {loadError}
+          </div>
+        )}
+
         {/* Warning when not playing */}
-        {!isPlaying && currentIndex < lines.length && (
+        {!isPlaying && !loadError && currentIndex < lines.length && (
           <div className="text-center text-amber-500 text-sm py-2 bg-amber-500/10 rounded-lg">
             ⚠️ Press Play first, then tap lines as they're sung
           </div>
