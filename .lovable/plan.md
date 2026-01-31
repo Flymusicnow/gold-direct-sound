@@ -1,117 +1,156 @@
 
-# Plan: Fixa Mobila Problem + Desktop Paritet
+# Plan: Fix Audio Playback in LyricsTimeSyncEditor
 
-## Identifierade Problem
+## Problem
+The Play button doesn't work - audio stays at 0:00/0:00. This indicates the audio is either not loading or the `play()` call is silently failing.
 
-### 1. Timestamps visar alla 00:00
-**Orsak:** Audio-elementet i LyricsTimeSyncEditor fungerar, men användaren kanske inte trycker på raderna medan musiken spelar. Editorn kräver att man:
-1. Först klickar Play
-2. Sedan trycker på varje rad i realtid
+## Root Causes
 
-**Möjlig bugg:** Audio URL kan vara relativ sökväg istället för full Supabase URL.
+### 1. Event Listeners Not Re-attached
+```tsx
+// Current code - runs once on mount, doesn't re-run when audioUrl changes
+useEffect(() => {
+  const audio = audioRef.current;
+  // event listeners setup...
+}, []); // ❌ Empty dependency array
+```
 
-### 2. Share-knappen fungerar inte på mobil
-**Orsak:** NowPlayingScreen har `z-[100]` men Dialog-komponenten har `z-50`. Dialogen renderas BAKOM spelaren!
+### 2. No Error Handling on play()
+```tsx
+// Current code - doesn't handle Promise rejection
+audio.play(); // ❌ Browser can reject this
+setIsPlaying(!isPlaying);
+```
 
-### 3. Lyrics-knappen fungerar inte på mobil
-**Samma orsak:** Lyrics-panelen är `position: absolute` med lågt z-index. Den täcks av andra element.
-
-### 4. Tre-punkters-menyn gör ingenting
-**Orsak:** MoreHorizontal-knappen saknar helt onClick-handler! (rad 184-186 i NowPlayingScreen)
-
-### 5. Desktop saknar lyrics-visning
-**Behov:** Lägga till lyrics-stöd i desktop-spelaren också.
+### 3. No Audio Load Error Detection
+No `error` event listener means failed loads go unnoticed.
 
 ---
 
-## Tekniska Ändringar
+## Technical Changes
 
-### Fil 1: `src/components/ui/dialog.tsx`
-**Ändring:** Öka z-index från z-50 till z-[150] för att fungera ovanpå NowPlayingScreen
+### File: `src/components/artist/LyricsTimeSyncEditor.tsx`
 
+**1. Add audioUrl to event listener dependency**
 ```tsx
-// DialogOverlay: z-50 → z-[150]
-// DialogContent: z-50 → z-[150]
+useEffect(() => {
+  const audio = audioRef.current;
+  if (!audio) return;
+
+  const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+  const handleLoadedMetadata = () => {
+    console.log('[LyricsSync] Audio loaded, duration:', audio.duration);
+    setDuration(audio.duration);
+  };
+  const handleEnded = () => setIsPlaying(false);
+  const handleError = (e: Event) => {
+    console.error('[LyricsSync] Audio error:', e);
+    toast.error('Failed to load audio file');
+  };
+  const handleCanPlay = () => {
+    console.log('[LyricsSync] Audio can play');
+  };
+
+  audio.addEventListener('timeupdate', handleTimeUpdate);
+  audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+  audio.addEventListener('ended', handleEnded);
+  audio.addEventListener('error', handleError);
+  audio.addEventListener('canplay', handleCanPlay);
+
+  // Force reload if src changed
+  audio.load();
+
+  return () => {
+    audio.removeEventListener('timeupdate', handleTimeUpdate);
+    audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    audio.removeEventListener('ended', handleEnded);
+    audio.removeEventListener('error', handleError);
+    audio.removeEventListener('canplay', handleCanPlay);
+  };
+}, [audioUrl]); // ✅ Re-run when audioUrl changes
 ```
 
-### Fil 2: `src/components/flightdeck/NowPlayingScreen.tsx`
-
-**Ändring 1:** Lägg till tre-punkters-meny med DropdownMenu
+**2. Handle play() Promise with error handling**
 ```tsx
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+const togglePlayPause = useCallback(async () => {
+  const audio = audioRef.current;
+  if (!audio) return;
 
-// Ersätt tom MoreHorizontal-knapp med:
-<DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button variant="ghost" size="icon">
-      <MoreHorizontal className="h-6 w-6" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent align="end" className="z-[200]">
-    <DropdownMenuItem onClick={() => navigate(`/track/${currentItem.id}`)}>
-      View Track Page
-    </DropdownMenuItem>
-    <DropdownMenuItem onClick={() => navigate(`/artist/${currentItem.artistUserId}`)}>
-      Go to Artist
-    </DropdownMenuItem>
-    {/* Fler alternativ */}
-  </DropdownMenuContent>
-</DropdownMenu>
+  if (isPlaying) {
+    audio.pause();
+    setIsPlaying(false);
+  } else {
+    try {
+      await audio.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('[LyricsSync] Play failed:', error);
+      toast.error('Could not play audio. Try again.');
+    }
+  }
+}, [isPlaying]);
 ```
 
-**Ändring 2:** Flytta lyrics-panelen till högre z-index och flytta positionen
+**3. Add loading state and feedback**
 ```tsx
-// Ändra lyrics-panel position och z-index
-<motion.div
-  className="fixed inset-x-0 bottom-0 z-[110] bg-card/95 backdrop-blur-lg"
-  // ... istället för absolute bottom-40
+const [isLoading, setIsLoading] = useState(true);
+const [loadError, setLoadError] = useState<string | null>(null);
+
+// In useEffect
+const handleLoadedMetadata = () => {
+  setDuration(audio.duration);
+  setIsLoading(false);
+  setLoadError(null);
+};
+const handleError = () => {
+  setIsLoading(false);
+  setLoadError('Failed to load audio');
+};
+```
+
+**4. Disable Play button while loading**
+```tsx
+<Button
+  variant="outline"
+  size="icon"
+  onClick={togglePlayPause}
+  className="h-10 w-10"
+  disabled={isLoading || !!loadError}
 >
+  {isLoading ? (
+    <Loader2 className="h-5 w-5 animate-spin" />
+  ) : isPlaying ? (
+    <Pause className="h-5 w-5" />
+  ) : (
+    <Play className="h-5 w-5" />
+  )}
+</Button>
 ```
 
-### Fil 3: `src/components/artist/LyricsTimeSyncEditor.tsx`
-
-**Ändring:** Lägg till instruktioner och förbättra UX
+**5. Show error state if audio fails to load**
 ```tsx
-// Lägg till tydligare instruktioner
-<DialogDescription>
-  1. Press Play to start the song
-  2. Tap each line when you hear it sung
-  3. The timestamp will be recorded automatically
-</DialogDescription>
-
-// Lägg till visuell indikator när audio inte spelar
-{!isPlaying && (
-  <div className="text-center text-amber-500 text-sm">
-    ⚠️ Press Play first, then tap lines as they're sung
+{loadError && (
+  <div className="text-center text-destructive text-sm py-2 bg-destructive/10 rounded-lg">
+    ❌ {loadError}
   </div>
 )}
 ```
 
-### Fil 4: Desktop Player (MiniPlayer eller FlightdeckBar)
+---
 
-**Behov:** Lägg till lyrics-knapp och modal på desktop-spelaren också.
+## Summary
+
+| Issue | Fix |
+|-------|-----|
+| Events not firing | Add `audioUrl` to dependency array + call `audio.load()` |
+| Play silently fails | Wrap `play()` in try/catch, use async/await |
+| No load feedback | Add loading state and error display |
+| Button always enabled | Disable during loading or on error |
 
 ---
 
-## Sammanfattning av ändringar
+## Files to Change
 
-| Problem | Fil | Lösning |
-|---------|-----|---------|
-| Share fungerar inte | dialog.tsx | Öka z-index till z-[150] |
-| Lyrics fungerar inte | NowPlayingScreen.tsx | Fixa z-index på lyrics-panel |
-| Tre-punkter gör inget | NowPlayingScreen.tsx | Lägg till DropdownMenu |
-| Timestamps 00:00 | LyricsTimeSyncEditor.tsx | Förtydliga instruktioner |
-| Desktop saknar lyrics | FlightdeckBar.tsx | Lägg till lyrics-knapp |
-
----
-
-## VIKTIGT: Regel för framtiden
-
-Alla UI-ändringar ska testas och fungera på BÅDE:
-- Mobil (NowPlayingScreen fullskärm)
-- Desktop (FlightdeckBar mini-player)
-
-Detta gäller speciellt:
-- Dialogs och modals (z-index)
-- Knappar och kontroller
-- Notifikationer och toast-meddelanden
+| File | Change |
+|------|--------|
+| `src/components/artist/LyricsTimeSyncEditor.tsx` | Fix audio event handling and add error states |
