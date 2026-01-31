@@ -43,10 +43,10 @@ export function LyricsTimeSyncEditor({
     }
   }, [open, plainLyrics]);
 
-  // Audio time update - re-run when audioUrl changes
+  // Audio time update - re-run when dialog opens or audioUrl changes
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !open) return;
 
     setIsLoading(true);
     setLoadError(null);
@@ -86,7 +86,7 @@ export function LyricsTimeSyncEditor({
       audio.removeEventListener('error', handleError);
       audio.removeEventListener('canplay', handleCanPlay);
     };
-  }, [audioUrl]);
+  }, [audioUrl, open]);
 
   const togglePlayPause = useCallback(async () => {
     const audio = audioRef.current;
