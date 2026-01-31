@@ -1,137 +1,62 @@
 
 
-# Plan: Karaoke-stil Synkroniserade Lyrics
+# Plan: Fixa Lyrics Sync Editor - Visa Alla Rader
 
-## Vad behövs
+## Problem
+Lyrics Time Sync Editor visar bara ~4 rader åt gången med `max-h-[300px]`. Användaren kan inte se eller scrolla till alla 45 rader på mobil.
 
-För att lyrics ska följa musiken behöver vi:
-1. **Tidsstämplar** på varje textrad (LRC-format)
-2. **Synkroniserad visning** som markerar aktuell rad
-3. **Editor för artister** att synka text med musik
-
-## LRC-format (Standard för synkade lyrics)
-
-```text
-[00:00.00]Intro...
-[00:15.50]First verse line here
-[00:18.20]Second verse line here
-[00:22.00]And so on...
-```
-
-Varje rad har en tidsstämpel `[mm:ss.ms]` som anger när den ska visas.
+## Orsak
+1. **ScrollArea begränsad till 300px** - för liten för långa lyrics
+2. **Möjligt mobilscroll-problem** - Radix ScrollArea kan ha touch-problem på iOS
 
 ---
 
 ## Tekniska Ändringar
 
-### 1. Skapa SyncedLyricsDisplay komponent
+### Fil: `src/components/artist/LyricsTimeSyncEditor.tsx`
 
-**Ny fil:** `src/components/flightdeck/SyncedLyricsDisplay.tsx`
+**Ändringar:**
 
-Funktionalitet:
-- Parsar LRC-format till array av `{time, text}`
-- Lyssnar på `currentTime` från spelaren
-- Highlightar och auto-scrollar till aktuell rad
-- Stödjer fallback till vanlig text (bakåtkompatibelt)
+1. **Öka ScrollArea-höjd** för att visa fler rader
+2. **Lägg till touch-scroll stöd** för mobil
+3. **Auto-scroll till aktuell rad** så användaren ser var de är
 
-```text
-┌────────────────────────────────────┐
-│    tidigare rad (dimmed)           │
-│    tidigare rad (dimmed)           │
-│  ▸ AKTUELL RAD (highlighted)  ◀   │  ← Auto-scroll hit
-│    nästa rad (dimmed)              │
-│    nästa rad (dimmed)              │
-└────────────────────────────────────┘
+```tsx
+// Ändra ScrollArea från:
+<ScrollArea className="flex-1 min-h-[200px] max-h-[300px]">
+
+// Till:
+<ScrollArea className="flex-1 min-h-[300px] max-h-[50vh]">
 ```
 
-### 2. Uppdatera NowPlayingScreen
+**Lägg till auto-scroll till aktuell rad:**
+```tsx
+const currentLineRef = useRef<HTMLButtonElement>(null);
 
-**Fil:** `src/components/flightdeck/NowPlayingScreen.tsx`
+// Auto-scroll när currentIndex ändras
+useEffect(() => {
+  if (currentLineRef.current) {
+    currentLineRef.current.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}, [currentIndex]);
 
-Ändringar:
-- Ersätt enkel `<pre>` med `<SyncedLyricsDisplay>`
-- Skicka `currentTime` och `lyrics` som props
-- Behåll fallback för icke-synkade lyrics
-
-### 3. Skapa LRC Editor för artister
-
-**Ny fil:** `src/components/artist/LyricsTimeSyncEditor.tsx`
-
-Funktionalitet för Studio:
-- Spela upp låten
-- Klicka/tryck på varje rad när den sjungs
-- Automatiskt generera tidsstämplar
-- Exportera som LRC-format
-
-```text
-┌─────────────────────────────────────────────┐
-│  🎵 Playing: 0:15 / 3:45    [▶ Play/Pause]  │
-├─────────────────────────────────────────────┤
-│  [TAP] First verse line here       [00:15]  │
-│  [TAP] Second verse line here      [00:18]  │
-│  [TAP] Third line...               [ -- ]   │  ← Inte synkad än
-│  [TAP] Fourth line...              [ -- ]   │
-└─────────────────────────────────────────────┘
+// På button-elementet:
+<button
+  ref={isCurrent ? currentLineRef : null}
+  ...
+>
 ```
 
-### 4. Uppdatera EditTrackMetadataDialog
-
-**Fil:** `src/components/artist/EditTrackMetadataDialog.tsx`
-
-Ändringar:
-- Lägg till knapp "Sync Lyrics with Music"
-- Öppnar `LyricsTimeSyncEditor` i dialog
-- Sparar LRC-format till databasen
-
 ---
 
-## Dataformat
+## Sammanfattning
 
-**Befintlig kolumn:** `tracks.lyrics` (text) - ingen databasändring behövs!
-
-**Nytt stöd för två format:**
-
-| Format | Exempel | Användning |
-|--------|---------|------------|
-| Plain text | `First line\nSecond line` | Statisk visning |
-| LRC | `[00:15.00]First line\n[00:18.00]Second line` | Karaoke-synk |
-
-Komponenten detekterar automatiskt format baserat på om texten börjar med `[`.
-
----
-
-## Användarflöde för artist
-
-1. Gå till **Studio → Tracks**
-2. Klicka **Edit** på en låt
-3. Skriv in lyrics (vanlig text)
-4. Klicka **"Sync with Music"**
-5. Låten spelas - tryck på varje rad när den sjungs
-6. Spara - lyrics konverteras till LRC-format
-
----
-
-## Filer att skapa/ändra
-
-| Fil | Åtgärd |
-|-----|--------|
-| `src/components/flightdeck/SyncedLyricsDisplay.tsx` | **Ny** - Karaoke-visning |
-| `src/components/artist/LyricsTimeSyncEditor.tsx` | **Ny** - Synk-verktyg |
-| `src/components/flightdeck/NowPlayingScreen.tsx` | **Ändra** - Använd SyncedLyricsDisplay |
-| `src/components/artist/EditTrackMetadataDialog.tsx` | **Ändra** - Lägg till sync-knapp |
-| `src/lib/lrc-parser.ts` | **Ny** - LRC parse/format utilities |
-
----
-
-## Fas 1 vs Fas 2
-
-**Fas 1 (denna plan):**
-- SyncedLyricsDisplay med rad-för-rad highlighting
-- Enkel tap-to-sync editor
-- LRC-format stöd
-
-**Fas 2 (framtida):**
-- Ord-för-ord highlighting (som Apple Music)
-- Automatisk sync via AI/ljudanalys
-- Import från externa LRC-filer
+| Ändring | Före | Efter |
+|---------|------|-------|
+| Max höjd | 300px (~4 rader) | 50vh (~12+ rader) |
+| Auto-scroll | Nej | Ja, till aktuell rad |
+| Touch-scroll | Potentiellt dåligt | Förbättrat |
 
