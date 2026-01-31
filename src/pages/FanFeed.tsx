@@ -339,7 +339,7 @@ export default function FanFeed() {
       <MobileFanNav />
       <div className="flex min-h-screen w-full pt-16 overflow-x-hidden">
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-28 md:pb-8">
+        <main className="flex-1 p-4 md:p-6 pb-44 md:pb-8">
           <PageBreadcrumb role="fan" />
           
           <PageTransition className="max-w-7xl mx-auto space-y-5">
