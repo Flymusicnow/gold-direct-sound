@@ -18,6 +18,7 @@ interface VideoPost {
   created_at: string;
   is_supporter_only: boolean;
   required_tier: string | null;
+  thumbnail_url?: string | null;
 }
 
 interface VideoCardProps {
@@ -153,19 +154,27 @@ export function VideoCard({
         onClick={handleVideoClick}
       >
         {/* Video element with proper mobile attributes */}
-        <video
-          ref={videoRef}
-          src={video.video_url}
-          className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
-          playsInline
-          webkit-playsinline="true"
-          muted={!isPlaying}
-          loop
-          preload="metadata"
-          onPlay={() => setIsPlaying(true)}
-          onPause={handleVideoPause}
-          onEnded={handleVideoEnded}
-        />
+        {video.thumbnail_url && !isPlaying ? (
+          <img
+            src={video.thumbnail_url}
+            alt={video.caption || 'Video thumbnail'}
+            className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={video.video_url}
+            className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+            playsInline
+            webkit-playsinline="true"
+            muted={!isPlaying}
+            loop
+            preload="metadata"
+            onPlay={() => setIsPlaying(true)}
+            onPause={handleVideoPause}
+            onEnded={handleVideoEnded}
+          />
+        )}
 
         {/* Play button overlay - always visible when not playing */}
         {!isPlaying && hasAccess && (
