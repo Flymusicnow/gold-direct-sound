@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle, FolderUp } from "lucide-react";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
 import { EditVideoDialog } from "@/components/artist/EditVideoDialog";
@@ -98,6 +99,7 @@ export default function StudioVideos() {
   const [customThumbnailPreview, setCustomThumbnailPreview] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const [editVideo, setEditVideo] = useState<VideoPost | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<VideoPost | null>(null);
   
   // Track milestone achievements
   useVideoMilestones(videoPosts);
@@ -876,7 +878,7 @@ export default function StudioVideos() {
                         )}
                         <div 
                           className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          onClick={() => window.open(video.video_url, '_blank')}
+                          onClick={() => setPlayingVideo(video)}
                         >
                           <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
                             <Video className="w-6 h-6 text-background" />
@@ -1038,6 +1040,24 @@ export default function StudioVideos() {
           }}
           artistId={artistProfile.id}
         />
+      )}
+
+      {/* Video Player Dialog */}
+      {playingVideo && (
+        <Dialog open={!!playingVideo} onOpenChange={() => setPlayingVideo(null)}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-primary/20">
+            <VisuallyHidden>
+              <DialogTitle>Video Player</DialogTitle>
+            </VisuallyHidden>
+            <video
+              src={playingVideo.video_url}
+              controls
+              autoPlay
+              playsInline
+              className="w-full aspect-video"
+            />
+          </DialogContent>
+        </Dialog>
       )}
       </div>
       {isMobile && <BottomNavBarStudio />}
