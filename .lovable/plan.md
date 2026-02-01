@@ -1,76 +1,67 @@
 
-# Plan: Robust Mobile Lyrics Centering (Final Fix)
+# Deep Debug: Why Centering Fails on Mobile
 
 ## Root Cause Analysis
 
-The centering fails because:
-
-1. **Animation Timing**: Parent `motion.div` animates `height: 0 → auto`. Our `requestAnimationFrame` fires BEFORE the animation completes
-2. **Container dimensions are 0**: When useEffect runs, container might still be at `height: 0`
-3. **Single RAF not enough**: One `requestAnimationFrame` isn't enough to wait for Framer Motion's animation to finish
-
-## Solution
-
-### 1. Use Double `requestAnimationFrame` + Small Delay
-
-Double RAF ensures browser has painted, and a small timeout ensures Framer Motion animation has completed:
-
-```typescript
-useEffect(() => {
-  if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
-  
-  // Wait for Framer Motion animation to complete (~300ms)
-  const timeoutId = setTimeout(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const container = scrollContainerRef.current;
-        const activeLine = activeLineRef.current;
-        if (!container || !activeLine) return;
-        
-        const containerRect = container.getBoundingClientRect();
-        const lineRect = activeLine.getBoundingClientRect();
-        
-        // Only scroll if container has height (animation complete)
-        if (containerRect.height === 0) return;
-        
-        const scrollOffset = lineRect.top - containerRect.top - 
-          (containerRect.height / 2) + (lineRect.height / 2);
-        
-        container.scrollTo({
-          top: container.scrollTop + scrollOffset,
-          behavior: 'smooth'
-        });
-      });
-    });
-  }, 50); // Small delay for animation
-  
-  return () => clearTimeout(timeoutId);
-}, [currentLineIndex, isSynced]);
-```
-
-### 2. Add Initial Scroll on Mount
-
-When lyrics panel opens, scroll to active line immediately:
-
-```typescript
-// Track when component mounts to do initial scroll
-const initialScrollDone = useRef(false);
-
-useEffect(() => {
-  // Reset on new lyrics
-  initialScrollDone.current = false;
-}, [lyrics]);
-```
-
-### 3. Ensure Container Has Explicit Height
-
-The className `h-72` should work, but let's ensure it's applied to the scrollable container:
+Looking at the code structure in `NowPlayingScreen.tsx` (lines 362-374):
 
 ```tsx
-<div 
-  ref={scrollContainerRef}
-  className={cn("overflow-y-auto", className)} // h-72 from className
+<motion.div
+  initial={{ height: 0, opacity: 0 }}
+  animate={{ height: 'auto', opacity: 1 }}
+  exit={{ height: 0, opacity: 0 }}
+  className="... overflow-hidden ..."
 >
+  <SyncedLyricsDisplay className="h-72" />
+</motion.div>
+```
+
+**The Problem Chain:**
+
+1. Parent `motion.div` animates from `height: 0` → `height: auto`
+2. Framer Motion spring animation with default timing takes **300-500ms** to complete
+3. Our timeout is only **50ms** - animation is still in progress!
+4. When we calculate `containerRect.height`, the parent is only ~50px tall (mid-animation)
+5. Our check `if (containerRect.height === 0)` doesn't catch partial heights like 50px
+6. Scroll calculation runs with wrong container dimensions → centering fails
+
+```text
+Timeline:
+  0ms: showLyrics=true, motion.div starts animating
+  0ms: SyncedLyricsDisplay mounts, useEffect schedules
+ 50ms: setTimeout fires (animation at ~15% complete)
+ 52ms: RAF 1 fires
+ 54ms: RAF 2 fires - container height is ~50px, NOT 288px!
+       → scrollOffset calculated incorrectly
+       → scroll happens to wrong position
+300ms: Animation completes (too late, we already scrolled wrong)
+```
+
+## The Fix
+
+### 1. Increase Timeout to 300ms (Wait for Animation)
+
+Framer Motion's default spring takes ~300ms. We need to wait for it.
+
+### 2. Add Container Height Validation
+
+Check that container is actually at expected height before scrolling:
+
+```typescript
+// h-72 = 288px, allow some tolerance
+if (containerRect.height < 200) return;
+```
+
+### 3. Add Retry Mechanism
+
+If animation not complete, schedule another attempt:
+
+```typescript
+// If container not ready, retry in 100ms
+if (containerRect.height < 200) {
+  const retryId = setTimeout(scrollToCenter, 100);
+  return () => clearTimeout(retryId);
+}
 ```
 
 ## Technical Changes
@@ -82,44 +73,53 @@ The className `h-72` should work, but let's ensure it's applied to the scrollabl
 useEffect(() => {
   if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
   
-  // Small delay to ensure parent animation completes + double RAF for layout stability
+  const scrollToCenter = () => {
+    const container = scrollContainerRef.current;
+    const activeLine = activeLineRef.current;
+    if (!container || !activeLine) return;
+    
+    const containerRect = container.getBoundingClientRect();
+    const lineRect = activeLine.getBoundingClientRect();
+    
+    // Skip if container not fully expanded (animation still running)
+    // h-72 = 288px, but check for at least 200px to be safe
+    if (containerRect.height < 200) {
+      // Retry in 100ms
+      setTimeout(scrollToCenter, 100);
+      return;
+    }
+    
+    const scrollOffset = lineRect.top - containerRect.top - 
+      (containerRect.height / 2) + (lineRect.height / 2);
+    
+    container.scrollTo({
+      top: container.scrollTop + scrollOffset,
+      behavior: 'smooth'
+    });
+  };
+  
+  // Wait 300ms for Framer Motion animation to complete + double RAF
   const timeoutId = setTimeout(() => {
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        const container = scrollContainerRef.current;
-        const activeLine = activeLineRef.current;
-        if (!container || !activeLine) return;
-        
-        const containerRect = container.getBoundingClientRect();
-        const lineRect = activeLine.getBoundingClientRect();
-        
-        // Skip if container not yet visible (animation not complete)
-        if (containerRect.height === 0) return;
-        
-        const scrollOffset = lineRect.top - containerRect.top - 
-          (containerRect.height / 2) + (lineRect.height / 2);
-        
-        container.scrollTo({
-          top: container.scrollTop + scrollOffset,
-          behavior: 'smooth'
-        });
+        scrollToCenter();
       });
     });
-  }, 50);
+  }, 300);
   
   return () => clearTimeout(timeoutId);
 }, [currentLineIndex, isSynced]);
 ```
 
-## Summary
+## Key Changes Summary
 
-| Change | Why |
-|--------|-----|
-| `setTimeout(50ms)` | Wait for Framer Motion animation |
-| Double `requestAnimationFrame` | Ensure browser has painted |
-| Guard `containerRect.height === 0` | Skip scroll if animation not done |
-| Cleanup with `clearTimeout` | Prevent memory leaks |
+| Issue | Fix |
+|-------|-----|
+| 50ms too short for animation | Increase to 300ms |
+| `height === 0` check too strict | Check `height < 200` |
+| No retry if animation not done | Add retry with 100ms delay |
+| Function not reusable | Extract `scrollToCenter` function |
 
-## File to Edit
+## Files to Edit
 
-1. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Add delayed scroll with double RAF
+1. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Robust timing + retry mechanism
