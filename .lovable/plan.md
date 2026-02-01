@@ -1,86 +1,217 @@
 
-# Fix: Video Thumbnail Upload RLS Policy
+# Fix: Visa Video Thumbnails på Desktop och Mobil
 
-## Problem Identified
+## Problem
 
-When trying to save changes in the Edit Video dialog (with a new thumbnail), the upload fails with:
+Thumbnail-uppdateringar syns inte eftersom:
+1. **VideoCard-komponenten** visar bara `<video>` element istället för thumbnail-bilder
+2. **VideoPost interface** saknar `thumbnail_url` i flera filer
+3. **StudioVideos video-kort** visar direkt video-spelaren utan thumbnail-preview
+
+## Lösning
+
+### Del 1: Uppdatera VideoCard.tsx (Public Artist Page)
+
+**Ändra VideoPost interface (rad 14-21):**
+```typescript
+interface VideoPost {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  is_supporter_only: boolean;
+  required_tier: string | null;
+  thumbnail_url?: string | null;  // LÄGG TILL
+}
 ```
-StorageApiError: new row violates row-level security policy
+
+**Ändra video-rendering (rad 155-168) - visa thumbnail istället för video när ej spelar:**
+```typescript
+{/* Thumbnail or Video */}
+{video.thumbnail_url && !isPlaying ? (
+  <img
+    src={video.thumbnail_url}
+    alt={video.caption || 'Video thumbnail'}
+    className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+  />
+) : (
+  <video
+    ref={videoRef}
+    src={video.video_url}
+    className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+    playsInline
+    webkit-playsinline="true"
+    muted={!isPlaying}
+    loop
+    preload="metadata"
+    onPlay={() => setIsPlaying(true)}
+    onPause={handleVideoPause}
+    onEnded={handleVideoEnded}
+  />
+)}
 ```
 
-## Root Cause
+### Del 2: Uppdatera ArtistVideosSection.tsx
 
-The `artist_videos` storage bucket INSERT policy is:
-```sql
-with_check: ((bucket_id = 'artist_videos') AND (auth.uid() IS NOT NULL))
+**Ändra VideoPost interface (rad 11-18):**
+```typescript
+interface VideoPost {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  is_supporter_only: boolean;
+  required_tier: string | null;
+  thumbnail_url: string | null;  // LÄGG TILL
+}
 ```
 
-This policy is different from other working storage buckets. Comparing to `community-banners` which works correctly:
-```sql
-with_check: ((bucket_id = 'community-banners') AND ((storage.foldername(name))[1] IN 
-  (SELECT (ap.id)::text FROM artist_profiles ap WHERE (ap.user_id = auth.uid()))))
+### Del 3: Uppdatera StudioVideos.tsx - Video Cards
+
+**Ändra video-kortet i "Your Videos" sektion (rad 862-922) för att visa thumbnail:**
+
+Ersätt den direkta `<video>` taggen med en thumbnail-preview:
+```typescript
+<Card className="overflow-hidden border-primary/20">
+  {/* Thumbnail or Video Preview */}
+  <div className="relative aspect-video bg-black">
+    {video.thumbnail_url ? (
+      <img
+        src={video.thumbnail_url}
+        alt={video.caption || 'Video thumbnail'}
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <video
+        src={video.video_url}
+        className="w-full h-full object-cover"
+        preload="metadata"
+      />
+    )}
+    {/* Play overlay */}
+    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
+      <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+        <Video className="w-6 h-6 text-background fill-background ml-0.5" />
+      </div>
+    </div>
+  </div>
+  {/* Rest of card content... */}
+</Card>
 ```
 
-The current policy:
-1. Uses `auth.uid() IS NOT NULL` which may not properly validate the auth context
-2. Doesn't validate that the user owns the folder they're uploading to
+## Sammanfattning
 
-## Solution
+| Fil | Ändring |
+|-----|---------|
+| `VideoCard.tsx` | Lägg till `thumbnail_url` i interface, visa bild istället för video när ej spelar |
+| `ArtistVideosSection.tsx` | Lägg till `thumbnail_url` i VideoPost interface |
+| `StudioVideos.tsx` | Visa thumbnail-bild i video-korten i "Your Videos" |
 
-Update the `artist_videos` storage INSERT policy to match the `community-banners` pattern, which:
-1. Uses a subquery to validate folder ownership
-2. Ensures the folder name matches an artist_profile.id belonging to the current user
+## Teknisk Implementation
 
-## Database Migration Required
+### VideoCard.tsx - Komplett rendering-logik
 
-```sql
--- Drop the existing insufficient policy
-DROP POLICY IF EXISTS "Artists can upload own videos" ON storage.objects;
+```typescript
+return (
+  <div className="space-y-3">
+    <div
+      className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation interactive-card"
+      onClick={handleVideoClick}
+    >
+      {/* Show thumbnail when available and not playing, otherwise show video */}
+      {video.thumbnail_url && !isPlaying ? (
+        <img
+          src={video.thumbnail_url}
+          alt={video.caption || 'Video thumbnail'}
+          className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          src={video.video_url}
+          className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
+          playsInline
+          webkit-playsinline="true"
+          muted={!isPlaying}
+          loop
+          preload="metadata"
+          onPlay={() => setIsPlaying(true)}
+          onPause={handleVideoPause}
+          onEnded={handleVideoEnded}
+        />
+      )}
 
--- Create new policy that validates folder ownership
-CREATE POLICY "Artists can upload own videos" ON storage.objects
-FOR INSERT 
-TO public 
-WITH CHECK (
-  bucket_id = 'artist_videos' 
-  AND (storage.foldername(name))[1] IN (
-    SELECT (ap.id)::text 
-    FROM artist_profiles ap 
-    WHERE ap.user_id = auth.uid()
-  )
+      {/* Play button overlay - visible when showing thumbnail or video paused */}
+      {!isPlaying && hasAccess && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+          <button
+            type="button"
+            onClick={handlePlayClick}
+            onTouchEnd={handleTouchEnd}
+            className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center shadow-lg transform group-hover:scale-110 active:scale-95 transition-transform touch-manipulation"
+            aria-label="Play video"
+          >
+            <Play className="w-8 h-8 text-background fill-background ml-1" />
+          </button>
+        </div>
+      )}
+      
+      {/* ... rest of overlays ... */}
+    </div>
+  </div>
 );
 ```
 
-This policy ensures:
-- Uploads only go to the `artist_videos` bucket
-- The folder path's first segment must be an artist_profile.id owned by the authenticated user
+### StudioVideos.tsx - Uppdaterat video-kort
 
-## Additional: Update DELETE Policy for Consistency
-
-The DELETE policy currently uses `auth.uid()` for the folder check, but should also use artist_profile.id:
-
-```sql
--- Update delete policy for consistency
-DROP POLICY IF EXISTS "Artists can delete own videos" ON storage.objects;
-
-CREATE POLICY "Artists can delete own videos" ON storage.objects
-FOR DELETE 
-TO public 
-USING (
-  bucket_id = 'artist_videos' 
-  AND (storage.foldername(name))[1] IN (
-    SELECT (ap.id)::text 
-    FROM artist_profiles ap 
-    WHERE ap.user_id = auth.uid()
-  )
-);
+```typescript
+{videoPosts.map((video) => (
+  <div key={video.id} className="relative">
+    <Card className="overflow-hidden border-primary/20">
+      {/* Thumbnail or Video Preview */}
+      <div className="relative aspect-video bg-black group">
+        {video.thumbnail_url ? (
+          <img
+            src={video.thumbnail_url}
+            alt={video.caption || 'Video thumbnail'}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <video
+            src={video.video_url}
+            className="w-full h-full object-cover"
+            preload="metadata"
+          />
+        )}
+        {/* Hover play overlay */}
+        <div 
+          className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          onClick={() => window.open(video.video_url, '_blank')}
+        >
+          <div className="w-12 h-12 rounded-full bg-primary/90 flex items-center justify-center">
+            <Video className="w-6 h-6 text-background" />
+          </div>
+        </div>
+      </div>
+      
+      {/* Card content - caption, buttons etc */}
+      <div className="p-4 space-y-3">
+        {/* ... existing content ... */}
+      </div>
+    </Card>
+    
+    {/* Live View Counter Badge */}
+    <div className={`absolute top-3 right-3 ...`}>
+      {/* ... existing counter ... */}
+    </div>
+  </div>
+))}
 ```
 
-## Summary
+## Resultat efter implementation
 
-| Change | Type | Purpose |
-|--------|------|---------|
-| Update INSERT policy | Database Migration | Allow uploads to artist_profile.id folders |
-| Update DELETE policy | Database Migration | Allow deletes from artist_profile.id folders |
-
-No code changes are needed - the `EditVideoDialog.tsx` and `StudioVideos.tsx` already use `artistProfile.id` for paths, which is correct. The storage RLS policies just need to be updated to recognize this pattern.
+- ✅ Thumbnails visas i Video Studio (StudioVideos)
+- ✅ Thumbnails visas på artist-profilen (ArtistVideosSection → VideoCard)
+- ✅ Fungerar på både desktop och mobil
+- ✅ Play-overlay för tydlig interaktion
+- ✅ Fallback till video-metadata om ingen thumbnail finns
