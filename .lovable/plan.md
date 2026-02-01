@@ -1,125 +1,65 @@
 
-# Deep Debug: Why Centering Fails on Mobile
+# Plan: Add "Don't Show This Again" Option to Onboarding Tour
 
-## Root Cause Analysis
+## Problem
 
-Looking at the code structure in `NowPlayingScreen.tsx` (lines 362-374):
+Varje gång användaren går till Fan Portal visas onboarding-dialogen igen eftersom "Let's Go!"-knappen bara stänger dialogen utan att spara preferensen i databasen.
 
-```tsx
-<motion.div
-  initial={{ height: 0, opacity: 0 }}
-  animate={{ height: 'auto', opacity: 1 }}
-  exit={{ height: 0, opacity: 0 }}
-  className="... overflow-hidden ..."
->
-  <SyncedLyricsDisplay className="h-72" />
-</motion.div>
-```
+## Lösning
 
-**The Problem Chain:**
+Lägg till en "Don't show this again"-checkbox i dialogen. När användaren bockar i den och stänger dialogen sparas detta som `onboarding_skipped: true` i databasen.
 
-1. Parent `motion.div` animates from `height: 0` → `height: auto`
-2. Framer Motion spring animation with default timing takes **300-500ms** to complete
-3. Our timeout is only **50ms** - animation is still in progress!
-4. When we calculate `containerRect.height`, the parent is only ~50px tall (mid-animation)
-5. Our check `if (containerRect.height === 0)` doesn't catch partial heights like 50px
-6. Scroll calculation runs with wrong container dimensions → centering fails
+## Tekniska Ändringar
 
-```text
-Timeline:
-  0ms: showLyrics=true, motion.div starts animating
-  0ms: SyncedLyricsDisplay mounts, useEffect schedules
- 50ms: setTimeout fires (animation at ~15% complete)
- 52ms: RAF 1 fires
- 54ms: RAF 2 fires - container height is ~50px, NOT 288px!
-       → scrollOffset calculated incorrectly
-       → scroll happens to wrong position
-300ms: Animation completes (too late, we already scrolled wrong)
-```
+### Fil: `src/components/fan/FanOnboardingTour.tsx`
 
-## The Fix
-
-### 1. Increase Timeout to 300ms (Wait for Animation)
-
-Framer Motion's default spring takes ~300ms. We need to wait for it.
-
-### 2. Add Container Height Validation
-
-Check that container is actually at expected height before scrolling:
-
+1. **Lägg till state för checkbox**
 ```typescript
-// h-72 = 288px, allow some tolerance
-if (containerRect.height < 200) return;
+const [dontShowAgain, setDontShowAgain] = useState(false);
 ```
 
-### 3. Add Retry Mechanism
-
-If animation not complete, schedule another attempt:
-
+2. **Uppdatera "Let's Go!"-knappens onClick**
 ```typescript
-// If container not ready, retry in 100ms
-if (containerRect.height < 200) {
-  const retryId = setTimeout(scrollToCenter, 100);
-  return () => clearTimeout(retryId);
-}
-```
-
-## Technical Changes
-
-### File: `src/components/flightdeck/SyncedLyricsDisplay.tsx`
-
-```typescript
-// Robust auto-scroll - always center active line (mobile compatible)
-useEffect(() => {
-  if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
-  
-  const scrollToCenter = () => {
-    const container = scrollContainerRef.current;
-    const activeLine = activeLineRef.current;
-    if (!container || !activeLine) return;
-    
-    const containerRect = container.getBoundingClientRect();
-    const lineRect = activeLine.getBoundingClientRect();
-    
-    // Skip if container not fully expanded (animation still running)
-    // h-72 = 288px, but check for at least 200px to be safe
-    if (containerRect.height < 200) {
-      // Retry in 100ms
-      setTimeout(scrollToCenter, 100);
-      return;
-    }
-    
-    const scrollOffset = lineRect.top - containerRect.top - 
-      (containerRect.height / 2) + (lineRect.height / 2);
-    
-    container.scrollTo({
-      top: container.scrollTop + scrollOffset,
-      behavior: 'smooth'
-    });
-  };
-  
-  // Wait 300ms for Framer Motion animation to complete + double RAF
-  const timeoutId = setTimeout(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        scrollToCenter();
+const handleLetsGo = async () => {
+  if (dontShowAgain && user) {
+    await supabase
+      .from('fan_onboarding_progress')
+      .upsert({
+        user_id: user.id,
+        onboarding_skipped: true,
       });
-    });
-  }, 300);
-  
-  return () => clearTimeout(timeoutId);
-}, [currentLineIndex, isSynced]);
+  }
+  setOpen(false);
+};
 ```
 
-## Key Changes Summary
+3. **Lägg till checkbox i UI (före action buttons)**
+```tsx
+<div className="flex items-center gap-2">
+  <Checkbox 
+    id="dont-show" 
+    checked={dontShowAgain}
+    onCheckedChange={(checked) => setDontShowAgain(checked === true)}
+  />
+  <label htmlFor="dont-show" className="text-sm text-muted-foreground cursor-pointer">
+    Don't show this again
+  </label>
+</div>
+```
 
-| Issue | Fix |
-|-------|-----|
-| 50ms too short for animation | Increase to 300ms |
-| `height === 0` check too strict | Check `height < 200` |
-| No retry if animation not done | Add retry with 100ms delay |
-| Function not reusable | Extract `scrollToCenter` function |
+4. **Import Checkbox component**
+```typescript
+import { Checkbox } from '@/components/ui/checkbox';
+```
 
-## Files to Edit
+## Sammanfattning
 
-1. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Robust timing + retry mechanism
+| Ändring | Varför |
+|---------|--------|
+| Lägg till `dontShowAgain` state | Spåra checkbox-status |
+| Ny `handleLetsGo` funktion | Spara preferens om checkbox är ibockad |
+| Checkbox i UI | Ge användaren valet att dölja dialogen permanent |
+
+## Filer att Ändra
+
+1. `src/components/fan/FanOnboardingTour.tsx` - Lägg till checkbox och logik för att spara preferensen
