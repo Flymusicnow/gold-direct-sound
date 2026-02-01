@@ -36,30 +36,39 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
   useEffect(() => {
     if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
     
-    // Small delay to ensure parent animation completes + double RAF for layout stability
+    const scrollToCenter = () => {
+      const container = scrollContainerRef.current;
+      const activeLine = activeLineRef.current;
+      if (!container || !activeLine) return;
+      
+      const containerRect = container.getBoundingClientRect();
+      const lineRect = activeLine.getBoundingClientRect();
+      
+      // Skip if container not fully expanded (animation still running)
+      // h-72 = 288px, but check for at least 200px to be safe
+      if (containerRect.height < 200) {
+        // Retry in 100ms
+        setTimeout(scrollToCenter, 100);
+        return;
+      }
+      
+      const scrollOffset = lineRect.top - containerRect.top - 
+        (containerRect.height / 2) + (lineRect.height / 2);
+      
+      container.scrollTo({
+        top: container.scrollTop + scrollOffset,
+        behavior: 'smooth'
+      });
+    };
+    
+    // Wait 300ms for Framer Motion animation to complete + double RAF
     const timeoutId = setTimeout(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const container = scrollContainerRef.current;
-          const activeLine = activeLineRef.current;
-          if (!container || !activeLine) return;
-          
-          const containerRect = container.getBoundingClientRect();
-          const lineRect = activeLine.getBoundingClientRect();
-          
-          // Skip if container not yet visible (animation not complete)
-          if (containerRect.height === 0) return;
-          
-          const scrollOffset = lineRect.top - containerRect.top - 
-            (containerRect.height / 2) + (lineRect.height / 2);
-          
-          container.scrollTo({
-            top: container.scrollTop + scrollOffset,
-            behavior: 'smooth'
-          });
+          scrollToCenter();
         });
       });
-    }, 50);
+    }, 300);
     
     return () => clearTimeout(timeoutId);
   }, [currentLineIndex, isSynced]);
