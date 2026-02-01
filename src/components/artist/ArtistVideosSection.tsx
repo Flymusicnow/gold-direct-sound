@@ -15,6 +15,7 @@ interface VideoPost {
   created_at: string;
   is_supporter_only: boolean;
   required_tier: string | null;
+  thumbnail_url?: string | null;
 }
 
 interface ArtistVideosSectionProps {
