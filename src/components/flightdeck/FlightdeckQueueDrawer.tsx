@@ -172,7 +172,9 @@ export function FlightdeckQueueDrawer({
         const newQueue = arrayMove(queue, oldIndex, newIndex);
         // Calculate new current index to preserve playback position
         const newCurrentIndex = currentItem 
-          ? newQueue.findIndex(item => item.id === currentItem.id)
+          ? newQueue.findIndex(item => 
+              (item.queueId || item.id) === (currentItem.queueId || currentItem.id)
+            )
           : 0;
         reorderQueue(newQueue, newCurrentIndex >= 0 ? newCurrentIndex : 0);
       }

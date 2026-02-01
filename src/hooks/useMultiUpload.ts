@@ -21,6 +21,7 @@ export interface UploadFile {
   error?: string;
   resultUrl?: string;
   thumbnailUrl?: string;
+  thumbnailFile?: File | null;
   // Metadata
   title: string;
   visibility: 'draft' | 'public' | 'supporter-only';
@@ -223,6 +224,23 @@ export function useMultiUpload(): UseMultiUploadReturn {
 
         if (uploadError) throw uploadError;
 
+        // Upload thumbnail if provided
+        let thumbnailUrl: string | null = null;
+        if (uploadFile.thumbnailFile) {
+          const thumbName = `thumb_${timestamp}_${sanitizeFileName(uploadFile.thumbnailFile.name)}`;
+          const thumbPath = `${artistId}/${thumbName}`;
+          const { error: thumbError } = await supabase.storage
+            .from('artist_videos')
+            .upload(thumbPath, uploadFile.thumbnailFile);
+          
+          if (!thumbError) {
+            const { data: { publicUrl: thumbPublicUrl } } = supabase.storage
+              .from('artist_videos')
+              .getPublicUrl(thumbPath);
+            thumbnailUrl = thumbPublicUrl;
+          }
+        }
+
         setFiles(prev => prev.map(f => 
           f.id === uploadFile.id ? { ...f, progress: 60 } : f
         ));
@@ -231,7 +249,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
           .from('artist_videos')
           .getPublicUrl(videoPath);
 
-        // Insert video record
+        // Insert video record with thumbnail
         const { error: insertError } = await supabase.from('artist_video_posts').insert({
           artist_id: artistId,
           video_url: publicUrl,
@@ -240,12 +258,13 @@ export function useMultiUpload(): UseMultiUploadReturn {
           mood: uploadFile.mood || null,
           tags: uploadFile.tags || null,
           upload_batch_id: uploadBatchId,
+          thumbnail_url: thumbnailUrl,
         });
 
         if (insertError) throw insertError;
 
         setFiles(prev => prev.map(f => 
-          f.id === uploadFile.id ? { ...f, status: 'completed', progress: 100, resultUrl: publicUrl } : f
+          f.id === uploadFile.id ? { ...f, status: 'completed', progress: 100, resultUrl: publicUrl, thumbnailUrl: thumbnailUrl || undefined } : f
         ));
       }
 

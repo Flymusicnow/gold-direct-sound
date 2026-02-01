@@ -14,6 +14,56 @@ import {
 import { Music, Video, CheckSquare, Square, Wand2, ImageIcon, X } from "lucide-react";
 import type { UploadFile } from "@/hooks/useMultiUpload";
 
+// Video Thumbnail Picker Component
+function VideoThumbnailPicker({ 
+  file, 
+  onThumbnailChange 
+}: { 
+  file: UploadFile; 
+  onThumbnailChange: (file: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const thumbnailPreview = file.thumbnailFile ? URL.createObjectURL(file.thumbnailFile) : null;
+
+  return (
+    <div className="relative shrink-0">
+      <div 
+        className="w-10 h-10 rounded bg-muted border border-dashed border-border flex items-center justify-center overflow-hidden cursor-pointer hover:border-primary/50 transition-colors group"
+        onClick={() => inputRef.current?.click()}
+        title="Add thumbnail"
+      >
+        {thumbnailPreview ? (
+          <img src={thumbnailPreview} alt="Thumbnail" className="w-full h-full object-cover" />
+        ) : (
+          <Video className="h-5 w-5 text-blue-500 group-hover:hidden" />
+        )}
+        {!thumbnailPreview && (
+          <ImageIcon className="h-4 w-4 text-muted-foreground hidden group-hover:block" />
+        )}
+      </div>
+      {thumbnailPreview && (
+        <button
+          type="button"
+          className="absolute -top-1 -right-1 w-4 h-4 bg-destructive rounded-full flex items-center justify-center"
+          onClick={(e) => {
+            e.stopPropagation();
+            onThumbnailChange(null);
+          }}
+        >
+          <X className="h-2.5 w-2.5 text-destructive-foreground" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => onThumbnailChange(e.target.files?.[0] || null)}
+      />
+    </div>
+  );
+}
+
 interface BulkMetadataEditorProps {
   files: UploadFile[];
   onUpdateFile: (id: string, metadata: Partial<UploadFile>) => void;
@@ -292,14 +342,17 @@ export function BulkMetadataEditor({
                 className="mt-1"
               />
 
-              {/* File Icon */}
-              <div className="w-8 h-8 rounded bg-muted flex items-center justify-center shrink-0">
-                {file.type === 'song' ? (
-                  <Music className="h-4 w-4 text-primary" />
-                ) : (
-                  <Video className="h-4 w-4 text-blue-500" />
-                )}
-              </div>
+              {/* File Icon / Video Thumbnail */}
+              {file.type === 'video' ? (
+                <VideoThumbnailPicker 
+                  file={file}
+                  onThumbnailChange={(thumbFile) => onUpdateFile(file.id, { thumbnailFile: thumbFile })}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center shrink-0">
+                  <Music className="h-5 w-5 text-primary" />
+                </div>
+              )}
 
               {/* Editable Fields */}
               <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-2">
