@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useVideoPlayback } from "@/contexts/VideoPlaybackContext";
 import { useAudioFocus } from "@/contexts/AudioFocusContext";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface VideoPost {
   id: string;
@@ -153,26 +154,34 @@ export function VideoCard({
         className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation interactive-card"
         onClick={handleVideoClick}
       >
-        {/* Video element with proper mobile attributes */}
-        {video.thumbnail_url && !isPlaying ? (
+        {/* Video element - always in DOM for ref access */}
+        <video
+          ref={videoRef}
+          src={video.video_url}
+          className={cn(
+            "w-full aspect-video object-cover",
+            video.is_supporter_only && !hasAccess && 'blur-sm',
+            video.thumbnail_url && !isPlaying && 'opacity-0 absolute inset-0'
+          )}
+          playsInline
+          webkit-playsinline="true"
+          muted={!isPlaying}
+          loop
+          preload="metadata"
+          onPlay={() => setIsPlaying(true)}
+          onPause={handleVideoPause}
+          onEnded={handleVideoEnded}
+        />
+        
+        {/* Thumbnail overlay - shown when not playing */}
+        {video.thumbnail_url && !isPlaying && (
           <img
             src={video.thumbnail_url}
             alt={video.caption || 'Video thumbnail'}
-            className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src={video.video_url}
-            className={`w-full aspect-video object-cover ${video.is_supporter_only && !hasAccess ? 'blur-sm' : ''}`}
-            playsInline
-            webkit-playsinline="true"
-            muted={!isPlaying}
-            loop
-            preload="metadata"
-            onPlay={() => setIsPlaying(true)}
-            onPause={handleVideoPause}
-            onEnded={handleVideoEnded}
+            className={cn(
+              "w-full aspect-video object-cover",
+              video.is_supporter_only && !hasAccess && 'blur-sm'
+            )}
           />
         )}
 
