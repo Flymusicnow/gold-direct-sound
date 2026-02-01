@@ -36,24 +36,32 @@ export function SyncedLyricsDisplay({ lyrics, currentTime, className }: SyncedLy
   useEffect(() => {
     if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
     
-    // Use requestAnimationFrame to ensure layout is complete
-    requestAnimationFrame(() => {
-      const container = scrollContainerRef.current;
-      const activeLine = activeLineRef.current;
-      if (!container || !activeLine) return;
-      
-      // Use getBoundingClientRect for reliable cross-browser positioning
-      const containerRect = container.getBoundingClientRect();
-      const lineRect = activeLine.getBoundingClientRect();
-      
-      // Calculate scroll offset to center the active line
-      const scrollOffset = lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
-      
-      container.scrollTo({
-        top: container.scrollTop + scrollOffset,
-        behavior: 'smooth'
+    // Small delay to ensure parent animation completes + double RAF for layout stability
+    const timeoutId = setTimeout(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const container = scrollContainerRef.current;
+          const activeLine = activeLineRef.current;
+          if (!container || !activeLine) return;
+          
+          const containerRect = container.getBoundingClientRect();
+          const lineRect = activeLine.getBoundingClientRect();
+          
+          // Skip if container not yet visible (animation not complete)
+          if (containerRect.height === 0) return;
+          
+          const scrollOffset = lineRect.top - containerRect.top - 
+            (containerRect.height / 2) + (lineRect.height / 2);
+          
+          container.scrollTo({
+            top: container.scrollTop + scrollOffset,
+            behavior: 'smooth'
+          });
+        });
       });
-    });
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
   }, [currentLineIndex, isSynced]);
 
   if (lines.length === 0) {
