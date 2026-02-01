@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Check, Music, UserPlus, Star, ListMusic, Trophy, X } from 'lucide-react';
@@ -20,6 +21,7 @@ export function FanOnboardingTour() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
   const [steps, setSteps] = useState<OnboardingStep[]>([
     {
       id: 'discover',
@@ -227,6 +229,20 @@ export function FanOnboardingTour() {
             ))}
           </div>
 
+          {/* Don't show again checkbox */}
+          {!allCompleted && (
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="dont-show" 
+                checked={dontShowAgain}
+                onCheckedChange={(checked) => setDontShowAgain(checked === true)}
+              />
+              <label htmlFor="dont-show" className="text-sm text-muted-foreground cursor-pointer">
+                Don't show this again
+              </label>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             {allCompleted ? (
@@ -247,7 +263,17 @@ export function FanOnboardingTour() {
                   Resume Later
                 </Button>
                 <Button
-                  onClick={() => setOpen(false)}
+                  onClick={async () => {
+                    if (dontShowAgain && user) {
+                      await supabase
+                        .from('fan_onboarding_progress')
+                        .upsert({
+                          user_id: user.id,
+                          onboarding_skipped: true,
+                        });
+                    }
+                    setOpen(false);
+                  }}
                   className="flex-1 bg-primary"
                 >
                   Let's Go!
