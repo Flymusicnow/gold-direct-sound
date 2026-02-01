@@ -1,117 +1,125 @@
 
-# Plan: Mobil-kompatibel Lyrics Centering
+# Plan: Robust Mobile Lyrics Centering (Final Fix)
 
-## Problemanalys
+## Root Cause Analysis
 
-Varför det inte fungerar på mobilen:
+The centering fails because:
 
-1. **`offsetTop` mäter fel** - Den mäter från inner `div` (med `py-32`), inte från scroll container
-2. **Animation timing** - `motion.div` animerar från `height: 0` till `height: auto` - scroll-beräkningen körs innan layouten är klar
-3. **Safari scroll-smooth** - CSS `scroll-smooth` fungerar inte pålitligt på iOS Safari
+1. **Animation Timing**: Parent `motion.div` animates `height: 0 → auto`. Our `requestAnimationFrame` fires BEFORE the animation completes
+2. **Container dimensions are 0**: When useEffect runs, container might still be at `height: 0`
+3. **Single RAF not enough**: One `requestAnimationFrame` isn't enough to wait for Framer Motion's animation to finish
 
-## Lösning
+## Solution
 
-### 1. Använd `getBoundingClientRect()` istället för `offsetTop`
+### 1. Use Double `requestAnimationFrame` + Small Delay
 
-`getBoundingClientRect()` är mer pålitlig cross-browser och ger exakt position relativt till viewport:
-
-```typescript
-const containerRect = container.getBoundingClientRect();
-const lineRect = activeLine.getBoundingClientRect();
-
-// Beräkna hur mycket vi behöver scrolla för att centrera
-const scrollOffset = lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
-
-container.scrollTo({
-  top: container.scrollTop + scrollOffset,
-  behavior: 'smooth'
-});
-```
-
-### 2. Lägg till `requestAnimationFrame` för layout-stabilitet
-
-Vänta på att layouten är klar innan vi scrollar:
+Double RAF ensures browser has painted, and a small timeout ensures Framer Motion animation has completed:
 
 ```typescript
 useEffect(() => {
   if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
   
-  // Vänta på att layout är komplett
-  requestAnimationFrame(() => {
-    const container = scrollContainerRef.current;
-    const activeLine = activeLineRef.current;
-    if (!container || !activeLine) return;
-    
-    // ... scroll calculation
-  });
+  // Wait for Framer Motion animation to complete (~300ms)
+  const timeoutId = setTimeout(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        const activeLine = activeLineRef.current;
+        if (!container || !activeLine) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const lineRect = activeLine.getBoundingClientRect();
+        
+        // Only scroll if container has height (animation complete)
+        if (containerRect.height === 0) return;
+        
+        const scrollOffset = lineRect.top - containerRect.top - 
+          (containerRect.height / 2) + (lineRect.height / 2);
+        
+        container.scrollTo({
+          top: container.scrollTop + scrollOffset,
+          behavior: 'smooth'
+        });
+      });
+    });
+  }, 50); // Small delay for animation
+  
+  return () => clearTimeout(timeoutId);
 }, [currentLineIndex, isSynced]);
 ```
 
-### 3. Ta bort `scroll-smooth` CSS-klass
+### 2. Add Initial Scroll on Mount
 
-Förlita oss enbart på `behavior: 'smooth'` i JavaScript:
+When lyrics panel opens, scroll to active line immediately:
 
-```tsx
-// FÖRE:
-className={cn("overflow-y-auto scroll-smooth", className)}
+```typescript
+// Track when component mounts to do initial scroll
+const initialScrollDone = useRef(false);
 
-// EFTER:
-className={cn("overflow-y-auto", className)}
+useEffect(() => {
+  // Reset on new lyrics
+  initialScrollDone.current = false;
+}, [lyrics]);
 ```
 
-## Tekniska ändringar
+### 3. Ensure Container Has Explicit Height
 
-### Fil: `src/components/flightdeck/SyncedLyricsDisplay.tsx`
+The className `h-72` should work, but let's ensure it's applied to the scrollable container:
 
-Komplett ny scroll-logik med mobile-support:
+```tsx
+<div 
+  ref={scrollContainerRef}
+  className={cn("overflow-y-auto", className)} // h-72 from className
+>
+```
+
+## Technical Changes
+
+### File: `src/components/flightdeck/SyncedLyricsDisplay.tsx`
 
 ```typescript
 // Robust auto-scroll - always center active line (mobile compatible)
 useEffect(() => {
   if (!activeLineRef.current || !scrollContainerRef.current || !isSynced) return;
   
-  // Use requestAnimationFrame to ensure layout is complete
-  requestAnimationFrame(() => {
-    const container = scrollContainerRef.current;
-    const activeLine = activeLineRef.current;
-    if (!container || !activeLine) return;
-    
-    // Use getBoundingClientRect for reliable cross-browser positioning
-    const containerRect = container.getBoundingClientRect();
-    const lineRect = activeLine.getBoundingClientRect();
-    
-    // Calculate scroll offset to center the active line
-    const scrollOffset = lineRect.top - containerRect.top - (containerRect.height / 2) + (lineRect.height / 2);
-    
-    container.scrollTo({
-      top: container.scrollTop + scrollOffset,
-      behavior: 'smooth'
+  // Small delay to ensure parent animation completes + double RAF for layout stability
+  const timeoutId = setTimeout(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        const activeLine = activeLineRef.current;
+        if (!container || !activeLine) return;
+        
+        const containerRect = container.getBoundingClientRect();
+        const lineRect = activeLine.getBoundingClientRect();
+        
+        // Skip if container not yet visible (animation not complete)
+        if (containerRect.height === 0) return;
+        
+        const scrollOffset = lineRect.top - containerRect.top - 
+          (containerRect.height / 2) + (lineRect.height / 2);
+        
+        container.scrollTo({
+          top: container.scrollTop + scrollOffset,
+          behavior: 'smooth'
+        });
+      });
     });
-  });
+  }, 50);
+  
+  return () => clearTimeout(timeoutId);
 }, [currentLineIndex, isSynced]);
 ```
 
-Och ta bort `scroll-smooth` från className:
+## Summary
 
-```tsx
-return (
-  <div 
-    ref={scrollContainerRef}
-    className={cn("overflow-y-auto", className)}
-  >
-    {/* ... */}
-  </div>
-);
-```
+| Change | Why |
+|--------|-----|
+| `setTimeout(50ms)` | Wait for Framer Motion animation |
+| Double `requestAnimationFrame` | Ensure browser has painted |
+| Guard `containerRect.height === 0` | Skip scroll if animation not done |
+| Cleanup with `clearTimeout` | Prevent memory leaks |
 
-## Sammanfattning
+## File to Edit
 
-| Ändring | Varför |
-|---------|--------|
-| `getBoundingClientRect()` | Mer pålitlig än `offsetTop` på mobil |
-| `requestAnimationFrame` | Väntar på layout innan scroll |
-| Ta bort `scroll-smooth` | iOS Safari stöder det inte pålitligt |
-
-## Fil att ändra
-
-1. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Ny scroll-logik med mobile support
+1. `src/components/flightdeck/SyncedLyricsDisplay.tsx` - Add delayed scroll with double RAF
