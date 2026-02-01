@@ -19,7 +19,7 @@ import { useAchievements } from "@/hooks/useAchievements";
 import { useVideoMilestones } from "@/hooks/useVideoMilestones";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Lock, Crown } from "lucide-react";
+import { Lock, Crown, Pencil, ImageIcon } from "lucide-react";
 import { SupporterExclusiveBadge } from "@/components/supporter/SupporterExclusiveBadge";
 import {
   Dialog,
@@ -34,9 +34,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Video, Upload, Trash2, CheckCircle, Share2, FolderPlus, AlertCircle, FolderUp } from "lucide-react";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { MultiUploadDialog } from "@/components/artist/MultiUploadDialog";
+import { EditVideoDialog } from "@/components/artist/EditVideoDialog";
 
 interface VideoPost {
   id: string;
@@ -46,6 +48,7 @@ interface VideoPost {
   is_supporter_only: boolean;
   required_tier: string | null;
   view_count: number;
+  thumbnail_url: string | null;
 }
 
 const MAX_VIDEO_SIZE = 40 * 1024 * 1024; // 40MB
@@ -87,6 +90,15 @@ export default function StudioVideos() {
   const [requiredTier, setRequiredTier] = useState<string>("basic");
   const [pulsingVideoIds, setPulsingVideoIds] = useState<Set<string>>(new Set());
   const [showMultiUpload, setShowMultiUpload] = useState(false);
+  
+  // Thumbnail state
+  const [customThumbnailFile, setCustomThumbnailFile] = useState<File | null>(null);
+  const [autoThumbnailBlob, setAutoThumbnailBlob] = useState<Blob | null>(null);
+  const [thumbnailSource, setThumbnailSource] = useState<'auto' | 'custom'>('auto');
+  const [customThumbnailPreview, setCustomThumbnailPreview] = useState<string | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [editVideo, setEditVideo] = useState<VideoPost | null>(null);
+  
   // Track milestone achievements
   useVideoMilestones(videoPosts);
 
@@ -160,10 +172,10 @@ export default function StudioVideos() {
 
       setArtistProfile(profile);
 
-      // Fetch video posts
+      // Fetch video posts with thumbnail_url
       const { data: videos, error: videosError } = await supabase
         .from("artist_video_posts")
-        .select("*")
+        .select("id, video_url, caption, created_at, is_supporter_only, required_tier, view_count, thumbnail_url")
         .eq("artist_id", profile.id)
         .order("created_at", { ascending: false });
 
@@ -207,6 +219,7 @@ export default function StudioVideos() {
         
         canvas.toBlob((blob) => {
           if (blob) {
+            setAutoThumbnailBlob(blob); // Save blob for upload
             resolve(URL.createObjectURL(blob));
           } else {
             resolve(null);
@@ -220,6 +233,15 @@ export default function StudioVideos() {
         resolve(null);
       };
     });
+  };
+
+  const handleCustomThumbnailSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCustomThumbnailFile(file);
+      setCustomThumbnailPreview(URL.createObjectURL(file));
+      setThumbnailSource('custom');
+    }
   };
 
   const processFile = async (file: File) => {
@@ -333,7 +355,29 @@ export default function StudioVideos() {
 
       if (uploadError) throw uploadError;
 
-      setUploadProgress(50);
+      setUploadProgress(40);
+
+      // Upload thumbnail if available
+      let uploadedThumbnailUrl: string | null = null;
+      const thumbnailToUpload = thumbnailSource === 'custom' ? customThumbnailFile : autoThumbnailBlob;
+      
+      if (thumbnailToUpload) {
+        const thumbFileName = `thumb_${timestamp}.jpg`;
+        const thumbPath = `${artistProfile.id}/${thumbFileName}`;
+        
+        const { error: thumbError } = await supabase.storage
+          .from("artist_videos")
+          .upload(thumbPath, thumbnailToUpload);
+        
+        if (!thumbError) {
+          const { data: thumbUrlData } = supabase.storage
+            .from("artist_videos")
+            .getPublicUrl(thumbPath);
+          uploadedThumbnailUrl = thumbUrlData.publicUrl;
+        }
+      }
+
+      setUploadProgress(60);
 
       // Get public URL
       const { data: urlData } = supabase.storage
@@ -351,6 +395,7 @@ export default function StudioVideos() {
           caption: caption.trim() || null,
           is_supporter_only: isSupporterOnly,
           required_tier: isSupporterOnly ? requiredTier : null,
+          thumbnail_url: uploadedThumbnailUrl,
         });
 
       if (insertError) throw insertError;
@@ -377,6 +422,10 @@ export default function StudioVideos() {
         setShowSuccess(false);
         setIsSupporterOnly(false);
         setRequiredTier("basic");
+        setCustomThumbnailFile(null);
+        setCustomThumbnailPreview(null);
+        setAutoThumbnailBlob(null);
+        setThumbnailSource('auto');
         fetchData();
       }, 2000);
     } catch (error) {
@@ -606,35 +655,113 @@ export default function StudioVideos() {
                 </p>
               </div>
 
-              {/* Preview */}
+              {/* Preview & Thumbnail Selection */}
               {previewUrl && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium">Preview</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <h3 className="text-sm font-medium">Preview & Thumbnail</h3>
+                  
+                  {/* Thumbnail Source Selection */}
+                  <div className="space-y-3 p-4 border border-border rounded-lg bg-muted/30">
+                    <Label className="flex items-center gap-2">
+                      <ImageIcon className="h-4 w-4" />
+                      Thumbnail
+                    </Label>
+                    
+                    {/* Hidden file input for custom thumbnail */}
+                    <input
+                      ref={thumbnailInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCustomThumbnailSelect}
+                    />
+                    
+                    <RadioGroup
+                      value={thumbnailSource}
+                      onValueChange={(val) => setThumbnailSource(val as 'auto' | 'custom')}
+                      className="flex flex-col sm:flex-row gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="auto" id="thumb-auto" />
+                        <Label htmlFor="thumb-auto" className="font-normal cursor-pointer">
+                          Auto (from video)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="custom" id="thumb-custom" />
+                        <Label htmlFor="thumb-custom" className="font-normal cursor-pointer">
+                          Custom
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                    
                     {/* Thumbnail Preview */}
-                    {thumbnailUrl && (
-                      <div className="space-y-2">
-                        <p className="text-xs text-muted-foreground">Thumbnail Preview</p>
-                        <div className="border border-primary/20 rounded-lg overflow-hidden">
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="w-full sm:w-40 aspect-video bg-muted rounded-lg overflow-hidden border border-border flex-shrink-0">
+                        {thumbnailSource === 'auto' && thumbnailUrl ? (
                           <img
                             src={thumbnailUrl}
-                            alt="Video thumbnail"
-                            className="w-full aspect-video object-cover bg-black"
+                            alt="Auto thumbnail"
+                            className="w-full h-full object-cover"
                           />
+                        ) : thumbnailSource === 'custom' && customThumbnailPreview ? (
+                          <img
+                            src={customThumbnailPreview}
+                            alt="Custom thumbnail"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      {thumbnailSource === 'custom' && (
+                        <div className="flex flex-col gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => thumbnailInputRef.current?.click()}
+                            disabled={uploading}
+                            className="min-h-[44px]"
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {customThumbnailPreview ? "Change" : "Upload Thumbnail"}
+                          </Button>
+                          {customThumbnailPreview && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive"
+                              onClick={() => {
+                                setCustomThumbnailFile(null);
+                                setCustomThumbnailPreview(null);
+                              }}
+                            >
+                              Remove
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                    )}
-                    
-                    {/* Video Preview */}
-                    <div className="space-y-2">
-                      <p className="text-xs text-muted-foreground">Video Preview</p>
-                      <div className="border border-primary/20 rounded-lg overflow-hidden">
-                        <video
-                          src={previewUrl}
-                          controls
-                          className="w-full aspect-video bg-black"
-                        />
-                      </div>
+                      )}
+                      
+                      {thumbnailSource === 'auto' && (
+                        <p className="text-xs text-muted-foreground">
+                          Frame captured at 1 second
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Video Preview */}
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Video Preview</p>
+                    <div className="border border-primary/20 rounded-lg overflow-hidden">
+                      <video
+                        src={previewUrl}
+                        controls
+                        className="w-full aspect-video bg-black"
+                      />
                     </div>
                   </div>
                 </div>
@@ -755,6 +882,14 @@ export default function StudioVideos() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => setEditVideo(video)}
+                              title="Edit"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => setShareVideo(video)}
                               title="Share"
                             >
@@ -870,6 +1005,20 @@ export default function StudioVideos() {
           type="videos"
           artistId={artistProfile.id}
           onSuccess={fetchData}
+        />
+      )}
+
+      {/* Edit Video Dialog */}
+      {editVideo && artistProfile && (
+        <EditVideoDialog
+          video={editVideo}
+          isOpen={!!editVideo}
+          onClose={() => setEditVideo(null)}
+          onSave={() => {
+            setEditVideo(null);
+            fetchData();
+          }}
+          artistId={artistProfile.id}
         />
       )}
       </div>
