@@ -1,65 +1,51 @@
 
-# Plan: Add "Don't Show This Again" Option to Onboarding Tour
+# Fix: Select Dropdown Not Working Inside Dialogs
 
 ## Problem
 
-Varje gång användaren går till Fan Portal visas onboarding-dialogen igen eftersom "Let's Go!"-knappen bara stänger dialogen utan att spara preferensen i databasen.
+When clicking on "Typ av lösning" dropdown in the QuickResolveDialog, nothing happens. The dropdown is being rendered BEHIND the dialog overlay.
 
-## Lösning
+## Root Cause
 
-Lägg till en "Don't show this again"-checkbox i dialogen. När användaren bockar i den och stänger dialogen sparas detta som `onboarding_skipped: true` i databasen.
+**Z-index mismatch:**
+- Dialog overlay: `z-[150]`
+- Dialog content: `z-[150]`  
+- SelectContent: `z-50`
 
-## Tekniska Ändringar
+Since SelectContent uses a Portal (renders to body), and its z-index (50) is lower than the Dialog's z-index (150), the dropdown appears behind the dialog and cannot be clicked.
 
-### Fil: `src/components/fan/FanOnboardingTour.tsx`
+## Solution
 
-1. **Lägg till state för checkbox**
+Update the SelectContent component to use `z-[200]` instead of `z-50`, ensuring it always appears above dialogs and other overlays.
+
+## Technical Changes
+
+### File: `src/components/ui/select.tsx`
+
+**Line 69 - Change z-index:**
 ```typescript
-const [dontShowAgain, setDontShowAgain] = useState(false);
+// Before
+"relative z-50 max-h-96 min-w-[8rem] overflow-hidden..."
+
+// After  
+"relative z-[200] max-h-96 min-w-[8rem] overflow-hidden..."
 ```
 
-2. **Uppdatera "Let's Go!"-knappens onClick**
-```typescript
-const handleLetsGo = async () => {
-  if (dontShowAgain && user) {
-    await supabase
-      .from('fan_onboarding_progress')
-      .upsert({
-        user_id: user.id,
-        onboarding_skipped: true,
-      });
-  }
-  setOpen(false);
-};
-```
+This single change will fix the dropdown in:
+- QuickResolveDialog
+- ReportIssueDialog  
+- Any other Select inside a Dialog
 
-3. **Lägg till checkbox i UI (före action buttons)**
-```tsx
-<div className="flex items-center gap-2">
-  <Checkbox 
-    id="dont-show" 
-    checked={dontShowAgain}
-    onCheckedChange={(checked) => setDontShowAgain(checked === true)}
-  />
-  <label htmlFor="dont-show" className="text-sm text-muted-foreground cursor-pointer">
-    Don't show this again
-  </label>
-</div>
-```
+## Z-Index Hierarchy (After Fix)
 
-4. **Import Checkbox component**
-```typescript
-import { Checkbox } from '@/components/ui/checkbox';
-```
+| Component | Z-Index |
+|-----------|---------|
+| Base content | 0-49 |
+| Standard popovers | z-50 |
+| Toast notifications | z-[100] |
+| Dialog overlay & content | z-[150] |
+| **SelectContent (fixed)** | **z-[200]** |
 
-## Sammanfattning
+## Files to Edit
 
-| Ändring | Varför |
-|---------|--------|
-| Lägg till `dontShowAgain` state | Spåra checkbox-status |
-| Ny `handleLetsGo` funktion | Spara preferens om checkbox är ibockad |
-| Checkbox i UI | Ge användaren valet att dölja dialogen permanent |
-
-## Filer att Ändra
-
-1. `src/components/fan/FanOnboardingTour.tsx` - Lägg till checkbox och logik för att spara preferensen
+1. `src/components/ui/select.tsx` - Update SelectContent z-index from `z-50` to `z-[200]`
