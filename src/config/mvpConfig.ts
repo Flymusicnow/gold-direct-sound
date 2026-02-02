@@ -13,6 +13,24 @@ export const MVP_CONFIG = {
 } as const;
 
 /**
+ * TEMP: Free plan keys until config-driven `is_free` field exists.
+ * When /config provides plan metadata, this will be replaced.
+ */
+export const FREE_PLAN_KEYS = new Set([
+  'artist_free',
+  'fan_free',
+  'brand_lite',
+]) as ReadonlySet<string>;
+
+/**
+ * Check if a plan key is a free plan.
+ * TEMP: Uses explicit Set until backend provides `is_free` flag per plan.
+ */
+export const isFreePlan = (planKey: string): boolean => {
+  return FREE_PLAN_KEYS.has(planKey);
+};
+
+/**
  * Check if payments are enabled.
  * Uses AppConfig from backend when available, falls back to MVP_CONFIG.
  */

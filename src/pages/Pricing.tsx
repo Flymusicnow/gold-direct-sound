@@ -12,7 +12,7 @@ import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { STRIPE_PLANS } from "@/config/stripePlans";
 import { toast } from "sonner";
 import { useAppConfig } from "@/hooks/useAppConfig";
-import { isPaymentsEnabled } from "@/config/mvpConfig";
+import { isPaymentsEnabled, isFreePlan } from "@/config/mvpConfig";
 
 const artistPlans = [
   {
@@ -213,7 +213,7 @@ const Pricing = () => {
 
   const isCurrentPlan = (planKey: string) => {
     if (!subscription || subscription.tier === 'free') {
-      return planKey.includes('free');
+      return isFreePlan(planKey);
     }
     // Map subscription tier to plan key
     const tierToPlanKey: Record<string, string> = {
@@ -232,7 +232,7 @@ const Pricing = () => {
         window.location.href = 'mailto:partnerships@flymusic.se?subject=Brand%20Enterprise%20Inquiry';
         return;
       }
-      if (planKey.includes('free')) {
+      if (isFreePlan(planKey)) {
         navigate('/auth');
         return;
       }
@@ -243,7 +243,7 @@ const Pricing = () => {
 
     // Post-MVP: Normal checkout flow
     // Free plans or contact sales - just navigate
-    if (planKey.includes('free') || planKey === 'brand_enterprise') {
+    if (isFreePlan(planKey) || planKey === 'brand_enterprise') {
       if (planKey === 'brand_enterprise') {
         window.location.href = 'mailto:partnerships@flymusic.se?subject=Brand%20Enterprise%20Inquiry';
       } else {
