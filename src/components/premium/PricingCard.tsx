@@ -15,8 +15,10 @@ interface PricingCardProps {
   currentPlan?: boolean;
   icon?: React.ReactNode;
   disabled?: boolean;
-  /** MVP: When true, shows "Coming after MVP" badge and disables checkout */
+  /** MVP: When true, shows mvpLabel badge and disables checkout */
   mvpLocked?: boolean;
+  /** Custom label for MVP locked plans (e.g., "Included in trial (MVP)" or "Pricing finalized post-MVP") */
+  mvpLabel?: string;
 }
 
 export const PricingCard = ({
@@ -31,7 +33,8 @@ export const PricingCard = ({
   currentPlan = false,
   icon,
   disabled = false,
-  mvpLocked = false
+  mvpLocked = false,
+  mvpLabel
 }: PricingCardProps) => {
   const formatPrice = () => {
     if (price === null) return "Custom";
@@ -58,7 +61,7 @@ export const PricingCard = ({
       )}
       {mvpLocked && !currentPlan && (
         <Badge variant="secondary" className="absolute -top-3 right-4">
-          Coming after MVP
+          {mvpLabel || "Pricing finalized post-MVP"}
         </Badge>
       )}
       <CardHeader className="text-center pb-2">
@@ -95,7 +98,7 @@ export const PricingCard = ({
           onClick={onCtaClick}
           disabled={disabled || currentPlan || mvpLocked}
         >
-          {currentPlan ? "Current Plan" : mvpLocked ? "Available during trial" : ctaText}
+          {currentPlan ? "Current Plan" : mvpLocked ? (mvpLabel || "Pricing finalized post-MVP") : ctaText}
         </Button>
       </CardContent>
     </Card>

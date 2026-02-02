@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  ArtistLevel, 
+  FanLevel, 
+  checkArtistLevel, 
+  checkFanLevel,
+} from '@/types/unlockLevels';
 
 export type FeatureFlagKey = 
   | 'TRUST_LAYER_ENABLED'
@@ -12,7 +18,7 @@ export type FeatureFlagKey =
   | 'SPOTLIGHT_CAROUSEL'
   | 'ARTIST_GOALS';
 
-export type UserTier = 'free' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'pro' | 'elite' | 'supporter' | 'enterprise';
+export type UserTier = 'free' | 'bronze' | 'silver' | 'gold' | 'diamond' | 'pro' | 'elite' | 'supporter' | 'enterprise' | 'trial' | 'partner';
 
 interface FeatureFlag {
   id: string;
@@ -39,6 +45,12 @@ interface FeatureFlagContextType {
   isEnabledForArtist: (key: FeatureFlagKey, artistId: string) => boolean;
   checkTierAccess: (key: string, tier: UserTier) => boolean;
   refetch: () => Promise<void>;
+  /**
+   * TEMP SCAFFOLD — Remove when backend provides resolved permissions
+   * Backend will provide: GET /config → { feature_unlocks: [{ feature_key, allowed }] }
+   */
+  checkArtistUnlock: (userLevel: ArtistLevel, requiredLevel: ArtistLevel) => boolean;
+  checkFanUnlock: (userLevel: FanLevel, requiredLevel: FanLevel) => boolean;
 }
 
 const FeatureFlagContext = createContext<FeatureFlagContextType | undefined>(undefined);
@@ -117,11 +129,13 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
       case 'enterprise':
       case 'elite':
       case 'diamond':
+      case 'partner':
         return flag.enabled_for_elite;
       case 'pro':
       case 'supporter':
       case 'gold':
       case 'silver':
+      case 'trial':
         return flag.enabled_for_pro;
       case 'bronze':
       case 'free':
@@ -130,8 +144,30 @@ export const FeatureFlagProvider: React.FC<{ children: ReactNode }> = ({ childre
     }
   };
 
+  /**
+   * TEMP SCAFFOLD — Client-side hierarchy checks
+   * Remove when backend provides per-feature resolved permissions
+   */
+  const checkArtistUnlock = (userLevel: ArtistLevel, requiredLevel: ArtistLevel): boolean => {
+    return checkArtistLevel(userLevel, requiredLevel);
+  };
+
+  const checkFanUnlock = (userLevel: FanLevel, requiredLevel: FanLevel): boolean => {
+    return checkFanLevel(userLevel, requiredLevel);
+  };
+
   return (
-    <FeatureFlagContext.Provider value={{ flags, fullFlags, isLoading, isEnabled, isEnabledForArtist, checkTierAccess, refetch: fetchFlags }}>
+    <FeatureFlagContext.Provider value={{ 
+      flags, 
+      fullFlags, 
+      isLoading, 
+      isEnabled, 
+      isEnabledForArtist, 
+      checkTierAccess, 
+      refetch: fetchFlags,
+      checkArtistUnlock,
+      checkFanUnlock
+    }}>
       {children}
     </FeatureFlagContext.Provider>
   );

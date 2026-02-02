@@ -14,95 +14,133 @@ import { toast } from "sonner";
 import { useAppConfig } from "@/hooks/useAppConfig";
 import { isPaymentsEnabled, isFreePlan } from "@/config/mvpConfig";
 
-const artistPlans = [
+import type { ArtistLevel, FanLevel } from '@/types/unlockLevels';
+
+const artistPlans: Array<{
+  key: string;
+  name: string;
+  price: number | null;
+  yearlyPrice: number | null;
+  description: string;
+  features: string[];
+  cta: string;
+  popular: boolean;
+  unlockLevel: ArtistLevel;
+  mvpLabel?: string;
+}> = [
   {
     key: "artist_free",
-    name: STRIPE_PLANS.artist_free.name,
+    name: "Free",
     price: 0,
     yearlyPrice: 0,
     description: "Get started with the essentials",
     features: [
-      "Upload up to 5 tracks",
       "Basic artist profile",
-      "Fan engagement tools",
-      "Spotlight entry (1/month)",
-      "Basic analytics"
+      "Limited track uploads",
+      "Basic campaigns",
+      "Discovery listing",
+      "Basic stats"
     ],
     cta: "Get Started",
-    popular: false
+    popular: false,
+    unlockLevel: 'artist_free'
+  },
+  {
+    key: "artist_trial",
+    name: "Trial",
+    price: 0,
+    yearlyPrice: 0,
+    description: "Extended access during trial period",
+    features: [
+      "Everything in Free",
+      "Full analytics dashboard",
+      "Community tools",
+      "Campaign insights",
+      "Extended uploads"
+    ],
+    cta: "Included in trial (MVP)",
+    popular: true,
+    unlockLevel: 'artist_trial',
+    mvpLabel: "Included in trial (MVP)"
   },
   {
     key: "artist_pro",
-    name: STRIPE_PLANS.artist_pro.name,
-    price: STRIPE_PLANS.artist_pro.monthly.amount / 100,
-    yearlyPrice: STRIPE_PLANS.artist_pro.yearly.amount / 100,
-    description: "Everything you need to grow",
+    name: "Pro",
+    price: null,
+    yearlyPrice: null,
+    description: "Premium features",
     features: [
-      "Unlimited track uploads",
-      "Advanced analytics dashboard",
-      "Priority Spotlight placement",
-      "Promo OS smart links",
-      "Presskit / EPK builder",
-      "Collaboration requests",
-      "Custom supporter tiers"
+      "Everything in Trial",
+      "Advanced analytics",
+      "Fan segmentation",
+      "Campaign builder"
     ],
-    cta: "Upgrade to Pro",
-    popular: true
-  },
-  {
-    key: "artist_elite",
-    name: STRIPE_PLANS.artist_elite.name,
-    price: STRIPE_PLANS.artist_elite.monthly.amount / 100,
-    yearlyPrice: STRIPE_PLANS.artist_elite.yearly.amount / 100,
-    description: "For serious artists",
-    features: [
-      "Everything in Pro",
-      "AI-powered bio & content tools",
-      "Brand collaboration matching",
-      "Dedicated support",
-      "Featured artist placement",
-      "Revenue optimization tools",
-      "White-label presskit"
-    ],
-    cta: "Go Elite",
-    popular: false
+    cta: "Pricing finalized post-MVP",
+    popular: false,
+    unlockLevel: 'artist_pro',
+    mvpLabel: "Pricing finalized post-MVP"
   }
 ];
 
-const fanPlans = [
+const fanPlans: Array<{
+  key: string;
+  name: string;
+  price: number | null;
+  yearlyPrice: number | null;
+  description: string;
+  features: string[];
+  cta: string;
+  popular: boolean;
+  unlockLevel: FanLevel;
+  mvpLabel?: string;
+}> = [
   {
     key: "fan_free",
-    name: STRIPE_PLANS.fan_free.name,
+    name: "Free",
     price: 0,
     yearlyPrice: 0,
     description: "Discover and support artists",
     features: [
-      "Unlimited music streaming",
-      "Follow unlimited artists",
-      "Create stacks (playlists)",
-      "Vote in Spotlight",
-      "Basic XP earning"
+      "Follow artists",
+      "Basic voting",
+      "View leaderboards",
+      "Discovery & search"
     ],
     cta: "Join Free",
-    popular: false
+    popular: false,
+    unlockLevel: 'fan_free'
   },
   {
     key: "fan_supporter",
-    name: STRIPE_PLANS.fan_supporter.name,
-    price: STRIPE_PLANS.fan_supporter.monthly.amount / 100,
-    yearlyPrice: STRIPE_PLANS.fan_supporter.yearly.amount / 100,
-    description: "Unlock the full fan experience",
+    name: "Supporter",
+    price: null,
+    yearlyPrice: null,
+    description: "Enhanced fan features",
     features: [
       "Everything in Free",
-      "2x XP multiplier",
-      "Exclusive content access",
-      "Early access to releases",
-      "Supporter badge on profile",
-      "Priority event access",
-      "Ad-free experience"
+      "Additional votes",
+      "Highlight votes"
     ],
-    cta: "Become a Supporter",
-    popular: true
+    cta: "Pricing finalized post-MVP",
+    popular: true,
+    unlockLevel: 'fan_supporter',
+    mvpLabel: "Pricing finalized post-MVP"
+  },
+  {
+    key: "fan_superfan",
+    name: "Superfan",
+    price: null,
+    yearlyPrice: null,
+    description: "Premium fan experience",
+    features: [
+      "Everything in Supporter",
+      "VIP votes",
+      "Collectibles access"
+    ],
+    cta: "Pricing finalized post-MVP",
+    popular: false,
+    unlockLevel: 'fan_superfan',
+    mvpLabel: "Pricing finalized post-MVP"
   }
 ];
 
@@ -159,13 +197,12 @@ const brandPlans = [
 ];
 
 const artistFeatureComparison = [
-  { feature: "Track uploads", free: "5", pro: "Unlimited", elite: "Unlimited" },
-  { feature: "Analytics", free: "Basic", pro: "Advanced", elite: "AI-powered" },
-  { feature: "Spotlight placement", free: "1/month", pro: "Priority", elite: "Featured" },
-  { feature: "Promo OS smart links", free: false, pro: true, elite: true },
-  { feature: "Presskit / EPK", free: false, pro: true, elite: "White-label" },
-  { feature: "Brand matching", free: false, pro: false, elite: true },
-  { feature: "Dedicated support", free: false, pro: false, elite: true },
+  { feature: "Track uploads", free: "Limited", trial: "Extended", pro: "Unlimited" },
+  { feature: "Analytics", free: "Basic", trial: "Full", pro: "Advanced" },
+  { feature: "Community tools", free: false, trial: true, pro: true },
+  { feature: "Campaign insights", free: false, trial: true, pro: true },
+  { feature: "Fan segmentation", free: false, trial: false, pro: true },
+  { feature: "Campaign builder", free: false, trial: false, pro: true },
 ];
 
 const faqs = [
@@ -322,7 +359,7 @@ const Pricing = () => {
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
               <p className="text-sm text-center">
                 <Sparkles className="inline h-4 w-4 mr-1 text-primary" />
-                <strong>MVP Mode:</strong> All premium features are available FREE during your trial period.
+                <strong>MVP:</strong> Extended features available during trial. Pricing and tiers finalized post-MVP.
               </p>
             </div>
           )}
@@ -384,8 +421,8 @@ const Pricing = () => {
                           <tr className="border-b border-border">
                             <th className="text-left py-3 px-4 font-medium">Feature</th>
                             <th className="text-center py-3 px-4 font-medium">Free</th>
-                            <th className="text-center py-3 px-4 font-medium text-primary">Pro</th>
-                            <th className="text-center py-3 px-4 font-medium">Elite</th>
+                            <th className="text-center py-3 px-4 font-medium text-primary">Trial</th>
+                            <th className="text-center py-3 px-4 font-medium">Pro</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -393,8 +430,8 @@ const Pricing = () => {
                             <tr key={i} className="border-b border-border/50">
                               <td className="py-3 px-4 text-muted-foreground">{row.feature}</td>
                               <td className="py-3 px-4 text-center">{renderFeatureValue(row.free)}</td>
-                              <td className="py-3 px-4 text-center bg-primary/5">{renderFeatureValue(row.pro)}</td>
-                              <td className="py-3 px-4 text-center">{renderFeatureValue(row.elite)}</td>
+                              <td className="py-3 px-4 text-center bg-primary/5">{renderFeatureValue(row.trial)}</td>
+                              <td className="py-3 px-4 text-center">{renderFeatureValue(row.pro)}</td>
                             </tr>
                           ))}
                         </tbody>
