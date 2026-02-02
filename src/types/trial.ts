@@ -16,13 +16,32 @@ export interface TrialStatus {
  * Single source of truth when available, replaces MVP_CONFIG fallback.
  */
 export interface AppConfig {
-  trial_enabled: boolean;
-  trial_length_days: number | null;
+  mvp_mode: boolean;
   payments_enabled: boolean;
-  pricing_tiers: Record<string, {
-    price_ore: number; // öre (1/100 SEK): 9900 = 99 SEK
-    active: boolean;
-  }>;
+  trial: {
+    trial_enabled: boolean;
+    allowed_lengths_days: number[];
+    default_length_days: number;
+  };
+  limits: Record<string, number | null>;
+  subscription_products: SubscriptionProduct[];
+  feature_unlocks: FeatureUnlockConfig[];
+}
+
+export interface SubscriptionProduct {
+  key: string;
+  name: string;
+  price_ore: number;
+  billing_period: 'month' | 'year';
+  features: string[];
+  active: boolean;
+}
+
+export interface FeatureUnlockConfig {
+  feature_key: string;
+  required_level: string;
+  mvp_available: boolean;
+  post_mvp_label?: string;
 }
 
 // ============================================
@@ -58,4 +77,20 @@ export const DEFAULT_TRIAL_STATUS: TrialStatus = {
   trial_ends_at: null,
   trial_days_left: null,
   trial_state: 'loading',
+};
+
+/**
+ * Fallback app config used when GET /config hasn't responded yet.
+ */
+export const FALLBACK_APP_CONFIG: AppConfig = {
+  mvp_mode: true,
+  payments_enabled: false,
+  trial: {
+    trial_enabled: true,
+    allowed_lengths_days: [7, 14, 30],
+    default_length_days: 14,
+  },
+  limits: {},
+  subscription_products: [],
+  feature_unlocks: [],
 };

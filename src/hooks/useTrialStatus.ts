@@ -1,35 +1,44 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { TrialStatus, DEFAULT_TRIAL_STATUS } from '@/types/trial';
 
 /**
- * STUB: Returns mock data until GET /trial/status endpoint exists.
+ * Hook for fetching trial status from GET /trial/status endpoint.
  * 
- * NO client-side calculations. All values come from mock/API.
- * When /trial/status is ready, replace mock with actual API call.
+ * Returns server-calculated trial state:
+ * - trial_days_left (backend-calculated ONLY)
+ * - trial_state (active/expired/none/loading)
+ * - trial dates (started_at, ends_at)
+ * 
+ * Frontend NEVER calculates trial logic independently.
  */
-
-// TEMP: Placeholder values for development only
-// These will be replaced by actual API response
-const MOCK_TRIAL_STATUS: TrialStatus = {
-  trial_enabled: true,
-  trial_length_days: 14, // TEMP: placeholder only - NOT a fallback
-  trial_started_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // TEMP
-  trial_ends_at: new Date(Date.now() + 11 * 24 * 60 * 60 * 1000).toISOString(), // TEMP
-  trial_days_left: 11, // TEMP: Backend-calculated value
-  trial_state: 'active', // TEMP: Backend-determined value
-};
-
 export const useTrialStatus = () => {
-  // TODO: Replace with actual API call when GET /trial/status exists
-  // const { data, isLoading, refetch } = useQuery(['trial-status'], fetchTrialStatus);
-  
-  const [isLoading] = useState(false);
-  const [trialStatus] = useState<TrialStatus>(MOCK_TRIAL_STATUS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [trialStatus, setTrialStatus] = useState<TrialStatus>(DEFAULT_TRIAL_STATUS);
 
-  const refetch = useCallback(() => {
-    // TODO: Implement actual refetch when API exists
-    return Promise.resolve();
+  const fetchTrialStatus = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const { data, error } = await supabase.functions.invoke('get-trial-status', {
+        headers: session?.access_token 
+          ? { Authorization: `Bearer ${session.access_token}` } 
+          : undefined,
+      });
+      
+      if (error) throw error;
+      setTrialStatus(data);
+    } catch (err) {
+      console.error('Error fetching trial status:', err);
+      // Keep default status on error
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchTrialStatus();
+  }, [fetchTrialStatus]);
 
   // Derived state helpers
   const isTrialActive = trialStatus.trial_state === 'active';
@@ -49,6 +58,6 @@ export const useTrialStatus = () => {
     isTrialExpired,
     hasNoTrial,
     isCheckingTrial,
-    refetch,
+    refetch: fetchTrialStatus,
   };
 };
