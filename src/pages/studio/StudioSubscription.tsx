@@ -14,6 +14,8 @@ import { EarlyAccessBadge } from "@/components/artist/EarlyAccessBadge";
 import { InviteFriendsCard } from "@/components/artist/InviteFriendsCard";
 import { useMyPricingStatus } from "@/hooks/useMyPricingStatus";
 
+import type { ArtistLevel } from '@/types/unlockLevels';
+
 interface Supporter {
   id: string;
   tier: string;
@@ -26,66 +28,77 @@ interface Supporter {
   };
 }
 
-const tiers = [
+interface TierDefinition {
+  name: string;
+  subtitle: string;
+  price: number | null;
+  period: string;
+  description: string;
+  features: string[];
+  current?: boolean;
+  unlockLevel: ArtistLevel;
+  ctaText: string;
+  icon: React.ComponentType<{ className?: string }>;
+  highlight?: boolean;
+  mvpLabel?: string;
+  comingSoon?: boolean;
+}
+
+const tiers: TierDefinition[] = [
   {
     name: "Free",
-    subtitle: "Early Access",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for getting started",
+    subtitle: "Getting Started",
+    price: null,
+    period: "",
+    description: "Essential tools to begin",
     features: [
-      "Upload up to 5 tracks",
-      "Upload up to 3 videos",
-      "Basic analytics",
-      "Artist profile",
-      "Fan engagement tools",
-      "Event management",
+      "Basic artist profile",
+      "Limited track uploads",
+      "Basic campaigns",
+      "Discovery listing",
+      "Basic stats"
     ],
     current: true,
-    comingSoon: false,
+    unlockLevel: 'artist_free',
     ctaText: "Current Plan",
     icon: Sparkles,
   },
   {
-    name: "FlyMusic Pro",
-    subtitle: "Most Popular",
-    price: "$9.99",
-    period: "/month",
-    description: "For serious independent artists",
+    name: "Trial Access",
+    subtitle: "MVP",
+    price: null,
+    period: "",
+    description: "Extended access during trial",
     features: [
       "Everything in Free",
-      "Unlimited track uploads",
-      "Unlimited video uploads",
-      "Spotlight priority placement",
-      "Advanced analytics dashboard",
-      "Custom profile badge",
-      "Priority support",
+      "Full analytics dashboard",
+      "Community tools",
+      "Campaign insights",
+      "Extended uploads"
     ],
-    current: false,
-    comingSoon: true,
-    ctaText: "Coming Soon",
+    unlockLevel: 'artist_trial',
+    ctaText: "Included in trial (MVP)",
     icon: Star,
     highlight: true,
+    mvpLabel: "Included in trial (MVP)"
   },
   {
     name: "Artist Pro",
-    subtitle: "Enterprise",
-    price: "$29.99",
-    period: "/month",
-    description: "Maximum exposure and features",
+    subtitle: "Post-MVP",
+    price: null,
+    period: "",
+    description: "Premium features",
     features: [
-      "Everything in Gold",
-      "Verified artist badge",
-      "Featured placement",
-      "Dedicated account manager",
-      "Custom integrations",
-      "White-label options",
-      "API access",
+      "Everything in Trial",
+      "Advanced analytics",
+      "Fan segmentation",
+      "Campaign builder"
     ],
-    current: false,
-    comingSoon: true,
-    ctaText: "Contact Sales",
+    unlockLevel: 'artist_pro',
+    ctaText: "Pricing finalized post-MVP",
     icon: Crown,
+    mvpLabel: "Pricing finalized post-MVP",
+    comingSoon: true
   },
 ];
 
@@ -332,16 +345,16 @@ export default function StudioSubscription() {
             <div className="space-y-4">
               <h3 className="font-semibold flex items-center gap-2">
                 <Zap className="h-5 w-5 text-primary" />
-                Early Access Benefits
+                Trial Access (MVP)
               </h3>
               <p className="text-sm text-muted-foreground">
-                During your trial period, you have full access to all platform features.
-                Premium subscription options are being finalized for post-MVP launch.
+                Extended features available during your trial period. 
+                Pricing and subscription tiers will be finalized post-MVP.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">No payment required</Badge>
-                <Badge variant="outline">Full feature access</Badge>
-                <Badge variant="outline">Premium plans coming soon</Badge>
+                <Badge variant="outline">Extended feature access</Badge>
+                <Badge variant="outline">Pricing finalized post-MVP</Badge>
               </div>
             </div>
           </Card>
