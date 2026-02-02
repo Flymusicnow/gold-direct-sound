@@ -26,6 +26,7 @@ import { Link } from "react-router-dom";
 import { VerifiedBadge } from "@/components/artist/VerifiedBadge";
 import { useArtistVerification } from "@/hooks/useArtistVerification";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { TrialBanner } from "@/components/trial";
 
 interface Stats {
   followers: number;
@@ -226,6 +227,9 @@ export default function StudioDashboard() {
             {t('studio.trackImpact')}
           </p>
         </div>
+
+        {/* Trial Banner */}
+        <TrialBanner className="mb-2" />
 
           {/* Spotlight Stats - Show if artist has active entry */}
           {hasActiveSpotlightEntry && (

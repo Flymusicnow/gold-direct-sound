@@ -15,6 +15,8 @@ interface PricingCardProps {
   currentPlan?: boolean;
   icon?: React.ReactNode;
   disabled?: boolean;
+  /** MVP: When true, shows "Coming after MVP" badge and disables checkout */
+  mvpLocked?: boolean;
 }
 
 export const PricingCard = ({
@@ -28,7 +30,8 @@ export const PricingCard = ({
   popular = false,
   currentPlan = false,
   icon,
-  disabled = false
+  disabled = false,
+  mvpLocked = false
 }: PricingCardProps) => {
   const formatPrice = () => {
     if (price === null) return "Custom";
@@ -48,9 +51,14 @@ export const PricingCard = ({
           Most Popular
         </Badge>
       )}
-      {currentPlan && (
+      {currentPlan && !mvpLocked && (
         <Badge variant="outline" className="absolute -top-3 right-4 border-primary text-primary">
           Current Plan
+        </Badge>
+      )}
+      {mvpLocked && !currentPlan && (
+        <Badge variant="secondary" className="absolute -top-3 right-4">
+          Coming after MVP
         </Badge>
       )}
       <CardHeader className="text-center pb-2">
@@ -83,11 +91,11 @@ export const PricingCard = ({
         </ul>
         <Button 
           className="w-full mt-6"
-          variant={popular ? "default" : "outline"}
+          variant={popular && !mvpLocked ? "default" : "outline"}
           onClick={onCtaClick}
-          disabled={disabled || currentPlan}
+          disabled={disabled || currentPlan || mvpLocked}
         >
-          {currentPlan ? "Current Plan" : ctaText}
+          {currentPlan ? "Current Plan" : mvpLocked ? "Available during trial" : ctaText}
         </Button>
       </CardContent>
     </Card>

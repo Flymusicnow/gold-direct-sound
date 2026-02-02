@@ -335,14 +335,13 @@ export default function StudioSubscription() {
                 Early Access Benefits
               </h3>
               <p className="text-sm text-muted-foreground">
-                As an early access user, you're getting all the premium features for free while
-                we perfect the platform. When we launch paid tiers, early supporters will receive
-                special lifetime discounts and exclusive perks.
+                During your trial period, you have full access to all platform features.
+                Premium subscription options are being finalized for post-MVP launch.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">No payment required</Badge>
                 <Badge variant="outline">Full feature access</Badge>
-                <Badge variant="outline">Lifetime discounts coming</Badge>
+                <Badge variant="outline">Premium plans coming soon</Badge>
               </div>
             </div>
           </Card>

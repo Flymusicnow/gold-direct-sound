@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAppConfig } from "@/hooks/useAppConfig";
+import { isPaymentsEnabled } from "@/config/mvpConfig";
 
 interface UpgradeModalProps {
   open: boolean;
@@ -106,6 +108,10 @@ export const UpgradeModal = ({
   const [isYearly, setIsYearly] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { config } = useAppConfig();
+  
+  // Check if payments are enabled
+  const paymentsEnabled = isPaymentsEnabled(config);
 
   const getTargetPlan = () => {
     if (userType === "fan") {
@@ -136,6 +142,14 @@ export const UpgradeModal = ({
   const handleUpgrade = async () => {
     const planKey = getPlanKey();
     
+    // MVP: Block ALL payments via single flag
+    if (!paymentsEnabled) {
+      toast.info("Premium plans coming after MVP. Enjoy full access during your trial!");
+      onOpenChange(false);
+      return;
+    }
+    
+    // Post-MVP: Normal checkout flow
     // For enterprise or plans without price, go to pricing page
     if (planKey === "brand_enterprise" || !price) {
       onOpenChange(false);
@@ -227,11 +241,20 @@ export const UpgradeModal = ({
 
           {/* CTA */}
           <div className="flex flex-col gap-2">
-            <Button onClick={handleUpgrade} className="w-full" disabled={isLoading}>
+            <Button 
+              onClick={handleUpgrade} 
+              className="w-full" 
+              disabled={isLoading || !paymentsEnabled}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Processing...
+                </>
+              ) : !paymentsEnabled ? (
+                <>
+                  <Badge variant="secondary" className="mr-2">Coming after MVP</Badge>
+                  Available during trial
                 </>
               ) : (
                 <>

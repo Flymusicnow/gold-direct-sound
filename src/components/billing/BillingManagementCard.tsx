@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { toast } from "sonner";
+import { useAppConfig } from "@/hooks/useAppConfig";
+import { isPaymentsEnabled } from "@/config/mvpConfig";
 
 interface BillingManagementCardProps {
   userType: 'artist' | 'fan';
@@ -15,6 +17,10 @@ export const BillingManagementCard = ({ userType }: BillingManagementCardProps) 
   const navigate = useNavigate();
   const { subscription, isLoading, isPro, isElite, isSupporter, isFree } = useUserSubscription();
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const { config } = useAppConfig();
+  
+  // Check if payments are enabled
+  const paymentsEnabled = isPaymentsEnabled(config);
 
   const getPlanDisplayName = () => {
     if (isElite) return "Elite";
@@ -108,11 +114,15 @@ export const BillingManagementCard = ({ userType }: BillingManagementCardProps) 
           </Button>
         ) : (
           <Button 
+            variant="outline"
             onClick={() => navigate('/pricing')}
             className="flex-1"
           >
             <Sparkles className="mr-2 h-4 w-4" />
-            Upgrade to {userType === 'artist' ? 'Pro' : 'Supporter Pass'}
+            View Plans
+            {!paymentsEnabled && (
+              <Badge variant="secondary" className="ml-2 text-xs">Coming after MVP</Badge>
+            )}
           </Button>
         )}
       </div>
@@ -121,7 +131,9 @@ export const BillingManagementCard = ({ userType }: BillingManagementCardProps) 
       <p className="text-xs text-muted-foreground">
         {hasActiveSubscription 
           ? "You can update payment methods, change plans, or cancel anytime from the billing portal."
-          : `Upgrade to unlock premium features and support ${userType === 'artist' ? 'your growth' : 'your favorite artists'}.`
+          : paymentsEnabled
+            ? `Upgrade to unlock premium features and support ${userType === 'artist' ? 'your growth' : 'your favorite artists'}.`
+            : "All features are available during your trial. Premium plans launching soon."
         }
       </p>
     </div>
