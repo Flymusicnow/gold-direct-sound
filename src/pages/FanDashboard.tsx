@@ -16,6 +16,7 @@ import { FanSidebar } from "@/components/fan/FanSidebar";
 import { PageBreadcrumb } from "@/components/navigation/PageBreadcrumb";
 import { BottomNavBarFan } from "@/components/mobile/BottomNavBarFan";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { TrialBanner } from "@/components/trial";
 
 interface Artist {
   id: string;
@@ -113,13 +114,16 @@ export default function FanDashboard() {
             </div>
           ) : (
             <PageTransition className="max-w-6xl mx-auto">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
                   <h1 className="text-3xl font-bold mb-2">{t('fan.yourDashboard')}</h1>
                   <p className="text-muted-foreground">{t('fan.welcomeBack')}</p>
                 </div>
                 <DashboardFeedSwitch />
               </div>
+
+              {/* Trial Banner */}
+              <TrialBanner className="mb-6" />
 
               {/* Quick Links Grid */}
               <StaggeredGrid 

@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserSubscription } from "@/hooks/useUserSubscription";
 import { STRIPE_PLANS } from "@/config/stripePlans";
 import { toast } from "sonner";
+import { useAppConfig } from "@/hooks/useAppConfig";
+import { isPaymentsEnabled } from "@/config/mvpConfig";
 
 const artistPlans = [
   {
@@ -177,7 +179,7 @@ const faqs = [
   },
   {
     question: "Is there a free trial for paid plans?",
-    answer: "Artist Pro and Brand Pro plans come with a 14-day free trial. No credit card required to start."
+    answer: "All users receive a free trial period with full feature access. No credit card required to start."
   },
   {
     question: "What happens if I cancel?",
@@ -195,6 +197,10 @@ const Pricing = () => {
   const navigate = useNavigate();
   const { user, hasRole } = useAuth();
   const { subscription, isLoading: subLoading } = useUserSubscription();
+  const { config } = useAppConfig();
+  
+  // Check if payments are enabled (uses AppConfig, falls back to MVP_CONFIG)
+  const paymentsEnabled = isPaymentsEnabled(config);
 
   // Determine which sections to show based on user role
   const showArtistPlans = !user || hasRole('artist') || (!hasRole('fan') && !hasRole('brand'));
@@ -219,6 +225,23 @@ const Pricing = () => {
   };
 
   const handleSubscribe = async (planKey: string, cta: string) => {
+    // MVP: Block ALL paid checkouts via single flag
+    if (!paymentsEnabled) {
+      // Only allow enterprise contact and free plan signup
+      if (planKey === 'brand_enterprise') {
+        window.location.href = 'mailto:partnerships@flymusic.se?subject=Brand%20Enterprise%20Inquiry';
+        return;
+      }
+      if (planKey.includes('free')) {
+        navigate('/auth');
+        return;
+      }
+      // Block all other checkouts
+      toast.info("Premium plans coming after MVP. All features available during trial!");
+      return;
+    }
+
+    // Post-MVP: Normal checkout flow
     // Free plans or contact sales - just navigate
     if (planKey.includes('free') || planKey === 'brand_enterprise') {
       if (planKey === 'brand_enterprise') {
@@ -290,9 +313,19 @@ const Pricing = () => {
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
             {getPageTitle()}
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
             {user ? "Choose the plan that's right for you." : "Choose the plan that's right for you. Upgrade anytime as you grow."}
           </p>
+          
+          {/* MVP Trial Banner */}
+          {!paymentsEnabled && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6 max-w-2xl mx-auto">
+              <p className="text-sm text-center">
+                <Sparkles className="inline h-4 w-4 mr-1 text-primary" />
+                <strong>MVP Mode:</strong> All premium features are available FREE during your trial period.
+              </p>
+            </div>
+          )}
           
           {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-3 sticky top-20 z-10 bg-background/80 backdrop-blur-sm py-3 md:static md:bg-transparent md:backdrop-blur-none">
@@ -332,6 +365,7 @@ const Pricing = () => {
                   currentPlan={isCurrentPlan(plan.key)}
                   icon={<Music className="h-6 w-6 text-primary" />}
                   disabled={loadingPlan === plan.key || subLoading}
+                  mvpLocked={!paymentsEnabled && !plan.key.includes('free')}
                 />
               ))}
             </div>
@@ -398,6 +432,7 @@ const Pricing = () => {
                   currentPlan={isCurrentPlan(plan.key)}
                   icon={<User className="h-6 w-6 text-primary" />}
                   disabled={loadingPlan === plan.key || subLoading}
+                  mvpLocked={!paymentsEnabled && !plan.key.includes('free')}
                 />
               ))}
             </div>
@@ -429,6 +464,7 @@ const Pricing = () => {
                   currentPlan={isCurrentPlan(plan.key)}
                   icon={<Building2 className="h-6 w-6 text-primary" />}
                   disabled={loadingPlan === plan.key || subLoading}
+                  mvpLocked={!paymentsEnabled && !plan.key.includes('free') && plan.key !== 'brand_enterprise'}
                 />
               ))}
             </div>
@@ -448,7 +484,7 @@ const Pricing = () => {
             </div>
             <div className="flex items-center gap-2">
               <RefreshCw className="h-5 w-5 text-primary" />
-              <span>14-day free trial on Pro plans</span>
+              <span>Full feature access during trial</span>
             </div>
           </div>
         </section>
