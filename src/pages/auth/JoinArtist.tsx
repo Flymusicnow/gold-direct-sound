@@ -69,38 +69,45 @@ export default function JoinArtist() {
       }
 
       if (data.user) {
-        // Assign artist role
-        await supabase.from('user_roles').insert({
-          user_id: data.user.id,
-          role: 'artist',
-        });
+        // Check if we have a session (email auto-confirmed) or need confirmation
+        if (data.session) {
+          // Session exists - user is fully authenticated
+          // Assign artist role
+          await supabase.from('user_roles').insert({
+            user_id: data.user.id,
+            role: 'artist',
+          });
 
-        // Record permanent artist beta access in DB
-        await supabase.from('artist_beta_access').insert({
-          user_id: data.user.id,
-          badge_name: localStorage.getItem('artist_invite_badge') || 'Early Creator',
-        } as any);
+          // Record permanent artist beta access in DB
+          await supabase.from('artist_beta_access').insert({
+            user_id: data.user.id,
+            badge_name: localStorage.getItem('artist_invite_badge') || 'Early Creator',
+          } as any);
 
-        // Mark invite as redeemed
-        const inviteId = localStorage.getItem('artist_invite_id');
-        if (inviteId) {
-          await supabase
-            .from('beta_invites')
-            .update({ 
-              status: 'redeemed',
-              redeemed_at: new Date().toISOString()
-            })
-            .eq('id', inviteId);
-          
-          // Clean up localStorage
-          localStorage.removeItem('artist_invite_id');
-          localStorage.removeItem('artist_invite_token');
-          localStorage.removeItem('artist_invite_expires');
-          localStorage.removeItem('artist_invite_badge');
+          // Mark invite as redeemed
+          const inviteId = localStorage.getItem('artist_invite_id');
+          if (inviteId) {
+            await supabase
+              .from('beta_invites')
+              .update({ 
+                status: 'redeemed',
+                redeemed_at: new Date().toISOString()
+              })
+              .eq('id', inviteId);
+            
+            // Clean up localStorage
+            localStorage.removeItem('artist_invite_id');
+            localStorage.removeItem('artist_invite_token');
+            localStorage.removeItem('artist_invite_expires');
+            localStorage.removeItem('artist_invite_badge');
+          }
+
+          toast.success(t('auth.signUpSuccess'));
+          navigate('/studio/onboarding');
+        } else {
+          // No session - email confirmation required
+          toast.success(t('auth.checkEmailForConfirmation'));
         }
-
-        toast.success(t('auth.signUpSuccess'));
-        navigate('/studio/onboarding');
       }
     } catch (err) {
       console.error('Sign up error:', err);

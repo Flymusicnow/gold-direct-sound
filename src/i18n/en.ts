@@ -1208,6 +1208,7 @@ export const en = {
     artistNamePlaceholder: 'Your artist or stage name',
     fanNamePlaceholder: 'Your display name',
     signUpSuccess: 'Your account has been created successfully!',
+    checkEmailForConfirmation: 'Please check your email to confirm your account before continuing.',
     emailAlreadyExists: 'This email is already registered. Please sign in instead.',
     // Password reset page (legacy)
     resetPasswordPage: {
