@@ -81,6 +81,20 @@ export const LegalAcceptanceModal = ({
     
     setSubmitting(true);
     try {
+      // Verify session is valid before attempting RLS-protected insert
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // Try to refresh the session
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session) {
+          console.error("Session not available:", refreshError);
+          toast.error(t('errors.sessionExpired') || "Session expired. Please sign in again.");
+          return;
+        }
+      }
+
       // Get client IP for audit trail
       const ipAddress = await getClientIp();
 
