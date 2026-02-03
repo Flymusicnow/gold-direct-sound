@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_levels: {
+        Row: {
+          code: string
+          level: number
+          user_type: string
+        }
+        Insert: {
+          code: string
+          level: number
+          user_type: string
+        }
+        Update: {
+          code?: string
+          level?: number
+          user_type?: string
+        }
+        Relationships: []
+      }
       admin_activity_logs: {
         Row: {
           action: string
@@ -2803,6 +2821,48 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          feature_key: string
+          feature_name: string
+          id: string
+          is_active: boolean
+          mvp_available: boolean
+          required_level: number
+          sort_order: number
+          updated_at: string
+          user_type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          feature_key: string
+          feature_name: string
+          id?: string
+          is_active?: boolean
+          mvp_available?: boolean
+          required_level: number
+          sort_order?: number
+          updated_at?: string
+          user_type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          is_active?: boolean
+          mvp_available?: boolean
+          required_level?: number
+          sort_order?: number
+          updated_at?: string
+          user_type?: string
+        }
+        Relationships: []
+      }
       follows: {
         Row: {
           artist_id: string
@@ -3667,6 +3727,30 @@ export type Database = {
           },
         ]
       }
+      platform_config: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       platform_updates: {
         Row: {
           activation_log: Json | null
@@ -3958,7 +4042,9 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_monthly: number | null
+          price_monthly_ore: number | null
           price_yearly: number | null
+          price_yearly_ore: number | null
           sort_order: number | null
           stripe_price_id_monthly: string | null
           stripe_price_id_yearly: string | null
@@ -3975,7 +4061,9 @@ export type Database = {
           plan_key: string
           plan_name: string
           price_monthly?: number | null
+          price_monthly_ore?: number | null
           price_yearly?: number | null
+          price_yearly_ore?: number | null
           sort_order?: number | null
           stripe_price_id_monthly?: string | null
           stripe_price_id_yearly?: string | null
@@ -3992,7 +4080,9 @@ export type Database = {
           plan_key?: string
           plan_name?: string
           price_monthly?: number | null
+          price_monthly_ore?: number | null
           price_yearly?: number | null
+          price_yearly_ore?: number | null
           sort_order?: number | null
           stripe_price_id_monthly?: string | null
           stripe_price_id_yearly?: string | null
@@ -5698,6 +5788,51 @@ export type Database = {
           },
         ]
       }
+      user_trials: {
+        Row: {
+          converted_to_plan: string | null
+          created_at: string
+          ends_at: string
+          id: string
+          level_scope: number
+          metadata: Json
+          started_at: string
+          status: string
+          trial_length_days: number
+          trial_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          converted_to_plan?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          level_scope?: number
+          metadata?: Json
+          started_at?: string
+          status?: string
+          trial_length_days?: number
+          trial_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          converted_to_plan?: string | null
+          created_at?: string
+          ends_at?: string
+          id?: string
+          level_scope?: number
+          metadata?: Json
+          started_at?: string
+          status?: string
+          trial_length_days?: number
+          trial_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_collection_items: {
         Row: {
           added_at: string | null
@@ -6142,6 +6277,7 @@ export type Database = {
           trending_score: number
         }[]
       }
+      get_trial_status: { Args: { _user_id: string }; Returns: Json }
       get_user_plan: {
         Args: { _user_id: string; _user_type?: string }
         Returns: string
@@ -6186,6 +6322,7 @@ export type Database = {
         Args: { _code: string; _user_id: string }
         Returns: Json
       }
+      resolve_user_permissions: { Args: { _user_id: string }; Returns: Json }
       send_admin_notification: {
         Args: {
           p_link?: string
