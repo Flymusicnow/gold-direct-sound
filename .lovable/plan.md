@@ -1,98 +1,97 @@
 
-# Fix: Legal Acceptance RLS Error
 
-## Problem
+# Fix: Handle Email Confirmation Required in Signup Flow
 
-The error "Failed to record acceptance. Please try again." occurs because `auth.uid()` is NULL when the insert is attempted. This is a race condition where:
+## Root Cause
 
-1. User signs up in `JoinArtist.tsx`
-2. Code immediately navigates to `/studio/onboarding`
-3. Legal modal opens and user accepts terms
-4. Insert fails because Supabase session isn't fully synchronized yet
+In `JoinArtist.tsx` line 71, the code checks `if (data.user)` after signup. However:
 
-The RLS policy `with_check: (auth.uid() = user_id)` correctly rejects the insert when `auth.uid()` is NULL.
+- When email confirmation is **enabled**: `signUp` returns `{ user: {...}, session: null }`
+- When email confirmation is **disabled**: `signUp` returns `{ user: {...}, session: {...} }`
+
+The code navigates to `/studio/onboarding` regardless, but without a session, all RLS-protected operations fail.
 
 ---
 
 ## Solution
 
-Add session verification in `LegalAcceptanceModal.tsx` before attempting the insert. If the session is invalid, refresh it and retry.
+Check for `data.session` instead of `data.user` to determine the correct flow:
+
+1. **If session exists** → Navigate to onboarding (email auto-confirmed)
+2. **If no session** → Show "check your email" message and stay on page
 
 ---
 
 ## Changes
 
-### File: `src/components/legal/LegalAcceptanceModal.tsx`
+### File: `src/pages/auth/JoinArtist.tsx`
 
-**Modify `handleAccept` function (lines 79-106):**
+**Modify handleSignUp (lines 71-104):**
 
 ```typescript
-const handleAccept = async () => {
-  if (!user || !accepted) return;
-  
-  setSubmitting(true);
-  try {
-    // Verify session is valid before attempting RLS-protected insert
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
-      // Try to refresh the session
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      
-      if (refreshError || !refreshData.session) {
-        console.error("Session not available:", refreshError);
-        toast.error(t('errors.sessionExpired') || "Session expired. Please sign in again.");
-        return;
-      }
-    }
-
-    // Get client IP for audit trail
-    const ipAddress = await getClientIp();
-
-    const { error } = await supabase.from("legal_acceptances").insert({
-      user_id: user.id,
-      document_type: documentType,
-      document_version: currentVersion,
-      user_agent: navigator.userAgent,
-      ip_address: ipAddress,
-      accepted_language: language
+if (data.user) {
+  // Check if we have a session (email auto-confirmed) or need confirmation
+  if (data.session) {
+    // Session exists - user is fully authenticated
+    // Assign artist role
+    await supabase.from('user_roles').insert({
+      user_id: data.user.id,
+      role: 'artist',
     });
 
-    if (error) throw error;
-    
-    toast.success(t('legal.accepted') || `${title} accepted`);
-    onAccept();
-  } catch (err) {
-    console.error("Failed to record acceptance:", err);
-    toast.error(t('legal.acceptFailed') || "Failed to record acceptance. Please try again.");
-  } finally {
-    setSubmitting(false);
+    // Record permanent artist beta access in DB
+    await supabase.from('artist_beta_access').insert({
+      user_id: data.user.id,
+      badge_name: localStorage.getItem('artist_invite_badge') || 'Early Creator',
+    } as any);
+
+    // Mark invite as redeemed
+    const inviteId = localStorage.getItem('artist_invite_id');
+    if (inviteId) {
+      await supabase
+        .from('beta_invites')
+        .update({ 
+          status: 'redeemed',
+          redeemed_at: new Date().toISOString()
+        })
+        .eq('id', inviteId);
+      
+      // Clean up localStorage
+      localStorage.removeItem('artist_invite_id');
+      localStorage.removeItem('artist_invite_token');
+      localStorage.removeItem('artist_invite_expires');
+      localStorage.removeItem('artist_invite_badge');
+    }
+
+    toast.success(t('auth.signUpSuccess'));
+    navigate('/studio/onboarding');
+  } else {
+    // No session - email confirmation required
+    toast.success(t('auth.checkEmailForConfirmation') || 'Please check your email to confirm your account.');
+    // Don't navigate - user needs to confirm email first
   }
-};
+}
 ```
 
----
+### File: `src/i18n/sv.ts` and `src/i18n/en.ts`
 
-## Why This Works
+Add missing translation key in `auth` namespace:
 
-1. **Session Check**: Before any RLS-protected operation, we verify the session exists
-2. **Auto-Refresh**: If session is missing/expired, we attempt a refresh
-3. **Clear Feedback**: If session can't be restored, user gets a clear error message
-4. **No Race Condition**: The insert only proceeds when we have a valid session
-
----
-
-## Alternative Consideration
-
-We could also add a small delay in `JoinArtist.tsx` after signup before navigating:
-
+**Swedish:**
 ```typescript
-// After signup success
-await new Promise(resolve => setTimeout(resolve, 500));
-navigate('/studio/onboarding');
+checkEmailForConfirmation: 'Kontrollera din e-post för att bekräfta ditt konto innan du fortsätter.',
 ```
 
-However, the session verification approach is more robust and handles all edge cases (expired tokens, network issues, etc.).
+**English:**
+```typescript
+checkEmailForConfirmation: 'Please check your email to confirm your account before continuing.',
+```
+
+---
+
+## Alternative: Enable Auto-Confirm
+
+If the project intends for users to skip email confirmation, you could enable auto-confirm in auth settings. However, this is less secure and should only be done if intentional.
 
 ---
 
@@ -100,13 +99,16 @@ However, the session verification approach is more robust and handles all edge c
 
 | File | Action |
 |------|--------|
-| `src/components/legal/LegalAcceptanceModal.tsx` | Add session verification before insert |
+| `src/pages/auth/JoinArtist.tsx` | Check `data.session` before navigating |
+| `src/i18n/sv.ts` | Add `checkEmailForConfirmation` key |
+| `src/i18n/en.ts` | Add `checkEmailForConfirmation` key |
 
 ---
 
 ## Acceptance Criteria
 
-- Legal acceptance succeeds after signup flow
-- No "Failed to record acceptance" errors when session is valid
-- Clear error message if session truly cannot be restored
-- Existing logged-in users unaffected
+- Users without confirmed email see "check your email" message
+- Users with confirmed email (or auto-confirm enabled) navigate to onboarding
+- No more "session expired" errors during signup flow
+- Legal acceptance works after email confirmation
+
