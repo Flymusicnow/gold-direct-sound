@@ -14,7 +14,7 @@ const DISMISS_KEY = 'flymusic_trial_banner_dismissed';
 
 export const TrialBanner = ({ className }: TrialBannerProps) => {
   const navigate = useNavigate();
-  const { trialStatus, isLoading, isTrialActive, isTrialExpired, isCheckingTrial } = useTrialStatus();
+  const { trialStatus, isLoading, isTrialActive, isTrialExpired, isCheckingTrial, daysLeft } = useTrialStatus();
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Check if dismissed this session
@@ -36,10 +36,9 @@ export const TrialBanner = ({ className }: TrialBannerProps) => {
   // Don't show if dismissed
   if (isDismissed) return null;
   
-  // Don't show if no trial
-  if (trialStatus.trial_state === 'none') return null;
+  // Don't show if no trial (using new nested structure)
+  if (trialStatus.trial?.state === 'none') return null;
 
-  const daysLeft = trialStatus.trial_days_left;
   const isLowDays = daysLeft !== null && daysLeft <= 3;
 
   // Determine display text based on state

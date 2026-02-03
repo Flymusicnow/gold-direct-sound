@@ -6,9 +6,10 @@ import { TrialStatus, DEFAULT_TRIAL_STATUS } from '@/types/trial';
  * Hook for fetching trial status from GET /trial/status endpoint.
  * 
  * Returns server-calculated trial state:
- * - trial_days_left (backend-calculated ONLY)
- * - trial_state (active/expired/none/loading)
+ * - trial.days_left (backend-calculated ONLY)
+ * - trial.state (active/expired/none)
  * - trial dates (started_at, ends_at)
+ * - trial.type and trial.level_scope (scope-aware)
  * 
  * Frontend NEVER calculates trial logic independently.
  */
@@ -40,16 +41,16 @@ export const useTrialStatus = () => {
     fetchTrialStatus();
   }, [fetchTrialStatus]);
 
-  // Derived state helpers
-  const isTrialActive = trialStatus.trial_state === 'active';
-  const isTrialExpired = trialStatus.trial_state === 'expired';
-  const hasNoTrial = trialStatus.trial_state === 'none';
+  // Derived state helpers using new nested structure
+  const isTrialActive = trialStatus.trial?.state === 'active';
+  const isTrialExpired = trialStatus.trial?.state === 'expired';
+  const hasNoTrial = trialStatus.trial?.state === 'none';
   
-  // True when we can't show a definitive state
-  // (loading, or days_left is null even though state might be 'active')
-  const isCheckingTrial = 
-    trialStatus.trial_state === 'loading' || 
-    (trialStatus.trial_state === 'active' && trialStatus.trial_days_left === null);
+  // True when we're loading or can't show a definitive state
+  const isCheckingTrial = isLoading;
+
+  // Get days left (null-safe)
+  const daysLeft = trialStatus.trial?.days_left ?? null;
 
   return {
     trialStatus,
@@ -58,6 +59,7 @@ export const useTrialStatus = () => {
     isTrialExpired,
     hasNoTrial,
     isCheckingTrial,
+    daysLeft,
     refetch: fetchTrialStatus,
   };
 };

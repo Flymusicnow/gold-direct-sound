@@ -9,8 +9,13 @@ const corsHeaders = {
 /**
  * GET /me - Current user endpoint
  * 
- * Returns user profile with resolved per-feature permissions.
- * Permissions are boolean - UI renders based on these, no level comparisons.
+ * Returns user profile with:
+ * - role, effective_level
+ * - permissions (boolean map from resolve_user_permissions RPC)
+ * - trial object with type, level_scope, days_left
+ * - mvp_mode config
+ * 
+ * Frontend uses ONLY permissions[feature_key] for access checks.
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -44,14 +49,14 @@ serve(async (req) => {
 
     const user = userData.user;
 
-    // Fetch profile
+    // Fetch profile for basic info
     const { data: profile } = await supabaseClient
       .from('profiles')
-      .select('*')
+      .select('full_name, role')
       .eq('id', user.id)
       .single();
 
-    // Fetch roles
+    // Fetch roles from user_roles table
     const { data: rolesData } = await supabaseClient
       .from('user_roles')
       .select('role')
@@ -59,46 +64,37 @@ serve(async (req) => {
     
     const roles = rolesData?.map(r => r.role) ?? [];
 
-    // STUB: Resolved permissions - MVP gives trial access to all features
-    // TODO: Calculate based on subscription status, trial state, role
-    const permissions: Record<string, boolean> = {
-      // Artist features
-      basic_profile: true,
-      limited_uploads: true,
-      full_analytics: true,      // MVP: trial access
-      community_tools: true,     // MVP: trial access
-      campaign_insights: true,   // MVP: trial access
-      extended_uploads: true,    // MVP: trial access
-      advanced_analytics: true,  // MVP: trial access
-      fan_segmentation: true,    // MVP: trial access
-      campaign_builder: true,    // MVP: trial access
-      // Fan features
-      follow_artists: true,
-      basic_vote: true,
-      leaderboard: true,
-      highlight_votes: true,     // MVP: trial access
-      extra_votes: true,         // MVP: trial access
-      vip_vote: true,            // MVP: trial access
-      collectibles: true,        // MVP: trial access
-    };
+    // Call resolve_user_permissions RPC - this is the single source of truth
+    const { data: permData, error: permError } = await supabaseClient
+      .rpc('resolve_user_permissions', { _user_id: user.id });
 
-    // STUB: Labels for features (optional, for UI display)
-    const labels: Record<string, string> = {
-      advanced_analytics: "Included in trial (MVP)",
-      fan_segmentation: "Included in trial (MVP)",
-      campaign_builder: "Included in trial (MVP)",
-      highlight_votes: "Included in trial (MVP)",
-      vip_vote: "Included in trial (MVP)",
-    };
+    if (permError) {
+      console.error("Error calling resolve_user_permissions:", permError);
+    }
 
+    // Build canonical response
     const response = {
       id: user.id,
       email: user.email,
       full_name: profile?.full_name ?? null,
-      role: profile?.role ?? 'fan',
+      role: permData?.role ?? profile?.role ?? 'fan',
       roles,
-      permissions,
-      labels,
+      // Backend-resolved permissions - frontend uses ONLY this
+      permissions: permData?.permissions ?? {},
+      // Numeric effective level for display purposes only
+      effective_level: permData?.effective_level ?? 0,
+      // Scope-aware trial object
+      trial: permData?.trial ?? {
+        active: false,
+        type: null,
+        level_scope: null,
+        started_at: null,
+        ends_at: null,
+        days_left: null,
+        state: 'none'
+      },
+      // MVP mode config
+      mvp_mode: permData?.mvp_mode ?? { enabled: true, grants: ['artist_trial', 'fan_supporter'] },
     };
 
     return new Response(JSON.stringify(response), {
@@ -107,6 +103,7 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("get-me error:", errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,

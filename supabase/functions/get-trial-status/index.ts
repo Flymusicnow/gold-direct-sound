@@ -9,8 +9,13 @@ const corsHeaders = {
 /**
  * GET /trial/status - Trial status endpoint
  * 
- * Returns server-calculated trial state for current user.
- * Currently returns static JSON; will query user_trials table.
+ * Returns scope-aware trial status from get_trial_status RPC:
+ * - trial_enabled: boolean
+ * - trial.active: boolean
+ * - trial.type: string (e.g., 'platform', 'artist_trial')
+ * - trial.level_scope: number (10, 20, 30)
+ * - trial.days_left: number (server-calculated)
+ * - trial.state: 'active' | 'expired' | 'converted' | 'none'
  */
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -23,18 +28,24 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // Default response for unauthenticated users
+  const defaultResponse = {
+    trial_enabled: true,
+    trial: {
+      active: false,
+      type: null,
+      level_scope: null,
+      started_at: null,
+      ends_at: null,
+      days_left: null,
+      state: 'none'
+    }
+  };
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      // Unauthenticated: return default state
-      return new Response(JSON.stringify({
-        trial_enabled: true,
-        trial_length_days: null,
-        trial_started_at: null,
-        trial_ends_at: null,
-        trial_days_left: null,
-        trial_state: "none",
-      }), {
+      return new Response(JSON.stringify(defaultResponse), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -44,40 +55,31 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
     
     if (userError || !userData.user) {
-      return new Response(JSON.stringify({
-        trial_enabled: true,
-        trial_length_days: null,
-        trial_started_at: null,
-        trial_ends_at: null,
-        trial_days_left: null,
-        trial_state: "none",
-      }), {
+      return new Response(JSON.stringify(defaultResponse), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
 
-    // STUB: Static trial status for MVP
-    // TODO: Query user_trials table and calculate server-side
-    const now = new Date();
-    const trialStarted = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-    const trialEnds = new Date(now.getTime() + 11 * 24 * 60 * 60 * 1000);
-    
-    const trialStatus = {
-      trial_enabled: true,
-      trial_length_days: 14,
-      trial_started_at: trialStarted.toISOString(),
-      trial_ends_at: trialEnds.toISOString(),
-      trial_days_left: 11, // Server-calculated
-      trial_state: "active" as const,
-    };
+    // Call get_trial_status RPC - single source of truth
+    const { data: trialData, error: trialError } = await supabaseClient
+      .rpc('get_trial_status', { _user_id: userData.user.id });
 
-    return new Response(JSON.stringify(trialStatus), {
+    if (trialError) {
+      console.error("Error calling get_trial_status:", trialError);
+      return new Response(JSON.stringify(defaultResponse), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    return new Response(JSON.stringify(trialData ?? defaultResponse), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("get-trial-status error:", errorMessage);
     return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
