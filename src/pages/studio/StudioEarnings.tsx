@@ -181,11 +181,11 @@ export default function StudioEarnings() {
                     forRole="artist"
                   />
                 </div>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• {t('studio.payoutBullet1')}</li>
-                  <li>• {t('studio.payoutBullet2')}</li>
-                  <li>• {t('studio.payoutBullet3')}</li>
-                  <li>• {t('studio.payoutBullet4')}</li>
+                <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+                  <li>{t('studio.payoutBullet1')}</li>
+                  <li>{t('studio.payoutBullet2')}</li>
+                  <li>{t('studio.payoutBullet3')}</li>
+                  <li>{t('studio.payoutBullet4')}</li>
                 </ul>
               </CardContent>
         </Card>
