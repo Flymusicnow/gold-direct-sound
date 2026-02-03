@@ -1177,6 +1177,7 @@ export const sv = {
     artistNamePlaceholder: 'Ditt artist- eller scennamn',
     fanNamePlaceholder: 'Ditt visningsnamn',
     signUpSuccess: 'Ditt konto har skapats!',
+    checkEmailForConfirmation: 'Kontrollera din e-post för att bekräfta ditt konto innan du fortsätter.',
     emailAlreadyExists: 'Denna e-post är redan registrerad. Logga in istället.',
     // Password reset page (legacy)
     resetPasswordPage: {
