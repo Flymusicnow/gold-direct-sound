@@ -88,11 +88,11 @@ export const TrialBanner = ({ className }: TrialBannerProps) => {
               {getDisplayText()}
             </span>
             <Badge variant="secondary" className="text-xs">
-              Available during trial
+              Trial access
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            All premium features are unlocked during your trial period.
+            Explore select features included in your trial.
           </p>
         </div>
       </div>
