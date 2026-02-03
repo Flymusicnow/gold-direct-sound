@@ -1,369 +1,365 @@
 
-# Backend Endpoint Stubs Implementation
-## Preparing for Real DB/RPC Integration
-
----
+# FlyMusic V2 Canon Alignment — Full Implementation Plan
 
 ## Overview
 
-Create three backend functions with static JSON responses that match the agreed contracts. Frontend hooks will be updated to call these endpoints (with fallback to current mocks during transition).
+This plan implements all required changes to align FlyMusic with V2 Canon. All violations identified in the audit will be fixed. The system will match the locked state exactly.
 
 ---
 
-## Phase 1: Create Edge Functions
+## Phase 1: Database Schema (4 Migrations)
 
-### 1.1 Create `supabase/functions/get-config/index.ts`
+### 1.1 Create `platform_config` Table
 
-Returns app configuration - trial policy, payments, limits, feature unlocks.
+Creates the centralized configuration table with canonical MVP defaults.
 
-```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+```sql
+CREATE TABLE IF NOT EXISTS public.platform_config (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_by UUID REFERENCES auth.users(id)
+);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-/**
- * GET /config - App configuration endpoint
- * 
- * Returns platform-wide configuration.
- * Currently returns static JSON; will be wired to DB/RPC.
- */
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  // STUB: Static config - will be replaced with DB queries
-  const config = {
-    mvp_mode: true,
-    payments_enabled: false,
-    trial: {
-      trial_enabled: true,
-      allowed_lengths_days: [7, 14, 30],
-      default_length_days: 14,
-    },
-    limits: {
-      // No hard numbers - null means unlimited or config-driven
-      free_track_uploads: null,
-      trial_track_uploads: null,
-      pro_track_uploads: null,
-    },
-    subscription_products: [
-      {
-        key: "artist_pro",
-        name: "Artist Pro",
-        price_ore: 9900,
-        billing_period: "month",
-        features: ["Advanced analytics", "Fan segmentation", "Campaign builder"],
-        active: false,
-      },
-      {
-        key: "artist_elite",
-        name: "Artist Elite",
-        price_ore: 24900,
-        billing_period: "month",
-        features: ["Everything in Pro", "Priority support", "Custom branding"],
-        active: false,
-      },
-      {
-        key: "fan_supporter",
-        name: "Fan Supporter",
-        price_ore: 5900,
-        billing_period: "month",
-        features: ["Additional votes", "Highlight votes"],
-        active: false,
-      },
-    ],
-    feature_unlocks: [
-      // Artist features
-      { feature_key: "basic_profile", required_level: "artist_free", mvp_available: true },
-      { feature_key: "limited_uploads", required_level: "artist_free", mvp_available: true },
-      { feature_key: "full_analytics", required_level: "artist_trial", mvp_available: true },
-      { feature_key: "community_tools", required_level: "artist_trial", mvp_available: true },
-      { feature_key: "advanced_analytics", required_level: "artist_pro", mvp_available: true, post_mvp_label: "Pricing finalized post-MVP" },
-      { feature_key: "fan_segmentation", required_level: "artist_pro", mvp_available: true, post_mvp_label: "Pricing finalized post-MVP" },
-      // Fan features
-      { feature_key: "follow_artists", required_level: "fan_free", mvp_available: true },
-      { feature_key: "basic_vote", required_level: "fan_free", mvp_available: true },
-      { feature_key: "highlight_votes", required_level: "fan_supporter", mvp_available: true, post_mvp_label: "Pricing finalized post-MVP" },
-      { feature_key: "vip_vote", required_level: "fan_superfan", mvp_available: true, post_mvp_label: "Pricing finalized post-MVP" },
-    ],
-  };
-
-  return new Response(JSON.stringify(config), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-    status: 200,
-  });
-});
+-- Seed canonical defaults
+INSERT INTO public.platform_config (key, value, description) VALUES
+  ('mvp_mode', jsonb_build_object('enabled', true, 'grants', jsonb_build_array('artist_trial', 'fan_supporter')), 'MVP mode flag with restricted preview grants'),
+  ('payments_enabled', 'false'::jsonb, 'Payment processing enabled (must be explicitly turned on)'),
+  ('trial_policy', jsonb_build_object('enabled', true, 'allowed_lengths_days', jsonb_build_array(7, 14, 30), 'default_length_days', 14), 'Trial configuration')
+ON CONFLICT (key) DO NOTHING;
 ```
 
-### 1.2 Create `supabase/functions/get-trial-status/index.ts`
+### 1.2 Create `access_levels` Table (Numeric Canon)
 
-Returns server-calculated trial status for authenticated user.
+Establishes the numeric level system: 0, 10, 20, 30.
 
-```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+```sql
+CREATE TABLE IF NOT EXISTS public.access_levels (
+  code TEXT PRIMARY KEY,
+  user_type TEXT NOT NULL,
+  level INTEGER NOT NULL
+);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-/**
- * GET /trial/status - Trial status endpoint
- * 
- * Returns server-calculated trial state for current user.
- * Currently returns static JSON; will query user_trials table.
- */
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
-
-  try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      // Unauthenticated: return default state
-      return new Response(JSON.stringify({
-        trial_enabled: true,
-        trial_length_days: null,
-        trial_started_at: null,
-        trial_ends_at: null,
-        trial_days_left: null,
-        trial_state: "none",
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !userData.user) {
-      return new Response(JSON.stringify({
-        trial_enabled: true,
-        trial_length_days: null,
-        trial_started_at: null,
-        trial_ends_at: null,
-        trial_days_left: null,
-        trial_state: "none",
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // STUB: Static trial status for MVP
-    // TODO: Query user_trials table and calculate server-side
-    const now = new Date();
-    const trialStarted = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-    const trialEnds = new Date(now.getTime() + 11 * 24 * 60 * 60 * 1000);
-    
-    const trialStatus = {
-      trial_enabled: true,
-      trial_length_days: 14,
-      trial_started_at: trialStarted.toISOString(),
-      trial_ends_at: trialEnds.toISOString(),
-      trial_days_left: 11, // Server-calculated
-      trial_state: "active" as const,
-    };
-
-    return new Response(JSON.stringify(trialStatus), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
-});
+INSERT INTO public.access_levels (code, user_type, level) VALUES
+  ('artist_free', 'artist', 0),
+  ('artist_trial', 'artist', 10),
+  ('artist_pro', 'artist', 20),
+  ('artist_elite', 'artist', 30),
+  ('fan_free', 'fan', 0),
+  ('fan_trial', 'fan', 10),
+  ('fan_supporter', 'fan', 20),
+  ('fan_superfan', 'fan', 30)
+ON CONFLICT (code) DO NOTHING;
 ```
 
-### 1.3 Create `supabase/functions/get-me/index.ts`
+### 1.3 Create `feature_permissions` Table (Numeric Required Level)
 
-Returns user profile with resolved per-feature permissions.
+Feature access rules with numeric levels, not strings.
 
-```typescript
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+```sql
+CREATE TABLE IF NOT EXISTS public.feature_permissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  feature_key TEXT NOT NULL UNIQUE,
+  feature_name TEXT NOT NULL,
+  description TEXT,
+  user_type TEXT NOT NULL,
+  required_level INTEGER NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  mvp_available BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+-- Seed canonical permissions
+INSERT INTO public.feature_permissions 
+  (feature_key, feature_name, user_type, required_level, sort_order, mvp_available)
+VALUES
+  ('basic_profile', 'Basic Profile', 'artist', 0, 10, true),
+  ('limited_uploads', 'Limited Uploads', 'artist', 0, 20, true),
+  ('full_analytics', 'Full Analytics', 'artist', 10, 30, true),
+  ('community_tools', 'Community Tools', 'artist', 10, 40, true),
+  ('advanced_analytics', 'Advanced Analytics', 'artist', 20, 50, true),
+  ('fan_segmentation', 'Fan Segmentation', 'artist', 20, 60, true),
+  ('campaign_builder', 'Campaign Builder', 'artist', 20, 70, true),
+  ('follow_artists', 'Follow Artists', 'fan', 0, 10, true),
+  ('basic_vote', 'Basic Voting', 'fan', 0, 20, true),
+  ('highlight_votes', 'Highlight Votes', 'fan', 20, 30, true),
+  ('vip_vote', 'VIP Votes', 'fan', 30, 40, true)
+ON CONFLICT (feature_key) DO NOTHING;
+```
 
-/**
- * GET /me - Current user endpoint
- * 
- * Returns user profile with resolved per-feature permissions.
- * Permissions are boolean - UI renders based on these, no level comparisons.
- */
-serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+### 1.4 Create `user_trials` Table (Scope-Aware)
 
-  const supabaseClient = createClient(
-    Deno.env.get("SUPABASE_URL") ?? "",
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-    { auth: { persistSession: false } }
-  );
+Trial system with type and level_scope fields.
 
-  try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
+```sql
+CREATE TABLE IF NOT EXISTS public.user_trials (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  trial_type TEXT NOT NULL DEFAULT 'platform',
+  level_scope INTEGER NOT NULL DEFAULT 10,
+  trial_length_days INTEGER NOT NULL DEFAULT 14,
+  started_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  ends_at TIMESTAMPTZ NOT NULL,
+  status TEXT NOT NULL DEFAULT 'active',
+  converted_to_plan TEXT,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(user_id, trial_type)
+);
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    
-    if (userError || !userData.user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
+-- Auto-calculate ends_at trigger
+CREATE OR REPLACE FUNCTION public.set_trial_end_date()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.ends_at := NEW.started_at + (NEW.trial_length_days || ' days')::INTERVAL;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-    const user = userData.user;
+DROP TRIGGER IF EXISTS user_trials_set_end_date ON public.user_trials;
+CREATE TRIGGER user_trials_set_end_date
+BEFORE INSERT ON public.user_trials
+FOR EACH ROW EXECUTE FUNCTION public.set_trial_end_date();
+```
 
-    // Fetch profile
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
+### 1.5 Migrate `premium_plans` to öre + Fix Fan Supporter Price
 
-    // Fetch roles
-    const { data: rolesData } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id);
-    
-    const roles = rolesData?.map(r => r.role) ?? [];
+```sql
+ALTER TABLE public.premium_plans
+  ADD COLUMN IF NOT EXISTS price_monthly_ore INTEGER,
+  ADD COLUMN IF NOT EXISTS price_yearly_ore INTEGER;
 
-    // STUB: Resolved permissions - MVP gives trial access to all features
-    // TODO: Calculate based on subscription status, trial state, role
-    const permissions: Record<string, boolean> = {
-      // Artist features
-      basic_profile: true,
-      limited_uploads: true,
-      full_analytics: true,      // MVP: trial access
-      community_tools: true,     // MVP: trial access
-      campaign_insights: true,   // MVP: trial access
-      extended_uploads: true,    // MVP: trial access
-      advanced_analytics: true,  // MVP: trial access
-      fan_segmentation: true,    // MVP: trial access
-      campaign_builder: true,    // MVP: trial access
-      // Fan features
-      follow_artists: true,
-      basic_vote: true,
-      leaderboard: true,
-      highlight_votes: true,     // MVP: trial access
-      extra_votes: true,         // MVP: trial access
-      vip_vote: true,            // MVP: trial access
-      collectibles: true,        // MVP: trial access
-    };
+UPDATE public.premium_plans
+SET
+  price_monthly_ore = COALESCE(price_monthly_ore, COALESCE(price_monthly, 0) * 100),
+  price_yearly_ore = COALESCE(price_yearly_ore, COALESCE(price_yearly, 0) * 100);
 
-    // STUB: Labels for features (optional, for UI display)
-    const labels: Record<string, string> = {
-      advanced_analytics: "Included in trial (MVP)",
-      fan_segmentation: "Included in trial (MVP)",
-      campaign_builder: "Included in trial (MVP)",
-      highlight_votes: "Included in trial (MVP)",
-      vip_vote: "Included in trial (MVP)",
-    };
-
-    const response = {
-      id: user.id,
-      email: user.email,
-      full_name: profile?.full_name ?? null,
-      role: profile?.role ?? 'fan',
-      roles,
-      permissions,
-      labels,
-    };
-
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
-});
+-- Canon pricing: fan_supporter = 39 SEK = 3900 öre
+UPDATE public.premium_plans
+SET price_monthly_ore = 3900
+WHERE plan_key = 'fan_supporter';
 ```
 
 ---
 
-## Phase 2: Update Frontend Types
+## Phase 2: Database Functions (RPCs)
 
-### 2.1 Update `src/types/trial.ts`
+### 2.1 Create `get_trial_status` RPC
 
-Expand AppConfig to match new /config contract:
+Returns scope-aware trial object with `type` and `level_scope`.
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_trial_status(_user_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _trial RECORD;
+  _trial_policy JSONB;
+  _days_left INT;
+BEGIN
+  SELECT value INTO _trial_policy FROM public.platform_config WHERE key = 'trial_policy';
+
+  SELECT * INTO _trial
+  FROM public.user_trials
+  WHERE user_id = _user_id AND status = 'active'
+  ORDER BY created_at DESC LIMIT 1;
+
+  IF _trial IS NULL THEN
+    RETURN jsonb_build_object(
+      'trial_enabled', COALESCE((_trial_policy->>'enabled')::BOOLEAN, true),
+      'trial', jsonb_build_object(
+        'active', false, 'type', NULL, 'level_scope', NULL,
+        'started_at', NULL, 'ends_at', NULL, 'days_left', NULL, 'state', 'none'
+      )
+    );
+  END IF;
+
+  _days_left := GREATEST(0, EXTRACT(DAY FROM (_trial.ends_at - now()))::INT);
+
+  RETURN jsonb_build_object(
+    'trial_enabled', true,
+    'trial', jsonb_build_object(
+      'active', (_trial.ends_at > now() AND _trial.status = 'active'),
+      'type', _trial.trial_type,
+      'level_scope', _trial.level_scope,
+      'started_at', _trial.started_at,
+      'ends_at', _trial.ends_at,
+      'days_left', _days_left,
+      'state', CASE
+        WHEN _trial.status = 'active' AND _trial.ends_at > now() THEN 'active'
+        WHEN _trial.status = 'converted' THEN 'converted'
+        ELSE 'expired'
+      END
+    )
+  );
+END;
+$$;
+```
+
+### 2.2 Create `resolve_user_permissions` RPC
+
+Numeric permission resolution with restricted MVP grants.
+
+```sql
+CREATE OR REPLACE FUNCTION public.resolve_user_permissions(_user_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  _mvp JSONB;
+  _mvp_enabled BOOLEAN := true;
+  _mvp_grants JSONB := '[]'::JSONB;
+  _role TEXT := 'fan';
+  _user_level INT := 0;
+  _trial JSONB;
+  _trial_active BOOLEAN := false;
+  _trial_level INT := 0;
+  _permissions JSONB := '{}'::JSONB;
+  _perm RECORD;
+BEGIN
+  -- MVP mode config
+  SELECT value INTO _mvp FROM public.platform_config WHERE key = 'mvp_mode';
+  _mvp_enabled := COALESCE((_mvp->>'enabled')::BOOLEAN, true);
+  _mvp_grants := COALESCE((_mvp->'grants'), '[]'::JSONB);
+
+  -- Get user role
+  SELECT COALESCE(p.role, 'fan') INTO _role FROM public.profiles p WHERE p.id = _user_id;
+
+  -- Get trial status
+  SELECT public.get_trial_status(_user_id) INTO _trial;
+  _trial_active := COALESCE((_trial#>>'{trial,active}')::BOOLEAN, false);
+  _trial_level := COALESCE((_trial#>>'{trial,level_scope}')::INT, 0);
+
+  -- Baseline = free (0)
+  _user_level := 0;
+
+  -- Apply RESTRICTED MVP grants
+  IF _mvp_enabled THEN
+    IF _role = 'artist' AND (_mvp_grants ? 'artist_trial') THEN
+      _user_level := GREATEST(_user_level, 10);
+    END IF;
+    IF _role = 'fan' AND (_mvp_grants ? 'fan_supporter') THEN
+      _user_level := GREATEST(_user_level, 20);
+    END IF;
+  END IF;
+
+  -- Apply trial scope
+  IF _trial_active THEN
+    _user_level := GREATEST(_user_level, _trial_level);
+  END IF;
+
+  -- Compute permissions numerically
+  FOR _perm IN
+    SELECT feature_key, required_level
+    FROM public.feature_permissions
+    WHERE is_active = true AND (user_type = _role OR user_type = 'all')
+    ORDER BY sort_order
+  LOOP
+    _permissions := _permissions || jsonb_build_object(
+      _perm.feature_key,
+      (_user_level >= _perm.required_level)
+    );
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'role', _role,
+    'effective_level', _user_level,
+    'trial', _trial->'trial',
+    'mvp_mode', jsonb_build_object('enabled', _mvp_enabled, 'grants', _mvp_grants),
+    'permissions', _permissions
+  );
+END;
+$$;
+```
+
+---
+
+## Phase 3: Edge Functions (Wire to DB)
+
+### 3.1 Update `get-config/index.ts`
+
+Replace static JSON with DB queries. Return `required_level` as INTEGER.
+
+**Key changes:**
+- Query `platform_config` for mvp_mode, payments_enabled, trial_policy
+- Query `premium_plans` for subscription products with `price_monthly_ore`
+- Query `feature_permissions` for feature unlocks with numeric `required_level`
+
+### 3.2 Update `get-me/index.ts`
+
+Replace static permissions with RPC call.
+
+**Key changes:**
+- Call `resolve_user_permissions(_user_id)` RPC
+- Return `effective_level`, `trial` object, `mvp_mode`, `permissions`
+- Remove hardcoded permission stub
+
+### 3.3 Update `get-trial-status/index.ts`
+
+Replace static trial with RPC call.
+
+**Key changes:**
+- Call `get_trial_status(_user_id)` RPC
+- Return scope-aware trial object with `type` and `level_scope`
+- Remove fake date calculations
+
+---
+
+## Phase 4: Frontend Cleanup
+
+### 4.1 DELETE File
+
+```
+src/config/unlockConfig.mock.ts
+```
+
+### 4.2 Strip `src/types/unlockLevels.ts`
+
+**REMOVE (lines 44-78):**
+- `ARTIST_LEVEL_HIERARCHY`
+- `FAN_LEVEL_HIERARCHY`
+- `checkArtistLevel`
+- `checkFanLevel`
+
+**KEEP (lines 21-42):**
+- Type definitions: `ArtistLevel`, `FanLevel`, `UnlockLevel`, `FeatureUnlock`
+- Helper functions: `isArtistLevel`, `isFanLevel`
+
+### 4.3 Update `src/contexts/FeatureFlagContext.tsx`
+
+**REMOVE:**
+- Import of `checkArtistLevel`, `checkFanLevel` (line 6-7)
+- `checkArtistUnlock` method (lines 151-153)
+- `checkFanUnlock` method (lines 155-157)
+- Context type properties for these methods (lines 52-53)
+- Provider value properties (lines 168-169)
+
+### 4.4 Update `src/types/trial.ts`
+
+Update `FeatureUnlockConfig` to use numeric `required_level`:
 
 ```typescript
-/**
- * App Configuration - returned by GET /config endpoint
- */
-export interface AppConfig {
-  mvp_mode: boolean;
-  payments_enabled: boolean;
-  trial: {
-    trial_enabled: boolean;
-    allowed_lengths_days: number[];
-    default_length_days: number;
-  };
-  limits: Record<string, number | null>;
-  subscription_products: SubscriptionProduct[];
-  feature_unlocks: FeatureUnlockConfig[];
-}
-
-export interface SubscriptionProduct {
-  key: string;
-  name: string;
-  price_ore: number;
-  billing_period: 'month' | 'year';
-  features: string[];
-  active: boolean;
-}
-
 export interface FeatureUnlockConfig {
   feature_key: string;
-  required_level: string;
-  mvp_available: boolean;
-  post_mvp_label?: string;
+  required_level: number; // CHANGED from string to number
+  user_type: string;
 }
 ```
 
-### 2.2 Create `src/types/user.ts`
+### 4.5 Update `src/types/user.ts`
 
-New type for /me response:
+Add new fields from canonical `/me` response:
 
 ```typescript
-/**
- * User Profile - returned by GET /me endpoint
- */
 export interface UserProfile {
   id: string;
   email: string;
@@ -371,192 +367,70 @@ export interface UserProfile {
   role: 'admin' | 'artist' | 'fan' | 'brand' | 'super_admin';
   roles: string[];
   permissions: Record<string, boolean>;
-  labels?: Record<string, string>;
+  effective_level: number;
+  trial: {
+    active: boolean;
+    type: string | null;
+    level_scope: number | null;
+    started_at: string | null;
+    ends_at: string | null;
+    days_left: number | null;
+    state: 'active' | 'expired' | 'converted' | 'none';
+  };
+  mvp_mode: {
+    enabled: boolean;
+    grants: string[];
+  };
 }
 ```
 
 ---
 
-## Phase 3: Update Frontend Hooks
+## Phase 5: Verification Checklist
 
-### 3.1 Update `src/hooks/useAppConfig.ts`
+After implementation, these MUST be true:
 
-Wire to GET /config with fallback:
-
-```typescript
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { AppConfig } from '@/types/trial';
-
-const FALLBACK_CONFIG: AppConfig = {
-  mvp_mode: true,
-  payments_enabled: false,
-  trial: { trial_enabled: true, allowed_lengths_days: [7, 14, 30], default_length_days: 14 },
-  limits: {},
-  subscription_products: [],
-  feature_unlocks: [],
-};
-
-export const useAppConfig = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [config, setConfig] = useState<AppConfig>(FALLBACK_CONFIG);
-
-  const fetchConfig = useCallback(async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke('get-config');
-      if (error) throw error;
-      setConfig(data);
-    } catch (err) {
-      console.error('Error fetching config:', err);
-      // Keep fallback config
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchConfig();
-  }, [fetchConfig]);
-
-  const isPaymentsEnabled = config.payments_enabled;
-
-  return { config, isLoading, isPaymentsEnabled, refetch: fetchConfig };
-};
-```
-
-### 3.2 Update `src/hooks/useTrialStatus.ts`
-
-Wire to GET /trial/status with fallback:
-
-```typescript
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { TrialStatus, DEFAULT_TRIAL_STATUS } from '@/types/trial';
-
-export const useTrialStatus = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [trialStatus, setTrialStatus] = useState<TrialStatus>(DEFAULT_TRIAL_STATUS);
-
-  const fetchTrialStatus = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke('get-trial-status', {
-        headers: session?.access_token 
-          ? { Authorization: `Bearer ${session.access_token}` } 
-          : undefined,
-      });
-      if (error) throw error;
-      setTrialStatus(data);
-    } catch (err) {
-      console.error('Error fetching trial status:', err);
-      // Keep default status
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTrialStatus();
-  }, [fetchTrialStatus]);
-
-  const isTrialActive = trialStatus.trial_state === 'active';
-  const isTrialExpired = trialStatus.trial_state === 'expired';
-  const hasNoTrial = trialStatus.trial_state === 'none';
-  const isCheckingTrial = trialStatus.trial_state === 'loading' || 
-    (trialStatus.trial_state === 'active' && trialStatus.trial_days_left === null);
-
-  return { trialStatus, isLoading, isTrialActive, isTrialExpired, hasNoTrial, isCheckingTrial, refetch: fetchTrialStatus };
-};
-```
-
-### 3.3 Create `src/hooks/useCurrentUser.ts`
-
-New hook for GET /me with permissions:
-
-```typescript
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { UserProfile } from '@/types/user';
-import { useAuth } from '@/contexts/AuthContext';
-
-export const useCurrentUser = () => {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-
-  const fetchCurrentUser = useCallback(async () => {
-    if (!user) {
-      setCurrentUser(null);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) throw new Error('No session');
-
-      const { data, error } = await supabase.functions.invoke('get-me', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (error) throw error;
-      setCurrentUser(data);
-    } catch (err) {
-      console.error('Error fetching current user:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
-
-  // Permission check helper
-  const hasPermission = useCallback((featureKey: string): boolean => {
-    if (!currentUser?.permissions) return false;
-    return currentUser.permissions[featureKey] === true;
-  }, [currentUser?.permissions]);
-
-  // Label helper
-  const getFeatureLabel = useCallback((featureKey: string): string | null => {
-    return currentUser?.labels?.[featureKey] ?? null;
-  }, [currentUser?.labels]);
-
-  return { currentUser, isLoading, hasPermission, getFeatureLabel, refetch: fetchCurrentUser };
-};
-```
+| Check | Expected |
+|-------|----------|
+| `vip_vote` permission for fan | `false` (requires level 30, MVP grants max 20) |
+| Artist effective_level in MVP | `10` (artist_trial) |
+| Fan effective_level in MVP | `20` (fan_supporter) |
+| `/config.feature_unlocks[].required_level` | `number` (0, 10, 20, 30) |
+| `/trial/status.trial.type` | Present (not null for active trials) |
+| `/trial/status.trial.level_scope` | Present (numeric) |
+| `fan_supporter.price_ore` in DB | `3900` |
+| `unlockConfig.mock.ts` | DELETED |
+| Client-side hierarchy logic | REMOVED |
 
 ---
 
-## Files Summary
+## File Changes Summary
 
-| Action | File | Purpose |
-|--------|------|---------|
-| **Create** | `supabase/functions/get-config/index.ts` | App config endpoint stub |
-| **Create** | `supabase/functions/get-trial-status/index.ts` | Trial status endpoint stub |
-| **Create** | `supabase/functions/get-me/index.ts` | User profile + permissions endpoint stub |
-| **Modify** | `src/types/trial.ts` | Expand AppConfig for new contract |
-| **Create** | `src/types/user.ts` | UserProfile type with permissions |
-| **Modify** | `src/hooks/useAppConfig.ts` | Wire to edge function |
-| **Modify** | `src/hooks/useTrialStatus.ts` | Wire to edge function |
-| **Create** | `src/hooks/useCurrentUser.ts` | New hook for /me with permission helpers |
-
----
-
-## Migration Path
-
-Once these stubs are deployed:
-
-1. **Test endpoints** via curl/browser
-2. **Verify frontend hooks** receive data
-3. **Wire to real DB/RPC** - replace static JSON with queries
-4. **Remove scaffolds** once permissions flow from /me
+| Action | File |
+|--------|------|
+| **DB Migration** | Create `platform_config`, `access_levels`, `feature_permissions`, `user_trials` |
+| **DB Migration** | Add öre columns to `premium_plans`, fix `fan_supporter` price |
+| **DB Function** | Create `get_trial_status` RPC |
+| **DB Function** | Create `resolve_user_permissions` RPC |
+| **Update** | `supabase/functions/get-config/index.ts` |
+| **Update** | `supabase/functions/get-me/index.ts` |
+| **Update** | `supabase/functions/get-trial-status/index.ts` |
+| **DELETE** | `src/config/unlockConfig.mock.ts` |
+| **Strip** | `src/types/unlockLevels.ts` (remove scaffolds, keep types) |
+| **Update** | `src/contexts/FeatureFlagContext.tsx` (remove unlock methods) |
+| **Update** | `src/types/trial.ts` (numeric required_level) |
+| **Update** | `src/types/user.ts` (add effective_level, trial object, mvp_mode) |
 
 ---
 
-## Next Steps After Implementation
+## Technical Notes
 
-1. Deploy edge functions
-2. Test each endpoint
-3. Connect to real database tables (user_trials, app_config, etc.)
-4. Remove `unlockConfig.mock.ts` and hierarchy scaffolds
+1. **MVP Mode Restriction**: MVP grants ONLY `artist_trial` (10) and `fan_supporter` (20). Elite/Superfan (30) remain locked.
+
+2. **Numeric Comparison**: All permission checks use `user_level >= required_level`. No string matching.
+
+3. **Trial Scope**: Trials have `level_scope` that caps what they unlock. A `fan_trial` with `level_scope: 10` cannot unlock `highlight_votes` (requires 20).
+
+4. **Pricing Unit**: All internal pricing uses öre (1 SEK = 100 öre). `fan_supporter` = 3900 öre = 39 SEK.
+
+5. **No Client Logic**: Frontend uses ONLY `hasPermission(feature_key)`. Zero tier comparisons.
