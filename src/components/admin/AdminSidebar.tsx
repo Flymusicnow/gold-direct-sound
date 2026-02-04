@@ -177,6 +177,7 @@ const navSections = [
         title: "Waitlist", 
         url: "/admin/waitlist", 
         icon: Mail,
+        badgeType: 'waitlist' as const,
         description: "Se väntelistan med registrerade intressenter. Bjud in och prioritera användare"
       },
       { 
@@ -225,6 +226,7 @@ export function AdminSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [inboxCounts, setInboxCounts] = useState({ unread: 0, inProgress: 0 });
   const [brandAppCount, setBrandAppCount] = useState(0);
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -252,6 +254,14 @@ export function AdminSidebar() {
           .eq("status", "pending");
 
         setBrandAppCount(pendingBrand || 0);
+
+        // Fetch pending waitlist signups count
+        const { count: pendingWaitlist } = await supabase
+          .from("beta_waitlist")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending");
+
+        setWaitlistCount(pendingWaitlist || 0);
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
@@ -266,12 +276,15 @@ export function AdminSidebar() {
   const hasUnread = inboxCounts.unread > 0;
 
   // Get badge info for an item
-  const getBadgeInfo = (badgeType?: 'inbox' | 'brand') => {
+  const getBadgeInfo = (badgeType?: 'inbox' | 'brand' | 'waitlist') => {
     if (badgeType === 'inbox' && totalInboxActive > 0) {
       return { count: totalInboxActive, isUrgent: hasUnread };
     }
     if (badgeType === 'brand' && brandAppCount > 0) {
       return { count: brandAppCount, isUrgent: true };
+    }
+    if (badgeType === 'waitlist' && waitlistCount > 0) {
+      return { count: waitlistCount, isUrgent: true };
     }
     return null;
   };
