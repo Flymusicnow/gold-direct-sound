@@ -1,114 +1,97 @@
 
 
-# Fix: Handle Email Confirmation Required in Signup Flow
+# Waitlist Badge i Admin-sidebaren
 
-## Root Cause
+## Sammanfattning
 
-In `JoinArtist.tsx` line 71, the code checks `if (data.user)` after signup. However:
-
-- When email confirmation is **enabled**: `signUp` returns `{ user: {...}, session: null }`
-- When email confirmation is **disabled**: `signUp` returns `{ user: {...}, session: {...} }`
-
-The code navigates to `/studio/onboarding` regardless, but without a session, all RLS-protected operations fail.
+Lägg till en notifikationsbadge på Waitlist-menyalternativet i admin-sidebaren som visar antalet nya registreringar (status = "pending"), precis som Inbox visar antal olästa meddelanden.
 
 ---
 
-## Solution
+## Ändringar
 
-Check for `data.session` instead of `data.user` to determine the correct flow:
+### Fil: `src/components/admin/AdminSidebar.tsx`
 
-1. **If session exists** → Navigate to onboarding (email auto-confirmed)
-2. **If no session** → Show "check your email" message and stay on page
+**1. Uppdatera Waitlist-menyalternativet (rad ~177-181):**
 
----
-
-## Changes
-
-### File: `src/pages/auth/JoinArtist.tsx`
-
-**Modify handleSignUp (lines 71-104):**
+Lägg till `badgeType: 'waitlist'` till Waitlist-objektet:
 
 ```typescript
-if (data.user) {
-  // Check if we have a session (email auto-confirmed) or need confirmation
-  if (data.session) {
-    // Session exists - user is fully authenticated
-    // Assign artist role
-    await supabase.from('user_roles').insert({
-      user_id: data.user.id,
-      role: 'artist',
-    });
+{ 
+  title: "Waitlist", 
+  url: "/admin/waitlist", 
+  icon: Mail,
+  badgeType: 'waitlist' as const,  // NY RAD
+  description: "Se väntelistan med registrerade intressenter. Bjud in och prioritera användare"
+},
+```
 
-    // Record permanent artist beta access in DB
-    await supabase.from('artist_beta_access').insert({
-      user_id: data.user.id,
-      badge_name: localStorage.getItem('artist_invite_badge') || 'Early Creator',
-    } as any);
+**2. Lägg till state för waitlist-count (rad ~227):**
 
-    // Mark invite as redeemed
-    const inviteId = localStorage.getItem('artist_invite_id');
-    if (inviteId) {
-      await supabase
-        .from('beta_invites')
-        .update({ 
-          status: 'redeemed',
-          redeemed_at: new Date().toISOString()
-        })
-        .eq('id', inviteId);
-      
-      // Clean up localStorage
-      localStorage.removeItem('artist_invite_id');
-      localStorage.removeItem('artist_invite_token');
-      localStorage.removeItem('artist_invite_expires');
-      localStorage.removeItem('artist_invite_badge');
-    }
+```typescript
+const [waitlistCount, setWaitlistCount] = useState(0);
+```
 
-    toast.success(t('auth.signUpSuccess'));
-    navigate('/studio/onboarding');
-  } else {
-    // No session - email confirmation required
-    toast.success(t('auth.checkEmailForConfirmation') || 'Please check your email to confirm your account.');
-    // Don't navigate - user needs to confirm email first
+**3. Uppdatera fetchCounts-funktionen (rad ~230-258):**
+
+Lägg till hämtning av pending waitlist-entries:
+
+```typescript
+// Fetch pending waitlist signups count
+const { count: pendingWaitlist } = await supabase
+  .from("beta_waitlist")
+  .select("*", { count: "exact", head: true })
+  .eq("status", "pending");
+
+setWaitlistCount(pendingWaitlist || 0);
+```
+
+**4. Uppdatera getBadgeInfo-funktionen (rad ~269-277):**
+
+Lägg till hantering av waitlist badge:
+
+```typescript
+const getBadgeInfo = (badgeType?: 'inbox' | 'brand' | 'waitlist') => {
+  if (badgeType === 'inbox' && totalInboxActive > 0) {
+    return { count: totalInboxActive, isUrgent: hasUnread };
   }
-}
-```
-
-### File: `src/i18n/sv.ts` and `src/i18n/en.ts`
-
-Add missing translation key in `auth` namespace:
-
-**Swedish:**
-```typescript
-checkEmailForConfirmation: 'Kontrollera din e-post för att bekräfta ditt konto innan du fortsätter.',
-```
-
-**English:**
-```typescript
-checkEmailForConfirmation: 'Please check your email to confirm your account before continuing.',
+  if (badgeType === 'brand' && brandAppCount > 0) {
+    return { count: brandAppCount, isUrgent: true };
+  }
+  if (badgeType === 'waitlist' && waitlistCount > 0) {
+    return { count: waitlistCount, isUrgent: true };
+  }
+  return null;
+};
 ```
 
 ---
 
-## Alternative: Enable Auto-Confirm
+## Resultat
 
-If the project intends for users to skip email confirmation, you could enable auto-confirm in auth settings. However, this is less secure and should only be done if intentional.
+| Visning | Beskrivning |
+|---------|-------------|
+| Desktop (expanderad) | Röd badge med antal bredvid "Waitlist" |
+| Desktop (minimerad) | Liten röd prick i hörnet av ikonen |
+| Mobil | Samma som desktop |
 
----
-
-## Files to Change
-
-| File | Action |
-|------|--------|
-| `src/pages/auth/JoinArtist.tsx` | Check `data.session` before navigating |
-| `src/i18n/sv.ts` | Add `checkEmailForConfirmation` key |
-| `src/i18n/en.ts` | Add `checkEmailForConfirmation` key |
+Badgen uppdateras automatiskt var 30:e sekund (samma interval som Inbox).
 
 ---
 
-## Acceptance Criteria
+## Filer att ändra
 
-- Users without confirmed email see "check your email" message
-- Users with confirmed email (or auto-confirm enabled) navigate to onboarding
-- No more "session expired" errors during signup flow
-- Legal acceptance works after email confirmation
+| Fil | Åtgärd |
+|-----|--------|
+| `src/components/admin/AdminSidebar.tsx` | Lägg till waitlist badge |
+
+---
+
+## Acceptanskriterier
+
+- Waitlist-menyalternativet visar en röd badge med antal nya registreringar
+- Badgen uppdateras automatiskt var 30:e sekund
+- Badgen visas korrekt både i expanderat och minimerat läge
+- Antal matchar faktiska `pending` entries i `beta_waitlist`-tabellen
+- Fungerar på både desktop och mobil
 
