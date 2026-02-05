@@ -10,6 +10,7 @@ interface VideoPost {
   video_url: string;
   caption: string | null;
   created_at: string;
+  thumbnail_url: string | null;
   artist_profiles: {
     id: string;
     user_id: string;
@@ -59,6 +60,7 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
             key={video.id}
             videoId={video.id}
             videoUrl={video.video_url}
+            thumbnailUrl={video.thumbnail_url}
             caption={video.caption}
             createdAt={video.created_at}
             artist={video.artist_profiles}

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 interface CompactVideoCardProps {
   videoId: string;
   videoUrl: string;
+  thumbnailUrl: string | null;
   caption: string | null;
   createdAt: string;
   artist: {
@@ -21,6 +22,7 @@ interface CompactVideoCardProps {
 export function CompactVideoCard({
   videoId,
   videoUrl,
+  thumbnailUrl,
   caption,
   createdAt,
   artist,
@@ -72,15 +74,34 @@ export function CompactVideoCard({
     >
       {/* Video Container - 9:16 aspect ratio */}
       <div className="relative aspect-[9/16] bg-muted">
+        {/* Video element - hidden until playing */}
         <video
           ref={videoRef}
           src={videoUrl}
-          className="w-full h-full object-cover"
+          className={cn(
+            "w-full h-full object-cover",
+            !isPlaying && thumbnailUrl && "opacity-0 absolute inset-0"
+          )}
           muted={isMuted}
           loop
           playsInline
           preload="metadata"
+          poster={thumbnailUrl || undefined}
         />
+
+        {/* Thumbnail overlay - shown when not playing */}
+        {thumbnailUrl && !isPlaying && (
+          <img
+            src={thumbnailUrl}
+            alt={caption || 'Video thumbnail'}
+            className="w-full h-full object-cover"
+          />
+        )}
+
+        {/* Fallback skeleton when no thumbnail */}
+        {!thumbnailUrl && !isPlaying && (
+          <div className="absolute inset-0 bg-muted animate-pulse" />
+        )}
 
         {/* Play overlay when not playing */}
         {!isPlaying && (

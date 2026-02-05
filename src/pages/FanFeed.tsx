@@ -40,6 +40,7 @@ interface VideoPost {
   video_url: string;
   caption: string | null;
   created_at: string;
+  thumbnail_url: string | null;
   artist_profiles: {
     id: string;
     user_id: string;
@@ -212,6 +213,7 @@ export default function FanFeed() {
             video_url,
             caption,
             created_at,
+            thumbnail_url,
             artist_profiles (
               id,
               user_id,
