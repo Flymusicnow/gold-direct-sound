@@ -1,97 +1,214 @@
 
 
-# Waitlist Badge i Admin-sidebaren
+# Fix: Mobile Feed Video Card Thumbnails
 
-## Sammanfattning
+## Problem Summary
 
-Lägg till en notifikationsbadge på Waitlist-menyalternativet i admin-sidebaren som visar antalet nya registreringar (status = "pending"), precis som Inbox visar antal olästa meddelanden.
+Video cards in the Feed's "Videos" tab show black/empty on initial load because:
 
----
+1. **Query doesn't include thumbnail_url** - `FanFeed.tsx` fetches videos without the `thumbnail_url` field
+2. **CompactVideoCard lacks poster/thumbnail support** - Uses only `<video preload="metadata">` with no fallback image
 
-## Ändringar
-
-### Fil: `src/components/admin/AdminSidebar.tsx`
-
-**1. Uppdatera Waitlist-menyalternativet (rad ~177-181):**
-
-Lägg till `badgeType: 'waitlist'` till Waitlist-objektet:
-
-```typescript
-{ 
-  title: "Waitlist", 
-  url: "/admin/waitlist", 
-  icon: Mail,
-  badgeType: 'waitlist' as const,  // NY RAD
-  description: "Se väntelistan med registrerade intressenter. Bjud in och prioritera användare"
-},
-```
-
-**2. Lägg till state för waitlist-count (rad ~227):**
-
-```typescript
-const [waitlistCount, setWaitlistCount] = useState(0);
-```
-
-**3. Uppdatera fetchCounts-funktionen (rad ~230-258):**
-
-Lägg till hämtning av pending waitlist-entries:
-
-```typescript
-// Fetch pending waitlist signups count
-const { count: pendingWaitlist } = await supabase
-  .from("beta_waitlist")
-  .select("*", { count: "exact", head: true })
-  .eq("status", "pending");
-
-setWaitlistCount(pendingWaitlist || 0);
-```
-
-**4. Uppdatera getBadgeInfo-funktionen (rad ~269-277):**
-
-Lägg till hantering av waitlist badge:
-
-```typescript
-const getBadgeInfo = (badgeType?: 'inbox' | 'brand' | 'waitlist') => {
-  if (badgeType === 'inbox' && totalInboxActive > 0) {
-    return { count: totalInboxActive, isUrgent: hasUnread };
-  }
-  if (badgeType === 'brand' && brandAppCount > 0) {
-    return { count: brandAppCount, isUrgent: true };
-  }
-  if (badgeType === 'waitlist' && waitlistCount > 0) {
-    return { count: waitlistCount, isUrgent: true };
-  }
-  return null;
-};
-```
+The Artist page's `VideoCard.tsx` works correctly because it:
+- Fetches `thumbnail_url` 
+- Renders an `<img>` overlay when not playing
+- Only shows the video element during playback
 
 ---
 
-## Resultat
+## Solution
 
-| Visning | Beskrivning |
-|---------|-------------|
-| Desktop (expanderad) | Röd badge med antal bredvid "Waitlist" |
-| Desktop (minimerad) | Liten röd prick i hörnet av ikonen |
-| Mobil | Samma som desktop |
-
-Badgen uppdateras automatiskt var 30:e sekund (samma interval som Inbox).
+Apply the same thumbnail pattern from the Artist page to the Feed videos.
 
 ---
 
-## Filer att ändra
+## Changes
 
-| Fil | Åtgärd |
-|-----|--------|
-| `src/components/admin/AdminSidebar.tsx` | Lägg till waitlist badge |
+### 1. Update FanFeed.tsx - Add thumbnail_url to query
+
+**File:** `src/pages/FanFeed.tsx`
+
+Update the VideoPost interface and fetch query:
+
+```typescript
+interface VideoPost {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  thumbnail_url: string | null;  // ADD THIS
+  artist_profiles: {
+    id: string;
+    user_id: string;
+    artist_name: string;
+    avatar_url: string | null;
+  };
+}
+```
+
+Update the query (around line 208-224) to include `thumbnail_url`:
+
+```typescript
+const { data: videosData } = await supabase
+  .from('artist_video_posts')
+  .select(`
+    id,
+    video_url,
+    caption,
+    created_at,
+    thumbnail_url,
+    artist_profiles (
+      id,
+      user_id,
+      artist_name,
+      avatar_url
+    )
+  `)
+  .in('artist_id', artistIds)
+  .order('created_at', { ascending: false })
+  .limit(20);
+```
 
 ---
 
-## Acceptanskriterier
+### 2. Update FeedVideosTab.tsx - Pass thumbnail to card
 
-- Waitlist-menyalternativet visar en röd badge med antal nya registreringar
-- Badgen uppdateras automatiskt var 30:e sekund
-- Badgen visas korrekt både i expanderat och minimerat läge
-- Antal matchar faktiska `pending` entries i `beta_waitlist`-tabellen
-- Fungerar på både desktop och mobil
+**File:** `src/components/feed/FeedVideosTab.tsx`
+
+Update interface and pass the thumbnail:
+
+```typescript
+interface VideoPost {
+  id: string;
+  video_url: string;
+  caption: string | null;
+  created_at: string;
+  thumbnail_url: string | null;  // ADD THIS
+  artist_profiles: {
+    id: string;
+    user_id: string;
+    artist_name: string;
+    avatar_url: string | null;
+  };
+}
+```
+
+Pass it to CompactVideoCard:
+
+```typescript
+<CompactVideoCard
+  key={video.id}
+  videoId={video.id}
+  videoUrl={video.video_url}
+  thumbnailUrl={video.thumbnail_url}  // ADD THIS
+  caption={video.caption}
+  createdAt={video.created_at}
+  artist={video.artist_profiles}
+/>
+```
+
+---
+
+### 3. Update CompactVideoCard.tsx - Display thumbnail
+
+**File:** `src/components/feed/CompactVideoCard.tsx`
+
+Add `thumbnailUrl` prop and render thumbnail image instead of relying on video metadata:
+
+```typescript
+interface CompactVideoCardProps {
+  videoId: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;  // ADD THIS
+  caption: string | null;
+  createdAt: string;
+  artist: {
+    id: string;
+    user_id: string;
+    artist_name: string;
+    avatar_url: string | null;
+  };
+}
+
+export function CompactVideoCard({
+  videoId,
+  videoUrl,
+  thumbnailUrl,  // ADD THIS
+  caption,
+  createdAt,
+  artist,
+}: CompactVideoCardProps) {
+```
+
+Update the video container to show thumbnail when not playing:
+
+```typescript
+{/* Video Container - 9:16 aspect ratio */}
+<div className="relative aspect-[9/16] bg-muted">
+  {/* Video element - hidden until playing */}
+  <video
+    ref={videoRef}
+    src={videoUrl}
+    className={cn(
+      "w-full h-full object-cover",
+      !isPlaying && thumbnailUrl && "opacity-0 absolute inset-0"
+    )}
+    muted={isMuted}
+    loop
+    playsInline
+    preload="metadata"
+    poster={thumbnailUrl || undefined}
+  />
+
+  {/* Thumbnail overlay - shown when not playing */}
+  {thumbnailUrl && !isPlaying && (
+    <img
+      src={thumbnailUrl}
+      alt={caption || 'Video thumbnail'}
+      className="w-full h-full object-cover"
+    />
+  )}
+
+  {/* Fallback skeleton when no thumbnail */}
+  {!thumbnailUrl && !isPlaying && (
+    <div className="absolute inset-0 bg-muted animate-pulse" />
+  )}
+
+  {/* Play overlay when not playing */}
+  {!isPlaying && (
+    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+      <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
+        <Play className="h-6 w-6 text-white fill-white" />
+      </div>
+    </div>
+  )}
+  
+  {/* ... rest of mute button code */}
+</div>
+```
+
+Import `cn` utility at the top:
+```typescript
+import { cn } from "@/lib/utils";
+```
+
+---
+
+## Technical Summary
+
+| File | Change |
+|------|--------|
+| `src/pages/FanFeed.tsx` | Add `thumbnail_url` to interface and query |
+| `src/components/feed/FeedVideosTab.tsx` | Add `thumbnail_url` to interface, pass to card |
+| `src/components/feed/CompactVideoCard.tsx` | Accept `thumbnailUrl` prop, render `<img>` thumbnail |
+
+---
+
+## Expected Result
+
+- Video cards show thumbnails immediately on load (no black cards)
+- Same thumbnail source as Artist page (single source of truth)
+- Fallback skeleton shown if no thumbnail exists
+- Video plays on hover/tap as before
+- Consistent 9:16 aspect ratio maintained
 
