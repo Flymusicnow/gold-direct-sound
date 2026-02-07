@@ -71,7 +71,7 @@ export function FeedMusicTab({
       </div>
 
       {/* Track List */}
-      <StaggeredList className="space-y-2" staggerDelay={0.04}>
+      <StaggeredList className="space-y-3.5" staggerDelay={0.04}>
         {tracks.map((track) => (
           <TrackCard
             key={track.id}

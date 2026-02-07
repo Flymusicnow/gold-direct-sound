@@ -32,7 +32,7 @@ export function FlightdeckLayout({ children }: FlightdeckLayoutProps) {
       {/* Main content area - scrolls internally */}
       <main 
         className={cn(
-          "flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide",
+          "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-auto-hide",
           // Padding at bottom for fixed player (88px)
           currentItem && "pb-[88px]",
           // Desktop: squeeze content when queue opens (400px sidebar)
