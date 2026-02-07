@@ -1,86 +1,67 @@
 
+# Fix: Comment Thread Compression + Profile Picture Clipping on Mobile
 
-# Community Comments: Inline Avatar Layout for Mobile
+## Problem 1: Comment Threads Too Narrow on Deep Nesting
 
-## Problem
+Each reply depth adds `ml-3` (12px). At depth 3 that's 36px of accumulated indent, leaving text squeezed into narrow columns where words wrap one-by-one (visible in screenshots).
 
-The current comment layout uses a two-column flex design:
+### Fix
 
-```text
-[Avatar] | [Name + Badge + Time]
-         | [Comment text........]
-         | [Like] [Reply]
-```
+Cap indentation at 1 level on mobile. Depth 2+ replies get no additional mobile indent (still indent on desktop for visual hierarchy). Thread connector lines are adjusted accordingly.
 
-On mobile, especially in nested replies (which add `ml-4` per depth level), the avatar column (32px + 12px gap) steals ~44px from the text area. This compresses comment threads into awkward narrow text blocks.
+**File:** `src/components/community/CommentThread.tsx`
 
-## Solution
-
-Move the avatar into the name/metadata row so the comment text spans the full width:
-
-```text
-[Avatar] [Name] [Badge] [Time]
-[Comment text fills full width..]
-[Like] [Reply]
-```
-
-## Changes
-
-### File: `src/components/community/CommentThread.tsx`
-
-**1. Restructure `CommentItem` layout (lines 139-248)**
-
-Change from a two-column `flex gap-3` layout to a single-column layout where:
-
-- The avatar (reduced to `h-6 w-6`) moves inside the name/metadata row
-- Comment text and actions sit directly below at full width
-- The outer container changes from `flex gap-3` to a simple `space-y-1` block
-
-**Current structure:**
+Current (line 122-124):
 ```typescript
-<div className="flex gap-3 py-3">
-  <Avatar className="h-8 w-8 shrink-0">...</Avatar>
-  <div className="flex-1 min-w-0">
-    <div className="flex items-center gap-2">
-      name, badge, time
-    </div>
-    <p>comment text</p>
-    <div>actions</div>
-  </div>
-</div>
+depth > 0 && "ml-3 sm:ml-4"
 ```
 
-**New structure:**
+New logic:
 ```typescript
-<div className="py-3 space-y-1">
-  <div className="flex items-center gap-2 flex-wrap">
-    <Avatar className="h-6 w-6 shrink-0">...</Avatar>
-    name, badge, time
-  </div>
-  <p>comment text</p>
-  <div>actions</div>
-</div>
+depth === 1 && "ml-3 sm:ml-4",
+depth >= 2 && "sm:ml-4"  // No mobile indent beyond depth 1
 ```
 
-**2. Adjust nested reply indentation**
+Thread connector lines also adjusted so they only show the left border / connector when there is actual indentation (skipped for depth 2+ on mobile).
 
-Reduce `ml-4 sm:ml-6` to `ml-3 sm:ml-4` since we no longer need as much indent to clear the avatar column. This further maximizes text width on mobile.
+---
 
-**3. Adjust thread connector positions**
+## Problem 2: Artist Profile Picture Clipped on Mobile
 
-Update the left-positioned thread lines (`-left-4 sm:-left-6`) to match the new, smaller indentation (`-left-3 sm:-left-4`, connector width `w-2 sm:w-3`).
+The banner uses `aspect-[3/1]` = ~125px on a 375px screen. The avatar (96px) plus text content stacks vertically via `flex-col` on mobile, positioned `absolute bottom-0`. The total height exceeds the banner, so the avatar extends above and gets hidden behind the fixed navbar.
+
+### Fix
+
+Make the mobile banner taller by changing the aspect ratio from `aspect-[3/1]` to `aspect-[5/2]` on mobile. This gives ~150px on a 375px screen -- enough room for the avatar to sit within the visible area.
+
+**File:** `src/components/artist/ArtistHeroSection.tsx`
+
+Change (line 93):
+```
+aspect-[3/1] md:aspect-[4/1]
+```
+to:
+```
+aspect-[5/2] md:aspect-[4/1]
+```
+
+Also apply the same change to the gradient fallback (line 113).
+
+---
 
 ## Files to Change
 
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/components/community/CommentThread.tsx` | Restructure comment layout to inline avatar |
+| `src/components/community/CommentThread.tsx` | Cap mobile nesting indent at 1 level |
+| `src/components/artist/ArtistHeroSection.tsx` | Widen mobile banner aspect ratio |
+
+---
 
 ## Acceptance Criteria
 
-- Avatar appears inline with the author name, on the same row
-- Comment text spans the full available width
-- Nested replies remain visually threaded but with more text space
-- Thread connector lines still align correctly
-- Works on both mobile and desktop
-- No changes to tab layout or navigation
+- Comment threads at depth 2+ are readable on mobile (no single-word line wrapping)
+- Desktop comment threading retains multi-level indentation
+- Thread connector lines remain aligned
+- Artist profile picture is fully visible on mobile, not clipped by the navbar
+- No changes to desktop hero layout
