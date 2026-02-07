@@ -50,6 +50,12 @@ export default function EarlyAccess() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Store invite return URL in sessionStorage on mount
+  useEffect(() => {
+    const returnUrl = window.location.pathname + window.location.search;
+    sessionStorage.setItem("flymusic_invite_return_url", returnUrl);
+  }, []);
+
   // Update role when URL param changes
   useEffect(() => {
     if (roleParam === "artist" || roleParam === "fan") {
@@ -103,6 +109,9 @@ export default function EarlyAccess() {
 
       // Store token for session
       storeInviteToken(data.token, data.expires_at);
+
+      // Clear invite return URL since the user is proceeding
+      sessionStorage.removeItem("flymusic_invite_return_url");
 
       toast.success("Invite code accepted!");
 
