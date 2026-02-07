@@ -90,7 +90,7 @@ export function ArtistHeroSection({
     <div className="relative border-b border-border">
       {/* Banner Image/Video or Gradient Fallback */}
       {hasBanner ? (
-        <div className="w-full aspect-[3/1] md:aspect-[4/1] overflow-hidden">
+        <div className="w-full aspect-[5/2] md:aspect-[4/1] overflow-hidden">
           {isVideo ? (
             <video
               src={activeBanner.url!}
@@ -110,7 +110,7 @@ export function ArtistHeroSection({
           )}
         </div>
       ) : (
-        <div className="w-full aspect-[3/1] md:aspect-[4/1] bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
+        <div className="w-full aspect-[5/2] md:aspect-[4/1] bg-gradient-to-br from-primary/30 via-primary/10 to-background" />
       )}
 
       {/* Gradient overlay for text readability - lighter to show banner */}
