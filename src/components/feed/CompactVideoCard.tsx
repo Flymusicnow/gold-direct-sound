@@ -4,6 +4,7 @@ import { Play, Volume2, VolumeX } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CompactVideoCardProps {
   videoId: string;
@@ -17,6 +18,7 @@ interface CompactVideoCardProps {
     artist_name: string;
     avatar_url: string | null;
   };
+  onTap?: () => void;
 }
 
 export function CompactVideoCard({
@@ -26,14 +28,17 @@ export function CompactVideoCard({
   caption,
   createdAt,
   artist,
+  onTap,
 }: CompactVideoCardProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const isMobile = useIsMobile();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
+    if (isMobile) return; // No hover-to-play on mobile
     setIsHovered(true);
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
@@ -42,6 +47,7 @@ export function CompactVideoCard({
   };
 
   const handleMouseLeave = () => {
+    if (isMobile) return;
     setIsHovered(false);
     if (videoRef.current) {
       videoRef.current.pause();
@@ -63,34 +69,42 @@ export function CompactVideoCard({
     navigate(`/artist/${artist.user_id}`);
   };
 
+  const handleCardClick = () => {
+    if (onTap) {
+      onTap();
+    }
+  };
+
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
 
   return (
     <div
-      className="group relative rounded-xl overflow-hidden bg-card border border-border cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5"
+      className="group relative rounded-xl overflow-hidden bg-card border border-border cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 touch-manipulation"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => {/* Could open fullscreen modal */}}
+      onClick={handleCardClick}
     >
       {/* Video Container - 9:16 aspect ratio */}
       <div className="relative aspect-[9/16] bg-muted">
-        {/* Video element - hidden until playing */}
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          className={cn(
-            "w-full h-full object-cover",
-            !isPlaying && thumbnailUrl && "opacity-0 absolute inset-0"
-          )}
-          muted={isMuted}
-          loop
-          playsInline
-          preload="metadata"
-          poster={thumbnailUrl || undefined}
-        />
+        {/* Video element - hidden until playing (desktop hover only) */}
+        {!isMobile && (
+          <video
+            ref={videoRef}
+            src={videoUrl}
+            className={cn(
+              "w-full h-full object-cover",
+              !isPlaying && thumbnailUrl && "opacity-0 absolute inset-0"
+            )}
+            muted={isMuted}
+            loop
+            playsInline
+            preload="metadata"
+            poster={thumbnailUrl || undefined}
+          />
+        )}
 
-        {/* Thumbnail overlay - shown when not playing */}
-        {thumbnailUrl && !isPlaying && (
+        {/* Thumbnail overlay */}
+        {thumbnailUrl && (!isPlaying || isMobile) && (
           <img
             src={thumbnailUrl}
             alt={caption || 'Video thumbnail'}
@@ -104,7 +118,7 @@ export function CompactVideoCard({
         )}
 
         {/* Play overlay when not playing */}
-        {!isPlaying && (
+        {(!isPlaying || isMobile) && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/20">
             <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
               <Play className="h-6 w-6 text-white fill-white" />
@@ -112,8 +126,8 @@ export function CompactVideoCard({
           </div>
         )}
 
-        {/* Mute button */}
-        {isHovered && (
+        {/* Mute button - desktop hover only */}
+        {isHovered && !isMobile && (
           <button
             onClick={toggleMute}
             className="absolute bottom-2 right-2 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center transition-opacity"
