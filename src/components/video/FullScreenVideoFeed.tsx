@@ -7,26 +7,28 @@ interface FullScreenVideoFeedProps {
   videos: FeedVideo[];
   initialIndex: number;
   onClose: () => void;
-  onShare?: (video: FeedVideo) => void;
 }
 
 export function FullScreenVideoFeed({
   videos,
   initialIndex,
   onClose,
-  onShare,
 }: FullScreenVideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
+  const [isMuted, setIsMuted] = useState(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const itemRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  const toggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
 
   // Scroll to initial video on mount
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Delay to ensure DOM is ready
     requestAnimationFrame(() => {
       const targetEl = itemRefs.current.get(initialIndex);
       if (targetEl) {
@@ -57,7 +59,6 @@ export function FullScreenVideoFeed({
       }
     );
 
-    // Observe all items
     itemRefs.current.forEach((el) => {
       observerRef.current?.observe(el);
     });
@@ -95,11 +96,6 @@ export function FullScreenVideoFeed({
         <X className="w-5 h-5 text-white" />
       </button>
 
-      {/* Video counter */}
-      <div className="absolute top-14 left-1/2 -translate-x-1/2 z-[110] text-white/60 text-xs font-medium">
-        {activeIndex + 1} / {videos.length}
-      </div>
-
       {/* Snap-scroll container */}
       <div
         ref={containerRef}
@@ -115,8 +111,9 @@ export function FullScreenVideoFeed({
             <FullScreenVideoItem
               video={video}
               isActive={index === activeIndex}
+              isMuted={isMuted}
+              onToggleMute={toggleMute}
               onClose={onClose}
-              onShare={onShare}
             />
           </div>
         ))}
