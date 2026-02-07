@@ -169,6 +169,7 @@ import { PrivateBetaGate } from "@/components/PrivateBetaGate";
 import { SwipeBackProvider } from "@/components/mobile/SwipeBackProvider";
 import { EarlyAccessGate } from "@/components/EarlyAccessGate";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { InviteReturnBanner } from "@/components/InviteReturnBanner";
 
 // Community pages
 import ArtistCommunityPage from "./pages/community/ArtistCommunityPage";
@@ -203,6 +204,7 @@ const App = () => (
           <PreferencesSync />
           <SwipeBackProvider>
           <NavigationWrapper />
+          <InviteReturnBanner />
           <FlightdeckLayout>
           <Routes>
             {/* Public routes */}
