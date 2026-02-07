@@ -1,67 +1,75 @@
 
-# Fix: Artist Name Navigation + Compact Music Cards on Mobile
 
-## Issue 1: Tapping Artist Name Goes to Feed Instead of Artist Profile
+# Fix: Track Card Clipping in Portrait + Lock Screen Music Controls
+
+## Issue 1: Track Cards Clipped Behind Player in Portrait Mode
 
 ### Root Cause
 
-In `FullScreenVideoItem.tsx`, `handleArtistTap` calls two things in sequence:
-1. `onClose()` -- which triggers `closeFeedWithHistory()` in the hook
-2. `navigate('/artist/...')` -- which should go to the artist page
+On the FanFeed page, the main content area has `pb-44 md:pb-8` (176px on mobile). But on mobile, two fixed elements stack at the bottom:
+- **Bottom navigation bar**: 64px (`h-16`)
+- **FlightdeckPlayer bar**: ~120px (progress slider + track info + playback controls)
 
-The problem: `closeFeedWithHistory()` calls `window.history.back()`. This is an **asynchronous** browser action that navigates the page backward. The subsequent `navigate()` call fires immediately after, but `history.back()` wins the race and sends the user back to `/fan/feed`, not the artist profile.
+Total space consumed: ~184px. The padding of 176px is not quite enough, so the last track card(s) get clipped behind the player when scrolling to the end.
+
+In landscape mode, the viewport is wider so the player is more compact (single row), and the content fits. In portrait, the taller player eats into the scroll area.
+
+Additionally, the **loading state** skeleton has only `pb-28` (112px) -- far too little.
 
 ### Fix
 
-Add a dedicated `closeFeedForNavigation` method to `useFullScreenVideoFeed.ts` that closes the feed state **without** calling `history.back()`. Instead, it removes the pushed history entry silently so the navigate call works cleanly.
-
-**File: `src/hooks/useFullScreenVideoFeed.ts`**
-- Add a new method `closeFeedForNavigation()` that:
-  - Sets `isOpen: false` directly (no history.back)
-  - Removes the body scroll lock
-  - Does NOT call `history.back()` -- the subsequent `navigate()` replaces the history entry naturally
-
-**File: `src/components/video/FullScreenVideoItem.tsx`**
-- Accept a new `onNavigateToArtist` prop (or modify `onClose` usage)
-- In `handleArtistTap`: call `closeFeedForNavigation()` instead of `onClose()`, then navigate to the artist profile
-
-**File: `src/components/video/FullScreenVideoFeed.tsx`**
-- Accept and pass through the `closeFeedForNavigation` callback to each `FullScreenVideoItem`
-
-**Files using the hook:**
-- `src/components/feed/FeedVideosTab.tsx` -- pass `closeFeedForNavigation` through
-- `src/components/artist/ArtistVideosSection.tsx` -- pass `closeFeedForNavigation` through
+**File: `src/pages/FanFeed.tsx`**
+- Change `pb-44` to `pb-52` (208px) on the main content area -- enough to clear both the bottom nav (64px) and the full player bar (~120px) with breathing room
+- Also fix the loading state skeleton view from `pb-28` to `pb-52` for consistency
 
 ---
 
-## Issue 2: Music Track Cards Too Tall on Mobile
+## Issue 2: Lock Screen / Background Music Controls (Media Session API)
 
-### Root Cause
+### What It Does
 
-In `TrackCard.tsx`, the mobile sizing is oversized:
-- Padding: `p-6` (24px on all sides on mobile)
-- Cover image: `w-24 h-24` (96px square on mobile)
-- Title: `text-lg` (18px on mobile)
-- Artist name: `text-base` (16px on mobile)
-- Action buttons: `h-10 w-10` (40px on mobile)
+When users leave the app (switch to another app, lock their phone), they want to see the currently playing song on their lock screen and notification shade, with the ability to:
+- See the song title, artist name, and cover art
+- Pause / resume playback
+- Skip to next / previous track
+- See playback progress
 
-This makes each card very tall and elongated as seen in the screenshots -- only 2-3 cards fit on screen.
+This is exactly what the **Media Session API** provides. It is supported on iOS Safari, Android Chrome, and desktop browsers.
 
-### Fix
+### Implementation
 
-Reduce mobile sizes to make cards compact while keeping good touch targets:
+**File: `src/components/flightdeck/FlightdeckPlayer.tsx`**
 
-**File: `src/components/TrackCard.tsx`**
-- Padding: `p-3 md:p-4` (12px mobile, 16px desktop)
-- Cover image: `w-14 h-14 md:w-16 md:h-16` (56px mobile, 64px desktop)
-- Title: `text-base md:text-sm` (16px mobile -- still readable, keeps font hierarchy)
-- Artist name: `text-sm md:text-xs` (14px mobile)
-- Description: keep `text-xs`
-- Gap between items: `gap-3 md:gap-4`
-- Action buttons: keep `h-10 w-10` for touch targets (44px min rule)
-- Play button overlay: scale down to match smaller cover
+Add a `useEffect` that syncs with `navigator.mediaSession` whenever the current track changes or play state changes:
 
-This will show 5-6 cards per screen on mobile instead of 2-3.
+1. **Set metadata** when `currentItem` changes:
+   - `title`: track title
+   - `artist`: artist name
+   - `artwork`: cover image (multiple sizes for different devices)
+
+2. **Set action handlers** for:
+   - `play` -- calls `togglePlay()` to resume
+   - `pause` -- calls `togglePlay()` to pause
+   - `previoustrack` -- calls `playPrev()`
+   - `nexttrack` -- calls `playNext()`
+   - `seekto` -- calls `seek()` for scrubbing on lock screen
+   - `seekbackward` / `seekforward` -- 10-second jumps
+
+3. **Sync playback state** when `isPlaying` changes:
+   - `navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'`
+
+4. **Update position state** on time updates:
+   - `navigator.mediaSession.setPositionState({ duration, playbackRate: 1, position: currentTime })`
+
+5. **Clean up** action handlers when component unmounts or when no track is playing
+
+### What Users Will See
+
+- **iOS**: Lock screen shows track title, artist, cover art, and play/pause + skip controls
+- **Android**: Notification shade shows a media card with the same controls
+- **Desktop**: Media control overlay in the OS (macOS Now Playing widget, Windows media overlay)
+
+No additional libraries or permissions needed -- this is a native browser API.
 
 ---
 
@@ -69,20 +77,37 @@ This will show 5-6 cards per screen on mobile instead of 2-3.
 
 | File | Change |
 |------|--------|
-| `src/hooks/useFullScreenVideoFeed.ts` | Add `closeFeedForNavigation` method that closes without history.back |
-| `src/components/video/FullScreenVideoFeed.tsx` | Accept and pass through navigation close callback |
-| `src/components/video/FullScreenVideoItem.tsx` | Use navigation-specific close for artist tap |
-| `src/components/feed/FeedVideosTab.tsx` | Pass navigation close callback |
-| `src/components/artist/ArtistVideosSection.tsx` | Pass navigation close callback |
-| `src/components/TrackCard.tsx` | Reduce mobile padding, cover size, and font sizes |
+| `src/pages/FanFeed.tsx` | Increase bottom padding from `pb-44` to `pb-52` (both loaded and loading states) |
+| `src/components/flightdeck/FlightdeckPlayer.tsx` | Add Media Session API integration for lock screen controls |
+
+---
+
+## Technical Details
+
+```text
+Media Session API Integration (FlightdeckPlayer.tsx):
+
+useEffect when currentItem changes:
+  -> navigator.mediaSession.metadata = new MediaMetadata({
+       title, artist, artwork: [{ src: coverUrl, sizes: '512x512' }]
+     })
+  -> Set action handlers: play, pause, nexttrack, previoustrack, seekto
+
+useEffect when isPlaying changes:
+  -> navigator.mediaSession.playbackState = 'playing' | 'paused'
+
+handleTimeUpdate already exists:
+  -> Add navigator.mediaSession.setPositionState({ duration, position, playbackRate })
+```
 
 ---
 
 ## Acceptance Criteria
 
-- Tapping artist name in video feed navigates to the artist's profile page
-- Browser back from artist profile returns to the feed page (not broken history)
-- X button and swipe-to-close still work correctly (using history.back as before)
-- Music track cards are compact on mobile (5-6 visible per screen)
-- Track cards remain readable with proper touch targets
-- Desktop layout is unchanged
+- In portrait mode on mobile, all track cards are fully visible when scrolling -- no clipping behind the player
+- When music is playing and user switches to another app or locks their phone, the lock screen shows the track info and controls
+- Play/pause from lock screen controls the FlightdeckPlayer
+- Next/previous track from lock screen skips tracks correctly
+- Cover art is visible on the lock screen notification
+- Works on iOS Safari, Android Chrome, and desktop browsers
+
