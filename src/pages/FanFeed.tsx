@@ -304,27 +304,24 @@ export default function FanFeed() {
         <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8">
           <PageBreadcrumb role="fan" />
           
-          <div className="max-w-7xl mx-auto space-y-5">
+          <div className="max-w-7xl mx-auto">
             {loading ? (
               <>
-                {/* Header skeleton */}
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-48" />
-                  <Skeleton className="h-4 w-64" />
+                {/* Sticky header skeleton — same structure as loaded state */}
+                <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
+                  <div className="space-y-2 mb-3">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                  </div>
+                  <Skeleton className="h-12 w-full max-w-md" />
                 </div>
 
-                {/* Tabs skeleton */}
-                <Skeleton className="h-12 w-full max-w-md" />
-
-                <div className="grid lg:grid-cols-3 gap-6">
-                  {/* Main Content skeleton */}
+                <div className="pt-4 md:pt-5 grid lg:grid-cols-3 gap-6">
                   <div className="lg:col-span-2 space-y-4">
                     {[...Array(5)].map((_, i) => (
                       <TrackCardSkeleton key={i} />
                     ))}
                   </div>
-
-                  {/* Sidebar skeleton */}
                   <div className="hidden lg:block space-y-6">
                     <CardSkeleton lines={4} />
                     <CardSkeleton lines={3} />
@@ -332,18 +329,16 @@ export default function FanFeed() {
                 </div>
               </>
             ) : (
-              <PageTransition>
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
-                  <div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('fan.yourFeed')}</h1>
-                    <p className="text-muted-foreground text-sm md:text-base">{t('fan.discoverFromFavorites')}</p>
+              <>
+                {/* Sticky header — outside PageTransition so transform doesn't break sticky */}
+                <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+                    <div>
+                      <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('fan.yourFeed')}</h1>
+                      <p className="text-muted-foreground text-sm md:text-base">{t('fan.discoverFromFavorites')}</p>
+                    </div>
+                    <DashboardFeedSwitch />
                   </div>
-                  <DashboardFeedSwitch />
-                </div>
-
-                {/* Tab Navigation */}
-                <div className="mb-5">
                   <FeedTabs 
                     activeTab={activeTab} 
                     onTabChange={setActiveTab}
@@ -351,23 +346,22 @@ export default function FanFeed() {
                   />
                 </div>
 
-                {/* Main Content Grid */}
-                <div className="grid lg:grid-cols-3 gap-6">
-                  {/* Tab Content */}
-                  <div className="lg:col-span-2">
-                    {renderTabContent()}
+                {/* Content — only this part gets the page transition animation */}
+                <PageTransition>
+                  <div className="pt-4 md:pt-5 grid lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2">
+                      {renderTabContent()}
+                    </div>
+                    <div className="hidden lg:block">
+                      <FeedSidebar
+                        followedArtistIds={followedArtistIds}
+                        onTrackPlay={playNow}
+                        followingCount={followedArtistIds.length}
+                      />
+                    </div>
                   </div>
-
-                  {/* Sidebar - Desktop only */}
-                  <div className="hidden lg:block">
-                    <FeedSidebar
-                      followedArtistIds={followedArtistIds}
-                      onTrackPlay={playNow}
-                      followingCount={followedArtistIds.length}
-                    />
-                  </div>
-                </div>
-              </PageTransition>
+                </PageTransition>
+              </>
             )}
           </div>
         </main>
