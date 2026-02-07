@@ -96,7 +96,7 @@ export function TrackCard({
   return (
     <>
       <div
-        className="group flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+        className="group flex items-center gap-3 md:gap-4 p-3 md:p-4 h-[68px] md:h-auto rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
         onClick={onPlay}
       >
       <div className="relative w-14 h-14 md:w-16 md:h-16 flex-shrink-0">
@@ -132,18 +132,18 @@ export function TrackCard({
           {isVerified && <VerifiedBadge size="sm" />}
         </div>
         {track.description && (
-          <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
+          <p className="text-xs text-muted-foreground/70 truncate mt-0.5 hidden md:block">
             {track.description}
           </p>
         )}
       </div>
 
       {showLikeButton && (
-        <div className="flex items-center gap-2 md:gap-1">
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
+            className="h-9 w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
             onClick={(e) => {
               e.stopPropagation();
               if (!user) {
@@ -154,31 +154,31 @@ export function TrackCard({
             }}
             title="Add to playlist"
           >
-            <ListMusic className="h-6 w-6 md:h-5 md:w-5" />
+            <ListMusic className="h-5 w-5" />
           </Button>
           {onAddToQueue && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
+              className="h-9 w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToQueue();
               }}
               title="Add to queue"
             >
-              <Plus className="h-6 w-6 md:h-5 md:w-5" />
+              <Plus className="h-5 w-5" />
             </Button>
           )}
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 md:h-9 md:w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
+            className="h-9 w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
             onClick={handleLike}
             disabled={isUpdating}
             title={liked ? "Unlike" : "Like"}
           >
-            <Heart className={`h-6 w-6 md:h-5 md:w-5 ${liked ? "fill-primary text-primary" : ""}`} />
+            <Heart className={`h-5 w-5 ${liked ? "fill-primary text-primary" : ""}`} />
           </Button>
         </div>
       )}
