@@ -1,146 +1,102 @@
 
 
-# Super Card Fix Pack: Bigger Cards + No Horizontal Scroll + Stable Spacing
+# Fix: Return to "Discover & Support Artists" Page After Browsing
 
-## What's Already Done
+## Problem
 
-Two of the five items in this fix pack are **already implemented** from the previous changes:
+When a fan arrives at the **Discover & Support Artists** page (`/early-access`), they can immediately unlock access with their invite code. But if they want to browse around first (check out Explore, Discover, etc.), there is no easy way to get back to that specific page. The "Back to home" button goes to `/`, and the home page has no link back to `/early-access`.
 
-| Item | Status |
-|------|--------|
-| Sticky top tabs | Already done (sticky header wrapper in FanFeed.tsx) |
-| Bottom nav stable spacing | Already done (pb-52 on mobile, fixed bottom nav) |
-| Bigger feed cards | **Needs work** |
-| No horizontal page scroll | **Needs work** |
-| Global box-sizing / image sanity | **Needs work** |
+## Solution
 
-## Changes
+Two changes to make the return path frictionless:
 
-### 1. Bigger Feed Cards (TrackCard + TrackCardSkeleton)
+### 1. Store the invite entry URL in sessionStorage
 
-Currently cards use `h-[68px]` on mobile with `w-14 h-14` (56px) thumbnails and tight spacing. The fix pack asks for a more premium, spacious feel.
+When the EarlyAccess page loads, save the full URL (including `?role=fan&code=...` params) to `sessionStorage`. This way, other parts of the app can check if the user has a pending invite flow and offer a return link.
 
-**Current vs Target:**
+**File:** `src/pages/EarlyAccess.tsx`
+- On mount, store `window.location.pathname + window.location.search` into `sessionStorage` under key `flymusic_invite_return_url`
+- When the user successfully unlocks access (navigates to `/join/fan` or `/join/artist`), clear this key
 
-| Property | Current (mobile) | Target |
-|----------|-----------------|--------|
-| Card height | `h-[68px]` (fixed) | `min-h-[88px]` (flexible floor) |
-| Thumbnail | `w-14 h-14` (56px) | `w-[60px] h-[60px]` (60px) |
-| Inner gap | `gap-3` (12px) | `gap-3.5` (14px) |
-| Padding | `p-3` (12px) | `px-3.5 py-3` (14px h / 12px v) |
-| Border radius | `rounded-xl` (12px) | `rounded-[14px]` (14px) |
-| Title size | `text-base` (16px) | `text-base` (16px) -- keep |
-| Subtitle size | `text-sm` (14px) | `text-[13px]` (13px) |
-| Action button gap | `gap-1` (4px) | `gap-2.5` (10px) |
+### 2. Show a "Return to Invite" floating banner
 
-Key decisions:
-- Switch from fixed `h-[68px]` to `min-h-[88px]` so the card has a generous floor but can still breathe if content needs it (won't break layout since text is still truncated)
-- Slightly larger thumbnails (60px square) for a more premium feel
-- Wider action button gap (10px) so tapping targets are more comfortable
+Create a small, non-intrusive floating banner that appears at the bottom of public pages (Home, Explore, Discover, etc.) when a pending invite return URL exists in `sessionStorage`. This gives the fan a one-tap way to get back.
 
-**Files:**
-- `src/components/TrackCard.tsx` -- update card container, thumbnail, gap, text, action sizing
-- `src/components/ui/skeletons/TrackCardSkeleton.tsx` -- mirror the same dimensions exactly
+**New file:** `src/components/InviteReturnBanner.tsx`
 
-### 2. Feed List Spacing
+Visual design:
+- Fixed at the bottom of the screen (above any bottom nav if present)
+- Small pill/banner: dark background with blur, subtle border
+- Text: "You have a pending invite" + "Return" button
+- Dismiss (X) button to hide it for the session
+- Only shown on public pages (not on `/early-access` itself, not on `/join/*` pages)
 
-The track list in `FeedMusicTab.tsx` currently uses `space-y-2` (8px gap between cards). The fix pack specifies 14px gap.
+Behavior:
+- Reads `flymusic_invite_return_url` from `sessionStorage`
+- If present and current route is NOT the invite page itself, show the banner
+- "Return" button navigates to the stored URL
+- Dismiss button removes the key from `sessionStorage` (gone for the session)
+- Auto-clears when the user reaches `/join/*` (invite completed)
 
-**File:** `src/components/feed/FeedMusicTab.tsx`
-- Change `space-y-2` to `space-y-3.5` (14px) on the StaggeredList
+### 3. Add the banner to the app layout
 
-### 3. No Horizontal Page Scroll
+**File:** `src/App.tsx`
+- Render `InviteReturnBanner` inside the main layout (after `NavigationWrapper`), so it appears on all public pages
 
-The app uses `FlightdeckLayout` as the root shell where `<main>` is the scroll container with `overflow-y-auto`. There is no `overflow-x` constraint on it, so wide content (e.g., full-bleed elements, or the sticky header's `-mx-4` trick) can cause a horizontal scroll.
+### 4. Update EarlyAccess "Back to home" behavior
 
-**Fix approach -- two layers:**
-
-**A) Global CSS (App.css):** Add `overflow-x: hidden` to the root scroll containers and a universal `box-sizing: border-box` reset. Also add `max-width: 100%` defaults for media elements (img, video, canvas).
-
-**B) FlightdeckLayout.tsx:** Add `overflow-x-hidden` to the `<main>` scroll container so no child can cause horizontal expansion.
-
-**C) FanFeed.tsx:** Add `overflow-x-hidden` to the page content wrapper as a belt-and-suspenders safeguard.
-
-**Files:**
-- `src/App.css` -- add box-sizing reset, media max-width, and `overflow-x: hidden` on body
-- `src/components/flightdeck/FlightdeckLayout.tsx` -- add `overflow-x-hidden` to `<main>`
-- `src/pages/FanFeed.tsx` -- add `overflow-x-hidden` to the outer feed wrapper
-
-### 4. Touch-action Constraint
-
-Add `touch-action: pan-y` on the feed page's main content area so horizontal page-level dragging is blocked on mobile (only vertical scroll allowed). This prevents accidental sideways page drags on iOS Safari.
-
-**File:** `src/pages/FanFeed.tsx` -- add inline `style={{ touchAction: 'pan-y' }}` to the feed content main element
-
-## Technical Details
-
-### TrackCard.tsx Changes
-
-```
-Outer container:
-  Before: gap-3 md:gap-4 p-3 md:p-4 h-[68px] md:h-auto rounded-xl
-  After:  gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px]
-
-Thumbnail:
-  Before: w-14 h-14 md:w-16 md:h-16
-  After:  w-[60px] h-[60px] md:w-16 md:h-16
-
-Title:
-  Before: text-base md:text-sm
-  After:  text-base md:text-sm font-bold (change from font-semibold to font-bold = 700)
-
-Subtitle (artist name):
-  Before: text-sm md:text-xs
-  After:  text-[13px] md:text-xs opacity-80
-
-Action buttons container:
-  Before: gap-1
-  After:  gap-2.5
-```
-
-### TrackCardSkeleton.tsx Changes
-
-Mirror every dimension change from TrackCard so skeleton-to-real transitions remain seamless:
-
-```
-Container: gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px]
-Thumbnail skeleton: w-[60px] h-[60px] md:w-16 md:h-16
-Action circles: gap-2.5
-```
-
-### App.css Additions
-
-```css
-*, *::before, *::after { box-sizing: border-box; }
-img, video, canvas { max-width: 100%; height: auto; display: block; }
-```
-
-Note: `overflow: hidden` already exists on html/body in App.css, which includes both x and y. The FlightdeckLayout's `<main>` handles vertical scroll, so this is fine. The additional `overflow-x-hidden` on `<main>` is the key fix.
-
-### FlightdeckLayout.tsx Change
-
-Add `overflow-x-hidden` to the `<main>` className:
-
-```
-Before: "flex-1 min-h-0 overflow-y-auto overscroll-contain scrollbar-auto-hide"
-After:  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-auto-hide"
-```
+**File:** `src/pages/EarlyAccess.tsx`
+- Keep the "Back to home" button as-is (navigate to `/`)
+- The invite return URL is already stored in `sessionStorage`, so the banner will appear on the home page letting the user come back
 
 ## Files Summary
 
-| File | Change |
-|------|--------|
-| `src/components/TrackCard.tsx` | Bigger card: min-h-[88px], 60px thumb, gap-3.5, rounded-[14px], bolder title, wider action gap |
-| `src/components/ui/skeletons/TrackCardSkeleton.tsx` | Mirror all card dimensions for seamless skeleton-to-real transition |
-| `src/components/feed/FeedMusicTab.tsx` | Increase list gap from space-y-2 to space-y-3.5 (14px) |
-| `src/App.css` | Add box-sizing reset and media max-width defaults |
-| `src/components/flightdeck/FlightdeckLayout.tsx` | Add overflow-x-hidden to main scroll container |
-| `src/pages/FanFeed.tsx` | Add overflow-x-hidden and touch-action: pan-y to feed wrapper |
+| File | Action | Change |
+|------|--------|--------|
+| `src/pages/EarlyAccess.tsx` | Modify | Store invite return URL in sessionStorage on mount; clear on successful unlock |
+| `src/components/InviteReturnBanner.tsx` | Create | Floating banner component that shows when a pending invite URL exists in sessionStorage |
+| `src/App.tsx` | Modify | Add InviteReturnBanner to the layout |
+
+## Technical Details
+
+### sessionStorage key
+
+```
+Key: "flymusic_invite_return_url"
+Value: "/early-access?role=fan&code=FLYMUSIC-XXXX"  (full path + query)
+```
+
+Using `sessionStorage` (not `localStorage`) so it automatically clears when the browser tab is closed -- no stale banners on future visits.
+
+### InviteReturnBanner component
+
+```text
+Position: fixed bottom-20 (above mobile bottom nav) or bottom-4 (if no bottom nav)
+Z-index: 40 (below nav but above content)
+Layout: flex row with icon + text + "Return" button + dismiss X
+Animation: slide up on mount (framer-motion)
+```
+
+Hidden on these routes:
+- `/early-access` (already on the page)
+- `/join/*` (invite flow completed)
+- `/fan/onboarding` (already past the gate)
+- `/fan/dashboard` (already activated)
+
+### EarlyAccess.tsx sessionStorage logic
+
+```text
+On mount:
+  const returnUrl = location.pathname + location.search
+  sessionStorage.setItem("flymusic_invite_return_url", returnUrl)
+
+On successful code validation (before navigate):
+  sessionStorage.removeItem("flymusic_invite_return_url")
+```
 
 ## What's NOT Changing
 
-- Tab design / interaction (already sticky, already horizontally scrollable)
-- Bottom nav positioning (already fixed with safe-area padding)
-- Desktop layout (all mobile changes use responsive breakpoints)
-- Feed page structure (no redesign)
-
+- The invite code validation flow (same edge function, same redirect)
+- The EarlyAccess page design or layout
+- Navigation menus or header
+- Any protected route behavior
