@@ -1,158 +1,137 @@
 
-# Unified Full-Screen Video Feed + Artist Profile Clipping Fix
+# Fix Video Feed: Mute Sync, Like System, Counter, Share, and Navigation
 
-## Overview
+## Issues Identified (5 fixes)
 
-This plan addresses two critical issues and one major feature:
-1. **Artist profile clipping on mobile** - avatar/name hidden behind navbar
-2. **Full-screen vertical video feed** - TikTok/Reels-style swipe experience
-3. **Unified video feed system** - one code path for all entry points
+### 1. Mute State Not Synced Across Videos
+**Problem:** Each `FullScreenVideoItem` manages its own `isMuted` state. When you unmute video 1 and swipe to video 2, it is muted again. You have to tap unmute on every single video.
 
----
+**Fix:** Lift the mute state up to `FullScreenVideoFeed` and pass it down as a prop. When any video is unmuted/muted, the setting applies globally to all videos in the feed.
 
-## Part 1: Artist Profile Clipping Fix
+**File: `src/components/video/FullScreenVideoFeed.tsx`**
+- Add `const [isMuted, setIsMuted] = useState(true)` at the feed level
+- Pass `isMuted` and `onToggleMute` down to each `FullScreenVideoItem`
 
-### Problem
-The hero section avatar and name get clipped behind the fixed 64px navbar on mobile. The current `aspect-[5/2]` ratio gives ~150px on a 375px screen, but the avatar (96px) plus name/badges/buttons requires more vertical space. The content is `absolute bottom-0` positioned, so it overflows upward behind the navbar.
-
-### Fix
-Change the layout approach so the profile info section has guaranteed minimum height rather than relying solely on the banner aspect ratio to contain it.
-
-**File: `src/components/artist/ArtistHeroSection.tsx`**
-
-- Add `min-h-[280px] md:min-h-0` to the outer container so on mobile the hero section always has enough room for the profile overlay content
-- This works alongside the existing `aspect-[5/2]` ratio -- the aspect ratio applies when the banner image is tall enough, and `min-h` kicks in as a safety net when content needs more space
+**File: `src/components/video/FullScreenVideoItem.tsx`**
+- Remove local `isMuted` state
+- Accept `isMuted` and `onToggleMute` as props
+- Apply the shared mute state to the `<video>` element
 
 ---
 
-## Part 2: Full-Screen Vertical Video Feed (New Component)
+### 2. Heart Button: Like (Not Favorites) + Like Count
+**Problem:** The heart button says "Added to favorites." It should be a simple like -- and the like count should be visible both in the full-screen feed and in the feed grid cards.
 
-### Architecture
+**Fix:**
+- Create a `video_likes` database table to track likes per video per user
+- Add a `like_count` column to `artist_video_posts` (with a trigger to keep it in sync)
+- In `FullScreenVideoItem`: change the heart button to toggle a like (not favorites), show the like count below the heart icon
+- In `CompactVideoCard`: show the like count on the grid thumbnail
+- Load like state from the database when feed opens (check if user has liked each video)
 
-Create a single unified `FullScreenVideoFeed` component that acts as a full-screen overlay with vertical snap-scrolling. This is used from every entry point (Feed, Artist profile, Spotlight, Explore).
+**Database migration:**
+```sql
+-- Create video_likes table
+CREATE TABLE public.video_likes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_id UUID NOT NULL REFERENCES public.artist_video_posts(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(video_id, user_id)
+);
 
-```text
-+------------------------------------------+
-|  [X Close]                    [Mute icon] |
-|                                           |
-|         FULL SCREEN VIDEO                 |
-|         (object-cover, 100vh)             |
-|                                           |
-|  [Avatar] Artist Name  (tappable)         |
-|  Caption text...                          |
-|                                           |
-|  [Like] [Share] [More]    (right sidebar) |
-+------------------------------------------+
-     Swipe up/down = next/prev video
+-- Add like_count to artist_video_posts
+ALTER TABLE public.artist_video_posts 
+  ADD COLUMN IF NOT EXISTS like_count INTEGER NOT NULL DEFAULT 0;
+
+-- RLS policies
+ALTER TABLE public.video_likes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view video likes" ON public.video_likes
+  FOR SELECT USING (true);
+
+CREATE POLICY "Authenticated users can like" ON public.video_likes
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can unlike their own" ON public.video_likes
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Trigger to sync like_count
+CREATE OR REPLACE FUNCTION update_video_like_count()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE artist_video_posts SET like_count = like_count + 1 WHERE id = NEW.video_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE artist_video_posts SET like_count = like_count - 1 WHERE id = OLD.video_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER video_likes_count_trigger
+AFTER INSERT OR DELETE ON public.video_likes
+FOR EACH ROW EXECUTE FUNCTION update_video_like_count();
 ```
 
-### New Files
+**File: `src/hooks/useFullScreenVideoFeed.ts`**
+- Add `likeCount` to the `FeedVideo` interface
 
-**1. `src/components/video/FullScreenVideoFeed.tsx`**
+**File: `src/components/video/FullScreenVideoItem.tsx`**
+- On mount, check if current user has liked this video (query `video_likes`)
+- Toggle like inserts/deletes from `video_likes` table
+- Show like count below the heart icon
+- Change toast messages: remove "Added to favorites", just show filled heart (no toast)
 
-The core feed component. Accepts:
-- `videos`: array of video objects (id, video_url, thumbnail_url, caption, artist info)
-- `initialIndex`: which video to start on
-- `onClose`: callback to dismiss the feed
-- `onLoadMore`: optional callback for infinite scroll
+**File: `src/components/feed/CompactVideoCard.tsx`**
+- Accept and display `likeCount` on the card (small heart icon + number)
 
-Features:
-- Fixed full-screen overlay (`fixed inset-0 z-[100] bg-black`)
-- CSS `snap-y snap-mandatory` container with `overflow-y-scroll`
-- Each video occupies `h-[100dvh] snap-start`
-- IntersectionObserver to autoplay the visible video and pause others
-- Touch swipe detection for smooth transitions
-- Muted autoplay with unmute button (mobile autoplay policy)
-- Close button (top-left X)
-- Artist info overlay (bottom-left) with tappable name for navigation
-- Action bar (right side): Like, Share, More
-- Preloads adjacent videos for instant transition
-
-**2. `src/components/video/FullScreenVideoItem.tsx`**
-
-Individual video card within the feed:
-- Full-height video with `object-cover`
-- Thumbnail `<img>` shown until video can play (no black frames)
-- Play/pause on tap (center of screen)
-- Double-tap to like (heart animation)
-- Artist avatar + name (tappable, navigates to profile)
-- Caption text (bottom, max 2 lines)
-- Autoplay when in view via IntersectionObserver
-
-**3. `src/hooks/useFullScreenVideoFeed.ts`**
-
-State management hook:
-- Tracks `isOpen`, `videos[]`, `currentIndex`
-- `openFeed(videos, startIndex)` -- opens the overlay
-- `closeFeed()` -- dismisses and restores scroll position
-- Handles body scroll lock when feed is open
-- Provides `onNavigateToArtist(artistId)` that closes feed, navigates, and preserves state for back-navigation
-
-### Data Format
-
-All entry points normalize their video data into a common interface:
-
-```typescript
-interface FeedVideo {
-  id: string;
-  videoUrl: string;
-  thumbnailUrl: string | null;
-  caption: string | null;
-  artistId: string;
-  artistUserId: string;
-  artistName: string;
-  artistAvatar: string | null;
-}
-```
+**File: `src/components/feed/FeedVideosTab.tsx`**
+- Pass `likeCount` into feed videos data
 
 ---
 
-## Part 3: Integration Points (One System, Every Entry Point)
+### 3. Remove Video Counter ("3 / 3")
+**Problem:** The counter "1 / 3", "2 / 3", "3 / 3" shown at the top center is unnecessary and breaks the immersive feel.
 
-### A. Feed Videos Tab (`src/components/feed/CompactVideoCard.tsx`)
+**Fix:** Delete the counter `<div>` from `FullScreenVideoFeed.tsx` (lines 98-101).
 
-- On card tap: open `FullScreenVideoFeed` with all Feed videos, starting at tapped index
-- Remove current hover-to-play behavior on mobile (only desktop)
-- Card remains as grid thumbnail with play icon overlay
-
-### B. Artist Profile Videos (`src/components/artist/ArtistVideosSection.tsx`)
-
-- Replace the existing `VideoFullscreenModal` (horizontal prev/next with Dialog) with `FullScreenVideoFeed`
-- When `onOpenFullscreen(index)` is called, open the unified feed instead
-- Pass the artist's videos array to the feed
-
-### C. Discover Feed (`src/components/discover/DiscoverVideoCard.tsx`)
-
-- Already has full-screen-like behavior with snap scrolling
-- Integrate with the unified component to share the same UX patterns (action bar, artist overlay, like animation)
-
-### D. Feed Videos Tab container (`src/components/feed/FeedVideosTab.tsx`)
-
-- Pass video list and an `onVideoTap(index)` handler
-- Handler opens `FullScreenVideoFeed`
+**File: `src/components/video/FullScreenVideoFeed.tsx`**
+- Remove the video counter element entirely
 
 ---
 
-## Part 4: State Preservation for Navigation
+### 4. Share Button Not Working (from Feed)
+**Problem:** The share button in the full-screen feed does nothing because `FeedVideosTab` doesn't pass an `onShare` callback to `FullScreenVideoFeed`. On the artist page it works because `ArtistVideosSection` wires it up to `VideoShareModal`.
 
-When user taps an artist name inside the full-screen feed:
-1. Store current `feedState` (videos array, current index) in a React ref or context
-2. Close the feed overlay
-3. Navigate to `/artist/:userId` via `react-router-dom`
-4. On browser back, the feed page re-renders with cached data -- no refetch needed since data is in React state
+**Fix:** Use the native Web Share API directly inside `FullScreenVideoItem` instead of relying on a parent callback. This makes sharing work from every entry point without external wiring.
 
-This avoids losing scroll position or triggering full page reloads.
+**File: `src/components/video/FullScreenVideoItem.tsx`**
+- Replace `onShare?.()` with direct share logic:
+  - Try `navigator.share()` first (native mobile share sheet)
+  - Fall back to `navigator.clipboard.writeText()` with a toast confirmation
+  - Share URL format: `{origin}/artist/{artistUserId}?video={videoId}`
+
+**File: `src/components/video/FullScreenVideoFeed.tsx`**
+- Remove the `onShare` prop (no longer needed)
+
+**Files referencing onShare:**
+- `src/components/feed/FeedVideosTab.tsx` -- remove `onShare` prop
+- `src/components/artist/ArtistVideosSection.tsx` -- remove `onShare` from `FullScreenVideoFeed`
 
 ---
 
-## Part 5: Mobile-First Design Principles
+### 5. Back Navigation After Artist Tap
+**Problem:** When you tap an artist name in the feed, it navigates to their profile. Pressing back does not return to the video feed -- it goes back to the underlying page without reopening the feed overlay.
 
-- All touch targets are minimum 44x44px
-- Swipe gestures use `scroll-snap` (native browser, no JS touch math needed)
-- `100dvh` (dynamic viewport height) used to account for mobile browser chrome
-- Video autoplay uses `muted playsInline` for iOS Safari compatibility
-- Unmute prompt shown as floating button
-- Close button is thumb-reachable (top-left or swipe-down gesture)
+**Fix:** This is inherently tricky because the feed is a React overlay, not a URL route. The cleanest solution: use `window.history.pushState` to push a virtual state when the feed opens, and listen for `popstate` to close it. This makes the browser back button close the feed (returning to the underlying page with its scroll position intact).
+
+When tapping an artist name, the feed closes (restoring scroll), then navigates to the artist page. Pressing browser back from the artist page returns to `/fan/feed` where the grid is visible. The user can tap a video to reopen the feed.
+
+**File: `src/hooks/useFullScreenVideoFeed.ts`**
+- On `openFeed`: push a history state `{ videoFeedOpen: true }`
+- Listen for `popstate`: if state changes away from `videoFeedOpen`, close the feed
+- On `closeFeed`: if history state is `videoFeedOpen`, go back one step
 
 ---
 
@@ -160,37 +139,32 @@ This avoids losing scroll position or triggering full page reloads.
 
 | File | Purpose |
 |------|---------|
-| `src/components/video/FullScreenVideoFeed.tsx` | Main full-screen overlay with snap-scroll container |
-| `src/components/video/FullScreenVideoItem.tsx` | Individual video slide with controls and overlays |
-| `src/hooks/useFullScreenVideoFeed.ts` | State management hook for opening/closing the feed |
+| (none -- all changes are modifications) | |
+
+## Database Migration
+
+| Table | Change |
+|-------|--------|
+| `video_likes` | New table for tracking likes |
+| `artist_video_posts` | Add `like_count` column |
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/artist/ArtistHeroSection.tsx` | Add `min-h-[280px]` safety net for mobile |
-| `src/components/feed/CompactVideoCard.tsx` | On tap, open full-screen feed instead of inline play |
-| `src/components/feed/FeedVideosTab.tsx` | Wire up `FullScreenVideoFeed` for all Feed videos |
-| `src/components/artist/ArtistVideosSection.tsx` | Replace `VideoFullscreenModal` with unified feed |
-| `src/components/artist/VideoCard.tsx` | On tap/play, trigger unified feed |
-
-## Files to Remove (after migration)
-
-| File | Reason |
-|------|--------|
-| `src/components/artist/VideoFullscreenModal.tsx` | Replaced by `FullScreenVideoFeed` |
-
----
+| File | Changes |
+|------|---------|
+| `src/components/video/FullScreenVideoFeed.tsx` | Lift mute state, remove counter, remove onShare prop |
+| `src/components/video/FullScreenVideoItem.tsx` | Accept shared mute state, real like system with count, built-in share |
+| `src/hooks/useFullScreenVideoFeed.ts` | Add likeCount to FeedVideo, history state for back nav |
+| `src/components/feed/FeedVideosTab.tsx` | Pass likeCount, remove onShare |
+| `src/components/feed/CompactVideoCard.tsx` | Show like count on card |
+| `src/components/artist/ArtistVideosSection.tsx` | Remove onShare from feed, pass likeCount |
 
 ## Acceptance Criteria
 
-- Artist profile avatar and name are never clipped on mobile
-- Tapping any video card (Feed, Artist, Discover) opens a full-screen vertical feed
-- Swiping up/down navigates between videos with snap behavior
-- Videos autoplay (muted) when visible, pause when scrolled away
-- Thumbnails show immediately -- no black frames
-- Artist name is visible and tappable to navigate to profile
-- Navigating to an artist and pressing back returns to the feed (state preserved)
-- Same experience across all entry points
-- Mobile Safari (iOS) works correctly with `playsInline` and muted autoplay
-- Desktop shows the same overlay (mouse scroll replaces swipe)
+- Unmuting one video keeps all subsequent videos unmuted (and vice versa)
+- Heart button toggles a "like" (not favorites), shows the like count
+- Like count visible both in full-screen feed and feed grid cards
+- No "X / Y" counter shown at the top of the feed
+- Share button opens native share sheet on mobile, copies link on desktop
+- Browser back button from artist profile returns to the feed page
+- All changes work on both mobile and desktop
