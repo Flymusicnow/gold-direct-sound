@@ -1,9 +1,12 @@
+import { useState } from "react";
 import { Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate } from "react-router-dom";
 import { CompactVideoCard } from "./CompactVideoCard";
 import { StaggeredList } from "@/components/ui/StaggeredList";
+import { FullScreenVideoFeed } from "@/components/video/FullScreenVideoFeed";
+import { useFullScreenVideoFeed, type FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
 interface VideoPost {
   id: string;
@@ -26,6 +29,21 @@ interface FeedVideosTabProps {
 export function FeedVideosTab({ videos }: FeedVideosTabProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const feed = useFullScreenVideoFeed();
+
+  const handleVideoTap = (index: number) => {
+    const feedVideos: FeedVideo[] = videos.map(v => ({
+      id: v.id,
+      videoUrl: v.video_url,
+      thumbnailUrl: v.thumbnail_url,
+      caption: v.caption,
+      artistId: v.artist_profiles.id,
+      artistUserId: v.artist_profiles.user_id,
+      artistName: v.artist_profiles.artist_name,
+      artistAvatar: v.artist_profiles.avatar_url,
+    }));
+    feed.openFeed(feedVideos, index);
+  };
 
   if (videos.length === 0) {
     return (
@@ -55,7 +73,7 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
         className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4" 
         staggerDelay={0.06}
       >
-        {videos.map((video) => (
+        {videos.map((video, index) => (
           <CompactVideoCard
             key={video.id}
             videoId={video.id}
@@ -64,9 +82,18 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
             caption={video.caption}
             createdAt={video.created_at}
             artist={video.artist_profiles}
+            onTap={() => handleVideoTap(index)}
           />
         ))}
       </StaggeredList>
+
+      {feed.isOpen && (
+        <FullScreenVideoFeed
+          videos={feed.videos}
+          initialIndex={feed.initialIndex}
+          onClose={feed.closeFeed}
+        />
+      )}
     </div>
   );
 }

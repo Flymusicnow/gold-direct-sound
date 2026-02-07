@@ -726,6 +726,8 @@ export default function ArtistProfile() {
                 <ArtistVideosSection
                   artistId={artist.id}
                   artistName={artist.artist_name}
+                  artistAvatar={artist.avatar_url}
+                  artistUserId={artist.user_id}
                 />
               </TabsContent>
 

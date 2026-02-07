@@ -3,10 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Video } from "lucide-react";
 import { VideoShareModal } from "@/components/video/VideoShareModal";
-import { VideoFullscreenModal } from "./VideoFullscreenModal";
 import { EmptyStateCard } from "./EmptyStateCard";
 import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
 import { VideoCard } from "./VideoCard";
+import { FullScreenVideoFeed } from "@/components/video/FullScreenVideoFeed";
+import { useFullScreenVideoFeed, type FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
 interface VideoPost {
   id: string;
@@ -21,19 +22,18 @@ interface VideoPost {
 interface ArtistVideosSectionProps {
   artistId: string;
   artistName: string;
+  artistAvatar?: string | null;
+  artistUserId?: string;
 }
 
-export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectionProps) {
+export function ArtistVideosSection({ artistId, artistName, artistAvatar, artistUserId }: ArtistVideosSectionProps) {
   const { user } = useAuth();
   const [videos, setVideos] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
-  const [fullscreenVideo, setFullscreenVideo] = useState<{
-    index: number;
-    url: string;
-  } | null>(null);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
+  const feed = useFullScreenVideoFeed();
 
   useEffect(() => {
     fetchVideos();
@@ -64,18 +64,24 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
   };
 
   const handleOpenFullscreen = (index: number) => {
-    setFullscreenVideo({ index, url: videos[index].video_url });
+    const feedVideos: FeedVideo[] = videos.map(v => ({
+      id: v.id,
+      videoUrl: v.video_url,
+      thumbnailUrl: v.thumbnail_url || null,
+      caption: v.caption,
+      artistId: artistId,
+      artistUserId: artistUserId || artistId,
+      artistName: artistName,
+      artistAvatar: artistAvatar || null,
+      isSupporterOnly: v.is_supporter_only,
+      requiredTier: v.required_tier,
+    }));
+    feed.openFeed(feedVideos, index);
   };
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (!fullscreenVideo) return;
-
-    const newIndex =
-      direction === "prev"
-        ? Math.max(0, fullscreenVideo.index - 1)
-        : Math.min(videos.length - 1, fullscreenVideo.index + 1);
-
-    setFullscreenVideo({ index: newIndex, url: videos[newIndex].video_url });
+  const handleShareFromFeed = (video: FeedVideo) => {
+    const original = videos.find(v => v.id === video.id);
+    if (original) setShareVideo(original);
   };
 
   if (loading) {
@@ -137,14 +143,12 @@ export function ArtistVideosSection({ artistId, artistName }: ArtistVideosSectio
         artistName={artistName}
       />
 
-      {fullscreenVideo && (
-        <VideoFullscreenModal
-          isOpen={!!fullscreenVideo}
-          onClose={() => setFullscreenVideo(null)}
-          currentVideoUrl={fullscreenVideo.url}
-          videos={videos}
-          currentIndex={fullscreenVideo.index}
-          onNavigate={handleNavigate}
+      {feed.isOpen && (
+        <FullScreenVideoFeed
+          videos={feed.videos}
+          initialIndex={feed.initialIndex}
+          onClose={feed.closeFeed}
+          onShare={handleShareFromFeed}
         />
       )}
     </>
