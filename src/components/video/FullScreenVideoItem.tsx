@@ -1,11 +1,12 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Heart, Share2, Play, Volume2, VolumeX } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useVideoLikes } from "@/hooks/useVideoLikes";
+import { VideoCaption } from "./VideoCaption";
 import type { FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
 interface FullScreenVideoItemProps {
@@ -15,6 +16,7 @@ interface FullScreenVideoItemProps {
   onToggleMute: () => void;
   onClose: () => void;
   onCloseFeedForNavigation?: () => void;
+  onCaptionExpandedChange?: (expanded: boolean) => void;
 }
 
 export function FullScreenVideoItem({
@@ -24,6 +26,7 @@ export function FullScreenVideoItem({
   onToggleMute,
   onClose,
   onCloseFeedForNavigation,
+  onCaptionExpandedChange,
 }: FullScreenVideoItemProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -42,7 +45,6 @@ export function FullScreenVideoItem({
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return;
-
     if (isActive) {
       el.currentTime = 0;
       el.play().catch(() => {});
@@ -52,11 +54,9 @@ export function FullScreenVideoItem({
     }
   }, [isActive]);
 
-  // Sync muted state from parent
+  // Sync muted state
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-    }
+    if (videoRef.current) videoRef.current.muted = isMuted;
   }, [isMuted]);
 
   // Clean up timeouts
@@ -83,11 +83,10 @@ export function FullScreenVideoItem({
       return;
     }
 
-    // Single tap — toggle play/pause (with delay to detect double tap)
+    // Single tap — toggle play/pause (delayed for double-tap detection)
     doubleTapTimeout.current = setTimeout(() => {
       const el = videoRef.current;
       if (!el) return;
-
       if (el.paused) {
         el.play().catch(() => {});
         setIsPaused(false);
@@ -95,63 +94,71 @@ export function FullScreenVideoItem({
         el.pause();
         setIsPaused(true);
       }
-
       setShowPlayIcon(true);
       if (playIconTimeout.current) clearTimeout(playIconTimeout.current);
       playIconTimeout.current = setTimeout(() => setShowPlayIcon(false), 600);
     }, 300);
   }, [isLiked, toggleLike]);
 
-  const handleMuteTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    onToggleMute();
-  }, [onToggleMute]);
+  const handleMuteTap = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      onToggleMute();
+    },
+    [onToggleMute]
+  );
 
-  const handleArtistTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    // Use navigation-safe close (no history.back) so navigate() works
-    if (onCloseFeedForNavigation) {
-      onCloseFeedForNavigation();
-    } else {
-      onClose();
-    }
-    navigate(`/artist/${video.artistUserId}`);
-  }, [navigate, video.artistUserId, onClose, onCloseFeedForNavigation]);
-
-  const handleLike = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    if (!user) {
-      toast.error("Please sign in to like videos");
-      return;
-    }
-    toggleLike();
-  }, [user, toggleLike]);
-
-  const handleShare = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    const shareUrl = `${window.location.origin}/artist/${video.artistUserId}?video=${video.id}`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${video.artistName} on FlyMusic`,
-          text: video.caption || `Check out this video by ${video.artistName}`,
-          url: shareUrl,
-        });
+  const handleArtistTap = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      if (onCloseFeedForNavigation) {
+        onCloseFeedForNavigation();
       } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Link copied!");
+        onClose();
       }
-    } catch {
-      // User cancelled share or error
+      navigate(`/artist/${video.artistUserId}`);
+    },
+    [navigate, video.artistUserId, onClose, onCloseFeedForNavigation]
+  );
+
+  const handleLike = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      if (!user) {
+        toast.error("Please sign in to like videos");
+        return;
+      }
+      toggleLike();
+    },
+    [user, toggleLike]
+  );
+
+  const handleShare = useCallback(
+    async (e: React.MouseEvent | React.TouchEvent) => {
+      e.stopPropagation();
+      const shareUrl = `${window.location.origin}/artist/${video.artistUserId}?video=${video.id}`;
       try {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success("Link copied!");
+        if (navigator.share) {
+          await navigator.share({
+            title: `${video.artistName} on FlyMusic`,
+            text: video.caption || `Check out this video by ${video.artistName}`,
+            url: shareUrl,
+          });
+        } else {
+          await navigator.clipboard.writeText(shareUrl);
+          toast.success("Link copied!");
+        }
       } catch {
-        // Ignore
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          toast.success("Link copied!");
+        } catch {
+          // Ignore
+        }
       }
-    }
-  }, [video]);
+    },
+    [video]
+  );
 
   const formatCount = (count: number) => {
     if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -164,6 +171,18 @@ export function FullScreenVideoItem({
       className="relative h-[100dvh] w-full snap-start snap-always flex-shrink-0 bg-black touch-manipulation"
       onClick={handleTap}
     >
+      {/* Fallback placeholder when no thumbnail */}
+      {!video.thumbnailUrl && !videoReady && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+          <Avatar className="h-20 w-20 ring-2 ring-white/10">
+            <AvatarImage src={video.artistAvatar || undefined} />
+            <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
+              {video.artistName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      )}
+
       {/* Thumbnail — shown until video is ready */}
       {video.thumbnailUrl && !videoReady && (
         <img
@@ -177,6 +196,7 @@ export function FullScreenVideoItem({
       <video
         ref={videoRef}
         src={video.videoUrl}
+        poster={video.thumbnailUrl || undefined}
         className={cn(
           "absolute inset-0 w-full h-full object-cover",
           !videoReady && "opacity-0"
@@ -218,7 +238,10 @@ export function FullScreenVideoItem({
       {/* Mute button — top right */}
       <button
         onClick={handleMuteTap}
-        onTouchEnd={(e) => { e.preventDefault(); handleMuteTap(e); }}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          handleMuteTap(e);
+        }}
         className="absolute top-14 right-4 z-20 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center touch-manipulation"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
@@ -234,15 +257,25 @@ export function FullScreenVideoItem({
         {/* Like */}
         <button
           onClick={handleLike}
-          onTouchEnd={(e) => { e.preventDefault(); handleLike(e); }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleLike(e);
+          }}
           className="flex flex-col items-center gap-1 touch-manipulation"
           aria-label="Like"
         >
-          <div className={cn(
-            "w-11 h-11 rounded-full flex items-center justify-center",
-            isLiked ? "bg-red-500/20" : "bg-black/40"
-          )}>
-            <Heart className={cn("w-6 h-6", isLiked ? "text-red-500 fill-red-500" : "text-white")} />
+          <div
+            className={cn(
+              "w-11 h-11 rounded-full flex items-center justify-center",
+              isLiked ? "bg-red-500/20" : "bg-black/40"
+            )}
+          >
+            <Heart
+              className={cn(
+                "w-6 h-6",
+                isLiked ? "text-red-500 fill-red-500" : "text-white"
+              )}
+            />
           </div>
           <span className="text-white text-xs font-medium">
             {formatCount(likeCount)}
@@ -252,7 +285,10 @@ export function FullScreenVideoItem({
         {/* Share */}
         <button
           onClick={handleShare}
-          onTouchEnd={(e) => { e.preventDefault(); handleShare(e); }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            handleShare(e);
+          }}
           className="flex flex-col items-center gap-1 touch-manipulation"
           aria-label="Share"
         >
@@ -262,32 +298,15 @@ export function FullScreenVideoItem({
         </button>
       </div>
 
-      {/* Bottom info — artist + caption */}
-      <div className="absolute bottom-6 left-4 right-16 z-20">
-        {/* Artist row */}
-        <button
-          onClick={handleArtistTap}
-          onTouchEnd={(e) => { e.preventDefault(); handleArtistTap(e); }}
-          className="flex items-center gap-2.5 mb-2.5 touch-manipulation"
-        >
-          <Avatar className="h-9 w-9 ring-2 ring-white/30">
-            <AvatarImage src={video.artistAvatar || undefined} />
-            <AvatarFallback className="bg-primary/20 text-primary text-sm font-bold">
-              {video.artistName.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-white font-semibold text-sm drop-shadow-lg">
-            {video.artistName}
-          </span>
-        </button>
-
-        {/* Caption */}
-        {video.caption && (
-          <p className="text-white/90 text-sm line-clamp-2 drop-shadow-lg">
-            {video.caption}
-          </p>
-        )}
-      </div>
+      {/* Bottom info — artist + caption with fade preview */}
+      <VideoCaption
+        caption={video.caption}
+        artistName={video.artistName}
+        artistAvatar={video.artistAvatar}
+        artistUserId={video.artistUserId}
+        onArtistTap={handleArtistTap}
+        onExpandedChange={onCaptionExpandedChange}
+      />
     </div>
   );
 }
