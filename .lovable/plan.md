@@ -1,112 +1,85 @@
 
 
-# Fix: Mobile Feed Content Container Height Bug
+# Fix: Align Real Track Rows to Match Skeleton Symmetry
 
-## Root Cause Analysis
+## Problem
 
-The FanFeed page has **two completely separate render trees** -- one for loading (early return at line 299) and one for loaded (line 339). When `loading` flips from `true` to `false`, React **unmounts the entire loading DOM tree and mounts a new loaded tree**. This causes:
+The skeleton rows and real track card rows use different sizing values, causing a visual "jump" when content loads and an uneven rhythm in the loaded list.
 
-1. **Brief layout collapse** -- during the swap, the container momentarily has no content, causing the FlightdeckLayout scroll container to collapse to zero height before the new content renders
-2. **PageTransition animation** -- the loaded state wraps content in a `motion.div` that starts at `opacity: 0, y: 8`. During this animation, the browser may not calculate dimensions correctly, resulting in the "squeezed" container
-3. **`overflow-x-hidden` on the wrapper** -- unique to FanFeed (no other fan page has this). This creates a new block formatting context that can interact unpredictably with the parent FlightdeckLayout scroll container (`flex-1 min-h-0 overflow-y-auto`)
-4. **`min-h-screen` (100vh) is unreliable on mobile Safari** -- iOS dynamically changes the viewport height as the address bar shows/hides, causing `100vh` to be larger than the visible area
+### Current Mismatches
 
-### Layout chain on mobile
-```text
-html/body          -> height:100%, overflow:hidden
-  #root            -> height:100%
-    FlightdeckLayout -> h-screen, overflow-hidden, flex flex-col
-      <main>       -> flex-1, min-h-0, overflow-y-auto  <-- scroll container
-        FanFeed wrapper -> flex, min-h-screen, pt-16, overflow-x-hidden  <-- BUG SOURCE
-          FanSidebar   -> hidden on mobile
-          <main>       -> flex-1, p-4, pb-52
-            content...
-```
+| Property | Skeleton | Real Card (mobile) | Fix |
+|----------|----------|-------------------|-----|
+| Padding | `p-4` (16px) | `p-3` (12px) | Align to `p-3` |
+| Gap | `gap-4` (16px) | `gap-3` (12px) | Align to `gap-3` |
+| Thumbnail | `w-16 h-16` (64px) | `w-14 h-14` (56px) | Align to `w-14 h-14` |
+| Right area | Single `h-9 w-9` circle | 3 buttons x `h-10 w-10` + `gap-2` | Skeleton gets 3 small circles |
+| Row height | Implicit ~80px | Variable (description adds height) | Fixed `h-[68px]` on mobile |
+| Description | Not present | Optional extra line | Hide on mobile via `hidden md:block` |
+| Border | `border-border/50`, `bg-card/50` | `border-border`, `bg-card` | Align skeleton to match card |
 
-## Fix
+## Changes
 
-### Strategy: Unified shell, content-only swap
+### File: `src/components/ui/skeletons/TrackCardSkeleton.tsx`
 
-Instead of two completely separate render trees, use a **single shared shell** for both loading and loaded states. Only the inner content changes. This eliminates the layout collapse during the loading-to-loaded transition.
+Update the skeleton to mirror the real card's structure exactly:
 
-### File: `src/pages/FanFeed.tsx`
+- Change padding from `p-4` to `p-3 md:p-4`
+- Change gap from `gap-4` to `gap-3 md:gap-4`
+- Change thumbnail from `w-16 h-16` to `w-14 h-14 md:w-16 md:h-16`
+- Add a fixed height: `h-[68px] md:h-auto`
+- Replace the single right-side circle with 3 small circles matching the 3 action buttons (ListMusic, Plus, Heart)
+- Match border/bg to `border-border bg-card`
 
-**Changes:**
+### File: `src/components/TrackCard.tsx`
 
-1. **Remove the early return** for loading state (lines 299-336). Instead, render one unified shell that always mounts, and conditionally render skeleton or real content inside it.
+Lock the real card row to a fixed height on mobile so all rows are uniform:
 
-2. **Replace `min-h-screen` with `min-h-[100dvh]`** on the outer wrapper for proper mobile Safari dynamic viewport handling. Add a fallback via inline style for browsers that don't support `dvh`.
+- Add `h-[68px] md:h-auto` to the outer container (same as skeleton)
+- Hide the optional description on mobile: change `track.description &&` to render with `hidden md:block` so it never increases row height on mobile
+- Ensure title uses `truncate` (already does) -- keep as-is
+- Ensure artist name uses `truncate` (already does) -- keep as-is
+- Tighten the right-side action buttons: reduce gap from `gap-2` to `gap-1` on mobile so buttons sit closer together, reducing right-side width
+- Reduce icon sizes from `h-6 w-6` to `h-5 w-5` on mobile for tighter fit within the fixed row height
 
-3. **Remove `overflow-x-hidden`** from the outer wrapper -- it's unnecessary (FlightdeckLayout already handles overflow) and creates formatting context issues.
+## Detailed Changes
 
-4. **Move PageTransition inside the content area only**, not wrapping the entire shell. This prevents the animation from affecting the container dimensions.
+### TrackCardSkeleton.tsx -- full replacement
 
-### Before (two separate trees)
-```text
-if (loading) {
-  return (
-    <MobileFanNav />
-    <div className="flex min-h-screen ...overflow-x-hidden">   <-- Tree A
-      <FanSidebar />
-      <main>...skeletons...</main>
-    </div>
-    <BottomNavBarFan />
-  );
-}
-
-return (
-  <MobileFanNav />
-  <div className="flex min-h-screen ...overflow-x-hidden">     <-- Tree B (full unmount/remount)
-    <FanSidebar />
-    <main>
-      <PageTransition>...content...</PageTransition>           <-- animation affects container
-    </main>
+```tsx
+<div className="flex items-center gap-3 md:gap-4 p-3 md:p-4 h-[68px] md:h-auto rounded-xl bg-card border border-border">
+  <Skeleton className="w-14 h-14 md:w-16 md:h-16 rounded-lg flex-shrink-0" />
+  <div className="flex-1 min-w-0 space-y-2">
+    <Skeleton className="h-4 w-3/4" />
+    <Skeleton className="h-3 w-1/2" />
   </div>
-  <BottomNavBarFan />
-);
-```
-
-### After (single shell, content swap)
-```text
-return (
-  <MobileFanNav />
-  <div className="flex w-full pt-16 min-h-[100dvh]">          <-- Single shell, no overflow-x-hidden
-    <FanSidebar />
-    <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8">
-      <PageBreadcrumb />
-      <div className="max-w-7xl mx-auto space-y-5">
-        {loading ? (
-          ...skeletons...                                       <-- Same container, different content
-        ) : (
-          <PageTransition>...content...</PageTransition>        <-- Animation only on inner content
-        )}
-      </div>
-    </main>
+  <div className="flex items-center gap-1 md:gap-1 flex-shrink-0">
+    <Skeleton className="h-8 w-8 md:h-9 md:w-9 rounded-full" />
+    <Skeleton className="h-8 w-8 md:h-9 md:w-9 rounded-full" />
+    <Skeleton className="h-8 w-8 md:h-9 md:w-9 rounded-full" />
   </div>
-  <BottomNavBarFan />
-);
+</div>
 ```
 
-### Specific code changes:
+### TrackCard.tsx -- specific changes
 
-1. Remove the entire `if (loading) { return (...) }` block (lines 299-336)
-2. In the main return, wrap the content section in a conditional:
-   - `loading === true`: render header skeleton + tabs skeleton + track card skeletons (same as before)
-   - `loading === false`: render the header, FeedTabs, content grid inside PageTransition
-3. Change outer wrapper class from `"flex min-h-screen w-full pt-16 overflow-x-hidden"` to `"flex w-full pt-16 min-h-[100dvh]"`
-4. Add inline style `style={{ minHeight: '100dvh' }}` as the primary value (CSS property), with the Tailwind class as fallback
+1. **Outer container** (line 99): add `h-[68px] md:h-auto`
+2. **Description** (lines 134-138): add `hidden md:block` to prevent it from expanding row height on mobile
+3. **Action button container** (line 142): change `gap-2 md:gap-1` to `gap-1`
+4. **Action button sizes** (lines 146, 163, 176): change `h-10 w-10 md:h-9 md:w-9` to `h-9 w-9`
+5. **Icon sizes** (lines 157, 170, 181): change `h-6 w-6 md:h-5 md:w-5` to `h-5 w-5`
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/FanFeed.tsx` | Unify loading/loaded into single shell; replace `min-h-screen` with `min-h-[100dvh]`; remove `overflow-x-hidden`; conditional content instead of conditional return |
+| `src/components/ui/skeletons/TrackCardSkeleton.tsx` | Match real card structure: same padding, gap, thumbnail size, 3 action circles, fixed height |
+| `src/components/TrackCard.tsx` | Fixed row height on mobile, hide description on mobile, tighten action button spacing and icon sizes |
 
 ## Acceptance Criteria
 
-- On mobile portrait, feed content fills the available viewport height consistently
-- No "squeezed" or "compact" container on any tab (Music, Videos, Spotlight, Artists)
-- Switching between tabs does not cause the content area to shrink
-- Loading skeleton and loaded content have identical container sizing
-- No large empty dead space caused by incorrect container height
-- Desktop layout remains unchanged
+- Skeleton rows and real rows have identical height and proportions on mobile
+- All real rows are the same height regardless of content length (title, artist truncated)
+- No layout jump when transitioning from skeleton to loaded state
+- Right-side action icons (playlist, queue, heart) are always visible and tappable
+- Desktop layout remains unchanged (responsive breakpoints handle it)
