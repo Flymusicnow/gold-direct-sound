@@ -15,6 +15,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AddToPlaylistDialog from '@/components/playlists/AddToPlaylistDialog';
+import { useMediaSession } from '@/hooks/useMediaSession';
 
 type MiniPlayerPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 
@@ -66,6 +67,30 @@ export function FlightdeckPlayer() {
   const [isLikeUpdating, setIsLikeUpdating] = useState(false);
   const [showPlaylistDialog, setShowPlaylistDialog] = useState(false);
   const [showNowPlaying, setShowNowPlaying] = useState(false);
+
+  // Media Session API for lock screen / notification controls
+  const handleMediaSessionSeek = useCallback((time: number) => {
+    seek(time);
+    const mediaElement = currentItem?.type === 'track' ? audioRef.current : videoRef.current;
+    if (mediaElement) {
+      mediaElement.currentTime = time;
+    }
+  }, [currentItem?.type, seek]);
+
+  useMediaSession({
+    title: currentItem?.title,
+    artist: currentItem?.artistName,
+    coverUrl: currentItem?.coverUrl,
+    isPlaying,
+    currentTime,
+    duration,
+    onPlay: togglePlay,
+    onPause: togglePlay,
+    onNext: playNext,
+    onPrev: playPrev,
+    onSeek: handleMediaSessionSeek,
+    enabled: !!currentItem,
+  });
 
   // Debug helper for queue/player state
   const dbg = (...args: unknown[]) => console.log("[PLAYER/QUEUE DBG]", ...args);
