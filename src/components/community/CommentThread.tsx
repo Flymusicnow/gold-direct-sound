@@ -121,19 +121,24 @@ const CommentItem: React.FC<{
   return (
     <div className={cn(
       "relative",
-      depth > 0 && "ml-3 sm:ml-4"
+      depth === 1 && "ml-3 sm:ml-4",
+      depth >= 2 && "sm:ml-4"
     )}>
-      {/* Threading visual connector */}
+      {/* Threading visual connector - hidden on mobile for depth 2+ */}
       {depth > 0 && (
         <div className={cn(
           "absolute -left-3 sm:-left-4 top-0 bottom-0 border-l-2",
+          depth >= 2 && "hidden sm:block",
           getDepthStyles(depth - 1)
         )} />
       )}
       
-      {/* Reply connector line */}
+      {/* Reply connector line - hidden on mobile for depth 2+ */}
       {depth > 0 && (
-        <div className="absolute -left-3 sm:-left-4 top-4 w-2 sm:w-3 border-t-2 border-muted-foreground/20" />
+        <div className={cn(
+          "absolute -left-3 sm:-left-4 top-4 w-2 sm:w-3 border-t-2 border-muted-foreground/20",
+          depth >= 2 && "hidden sm:block"
+        )} />
       )}
 
       <div className={cn(
