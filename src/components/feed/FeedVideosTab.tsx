@@ -41,6 +41,7 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
       artistUserId: v.artist_profiles.user_id,
       artistName: v.artist_profiles.artist_name,
       artistAvatar: v.artist_profiles.avatar_url,
+      likeCount: (v as any).like_count ?? 0,
     }));
     feed.openFeed(feedVideos, index);
   };
@@ -81,6 +82,7 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
             thumbnailUrl={video.thumbnail_url}
             caption={video.caption}
             createdAt={video.created_at}
+            likeCount={(video as any).like_count ?? 0}
             artist={video.artist_profiles}
             onTap={() => handleVideoTap(index)}
           />

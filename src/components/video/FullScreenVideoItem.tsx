@@ -5,33 +5,36 @@ import { Heart, Share2, Play, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useVideoLikes } from "@/hooks/useVideoLikes";
 import type { FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
 interface FullScreenVideoItemProps {
   video: FeedVideo;
   isActive: boolean;
+  isMuted: boolean;
+  onToggleMute: () => void;
   onClose: () => void;
-  onShare?: (video: FeedVideo) => void;
 }
 
 export function FullScreenVideoItem({
   video,
   isActive,
+  isMuted,
+  onToggleMute,
   onClose,
-  onShare,
 }: FullScreenVideoItemProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
   const { user } = useAuth();
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isLiked, setIsLiked] = useState(false);
   const [showPlayIcon, setShowPlayIcon] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const playIconTimeout = useRef<ReturnType<typeof setTimeout>>();
   const doubleTapTimeout = useRef<ReturnType<typeof setTimeout>>();
   const lastTap = useRef<number>(0);
   const [showHeart, setShowHeart] = useState(false);
+
+  const { isLiked, likeCount, toggleLike } = useVideoLikes(video.id);
 
   // Autoplay/pause based on visibility
   useEffect(() => {
@@ -46,6 +49,13 @@ export function FullScreenVideoItem({
       el.pause();
     }
   }, [isActive]);
+
+  // Sync muted state from parent
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
 
   // Clean up timeouts
   useEffect(() => {
@@ -64,10 +74,9 @@ export function FullScreenVideoItem({
     if (timeSinceLastTap < 300) {
       if (doubleTapTimeout.current) clearTimeout(doubleTapTimeout.current);
       if (!isLiked) {
-        setIsLiked(true);
+        toggleLike();
         setShowHeart(true);
         setTimeout(() => setShowHeart(false), 800);
-        toast.success("Added to favorites");
       }
       return;
     }
@@ -89,15 +98,12 @@ export function FullScreenVideoItem({
       if (playIconTimeout.current) clearTimeout(playIconTimeout.current);
       playIconTimeout.current = setTimeout(() => setShowPlayIcon(false), 600);
     }, 300);
-  }, [isLiked]);
+  }, [isLiked, toggleLike]);
 
-  const toggleMute = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleMuteTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    if (videoRef.current) {
-      videoRef.current.muted = !videoRef.current.muted;
-      setIsMuted(prev => !prev);
-    }
-  }, []);
+    onToggleMute();
+  }, [onToggleMute]);
 
   const handleArtistTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
@@ -111,14 +117,40 @@ export function FullScreenVideoItem({
       toast.error("Please sign in to like videos");
       return;
     }
-    setIsLiked(prev => !prev);
-    toast.success(isLiked ? "Removed from favorites" : "Added to favorites");
-  }, [user, isLiked]);
+    toggleLike();
+  }, [user, toggleLike]);
 
-  const handleShare = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const handleShare = useCallback(async (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onShare?.(video);
-  }, [onShare, video]);
+    const shareUrl = `${window.location.origin}/artist/${video.artistUserId}?video=${video.id}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${video.artistName} on FlyMusic`,
+          text: video.caption || `Check out this video by ${video.artistName}`,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied!");
+      }
+    } catch {
+      // User cancelled share or error
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied!");
+      } catch {
+        // Ignore
+      }
+    }
+  }, [video]);
+
+  const formatCount = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`;
+    return count.toString();
+  };
 
   return (
     <div
@@ -178,8 +210,8 @@ export function FullScreenVideoItem({
 
       {/* Mute button — top right */}
       <button
-        onClick={toggleMute}
-        onTouchEnd={(e) => { e.preventDefault(); toggleMute(e); }}
+        onClick={handleMuteTap}
+        onTouchEnd={(e) => { e.preventDefault(); handleMuteTap(e); }}
         className="absolute top-14 right-4 z-20 w-10 h-10 rounded-full bg-black/40 flex items-center justify-center touch-manipulation"
         aria-label={isMuted ? "Unmute" : "Mute"}
       >
@@ -205,6 +237,9 @@ export function FullScreenVideoItem({
           )}>
             <Heart className={cn("w-6 h-6", isLiked ? "text-red-500 fill-red-500" : "text-white")} />
           </div>
+          <span className="text-white text-xs font-medium">
+            {formatCount(likeCount)}
+          </span>
         </button>
 
         {/* Share */}

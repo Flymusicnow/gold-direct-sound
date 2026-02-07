@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Video } from "lucide-react";
-import { VideoShareModal } from "@/components/video/VideoShareModal";
 import { EmptyStateCard } from "./EmptyStateCard";
 import { BecomeASupporterModal } from "@/components/supporter/BecomeASupporterModal";
 import { VideoCard } from "./VideoCard";
@@ -30,7 +29,6 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
   const { user } = useAuth();
   const [videos, setVideos] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shareVideo, setShareVideo] = useState<VideoPost | null>(null);
   const [showSupporterModal, setShowSupporterModal] = useState(false);
   const [autoplayEnabled, setAutoplayEnabled] = useState(true);
   const feed = useFullScreenVideoFeed();
@@ -43,7 +41,7 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
   const fetchVideos = async () => {
     const { data, error } = await supabase
       .from("artist_video_posts")
-      .select("*")
+      .select("*, like_count")
       .eq("artist_id", artistId)
       .order("created_at", { ascending: false });
 
@@ -75,13 +73,9 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
       artistAvatar: artistAvatar || null,
       isSupporterOnly: v.is_supporter_only,
       requiredTier: v.required_tier,
+      likeCount: (v as any).like_count ?? 0,
     }));
     feed.openFeed(feedVideos, index);
-  };
-
-  const handleShareFromFeed = (video: FeedVideo) => {
-    const original = videos.find(v => v.id === video.id);
-    if (original) setShareVideo(original);
   };
 
   if (loading) {
@@ -118,23 +112,11 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
             artistId={artistId}
             autoplayEnabled={autoplayEnabled}
             onOpenFullscreen={handleOpenFullscreen}
-            onShare={setShareVideo}
+            onShare={() => {}}
             onUnlock={() => setShowSupporterModal(true)}
           />
         ))}
       </div>
-
-      {shareVideo && (
-        <VideoShareModal
-          isOpen={!!shareVideo}
-          onClose={() => setShareVideo(null)}
-          video={shareVideo}
-          artist={{
-            id: artistId,
-            artist_name: artistName,
-          }}
-        />
-      )}
 
       <BecomeASupporterModal
         open={showSupporterModal}
@@ -148,7 +130,6 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
           videos={feed.videos}
           initialIndex={feed.initialIndex}
           onClose={feed.closeFeed}
-          onShare={handleShareFromFeed}
         />
       )}
     </>

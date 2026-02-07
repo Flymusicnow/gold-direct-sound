@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Play, Volume2, VolumeX } from "lucide-react";
+import { Play, Volume2, VolumeX, Heart } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ interface CompactVideoCardProps {
   thumbnailUrl: string | null;
   caption: string | null;
   createdAt: string;
+  likeCount?: number;
   artist: {
     id: string;
     user_id: string;
@@ -27,6 +28,7 @@ export function CompactVideoCard({
   thumbnailUrl,
   caption,
   createdAt,
+  likeCount,
   artist,
   onTap,
 }: CompactVideoCardProps) {
@@ -166,10 +168,18 @@ export function CompactVideoCard({
           </p>
         )}
 
-        {/* Time */}
-        <p className="text-xs text-muted-foreground">
-          {timeAgo}
-        </p>
+        {/* Like count + Time */}
+        <div className="flex items-center justify-between">
+          {likeCount !== undefined && likeCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Heart className="w-3 h-3" />
+              <span>{likeCount}</span>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {timeAgo}
+          </p>
+        </div>
       </div>
     </div>
   );

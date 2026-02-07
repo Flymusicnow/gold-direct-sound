@@ -1185,6 +1185,7 @@ export type Database = {
           duration_seconds: number | null
           id: string
           is_supporter_only: boolean | null
+          like_count: number
           mood: string | null
           release_date: string | null
           required_tier: string | null
@@ -1204,6 +1205,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          like_count?: number
           mood?: string | null
           release_date?: string | null
           required_tier?: string | null
@@ -1223,6 +1225,7 @@ export type Database = {
           duration_seconds?: number | null
           id?: string
           is_supporter_only?: boolean | null
+          like_count?: number
           mood?: string | null
           release_date?: string | null
           required_tier?: string | null
@@ -5992,6 +5995,35 @@ export type Database = {
           },
           {
             foreignKeyName: "video_comments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "artist_video_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_likes: {
+        Row: {
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_likes_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "artist_video_posts"

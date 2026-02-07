@@ -11,6 +11,7 @@ export interface FeedVideo {
   artistAvatar: string | null;
   isSupporterOnly?: boolean;
   requiredTier?: string | null;
+  likeCount?: number;
 }
 
 interface FullScreenVideoFeedState {
@@ -28,11 +29,37 @@ export function useFullScreenVideoFeed() {
 
   const openFeed = useCallback((videos: FeedVideo[], startIndex: number = 0) => {
     setState({ isOpen: true, videos, initialIndex: startIndex });
+    // Push a virtual history entry so browser back closes the feed
+    window.history.pushState({ videoFeedOpen: true }, "");
   }, []);
 
   const closeFeed = useCallback(() => {
     setState(prev => ({ ...prev, isOpen: false }));
   }, []);
+
+  // Listen for popstate (browser back button) to close the feed
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (state.isOpen) {
+        setState(prev => ({ ...prev, isOpen: false }));
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [state.isOpen]);
+
+  // When closeFeed is called directly (X button, artist tap), go back in history
+  const closeFeedWithHistory = useCallback(() => {
+    if (state.isOpen) {
+      // Check if we pushed a history entry
+      if (window.history.state?.videoFeedOpen) {
+        window.history.back(); // This triggers popstate which closes the feed
+      } else {
+        closeFeed();
+      }
+    }
+  }, [state.isOpen, closeFeed]);
 
   // Lock body scroll when feed is open
   useEffect(() => {
@@ -58,6 +85,6 @@ export function useFullScreenVideoFeed() {
     videos: state.videos,
     initialIndex: state.initialIndex,
     openFeed,
-    closeFeed,
+    closeFeed: closeFeedWithHistory,
   };
 }
