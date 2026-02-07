@@ -80,11 +80,17 @@ export function useFullScreenVideoFeed() {
     }
   }, [state.isOpen]);
 
+  // Close feed without touching history — used when navigating to another page
+  const closeFeedForNavigation = useCallback(() => {
+    setState(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
   return {
     isOpen: state.isOpen,
     videos: state.videos,
     initialIndex: state.initialIndex,
     openFeed,
     closeFeed: closeFeedWithHistory,
+    closeFeedForNavigation,
   };
 }

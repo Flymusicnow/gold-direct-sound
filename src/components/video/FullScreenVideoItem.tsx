@@ -14,6 +14,7 @@ interface FullScreenVideoItemProps {
   isMuted: boolean;
   onToggleMute: () => void;
   onClose: () => void;
+  onCloseFeedForNavigation?: () => void;
 }
 
 export function FullScreenVideoItem({
@@ -22,6 +23,7 @@ export function FullScreenVideoItem({
   isMuted,
   onToggleMute,
   onClose,
+  onCloseFeedForNavigation,
 }: FullScreenVideoItemProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -107,9 +109,14 @@ export function FullScreenVideoItem({
 
   const handleArtistTap = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
-    onClose();
+    // Use navigation-safe close (no history.back) so navigate() works
+    if (onCloseFeedForNavigation) {
+      onCloseFeedForNavigation();
+    } else {
+      onClose();
+    }
     navigate(`/artist/${video.artistUserId}`);
-  }, [navigate, video.artistUserId, onClose]);
+  }, [navigate, video.artistUserId, onClose, onCloseFeedForNavigation]);
 
   const handleLike = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();

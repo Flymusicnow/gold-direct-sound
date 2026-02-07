@@ -94,6 +94,7 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
           videos={feed.videos}
           initialIndex={feed.initialIndex}
           onClose={feed.closeFeed}
+          onCloseFeedForNavigation={feed.closeFeedForNavigation}
         />
       )}
     </div>

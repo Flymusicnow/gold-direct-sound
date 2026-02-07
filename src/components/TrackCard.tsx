@@ -96,11 +96,10 @@ export function TrackCard({
   return (
     <>
       <div
-        className="group flex items-center gap-4 p-6 md:p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+        className="group flex items-center gap-3 md:gap-4 p-3 md:p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
         onClick={onPlay}
       >
-      {/* Larger cover for better mobile touch targets */}
-      <div className="relative w-24 h-24 md:w-16 md:h-16 flex-shrink-0">
+      <div className="relative w-14 h-14 md:w-16 md:h-16 flex-shrink-0">
         {track.cover_url ? (
           <img
             src={track.cover_url}
@@ -109,32 +108,31 @@ export function TrackCard({
           />
         ) : (
           <div className="w-full h-full rounded-lg bg-primary/10 flex items-center justify-center">
-            <Music className="h-10 w-10 md:h-6 md:w-6 text-primary" />
+            <Music className="h-6 w-6 text-primary" />
           </div>
         )}
-        {/* Play button overlay - larger on mobile */}
         <div className="absolute inset-0 rounded-lg bg-black/40 flex items-center justify-center">
           <div 
-            className="h-12 w-12 md:h-8 md:w-8 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
+            className="h-8 w-8 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
             style={{
               backgroundColor: 'hsl(45, 82%, 51%)',
               border: '1px solid hsla(45, 82%, 51%, 0.4)',
               boxShadow: '0 4px 12px hsla(45, 82%, 51%, 0.35)'
             }}
           >
-            <Play className="h-6 w-6 md:h-4 md:w-4 fill-white text-white ml-0.5" />
+            <Play className="h-4 w-4 fill-white text-white ml-0.5" />
           </div>
         </div>
       </div>
       
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg md:text-sm font-semibold truncate">{track.title}</h3>
+        <h3 className="text-base md:text-sm font-semibold truncate">{track.title}</h3>
         <div className="flex items-center gap-1">
-          <p className="text-base md:text-xs text-muted-foreground truncate">{artistName}</p>
+          <p className="text-sm md:text-xs text-muted-foreground truncate">{artistName}</p>
           {isVerified && <VerifiedBadge size="sm" />}
         </div>
         {track.description && (
-          <p className="text-sm md:text-xs text-muted-foreground/70 truncate mt-1">
+          <p className="text-xs text-muted-foreground/70 truncate mt-0.5">
             {track.description}
           </p>
         )}
