@@ -1,113 +1,112 @@
 
 
-# Fix: Track Card Clipping in Portrait + Lock Screen Music Controls
+# Fix: Mobile Feed Content Container Height Bug
 
-## Issue 1: Track Cards Clipped Behind Player in Portrait Mode
+## Root Cause Analysis
 
-### Root Cause
+The FanFeed page has **two completely separate render trees** -- one for loading (early return at line 299) and one for loaded (line 339). When `loading` flips from `true` to `false`, React **unmounts the entire loading DOM tree and mounts a new loaded tree**. This causes:
 
-On the FanFeed page, the main content area has `pb-44 md:pb-8` (176px on mobile). But on mobile, two fixed elements stack at the bottom:
-- **Bottom navigation bar**: 64px (`h-16`)
-- **FlightdeckPlayer bar**: ~120px (progress slider + track info + playback controls)
+1. **Brief layout collapse** -- during the swap, the container momentarily has no content, causing the FlightdeckLayout scroll container to collapse to zero height before the new content renders
+2. **PageTransition animation** -- the loaded state wraps content in a `motion.div` that starts at `opacity: 0, y: 8`. During this animation, the browser may not calculate dimensions correctly, resulting in the "squeezed" container
+3. **`overflow-x-hidden` on the wrapper** -- unique to FanFeed (no other fan page has this). This creates a new block formatting context that can interact unpredictably with the parent FlightdeckLayout scroll container (`flex-1 min-h-0 overflow-y-auto`)
+4. **`min-h-screen` (100vh) is unreliable on mobile Safari** -- iOS dynamically changes the viewport height as the address bar shows/hides, causing `100vh` to be larger than the visible area
 
-Total space consumed: ~184px. The padding of 176px is not quite enough, so the last track card(s) get clipped behind the player when scrolling to the end.
+### Layout chain on mobile
+```text
+html/body          -> height:100%, overflow:hidden
+  #root            -> height:100%
+    FlightdeckLayout -> h-screen, overflow-hidden, flex flex-col
+      <main>       -> flex-1, min-h-0, overflow-y-auto  <-- scroll container
+        FanFeed wrapper -> flex, min-h-screen, pt-16, overflow-x-hidden  <-- BUG SOURCE
+          FanSidebar   -> hidden on mobile
+          <main>       -> flex-1, p-4, pb-52
+            content...
+```
 
-In landscape mode, the viewport is wider so the player is more compact (single row), and the content fits. In portrait, the taller player eats into the scroll area.
+## Fix
 
-Additionally, the **loading state** skeleton has only `pb-28` (112px) -- far too little.
+### Strategy: Unified shell, content-only swap
 
-### Fix
+Instead of two completely separate render trees, use a **single shared shell** for both loading and loaded states. Only the inner content changes. This eliminates the layout collapse during the loading-to-loaded transition.
 
-**File: `src/pages/FanFeed.tsx`**
-- Change `pb-44` to `pb-52` (208px) on the main content area -- enough to clear both the bottom nav (64px) and the full player bar (~120px) with breathing room
-- Also fix the loading state skeleton view from `pb-28` to `pb-52` for consistency
+### File: `src/pages/FanFeed.tsx`
 
----
+**Changes:**
 
-## Issue 2: Lock Screen / Background Music Controls (Media Session API)
+1. **Remove the early return** for loading state (lines 299-336). Instead, render one unified shell that always mounts, and conditionally render skeleton or real content inside it.
 
-### What It Does
+2. **Replace `min-h-screen` with `min-h-[100dvh]`** on the outer wrapper for proper mobile Safari dynamic viewport handling. Add a fallback via inline style for browsers that don't support `dvh`.
 
-When users leave the app (switch to another app, lock their phone), they want to see the currently playing song on their lock screen and notification shade, with the ability to:
-- See the song title, artist name, and cover art
-- Pause / resume playback
-- Skip to next / previous track
-- See playback progress
+3. **Remove `overflow-x-hidden`** from the outer wrapper -- it's unnecessary (FlightdeckLayout already handles overflow) and creates formatting context issues.
 
-This is exactly what the **Media Session API** provides. It is supported on iOS Safari, Android Chrome, and desktop browsers.
+4. **Move PageTransition inside the content area only**, not wrapping the entire shell. This prevents the animation from affecting the container dimensions.
 
-### Implementation
+### Before (two separate trees)
+```text
+if (loading) {
+  return (
+    <MobileFanNav />
+    <div className="flex min-h-screen ...overflow-x-hidden">   <-- Tree A
+      <FanSidebar />
+      <main>...skeletons...</main>
+    </div>
+    <BottomNavBarFan />
+  );
+}
 
-**File: `src/components/flightdeck/FlightdeckPlayer.tsx`**
+return (
+  <MobileFanNav />
+  <div className="flex min-h-screen ...overflow-x-hidden">     <-- Tree B (full unmount/remount)
+    <FanSidebar />
+    <main>
+      <PageTransition>...content...</PageTransition>           <-- animation affects container
+    </main>
+  </div>
+  <BottomNavBarFan />
+);
+```
 
-Add a `useEffect` that syncs with `navigator.mediaSession` whenever the current track changes or play state changes:
+### After (single shell, content swap)
+```text
+return (
+  <MobileFanNav />
+  <div className="flex w-full pt-16 min-h-[100dvh]">          <-- Single shell, no overflow-x-hidden
+    <FanSidebar />
+    <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8">
+      <PageBreadcrumb />
+      <div className="max-w-7xl mx-auto space-y-5">
+        {loading ? (
+          ...skeletons...                                       <-- Same container, different content
+        ) : (
+          <PageTransition>...content...</PageTransition>        <-- Animation only on inner content
+        )}
+      </div>
+    </main>
+  </div>
+  <BottomNavBarFan />
+);
+```
 
-1. **Set metadata** when `currentItem` changes:
-   - `title`: track title
-   - `artist`: artist name
-   - `artwork`: cover image (multiple sizes for different devices)
+### Specific code changes:
 
-2. **Set action handlers** for:
-   - `play` -- calls `togglePlay()` to resume
-   - `pause` -- calls `togglePlay()` to pause
-   - `previoustrack` -- calls `playPrev()`
-   - `nexttrack` -- calls `playNext()`
-   - `seekto` -- calls `seek()` for scrubbing on lock screen
-   - `seekbackward` / `seekforward` -- 10-second jumps
-
-3. **Sync playback state** when `isPlaying` changes:
-   - `navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'`
-
-4. **Update position state** on time updates:
-   - `navigator.mediaSession.setPositionState({ duration, playbackRate: 1, position: currentTime })`
-
-5. **Clean up** action handlers when component unmounts or when no track is playing
-
-### What Users Will See
-
-- **iOS**: Lock screen shows track title, artist, cover art, and play/pause + skip controls
-- **Android**: Notification shade shows a media card with the same controls
-- **Desktop**: Media control overlay in the OS (macOS Now Playing widget, Windows media overlay)
-
-No additional libraries or permissions needed -- this is a native browser API.
-
----
+1. Remove the entire `if (loading) { return (...) }` block (lines 299-336)
+2. In the main return, wrap the content section in a conditional:
+   - `loading === true`: render header skeleton + tabs skeleton + track card skeletons (same as before)
+   - `loading === false`: render the header, FeedTabs, content grid inside PageTransition
+3. Change outer wrapper class from `"flex min-h-screen w-full pt-16 overflow-x-hidden"` to `"flex w-full pt-16 min-h-[100dvh]"`
+4. Add inline style `style={{ minHeight: '100dvh' }}` as the primary value (CSS property), with the Tailwind class as fallback
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/FanFeed.tsx` | Increase bottom padding from `pb-44` to `pb-52` (both loaded and loading states) |
-| `src/components/flightdeck/FlightdeckPlayer.tsx` | Add Media Session API integration for lock screen controls |
-
----
-
-## Technical Details
-
-```text
-Media Session API Integration (FlightdeckPlayer.tsx):
-
-useEffect when currentItem changes:
-  -> navigator.mediaSession.metadata = new MediaMetadata({
-       title, artist, artwork: [{ src: coverUrl, sizes: '512x512' }]
-     })
-  -> Set action handlers: play, pause, nexttrack, previoustrack, seekto
-
-useEffect when isPlaying changes:
-  -> navigator.mediaSession.playbackState = 'playing' | 'paused'
-
-handleTimeUpdate already exists:
-  -> Add navigator.mediaSession.setPositionState({ duration, position, playbackRate })
-```
-
----
+| `src/pages/FanFeed.tsx` | Unify loading/loaded into single shell; replace `min-h-screen` with `min-h-[100dvh]`; remove `overflow-x-hidden`; conditional content instead of conditional return |
 
 ## Acceptance Criteria
 
-- In portrait mode on mobile, all track cards are fully visible when scrolling -- no clipping behind the player
-- When music is playing and user switches to another app or locks their phone, the lock screen shows the track info and controls
-- Play/pause from lock screen controls the FlightdeckPlayer
-- Next/previous track from lock screen skips tracks correctly
-- Cover art is visible on the lock screen notification
-- Works on iOS Safari, Android Chrome, and desktop browsers
-
+- On mobile portrait, feed content fills the available viewport height consistently
+- No "squeezed" or "compact" container on any tab (Music, Videos, Spotlight, Artists)
+- Switching between tabs does not cause the content area to shrink
+- Loading skeleton and loaded content have identical container sizing
+- No large empty dead space caused by incorrect container height
+- Desktop layout remains unchanged
