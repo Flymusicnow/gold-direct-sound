@@ -96,10 +96,10 @@ export function TrackCard({
   return (
     <>
       <div
-        className="group flex items-center gap-3 md:gap-4 p-3 md:p-4 h-[68px] md:h-auto rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+        className="group flex items-center gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
         onClick={onPlay}
       >
-      <div className="relative w-14 h-14 md:w-16 md:h-16 flex-shrink-0">
+      <div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0">
         {track.cover_url ? (
           <img
             src={track.cover_url}
@@ -126,9 +126,9 @@ export function TrackCard({
       </div>
       
       <div className="flex-1 min-w-0">
-        <h3 className="text-base md:text-sm font-semibold truncate">{track.title}</h3>
+        <h3 className="text-base md:text-sm font-bold truncate">{track.title}</h3>
         <div className="flex items-center gap-1">
-          <p className="text-sm md:text-xs text-muted-foreground truncate">{artistName}</p>
+          <p className="text-[13px] md:text-xs text-muted-foreground truncate opacity-80">{artistName}</p>
           {isVerified && <VerifiedBadge size="sm" />}
         </div>
         {track.description && (
@@ -139,7 +139,7 @@ export function TrackCard({
       </div>
 
       {showLikeButton && (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="ghost"
             size="icon"
