@@ -1,214 +1,86 @@
 
 
-# Fix: Mobile Feed Video Card Thumbnails
+# Community Comments: Inline Avatar Layout for Mobile
 
-## Problem Summary
+## Problem
 
-Video cards in the Feed's "Videos" tab show black/empty on initial load because:
+The current comment layout uses a two-column flex design:
 
-1. **Query doesn't include thumbnail_url** - `FanFeed.tsx` fetches videos without the `thumbnail_url` field
-2. **CompactVideoCard lacks poster/thumbnail support** - Uses only `<video preload="metadata">` with no fallback image
+```text
+[Avatar] | [Name + Badge + Time]
+         | [Comment text........]
+         | [Like] [Reply]
+```
 
-The Artist page's `VideoCard.tsx` works correctly because it:
-- Fetches `thumbnail_url` 
-- Renders an `<img>` overlay when not playing
-- Only shows the video element during playback
-
----
+On mobile, especially in nested replies (which add `ml-4` per depth level), the avatar column (32px + 12px gap) steals ~44px from the text area. This compresses comment threads into awkward narrow text blocks.
 
 ## Solution
 
-Apply the same thumbnail pattern from the Artist page to the Feed videos.
+Move the avatar into the name/metadata row so the comment text spans the full width:
 
----
+```text
+[Avatar] [Name] [Badge] [Time]
+[Comment text fills full width..]
+[Like] [Reply]
+```
 
 ## Changes
 
-### 1. Update FanFeed.tsx - Add thumbnail_url to query
+### File: `src/components/community/CommentThread.tsx`
 
-**File:** `src/pages/FanFeed.tsx`
+**1. Restructure `CommentItem` layout (lines 139-248)**
 
-Update the VideoPost interface and fetch query:
+Change from a two-column `flex gap-3` layout to a single-column layout where:
 
+- The avatar (reduced to `h-6 w-6`) moves inside the name/metadata row
+- Comment text and actions sit directly below at full width
+- The outer container changes from `flex gap-3` to a simple `space-y-1` block
+
+**Current structure:**
 ```typescript
-interface VideoPost {
-  id: string;
-  video_url: string;
-  caption: string | null;
-  created_at: string;
-  thumbnail_url: string | null;  // ADD THIS
-  artist_profiles: {
-    id: string;
-    user_id: string;
-    artist_name: string;
-    avatar_url: string | null;
-  };
-}
-```
-
-Update the query (around line 208-224) to include `thumbnail_url`:
-
-```typescript
-const { data: videosData } = await supabase
-  .from('artist_video_posts')
-  .select(`
-    id,
-    video_url,
-    caption,
-    created_at,
-    thumbnail_url,
-    artist_profiles (
-      id,
-      user_id,
-      artist_name,
-      avatar_url
-    )
-  `)
-  .in('artist_id', artistIds)
-  .order('created_at', { ascending: false })
-  .limit(20);
-```
-
----
-
-### 2. Update FeedVideosTab.tsx - Pass thumbnail to card
-
-**File:** `src/components/feed/FeedVideosTab.tsx`
-
-Update interface and pass the thumbnail:
-
-```typescript
-interface VideoPost {
-  id: string;
-  video_url: string;
-  caption: string | null;
-  created_at: string;
-  thumbnail_url: string | null;  // ADD THIS
-  artist_profiles: {
-    id: string;
-    user_id: string;
-    artist_name: string;
-    avatar_url: string | null;
-  };
-}
-```
-
-Pass it to CompactVideoCard:
-
-```typescript
-<CompactVideoCard
-  key={video.id}
-  videoId={video.id}
-  videoUrl={video.video_url}
-  thumbnailUrl={video.thumbnail_url}  // ADD THIS
-  caption={video.caption}
-  createdAt={video.created_at}
-  artist={video.artist_profiles}
-/>
-```
-
----
-
-### 3. Update CompactVideoCard.tsx - Display thumbnail
-
-**File:** `src/components/feed/CompactVideoCard.tsx`
-
-Add `thumbnailUrl` prop and render thumbnail image instead of relying on video metadata:
-
-```typescript
-interface CompactVideoCardProps {
-  videoId: string;
-  videoUrl: string;
-  thumbnailUrl: string | null;  // ADD THIS
-  caption: string | null;
-  createdAt: string;
-  artist: {
-    id: string;
-    user_id: string;
-    artist_name: string;
-    avatar_url: string | null;
-  };
-}
-
-export function CompactVideoCard({
-  videoId,
-  videoUrl,
-  thumbnailUrl,  // ADD THIS
-  caption,
-  createdAt,
-  artist,
-}: CompactVideoCardProps) {
-```
-
-Update the video container to show thumbnail when not playing:
-
-```typescript
-{/* Video Container - 9:16 aspect ratio */}
-<div className="relative aspect-[9/16] bg-muted">
-  {/* Video element - hidden until playing */}
-  <video
-    ref={videoRef}
-    src={videoUrl}
-    className={cn(
-      "w-full h-full object-cover",
-      !isPlaying && thumbnailUrl && "opacity-0 absolute inset-0"
-    )}
-    muted={isMuted}
-    loop
-    playsInline
-    preload="metadata"
-    poster={thumbnailUrl || undefined}
-  />
-
-  {/* Thumbnail overlay - shown when not playing */}
-  {thumbnailUrl && !isPlaying && (
-    <img
-      src={thumbnailUrl}
-      alt={caption || 'Video thumbnail'}
-      className="w-full h-full object-cover"
-    />
-  )}
-
-  {/* Fallback skeleton when no thumbnail */}
-  {!thumbnailUrl && !isPlaying && (
-    <div className="absolute inset-0 bg-muted animate-pulse" />
-  )}
-
-  {/* Play overlay when not playing */}
-  {!isPlaying && (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-      <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center">
-        <Play className="h-6 w-6 text-white fill-white" />
-      </div>
+<div className="flex gap-3 py-3">
+  <Avatar className="h-8 w-8 shrink-0">...</Avatar>
+  <div className="flex-1 min-w-0">
+    <div className="flex items-center gap-2">
+      name, badge, time
     </div>
-  )}
-  
-  {/* ... rest of mute button code */}
+    <p>comment text</p>
+    <div>actions</div>
+  </div>
 </div>
 ```
 
-Import `cn` utility at the top:
+**New structure:**
 ```typescript
-import { cn } from "@/lib/utils";
+<div className="py-3 space-y-1">
+  <div className="flex items-center gap-2 flex-wrap">
+    <Avatar className="h-6 w-6 shrink-0">...</Avatar>
+    name, badge, time
+  </div>
+  <p>comment text</p>
+  <div>actions</div>
+</div>
 ```
 
----
+**2. Adjust nested reply indentation**
 
-## Technical Summary
+Reduce `ml-4 sm:ml-6` to `ml-3 sm:ml-4` since we no longer need as much indent to clear the avatar column. This further maximizes text width on mobile.
 
-| File | Change |
+**3. Adjust thread connector positions**
+
+Update the left-positioned thread lines (`-left-4 sm:-left-6`) to match the new, smaller indentation (`-left-3 sm:-left-4`, connector width `w-2 sm:w-3`).
+
+## Files to Change
+
+| File | Action |
 |------|--------|
-| `src/pages/FanFeed.tsx` | Add `thumbnail_url` to interface and query |
-| `src/components/feed/FeedVideosTab.tsx` | Add `thumbnail_url` to interface, pass to card |
-| `src/components/feed/CompactVideoCard.tsx` | Accept `thumbnailUrl` prop, render `<img>` thumbnail |
+| `src/components/community/CommentThread.tsx` | Restructure comment layout to inline avatar |
 
----
+## Acceptance Criteria
 
-## Expected Result
-
-- Video cards show thumbnails immediately on load (no black cards)
-- Same thumbnail source as Artist page (single source of truth)
-- Fallback skeleton shown if no thumbnail exists
-- Video plays on hover/tap as before
-- Consistent 9:16 aspect ratio maintained
-
+- Avatar appears inline with the author name, on the same row
+- Comment text spans the full available width
+- Nested replies remain visually threaded but with more text space
+- Thread connector lines still align correctly
+- Works on both mobile and desktop
+- No changes to tab layout or navigation
