@@ -130,6 +130,7 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
           videos={feed.videos}
           initialIndex={feed.initialIndex}
           onClose={feed.closeFeed}
+          onCloseFeedForNavigation={feed.closeFeedForNavigation}
         />
       )}
     </>

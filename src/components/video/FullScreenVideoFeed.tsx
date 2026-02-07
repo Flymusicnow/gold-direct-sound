@@ -7,12 +7,14 @@ interface FullScreenVideoFeedProps {
   videos: FeedVideo[];
   initialIndex: number;
   onClose: () => void;
+  onCloseFeedForNavigation?: () => void;
 }
 
 export function FullScreenVideoFeed({
   videos,
   initialIndex,
   onClose,
+  onCloseFeedForNavigation,
 }: FullScreenVideoFeedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(initialIndex);
@@ -114,6 +116,7 @@ export function FullScreenVideoFeed({
               isMuted={isMuted}
               onToggleMute={toggleMute}
               onClose={onClose}
+              onCloseFeedForNavigation={onCloseFeedForNavigation}
             />
           </div>
         ))}
