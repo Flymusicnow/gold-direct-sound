@@ -121,31 +121,31 @@ const CommentItem: React.FC<{
   return (
     <div className={cn(
       "relative",
-      depth > 0 && "ml-4 sm:ml-6"
+      depth > 0 && "ml-3 sm:ml-4"
     )}>
       {/* Threading visual connector */}
       {depth > 0 && (
         <div className={cn(
-          "absolute -left-4 sm:-left-6 top-0 bottom-0 border-l-2",
+          "absolute -left-3 sm:-left-4 top-0 bottom-0 border-l-2",
           getDepthStyles(depth - 1)
         )} />
       )}
       
       {/* Reply connector line */}
       {depth > 0 && (
-        <div className="absolute -left-4 sm:-left-6 top-4 w-3 sm:w-5 border-t-2 border-muted-foreground/20" />
+        <div className="absolute -left-3 sm:-left-4 top-4 w-2 sm:w-3 border-t-2 border-muted-foreground/20" />
       )}
 
       <div className={cn(
-        "flex gap-3 py-3",
+        "py-3 space-y-1",
         comment.is_pinned && "bg-primary/5 -mx-2 px-2 rounded-lg"
       )}>
-        <Avatar className="h-8 w-8 shrink-0">
-          <AvatarImage src={avatarUrl || undefined} />
-          <AvatarFallback>{displayName[0]?.toUpperCase()}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <Avatar className="h-6 w-6 shrink-0">
+              <AvatarImage src={avatarUrl || undefined} />
+              <AvatarFallback className="text-xs">{displayName[0]?.toUpperCase()}</AvatarFallback>
+            </Avatar>
             {isAnonymous ? (
               <span className="text-sm font-medium text-muted-foreground">
                 {displayName}
