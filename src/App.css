@@ -1,6 +1,7 @@
 /* Global resets */
 *, *::before, *::after { box-sizing: border-box; }
-img, video, canvas { max-width: 100%; height: auto; display: block; }
+video, canvas { max-width: 100%; height: auto; display: block; }
+img { max-width: 100%; display: block; }
 
 /* App-wide scroll lock base styles */
 html, body {
