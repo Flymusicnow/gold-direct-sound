@@ -1,102 +1,89 @@
 
 
-# Fix: Return to "Discover & Support Artists" Page After Browsing
+# Fix: Cover Image Aspect Ratio on Mobile Feed Cards
 
-## Problem
+## Root Cause
 
-When a fan arrives at the **Discover & Support Artists** page (`/early-access`), they can immediately unlock access with their invite code. But if they want to browse around first (check out Explore, Discover, etc.), there is no easy way to get back to that specific page. The "Back to home" button goes to `/`, and the home page has no link back to `/early-access`.
+Two issues combine to cause the stretched/cropped cover image on mobile:
 
-## Solution
+### Issue 1: Global CSS `height: auto` on images
 
-Two changes to make the return path frictionless:
+In `src/App.css` (line 3), we added a global reset:
 
-### 1. Store the invite entry URL in sessionStorage
+```css
+img, video, canvas { max-width: 100%; height: auto; display: block; }
+```
 
-When the EarlyAccess page loads, save the full URL (including `?role=fan&code=...` params) to `sessionStorage`. This way, other parts of the app can check if the user has a pending invite flow and offer a return link.
+While Tailwind's `.h-full` class (specificity 0,1,0) technically beats the element selector `img` (specificity 0,0,1), iOS Safari has known rendering quirks where `height: auto` and `object-cover` interact unpredictably inside flex containers. The `height: auto` tells the browser "use natural aspect ratio" which conflicts with `h-full` ("fill parent height"). Safari sometimes resolves this by stretching/elongating the image.
 
-**File:** `src/pages/EarlyAccess.tsx`
-- On mount, store `window.location.pathname + window.location.search` into `sessionStorage` under key `flymusic_invite_return_url`
-- When the user successfully unlocks access (navigates to `/join/fan` or `/join/artist`), clear this key
+### Issue 2: No `overflow-hidden` on thumbnail wrapper
 
-### 2. Show a "Return to Invite" floating banner
+The thumbnail wrapper div:
+```html
+<div class="relative w-[60px] h-[60px] flex-shrink-0">
+  <img class="w-full h-full rounded-lg object-cover" />
+</div>
+```
 
-Create a small, non-intrusive floating banner that appears at the bottom of public pages (Home, Explore, Discover, etc.) when a pending invite return URL exists in `sessionStorage`. This gives the fan a one-tap way to get back.
+Without `overflow-hidden`, the image can visually bleed outside its 60x60 boundary. On Safari, this manifests as the image appearing taller than the container.
 
-**New file:** `src/components/InviteReturnBanner.tsx`
+## Fix
 
-Visual design:
-- Fixed at the bottom of the screen (above any bottom nav if present)
-- Small pill/banner: dark background with blur, subtle border
-- Text: "You have a pending invite" + "Return" button
-- Dismiss (X) button to hide it for the session
-- Only shown on public pages (not on `/early-access` itself, not on `/join/*` pages)
+### File 1: `src/App.css`
 
-Behavior:
-- Reads `flymusic_invite_return_url` from `sessionStorage`
-- If present and current route is NOT the invite page itself, show the banner
-- "Return" button navigates to the stored URL
-- Dismiss button removes the key from `sessionStorage` (gone for the session)
-- Auto-clears when the user reaches `/join/*` (invite completed)
+Remove `height: auto` from the global `img` rule. This was added as a "safety net" reset, but it actively conflicts with images that need explicit sizing (like our track covers). Keep `max-width: 100%` and `display: block` which are safe.
 
-### 3. Add the banner to the app layout
+Before:
+```css
+img, video, canvas { max-width: 100%; height: auto; display: block; }
+```
 
-**File:** `src/App.tsx`
-- Render `InviteReturnBanner` inside the main layout (after `NavigationWrapper`), so it appears on all public pages
+After:
+```css
+video, canvas { max-width: 100%; height: auto; display: block; }
+img { max-width: 100%; display: block; }
+```
 
-### 4. Update EarlyAccess "Back to home" behavior
+This removes `height: auto` only from `img` elements, so images respect their explicit Tailwind height classes without interference. Videos and canvas elements keep `height: auto` since they typically need it.
 
-**File:** `src/pages/EarlyAccess.tsx`
-- Keep the "Back to home" button as-is (navigate to `/`)
-- The invite return URL is already stored in `sessionStorage`, so the banner will appear on the home page letting the user come back
+### File 2: `src/components/TrackCard.tsx`
+
+Add `overflow-hidden` to the thumbnail wrapper div so the image is clipped to the exact square boundary:
+
+Before (line 102):
+```
+<div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0">
+```
+
+After:
+```
+<div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg">
+```
+
+Also move `rounded-lg` from the `<img>` and the overlay to the wrapper (single source of truth for border radius), and remove the redundant `rounded-lg` from child elements:
+
+- `<img>`: remove `rounded-lg`, keep `w-full h-full object-cover`
+- Play overlay div: remove `rounded-lg`, keep everything else
+- Fallback (no cover) div: remove `rounded-lg`, keep everything else
+
+This ensures the wrapper clips everything cleanly to a rounded square.
+
+### File 3: `src/components/ui/skeletons/TrackCardSkeleton.tsx`
+
+No changes needed -- the skeleton already uses `w-[60px] h-[60px] rounded-lg flex-shrink-0` on a Skeleton component (no nested image), so it matches perfectly. The skeleton is already correct.
 
 ## Files Summary
 
-| File | Action | Change |
-|------|--------|--------|
-| `src/pages/EarlyAccess.tsx` | Modify | Store invite return URL in sessionStorage on mount; clear on successful unlock |
-| `src/components/InviteReturnBanner.tsx` | Create | Floating banner component that shows when a pending invite URL exists in sessionStorage |
-| `src/App.tsx` | Modify | Add InviteReturnBanner to the layout |
-
-## Technical Details
-
-### sessionStorage key
-
-```
-Key: "flymusic_invite_return_url"
-Value: "/early-access?role=fan&code=FLYMUSIC-XXXX"  (full path + query)
-```
-
-Using `sessionStorage` (not `localStorage`) so it automatically clears when the browser tab is closed -- no stale banners on future visits.
-
-### InviteReturnBanner component
-
-```text
-Position: fixed bottom-20 (above mobile bottom nav) or bottom-4 (if no bottom nav)
-Z-index: 40 (below nav but above content)
-Layout: flex row with icon + text + "Return" button + dismiss X
-Animation: slide up on mount (framer-motion)
-```
-
-Hidden on these routes:
-- `/early-access` (already on the page)
-- `/join/*` (invite flow completed)
-- `/fan/onboarding` (already past the gate)
-- `/fan/dashboard` (already activated)
-
-### EarlyAccess.tsx sessionStorage logic
-
-```text
-On mount:
-  const returnUrl = location.pathname + location.search
-  sessionStorage.setItem("flymusic_invite_return_url", returnUrl)
-
-On successful code validation (before navigate):
-  sessionStorage.removeItem("flymusic_invite_return_url")
-```
+| File | Change |
+|------|--------|
+| `src/App.css` | Remove `height: auto` from `img` elements to stop conflicting with explicit Tailwind height classes |
+| `src/components/TrackCard.tsx` | Add `overflow-hidden rounded-lg` to thumbnail wrapper; remove redundant `rounded-lg` from children |
 
 ## What's NOT Changing
 
-- The invite code validation flow (same edge function, same redirect)
-- The EarlyAccess page design or layout
-- Navigation menus or header
-- Any protected route behavior
+- Thumbnail dimensions (stays 60x60 mobile, 64x64 desktop)
+- Card layout, spacing, or sizing
+- Skeleton dimensions (already correct)
+- Tab behavior
+- Desktop layout
+
