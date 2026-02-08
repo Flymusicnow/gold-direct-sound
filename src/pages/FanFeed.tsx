@@ -302,7 +302,9 @@ export default function FanFeed() {
       <div className="flex w-full pt-16 min-h-[100dvh]" style={{ minHeight: '100dvh' }}>
         <FanSidebar />
         <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8 overflow-x-hidden" style={{ touchAction: 'pan-y' }}>
-          <PageBreadcrumb role="fan" />
+          <div className="hidden md:block">
+            <PageBreadcrumb role="fan" />
+          </div>
           
           <div className="max-w-7xl mx-auto">
             {loading ? (
@@ -331,10 +333,10 @@ export default function FanFeed() {
             ) : (
               <>
                 {/* Sticky header — outside PageTransition so transform doesn't break sticky */}
-                <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+                <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-1 pb-2 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 md:gap-4 md:mb-3">
                     <div>
-                      <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('fan.yourFeed')}</h1>
+                      <h1 className="text-2xl md:text-4xl font-bold">{t('fan.yourFeed')}</h1>
                     </div>
                   </div>
                   <FeedTabs 
@@ -346,7 +348,7 @@ export default function FanFeed() {
 
                 {/* Content — only this part gets the page transition animation */}
                 <PageTransition>
-                  <div className="pt-4 md:pt-5 grid lg:grid-cols-3 gap-6">
+                  <div className="pt-2 md:pt-5 grid lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2">
                       {renderTabContent()}
                     </div>
