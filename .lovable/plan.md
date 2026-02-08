@@ -1,89 +1,103 @@
 
 
-# Fix: Cover Image Aspect Ratio on Mobile Feed Cards
+# Fix: Mobile Layout Inconsistency Between Lovable Preview and External Window
 
 ## Root Cause
 
-Two issues combine to cause the stretched/cropped cover image on mobile:
+`src/App.css` is **never imported** anywhere in the application. Not in `main.tsx`, not in `App.tsx`, not anywhere. It is dead code.
 
-### Issue 1: Global CSS `height: auto` on images
-
-In `src/App.css` (line 3), we added a global reset:
+This means the following critical rules are never applied:
 
 ```css
-img, video, canvas { max-width: 100%; height: auto; display: block; }
+html, body {
+  height: 100%;
+  overflow: hidden;   /* <-- scroll-lock for FlightdeckLayout */
+}
+
+#root {
+  height: 100%;       /* <-- h-screen chain for FlightdeckLayout */
+}
 ```
 
-While Tailwind's `.h-full` class (specificity 0,1,0) technically beats the element selector `img` (specificity 0,0,1), iOS Safari has known rendering quirks where `height: auto` and `object-cover` interact unpredictably inside flex containers. The `height: auto` tells the browser "use natural aspect ratio" which conflicts with `h-full` ("fill parent height"). Safari sometimes resolves this by stretching/elongating the image.
+**Why it looks correct in the Lovable preview:** The Lovable preview panel renders your app inside an iframe with its own height/overflow constraints on the wrapper element. This accidentally masks the missing `overflow: hidden` and `height: 100%` rules. In a separate browser tab, there is no wrapper -- the app runs directly on the page, and without those rules the FlightdeckLayout scroll model breaks.
 
-### Issue 2: No `overflow-hidden` on thumbnail wrapper
-
-The thumbnail wrapper div:
-```html
-<div class="relative w-[60px] h-[60px] flex-shrink-0">
-  <img class="w-full h-full rounded-lg object-cover" />
-</div>
-```
-
-Without `overflow-hidden`, the image can visually bleed outside its 60x60 boundary. On Safari, this manifests as the image appearing taller than the container.
+**Why the img fix also doesn't apply externally:** The `img { max-width: 100%; display: block; }` rule from App.css (the cover image fix) is also dead. However, Tailwind's preflight (loaded via `@tailwind base` in index.css) already sets identical img defaults, so this specific rule is redundant and not the cause.
 
 ## Fix
 
-### File 1: `src/App.css`
+### Merge App.css into index.css (single source of truth)
 
-Remove `height: auto` from the global `img` rule. This was added as a "safety net" reset, but it actively conflicts with images that need explicit sizing (like our track covers). Keep `max-width: 100%` and `display: block` which are safe.
+Rather than just adding an import (which leaves two global CSS files -- confusing and error-prone), merge the non-redundant rules from `App.css` into `index.css` and delete `App.css`.
 
-Before:
+**What App.css currently has:**
+
+| Rule | Already in index.css / Tailwind? | Action |
+|------|----------------------------------|--------|
+| `*, *::before, *::after { box-sizing: border-box }` | Yes (Tailwind preflight) | Skip (redundant) |
+| `video, canvas { max-width: 100%; height: auto; display: block }` | Partially (Tailwind handles video but not canvas) | Keep for canvas |
+| `img { max-width: 100%; display: block }` | Yes (Tailwind preflight) | Skip (redundant) |
+| `html, body { height: 100%; margin: 0; padding: 0; overflow: hidden }` | Partially (index.css has Safari viewport sizing, Tailwind preflight has margin/padding reset) | **Keep height + overflow** |
+| `#root { height: 100% }` | No | **Keep** |
+
+**File: `src/index.css`**
+
+Add the missing critical rules at the top of the file (before `@tailwind base`):
+
 ```css
-img, video, canvas { max-width: 100%; height: auto; display: block; }
+/* App-wide scroll lock -- keeps FlightdeckLayout as the sole scroll container */
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Canvas element safety reset */
+canvas { max-width: 100%; height: auto; display: block; }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* ... rest of index.css unchanged ... */
 ```
 
-After:
-```css
-video, canvas { max-width: 100%; height: auto; display: block; }
-img { max-width: 100%; display: block; }
+Placing them before `@tailwind base` ensures they load first, then Tailwind's preflight layer adds its own resets on top without conflict. The `overflow: hidden` and `height: 100%` rules are not covered by Tailwind, so they survive.
+
+**File: `src/App.css`**
+
+Delete this file entirely. All its rules are now either in `index.css` or already covered by Tailwind's preflight.
+
+## Why This Fixes the Problem
+
+```text
+Before (external tab):
+  html/body -> no height, no overflow:hidden
+    -> body scrolls freely
+    -> FlightdeckLayout h-screen has no reference height
+    -> layout breaks, content overflows, double scrollbars
+
+After (external tab):
+  html/body -> height:100%, overflow:hidden
+    -> no body scroll
+    -> FlightdeckLayout h-screen = viewport height
+    -> <main> is the sole scroll container (overflow-y-auto)
+    -> layout matches Lovable preview exactly
 ```
-
-This removes `height: auto` only from `img` elements, so images respect their explicit Tailwind height classes without interference. Videos and canvas elements keep `height: auto` since they typically need it.
-
-### File 2: `src/components/TrackCard.tsx`
-
-Add `overflow-hidden` to the thumbnail wrapper div so the image is clipped to the exact square boundary:
-
-Before (line 102):
-```
-<div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0">
-```
-
-After:
-```
-<div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg">
-```
-
-Also move `rounded-lg` from the `<img>` and the overlay to the wrapper (single source of truth for border radius), and remove the redundant `rounded-lg` from child elements:
-
-- `<img>`: remove `rounded-lg`, keep `w-full h-full object-cover`
-- Play overlay div: remove `rounded-lg`, keep everything else
-- Fallback (no cover) div: remove `rounded-lg`, keep everything else
-
-This ensures the wrapper clips everything cleanly to a rounded square.
-
-### File 3: `src/components/ui/skeletons/TrackCardSkeleton.tsx`
-
-No changes needed -- the skeleton already uses `w-[60px] h-[60px] rounded-lg flex-shrink-0` on a Skeleton component (no nested image), so it matches perfectly. The skeleton is already correct.
 
 ## Files Summary
 
-| File | Change |
-|------|--------|
-| `src/App.css` | Remove `height: auto` from `img` elements to stop conflicting with explicit Tailwind height classes |
-| `src/components/TrackCard.tsx` | Add `overflow-hidden rounded-lg` to thumbnail wrapper; remove redundant `rounded-lg` from children |
+| File | Action | Change |
+|------|--------|--------|
+| `src/index.css` | Modify | Add scroll-lock rules (height: 100%, overflow: hidden on html/body, height: 100% on #root) and canvas reset at the top |
+| `src/App.css` | Delete | All rules are now redundant or merged into index.css |
 
 ## What's NOT Changing
 
-- Thumbnail dimensions (stays 60x60 mobile, 64x64 desktop)
-- Card layout, spacing, or sizing
-- Skeleton dimensions (already correct)
-- Tab behavior
-- Desktop layout
+- TrackCard dimensions or thumbnail styling (already fixed in previous commit)
+- FlightdeckLayout structure (already has overflow-x-hidden)
+- FanFeed page structure (already has overflow-x-hidden and touch-action)
+- Tailwind config or Vite config
+- index.html viewport meta tag (already correct: `viewport-fit=cover`)
 
