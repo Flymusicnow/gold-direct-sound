@@ -1,49 +1,77 @@
 
 
-# Fix Mobile Feed Layout: Cut-off Cards, Remove Text and Icons
+# Fix: Track Cards Still Cut Off on Mobile Feed
 
-## Issues Found
+## Root Cause
 
-Looking at the screenshot, there are three distinct problems on the mobile feed page:
+The TrackCard outer `div` is a flex row with no width constraint (`w-full`, `max-w-full`, or `overflow-hidden`). The combined minimum widths of its children are:
 
-1. **Track cards overflow the screen width** -- the song boxes are cut off on the right side because the card tries to fit a 60px thumbnail + song title + 3 action buttons (playlist, queue, like) all in one row, which exceeds the mobile viewport width.
+- Card padding: `px-3.5` = 28px
+- Thumbnail: 60px + gap 14px = 74px
+- Buttons: 2 x 36px + gap 10px = 82px + gap-to-text 14px = 96px
+- **Total fixed width: ~198px**
 
-2. **"Discover from your favorites" subtitle text** -- the user wants this removed.
+On a 375px phone with 16px page padding on each side, the card gets 343px. After fixed elements, only ~145px remains for text -- which should fit. BUT the `flex` container has no `overflow-hidden`, and the combination of `min-h-[88px]`, padding, gaps, and button sizing can cause the row to push slightly wider than the parent, especially when border and sub-pixel rounding are involved.
 
-3. **Dashboard/Feed pill switch** (the house icon and RSS icon) -- the user wants this removed from the feed page.
+The parent `motion.div` wrapper (from StaggeredList) also has no width constraint, so nothing prevents the card from overflowing.
 
-## Changes
+## Fix (3 changes in 2 files)
 
-### 1. Remove "Discover from your favorites" text
-**File:** `src/pages/FanFeed.tsx` (line 338)
+### 1. TrackCard outer div -- add `w-full overflow-hidden`
+This is the primary fix. Forces the card to respect its parent's width and clip any overflow internally.
 
-Remove the `<p>` element containing the subtitle text. The "Your Feed" heading remains.
+**File:** `src/components/TrackCard.tsx` (line 98-99)
 
-### 2. Remove the Dashboard/Feed switch (house + RSS icons)
-**File:** `src/pages/FanFeed.tsx` (line 340)
+Before:
+```tsx
+className="group flex items-center gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+```
 
-Remove the `<DashboardFeedSwitch />` component from the feed page header. This removes the pill-shaped toggle with the house and RSS icons.
+After:
+```tsx
+className="group flex items-center gap-3 md:gap-4 px-3 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer w-full overflow-hidden"
+```
 
-### 3. Fix track cards being cut off on mobile
-**File:** `src/components/TrackCard.tsx`
+Changes: adds `w-full overflow-hidden`, reduces mobile gap from `gap-3.5` to `gap-3`, and reduces mobile padding from `px-3.5` to `px-3` (saves ~5px total, prevents edge-case overflow on 320px screens).
 
-The card currently shows 3 action buttons side by side (playlist, queue, like) which takes ~108px. Combined with the 60px thumbnail, gap spacing, and text, this overflows narrow mobile screens.
+### 2. Buttons container -- add `flex-shrink-0` and reduce mobile gap
+The buttons wrapper needs `flex-shrink-0` so it keeps its size and lets only the text column shrink (which already has `min-w-0` and `truncate`).
 
-The fix: On mobile, hide the "Add to queue" button (the `+` icon). Users can still access queue functionality through the player. This brings the action area from 3 buttons down to 2, which fits comfortably on all mobile widths.
+**File:** `src/components/TrackCard.tsx` (line 145)
 
-- Wrap the "Add to queue" button with `hidden md:flex` so it only shows on desktop
-- The playlist button and like button remain always visible
-- The buttons already use `h-9 w-9` sizing which is touch-friendly
+Before:
+```tsx
+<div className="flex items-center gap-2.5">
+```
 
-### 4. Ensure the "Play All" button is not cut off
-**File:** `src/components/feed/FeedMusicTab.tsx`
+After:
+```tsx
+<div className="flex items-center gap-1.5 md:gap-2.5 flex-shrink-0">
+```
 
-The "Play All" button wrapper uses `justify-between` with only one child, which is fine. But the parent `space-y-4` combined with the sticky header margin can cause issues. Add `overflow-hidden` protection to ensure nothing bleeds out.
+Changes: adds `flex-shrink-0`, reduces mobile button gap from `gap-2.5` (10px) to `gap-1.5` (6px), saving 4px.
 
-## Files Summary
+### 3. StaggeredList items -- add `overflow-hidden`
+Each card is wrapped in a `motion.div` inside StaggeredList. Adding `overflow-hidden` ensures the animation wrapper also constrains its children.
+
+**File:** `src/components/ui/StaggeredList.tsx` (line 61)
+
+Before:
+```tsx
+<motion.div key={index} variants={itemVariants}>
+```
+
+After:
+```tsx
+<motion.div key={index} variants={itemVariants} className="overflow-hidden">
+```
+
+## Summary
 
 | File | Change |
 |------|--------|
-| `src/pages/FanFeed.tsx` | Remove "Discover from your favorites" text and `DashboardFeedSwitch` component |
-| `src/components/TrackCard.tsx` | Hide "Add to queue" button on mobile (`hidden md:flex`) to prevent card overflow |
+| `src/components/TrackCard.tsx` | Add `w-full overflow-hidden` to card, reduce mobile gap/padding, add `flex-shrink-0` to buttons |
+| `src/components/ui/StaggeredList.tsx` | Add `overflow-hidden` to motion.div wrapper |
+
+These changes guarantee the card respects its container width on all viewport sizes (320px-414px). The text column absorbs all available space and truncates, while buttons and thumbnail keep their fixed sizes.
 
