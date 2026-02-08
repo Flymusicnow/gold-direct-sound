@@ -28,7 +28,7 @@ export default function PlaylistCard({
     >
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
             {coverUrl ? (
               <img
                 src={coverUrl}

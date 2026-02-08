@@ -169,22 +169,22 @@ export function PremiumTrackCard({
       >
         <div className="flex items-center gap-4">
           {/* Cover Art with clickable play overlay */}
-          <div className="relative w-20 h-20 flex-shrink-0">
+          <div className="relative w-20 h-20 flex-shrink-0 overflow-hidden rounded-lg isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
             {track.cover_url ? (
               <img
                 src={track.cover_url}
                 alt={track.title}
-                className={`w-full h-full rounded-lg object-cover ${track.is_supporter_only && !hasAccess ? "blur-sm" : ""}`}
+                className={`w-full h-full object-cover ${track.is_supporter_only && !hasAccess ? "blur-sm" : ""}`}
               />
             ) : (
-              <div className="w-full h-full rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
                 <Music className="h-8 w-8 text-primary" />
               </div>
             )}
             
             {/* Locked Overlay on Cover */}
             {track.is_supporter_only && !hasAccess && !accessLoading && (
-              <div className="absolute inset-0 rounded-lg bg-black/60 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
                 <Lock className="h-6 w-6 text-primary" />
               </div>
             )}
@@ -192,7 +192,7 @@ export function PremiumTrackCard({
             {/* Play Overlay - Clickable */}
             {(!track.is_supporter_only || hasAccess) && (
         <div 
-          className="absolute inset-0 rounded-lg bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+          className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
           onClick={handlePlay}
         >
           <div 
