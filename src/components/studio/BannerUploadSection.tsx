@@ -115,7 +115,7 @@ export function BannerUploadSection({
 
     if (banner.mediaType === 'video') {
       return (
-        <div className={`w-full ${aspectRatio} rounded-lg overflow-hidden relative group`}>
+        <div className={`w-full ${aspectRatio} rounded-lg overflow-hidden relative group isolate`} style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
           <video
             src={banner.url}
             autoPlay

@@ -31,7 +31,8 @@ export function SearchTrackCard({ track, query, onOpenOverlay }: SearchTrackCard
         <div className="flex items-start gap-4">
           {/* Cover Image */}
           <div 
-            className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer"
+            className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer isolate"
+            style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
             onClick={onOpenOverlay}
           >
             {track.cover_url ? (

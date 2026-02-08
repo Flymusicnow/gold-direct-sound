@@ -162,7 +162,7 @@ export function RecentlyAddedSection() {
             key={item.id}
             className="flex items-center gap-3 p-3 rounded-lg bg-card hover:bg-muted/50 transition-colors group"
           >
-            <div className="relative">
+            <div className="relative overflow-hidden rounded isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
               <img
                 src={item.track.cover_url || '/placeholder.svg'}
                 alt={item.track.title}

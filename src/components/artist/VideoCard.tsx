@@ -151,7 +151,8 @@ export function VideoCard({
   return (
     <div className="space-y-3">
       <div
-        className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation interactive-card"
+        className="cursor-pointer group relative rounded-2xl overflow-hidden touch-manipulation interactive-card isolate"
+        style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
         onClick={handleVideoClick}
       >
         {/* Video element - always in DOM for ref access */}

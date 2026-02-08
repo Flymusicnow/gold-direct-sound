@@ -81,7 +81,8 @@ export function CompactVideoCard({
 
   return (
     <div
-      className="group relative rounded-xl overflow-hidden bg-card border border-border cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 touch-manipulation"
+      className="group relative rounded-xl overflow-hidden bg-card border border-border cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 touch-manipulation isolate"
+      style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleCardClick}

@@ -24,7 +24,8 @@ export function PreviewVideoGrid({ videos }: PreviewVideoGridProps) {
       {videos.map((video) => (
         <div 
           key={video.id}
-          className="group relative aspect-video rounded-lg overflow-hidden bg-muted cursor-not-allowed"
+          className="group relative aspect-video rounded-lg overflow-hidden bg-muted cursor-not-allowed isolate"
+          style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
         >
           {/* Thumbnail */}
           {video.thumbnail_url ? (

@@ -18,7 +18,7 @@ export function VideoCollectionCard({ collection, artistUserId }: VideoCollectio
   return (
     <Link to={`/collections/${collection.id}`}>
       <Card className="group hover:border-primary/50 transition-all cursor-pointer overflow-hidden">
-        <div className="relative aspect-video bg-gradient-to-br from-primary/5 to-primary/10">
+        <div className="relative aspect-video bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
           {collection.cover_url ? (
             <img
               src={collection.cover_url}

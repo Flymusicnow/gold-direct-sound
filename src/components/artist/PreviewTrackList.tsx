@@ -32,7 +32,7 @@ export function PreviewTrackList({ tracks }: PreviewTrackListProps) {
           </span>
           
           {/* Cover art */}
-          <div className="relative w-12 h-12 rounded bg-muted overflow-hidden shrink-0">
+          <div className="relative w-12 h-12 rounded bg-muted overflow-hidden shrink-0 isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
             {track.cover_url ? (
               <img 
                 src={track.cover_url} 

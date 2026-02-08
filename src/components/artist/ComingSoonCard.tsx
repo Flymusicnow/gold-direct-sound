@@ -65,7 +65,7 @@ export function ComingSoonCard({
   };
 
   return (
-    <div className="relative group overflow-hidden rounded-lg border bg-card">
+    <div className="relative group overflow-hidden rounded-lg border bg-card isolate" style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}>
       {/* Cover Image with Blur Overlay */}
       <div className="relative aspect-square bg-muted">
         {coverUrl ? (
