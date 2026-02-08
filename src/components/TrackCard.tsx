@@ -99,19 +99,19 @@ export function TrackCard({
         className="group flex items-center gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
         onClick={onPlay}
       >
-      <div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0">
+      <div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg">
         {track.cover_url ? (
           <img
             src={track.cover_url}
             alt={track.title}
-            className="w-full h-full rounded-lg object-cover"
+            className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full rounded-lg bg-primary/10 flex items-center justify-center">
+          <div className="w-full h-full bg-primary/10 flex items-center justify-center">
             <Music className="h-6 w-6 text-primary" />
           </div>
         )}
-        <div className="absolute inset-0 rounded-lg bg-black/40 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
           <div 
             className="h-8 w-8 rounded-full flex items-center justify-center hover:scale-105 transition-transform"
             style={{
