@@ -58,7 +58,7 @@ export function StaggeredList({
       }}
     >
       {children.map((child, index) => (
-        <motion.div key={index} variants={itemVariants}>
+        <motion.div key={index} variants={itemVariants} className="overflow-hidden">
           {child}
         </motion.div>
       ))}

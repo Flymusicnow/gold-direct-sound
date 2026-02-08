@@ -96,7 +96,7 @@ export function TrackCard({
   return (
     <>
       <div
-        className="group flex items-center gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+        className="group flex items-center gap-3 md:gap-4 px-3 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer w-full overflow-hidden"
         onClick={onPlay}
       >
       <div
@@ -142,7 +142,7 @@ export function TrackCard({
       </div>
 
       {showLikeButton && (
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 md:gap-2.5 flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
