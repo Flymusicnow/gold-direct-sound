@@ -163,7 +163,7 @@ export function TrackCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
+              className="hidden md:flex h-9 w-9 text-muted-foreground/70 hover:text-foreground hover:bg-transparent"
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToQueue();
