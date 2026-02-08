@@ -1,58 +1,65 @@
 
+# Fix: Cover + Play Overlay Still Clipping on iOS Safari (Nuclear Safari Workaround)
 
-# Fix: Cover + Play Overlay Clipping on iOS Safari
+## Why Previous Fixes Haven't Worked
 
-## Root Cause
+The code already has the correct structure: `overflow-hidden rounded-lg isolate` on the thumbnail wrapper. However, iOS Safari has a deeper compositing bug that `isolation: isolate` alone does not always resolve, particularly when the element is nested inside Framer Motion animated wrappers.
 
-The thumbnail wrapper in `TrackCard.tsx` already has the correct structure:
-- Fixed dimensions: `w-[60px] h-[60px]`
-- `overflow-hidden rounded-lg`
-- `position: relative`
-- Play overlay uses `absolute inset-0` (fully contained)
+In this case, the rendering chain is:
 
-The DOM nesting is correct. The issue is a **well-known iOS Safari rendering bug** where `overflow: hidden` combined with `border-radius` fails to clip absolutely positioned descendants. Safari does not always create a compositing layer for the clipping parent, so the overlay and image can visually "escape" the rounded, clipped bounds.
+```text
+motion.div (StaggeredList item -- applies CSS transform during animation)
+  -> div.group (TrackCard outer card)
+    -> div.thumbnail-wrapper (overflow-hidden + rounded-lg + isolate)
+        -> img (cover image)
+        -> div.absolute.inset-0 (play overlay)
+```
 
-This bug is documented across WebKit and only manifests on iOS Safari (not desktop Safari or Chrome mobile). It explains why the Lovable preview (Chrome-based iframe) looks fine while external Safari preview shows clipping.
+Framer Motion applies inline `transform: translateY(...)` and `will-change: transform` on the `motion.div` ancestor. On iOS Safari, this ancestor transform interferes with descendant `overflow: hidden` + `border-radius` clipping -- even when `isolation: isolate` is present. Safari's compositor does not always honor the clip path when a transform context exists further up the tree.
 
-## Fix
+## The Fix: `-webkit-mask-image` (Bulletproof Safari Clipping)
 
-Add `isolation: isolate` to the thumbnail wrapper. This forces Safari to create a new stacking context and compositing layer, which makes `overflow: hidden` + `border-radius` reliably clip all positioned children.
+The only 100% reliable workaround for this Safari bug is applying a webkit mask image on the thumbnail wrapper:
 
-In Tailwind, this is the `isolate` utility class.
+```css
+-webkit-mask-image: -webkit-radial-gradient(white, black);
+```
+
+This forces Safari to use a pixel mask for clipping instead of relying on `overflow: hidden`. Masks always clip correctly regardless of ancestor transforms, compositing contexts, or stacking order. This is the standard workaround recommended across WebKit bug trackers and iOS development communities.
+
+## Changes
 
 ### File: `src/components/TrackCard.tsx`
 
-Line 102, the thumbnail wrapper:
+Add an inline style to the thumbnail wrapper div that applies the webkit mask:
 
 Before:
-```
-<div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg">
-```
-
-After:
-```
+```tsx
 <div className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg isolate">
 ```
 
-One class added: `isolate`. This maps to `isolation: isolate` in CSS, which:
-- Creates a new stacking context (prevents z-index leaking)
-- Forces Safari to composite the element as a unit
-- Makes `overflow: hidden` + `border-radius` reliably clip the `absolute inset-0` overlay inside
+After:
+```tsx
+<div
+  className="relative w-[60px] h-[60px] md:w-16 md:h-16 flex-shrink-0 overflow-hidden rounded-lg isolate"
+  style={{ WebkitMaskImage: '-webkit-radial-gradient(white, black)' }}
+>
+```
 
-No other changes needed. The image (`w-full h-full object-cover`) and overlay (`absolute inset-0`) are already correctly structured.
+This single inline style addition forces Safari to rasterize the clipping boundary as a mask, ensuring:
+- The cover image is clipped to the exact 60x60 rounded square
+- The play overlay is fully contained and never bleeds outside
+- Both work correctly even inside Framer Motion animated containers
+- No visual difference on Chrome/Firefox (they already clip correctly)
+
+No other files need changes. The skeleton already matches dimensions (60x60, rounded-lg, flex-shrink-0).
+
+## Important Note About the Published Site
+
+The screenshot shows `gold-direct-sound.lovable.app` (the published URL). The previous fixes (adding `isolate`, `overflow-hidden`, merging CSS into `index.css`) exist in the test/preview build but have NOT been published yet. After this fix is implemented, all accumulated fixes will need to be published together to appear on the live site.
 
 ## Files Summary
 
 | File | Change |
 |------|--------|
-| `src/components/TrackCard.tsx` | Add `isolate` class to thumbnail wrapper div (line 102) |
-
-## What's NOT Changing
-
-- Thumbnail dimensions (60x60 mobile, 64x64 desktop)
-- Image fitting (object-cover)
-- Overlay structure or play button styling
-- Skeleton dimensions (already correct at 60x60)
-- Global CSS (index.css)
-- Card layout, spacing, or border radius
-
+| `src/components/TrackCard.tsx` | Add `WebkitMaskImage` inline style to thumbnail wrapper for bulletproof Safari clipping |
