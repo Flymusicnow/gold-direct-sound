@@ -1,77 +1,108 @@
 
 
-# Fix: Track Cards Still Cut Off on Mobile Feed
+# Fix: "Play All" Button Clipped on Mobile Feed
 
-## Root Cause
+## Problem
 
-The TrackCard outer `div` is a flex row with no width constraint (`w-full`, `max-w-full`, or `overflow-hidden`). The combined minimum widths of its children are:
+On mobile, too much vertical space is consumed before the actual content starts. Adding up all the elements above "Play All":
 
-- Card padding: `px-3.5` = 28px
-- Thumbnail: 60px + gap 14px = 74px
-- Buttons: 2 x 36px + gap 10px = 82px + gap-to-text 14px = 96px
-- **Total fixed width: ~198px**
+- Top nav bar: 64px
+- Main content padding: 16px
+- Breadcrumb (Home > Fan Portal > Feed): ~36px
+- Sticky header top padding: 8px
+- "Your Feed" title + spacing: ~72px
+- Tabs bar: ~48px
+- Sticky header bottom padding: 12px
+- Content top padding: 16px
 
-On a 375px phone with 16px page padding on each side, the card gets 343px. After fixed elements, only ~145px remains for text -- which should fit. BUT the `flex` container has no `overflow-hidden`, and the combination of `min-h-[88px]`, padding, gaps, and button sizing can cause the row to push slightly wider than the parent, especially when border and sub-pixel rounding are involved.
+**Total: ~272px** before "Play All" even starts. On a ~700px phone viewport, the button is right at the edge, partially clipped.
 
-The parent `motion.div` wrapper (from StaggeredList) also has no width constraint, so nothing prevents the card from overflowing.
+## Solution (3 changes in 2 files)
 
-## Fix (3 changes in 2 files)
+### 1. Hide breadcrumb on mobile
+**File:** `src/pages/FanFeed.tsx` (line 305)
 
-### 1. TrackCard outer div -- add `w-full overflow-hidden`
-This is the primary fix. Forces the card to respect its parent's width and clip any overflow internally.
-
-**File:** `src/components/TrackCard.tsx` (line 98-99)
+The breadcrumb "Home > Fan Portal > Feed" is redundant on mobile because the bottom nav already highlights "Feed" as the active tab. Hiding it saves ~36px of vertical space.
 
 Before:
 ```tsx
-className="group flex items-center gap-3.5 md:gap-4 px-3.5 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer"
+<PageBreadcrumb role="fan" />
 ```
 
 After:
 ```tsx
-className="group flex items-center gap-3 md:gap-4 px-3 py-3 md:p-4 min-h-[88px] md:min-h-0 rounded-[14px] bg-card border border-border hover:border-primary/50 hover:bg-card/80 transition-all cursor-pointer w-full overflow-hidden"
+<div className="hidden md:block">
+  <PageBreadcrumb role="fan" />
+</div>
 ```
 
-Changes: adds `w-full overflow-hidden`, reduces mobile gap from `gap-3.5` to `gap-3`, and reduces mobile padding from `px-3.5` to `px-3` (saves ~5px total, prevents edge-case overflow on 320px screens).
+### 2. Make the sticky header more compact on mobile
+**File:** `src/pages/FanFeed.tsx` (line 334)
 
-### 2. Buttons container -- add `flex-shrink-0` and reduce mobile gap
-The buttons wrapper needs `flex-shrink-0` so it keeps its size and lets only the text column shrink (which already has `min-w-0` and `truncate`).
-
-**File:** `src/components/TrackCard.tsx` (line 145)
+Reduce the title size and spacing on mobile to reclaim vertical space:
 
 Before:
 ```tsx
-<div className="flex items-center gap-2.5">
+<div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-2 pb-3 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-3">
+    <div>
+      <h1 className="text-3xl md:text-4xl font-bold mb-1">{t('fan.yourFeed')}</h1>
+    </div>
+  </div>
 ```
 
 After:
 ```tsx
-<div className="flex items-center gap-1.5 md:gap-2.5 flex-shrink-0">
+<div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm -mx-4 px-4 pt-1 pb-2 border-b border-border/50 md:static md:z-auto md:bg-transparent md:backdrop-blur-none md:mx-0 md:px-0 md:pt-0 md:pb-0 md:border-b-0">
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2 md:gap-4 md:mb-3">
+    <div>
+      <h1 className="text-2xl md:text-4xl font-bold">{t('fan.yourFeed')}</h1>
+    </div>
+  </div>
 ```
 
-Changes: adds `flex-shrink-0`, reduces mobile button gap from `gap-2.5` (10px) to `gap-1.5` (6px), saving 4px.
+Changes:
+- `pt-2` to `pt-1` (saves 4px)
+- `pb-3` to `pb-2` (saves 4px)
+- `gap-4` to `gap-2 md:gap-4` (saves 8px on mobile)
+- `mb-3` to `mb-2 md:mb-3` (saves 4px on mobile)
+- `text-3xl` to `text-2xl md:text-4xl` (smaller title on mobile, saves ~8px)
+- Remove `mb-1` from h1 (saves 4px)
 
-### 3. StaggeredList items -- add `overflow-hidden`
-Each card is wrapped in a `motion.div` inside StaggeredList. Adding `overflow-hidden` ensures the animation wrapper also constrains its children.
-
-**File:** `src/components/ui/StaggeredList.tsx` (line 61)
+### 3. Reduce content top padding on mobile
+**File:** `src/pages/FanFeed.tsx` (line 349)
 
 Before:
 ```tsx
-<motion.div key={index} variants={itemVariants}>
+<div className="pt-4 md:pt-5 grid lg:grid-cols-3 gap-6">
 ```
 
 After:
 ```tsx
-<motion.div key={index} variants={itemVariants} className="overflow-hidden">
+<div className="pt-2 md:pt-5 grid lg:grid-cols-3 gap-6">
 ```
 
-## Summary
+Reduces the gap between the sticky header bottom border and the "Play All" button on mobile (saves 8px).
+
+## Space Saved
+
+| Change | Pixels saved |
+|--------|-------------|
+| Hide breadcrumb | ~36px |
+| Reduce header padding/gaps | ~20px |
+| Smaller title | ~8px |
+| Reduce content padding | 8px |
+| **Total** | **~72px** |
+
+This pushes "Play All" and the first track card well into the visible viewport on all phone sizes (320px-414px wide, ~600-900px tall).
+
+## Files Summary
 
 | File | Change |
 |------|--------|
-| `src/components/TrackCard.tsx` | Add `w-full overflow-hidden` to card, reduce mobile gap/padding, add `flex-shrink-0` to buttons |
-| `src/components/ui/StaggeredList.tsx` | Add `overflow-hidden` to motion.div wrapper |
+| `src/pages/FanFeed.tsx` | Hide breadcrumb on mobile, compact sticky header spacing, reduce content top padding |
 
-These changes guarantee the card respects its container width on all viewport sizes (320px-414px). The text column absorbs all available space and truncates, while buttons and thumbnail keep their fixed sizes.
-
+## What stays the same
+- Desktop layout is unchanged (all changes use `md:` breakpoint to preserve desktop styles)
+- The track card fixes from the previous change remain
+- The sticky header behavior still works correctly
