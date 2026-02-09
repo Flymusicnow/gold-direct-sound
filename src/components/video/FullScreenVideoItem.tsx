@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { useVideoLikes } from "@/hooks/useVideoLikes";
 import { VideoCaption } from "./VideoCaption";
+import { VideoCommentSheet } from "./VideoCommentSheet";
 import type { FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
 interface FullScreenVideoItemProps {
@@ -17,6 +18,7 @@ interface FullScreenVideoItemProps {
   onClose: () => void;
   onCloseFeedForNavigation?: () => void;
   onCaptionExpandedChange?: (expanded: boolean) => void;
+  onCommentSheetChange?: (open: boolean) => void;
 }
 
 export function FullScreenVideoItem({
@@ -27,6 +29,7 @@ export function FullScreenVideoItem({
   onClose,
   onCloseFeedForNavigation,
   onCaptionExpandedChange,
+  onCommentSheetChange,
 }: FullScreenVideoItemProps) {
   const navigate = useNavigate();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -38,6 +41,7 @@ export function FullScreenVideoItem({
   const doubleTapTimeout = useRef<ReturnType<typeof setTimeout>>();
   const lastTap = useRef<number>(0);
   const [showHeart, setShowHeart] = useState(false);
+  const commentSheetOpenRef = useRef(false);
 
   const { isLiked, likeCount, toggleLike } = useVideoLikes(video.id);
 
@@ -68,6 +72,8 @@ export function FullScreenVideoItem({
   }, []);
 
   const handleTap = useCallback(() => {
+    // Don't handle tap-to-pause when comment sheet is open
+    if (commentSheetOpenRef.current) return;
     const now = Date.now();
     const timeSinceLastTap = now - lastTap.current;
     lastTap.current = now;
@@ -158,6 +164,14 @@ export function FullScreenVideoItem({
       }
     },
     [video]
+  );
+
+  const handleCommentSheetChange = useCallback(
+    (open: boolean) => {
+      commentSheetOpenRef.current = open;
+      onCommentSheetChange?.(open);
+    },
+    [onCommentSheetChange]
   );
 
   const formatCount = (count: number) => {
@@ -296,6 +310,13 @@ export function FullScreenVideoItem({
             <Share2 className="w-6 h-6 text-white" />
           </div>
         </button>
+
+        {/* Comments */}
+        <VideoCommentSheet
+          videoId={video.id}
+          artistId={video.artistId}
+          onOpenChange={handleCommentSheetChange}
+        />
       </div>
 
       {/* Bottom info — artist + caption with fade preview */}
