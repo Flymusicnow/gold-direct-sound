@@ -95,6 +95,7 @@ export function ScrollableTabsList({
           "md:overflow-x-visible",
           className
         )}
+        style={{ touchAction: 'pan-x pinch-zoom' }}
       >
         {children}
       </div>

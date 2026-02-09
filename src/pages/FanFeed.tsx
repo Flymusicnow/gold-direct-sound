@@ -301,7 +301,7 @@ export default function FanFeed() {
       <MobileFanNav />
       <div className="flex w-full pt-16 min-h-[100dvh]" style={{ minHeight: '100dvh' }}>
         <FanSidebar />
-        <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8 overflow-x-hidden" style={{ touchAction: 'pan-y' }}>
+        <main className="flex-1 p-4 md:p-6 pb-52 md:pb-8 overflow-x-hidden" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
           <div className="hidden md:block">
             <PageBreadcrumb role="fan" />
           </div>

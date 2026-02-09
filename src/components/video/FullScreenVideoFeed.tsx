@@ -27,6 +27,7 @@ export function FullScreenVideoFeed({
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const directionLockedRef = useRef<"horizontal" | "vertical" | null>(null);
   const captionExpandedRef = useRef(false);
+  const commentSheetOpenRef = useRef(false);
 
   const toggleMute = useCallback(() => {
     setIsMuted((prev) => !prev);
@@ -34,6 +35,10 @@ export function FullScreenVideoFeed({
 
   const handleCaptionExpandedChange = useCallback((expanded: boolean) => {
     captionExpandedRef.current = expanded;
+  }, []);
+
+  const handleCommentSheetChange = useCallback((open: boolean) => {
+    commentSheetOpenRef.current = open;
   }, []);
 
   // Scroll to initial video on mount
@@ -88,6 +93,8 @@ export function FullScreenVideoFeed({
 
   // ─── Swipe-right-to-close gesture handlers ───
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Don't start swipe-to-close when comment sheet is open
+    if (commentSheetOpenRef.current) return;
     touchStartRef.current = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
@@ -179,6 +186,7 @@ export function FullScreenVideoFeed({
               onClose={onClose}
               onCloseFeedForNavigation={onCloseFeedForNavigation}
               onCaptionExpandedChange={handleCaptionExpandedChange}
+              onCommentSheetChange={handleCommentSheetChange}
             />
           </div>
         ))}
