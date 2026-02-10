@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { FullScreenVideoItem } from "./FullScreenVideoItem";
 import type { FeedVideo } from "@/hooks/useFullScreenVideoFeed";
 
+// Hide bottom nav bars when fullscreen video feed is open
+
 interface FullScreenVideoFeedProps {
   videos: FeedVideo[];
   initialIndex: number;
@@ -39,6 +41,14 @@ export function FullScreenVideoFeed({
 
   const handleCommentSheetChange = useCallback((open: boolean) => {
     commentSheetOpenRef.current = open;
+  }, []);
+
+  // Toggle body class to hide bottom nav when mounted
+  useEffect(() => {
+    document.body.classList.add("video-feed-open");
+    return () => {
+      document.body.classList.remove("video-feed-open");
+    };
   }, []);
 
   // Scroll to initial video on mount

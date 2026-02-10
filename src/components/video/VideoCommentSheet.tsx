@@ -188,6 +188,7 @@ export function VideoCommentSheet({
                 onTouchMove={(e) => e.stopPropagation()}
               >
                 <VideoCommentsSection
+                  key={videoId}
                   videoId={videoId}
                   artistId={artistId}
                 />

@@ -178,6 +178,11 @@ canvas { max-width: 100%; height: auto; display: block; }
   text-shadow: 0 0 12px hsl(45 82% 55% / 0.4);
 }
 
+/* Hide bottom nav when fullscreen video feed is open */
+body.video-feed-open .bottom-nav-bar {
+  display: none !important;
+}
+
 /* Mobile Safari viewport fix - use dynamic viewport height */
 html {
   height: -webkit-fill-available;

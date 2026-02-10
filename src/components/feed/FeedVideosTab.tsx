@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -89,13 +90,14 @@ export function FeedVideosTab({ videos }: FeedVideosTabProps) {
         ))}
       </StaggeredList>
 
-      {feed.isOpen && (
+      {feed.isOpen && createPortal(
         <FullScreenVideoFeed
           videos={feed.videos}
           initialIndex={feed.initialIndex}
           onClose={feed.closeFeed}
           onCloseFeedForNavigation={feed.closeFeedForNavigation}
-        />
+        />,
+        document.body
       )}
     </div>
   );
