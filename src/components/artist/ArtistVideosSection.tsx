@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Video } from "lucide-react";
@@ -125,13 +126,14 @@ export function ArtistVideosSection({ artistId, artistName, artistAvatar, artist
         artistName={artistName}
       />
 
-      {feed.isOpen && (
+      {feed.isOpen && createPortal(
         <FullScreenVideoFeed
           videos={feed.videos}
           initialIndex={feed.initialIndex}
           onClose={feed.closeFeed}
           onCloseFeedForNavigation={feed.closeFeedForNavigation}
-        />
+        />,
+        document.body
       )}
     </>
   );

@@ -80,7 +80,7 @@ export function VideoCaption({
   return (
     <>
       {/* ─── Collapsed Preview ─── */}
-      <div className="absolute bottom-6 left-4 right-16 z-20">
+      <div className="absolute bottom-8 left-4 right-16 z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         {/* Artist row */}
         <button
           onClick={onArtistTap}
