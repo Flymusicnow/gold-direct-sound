@@ -1,131 +1,80 @@
 
 
-# Smooth Feed Scrolling + Video Comments "Genie Pull"
+# Fix: Full-Screen Video Feed Layout + Comment Bug
 
-Two features in one: fix the mobile scroll jank on the fan feed, and add a "genie pull" comment panel to the full-screen video viewer.
+## Issues
 
----
+### Issue 1 + 3: Bottom nav covers video, profile/comments hidden
+The full-screen video feed is rendered **inside** `FeedVideosTab` (which is inside the page layout). Even though it uses `fixed inset-0 z-[100]`, the parent's stacking context can interfere. The bottom navigation bar (`z-50`) remains visible on top.
 
-## Part 1: Smooth Mobile Scrolling
+**Fix**: Use a React Portal to render `FullScreenVideoFeed` directly into `document.body`, breaking out of all parent stacking contexts. This ensures it truly covers the entire screen including the bottom nav. Also adjust the caption and action bar positioning to account for safe areas.
 
-### What's wrong
+### Issue 2: Comments all go to video #1
+Each `FullScreenVideoItem` renders its own `VideoCommentSheet` with the correct `videoId`. However, the comment sheet panel uses `fixed bottom-0` positioning, so when opened from any video, it correctly uses the right `videoId`. The likely issue is that the `VideoCommentsSection` inside the sheet has the `Collapsible` component that starts as `isExpanded: true`, but the outer `Collapsible` wrapper with the "Comments (N)" header + Show/Hide button is adding visual noise and a redundant collapsible layer inside the already-collapsible sheet. More critically: the `VideoCommentsSection` counts ALL comments (`comments.length`) but the sheet header shows `commentCount` fetched separately. If there's a mismatch, it could appear like comments are wrong.
 
-On iOS Safari, horizontal tab swiping and vertical content scrolling can fight each other. The tabs container uses `overflow-x: auto` but has no `touch-action` directive, so the browser doesn't know which direction to prioritize. This causes stutter when switching from horizontal to vertical gesture.
+After more careful analysis: the actual bug is that `VideoCommentSheet` **does not reset its state when `videoId` changes**. The sheet is mounted once per `FullScreenVideoItem`, so `videoId` should be stable. But the `VideoCommentsSection` inside it uses a `useEffect` that resets on `videoId` change. This should work correctly.
 
-### Changes
+The most likely cause: the sheet's `useEffect` for fetching comment count uses `videoId` as a dependency, but the embedded `VideoCommentsSection` also starts its own fetch. If there's a race condition or if the real-time channel name collides, comments could cross-contaminate. The channel names are unique (`video_comments_${videoId}` and `comment_count_${videoId}`), so this should be fine.
 
-**File: `src/index.css`** (tabs-scrollable styles, ~line 83)
-- Add `touch-action: pan-x pinch-zoom` to `.tabs-scrollable` so horizontal swipes are cleanly intercepted by the tab bar
-- Add `will-change: scroll-position` for GPU compositing on scroll
+Let me propose a defensive fix: ensure `VideoCommentsSection` is only mounted when the sheet is open, and passes the correct `videoId` as a key to force remounting on video change.
 
-**File: `src/components/ui/ScrollableTabs.tsx`** (~line 91)
-- Add `touch-action: pan-x` style to the scrollable `<div>` to explicitly tell the browser this area only handles horizontal gestures
-- This prevents the tab scroll from eating vertical scroll events
+## Changes
 
-**File: `src/pages/FanFeed.tsx`** (~line 304)
-- The `<main>` already has `touchAction: 'pan-y'` which is correct
-- Add `-webkit-overflow-scrolling: touch` style for smoother inertial scrolling on older iOS versions
+### 1. Portal rendering for FullScreenVideoFeed
 
-These are surgical CSS-only changes. No JS scroll listeners added.
+**File: `src/components/feed/FeedVideosTab.tsx`**
+- Wrap `FullScreenVideoFeed` in `ReactDOM.createPortal(...)` targeting `document.body`
+- This ensures the feed renders outside the page DOM tree, above all other content including bottom nav
 
----
-
-## Part 2: Video Comments "Genie Pull" Panel
-
-### Concept
-
-A comment icon (the "Super Card" trigger) appears on the right side of the full-screen video feed, below the share button. Tapping it opens a bottom-sheet panel where comments emerge smoothly from below. Swiping down or tapping outside collapses it.
-
-This reuses the existing `VideoCommentsSection` component (which handles fetching, posting, real-time subscriptions, replies, likes, etc.) but wraps it inside a new bottom-sheet overlay that lives inside each video item.
-
-### New Component
-
-**File: `src/components/video/VideoCommentSheet.tsx`** (new file)
-
-A self-contained bottom-sheet for video comments:
-- **Trigger**: A `MessageSquare` icon button on the right action bar (same style as heart/share)
-- **Sheet**: A `motion.div` panel that slides up from bottom, `maxHeight: 55dvh`, with rounded top corners, dark translucent background + blur
-- **Content**: Embeds the existing `VideoCommentsSection` component inside the scrollable area
-- **Comment count**: Shown below the icon (like the like count)
-- **Close**: Swipe down, tap backdrop, or tap close chevron
-- **Gesture isolation**: The panel's scroll area uses `touch-action: pan-y` and `overscroll-behavior: contain` to prevent scroll from leaking to the video feed behind it
-- When open, video controls (tap-to-pause) are blocked by the backdrop
-
-Uses `framer-motion` for the slide-up animation (same pattern as `VideoCaption` expanded panel).
-
-### Integration Changes
-
-**File: `src/components/video/FullScreenVideoItem.tsx`**
-- Import and render `VideoCommentSheet` in the right-side action bar, between the share button and the bottom caption
-- Pass `videoId` and `artistId` to the sheet
-- When the comment sheet is open, block tap-to-pause on the video (via a ref flag, similar to `captionExpandedRef`)
+### 2. Hide bottom nav when feed is open
 
 **File: `src/components/video/FullScreenVideoFeed.tsx`**
-- Add a `commentSheetOpen` ref to track when comments are open, preventing swipe-to-close while the user scrolls comments
-- Pass an `onCommentSheetChange` callback to each `FullScreenVideoItem`
+- On mount: add a class to `document.body` (e.g., `video-feed-open`) that hides the bottom nav
+- On unmount: remove the class
 
-### Comment Count Loading
+**File: `src/index.css`**
+- Add rule: `body.video-feed-open .bottom-nav-bar { display: none !important; }`
+
+**File: `src/components/mobile/BottomNavBarFan.tsx`**
+- Add `bottom-nav-bar` class to the root div so the CSS rule can target it
+
+### 3. Adjust bottom positioning for safe areas
+
+**File: `src/components/video/VideoCaption.tsx`**
+- Change `bottom-6` to `bottom-8` with `pb-safe` (env safe-area-inset-bottom) to ensure the artist name and caption are not hidden behind browser chrome
+
+**File: `src/components/video/FullScreenVideoItem.tsx`**
+- Change action bar from `bottom-32` to `bottom-36` to push it above the caption area and safe zone
+
+### 4. Fix comment sheet videoId isolation
 
 **File: `src/components/video/VideoCommentSheet.tsx`**
-- On mount, fetch comment count for the video from `video_comments` table
-- Subscribe to real-time changes to update the count badge
-- Display the count below the MessageSquare icon (same format as like count)
+- Add `key={videoId}` to the `VideoCommentsSection` component to force a clean remount when `videoId` changes
+- Only render `VideoCommentsSection` when the sheet is open (lazy mount) to avoid all videos loading comments simultaneously
+- Reset `isOpen` state when `videoId` changes
 
-### Gesture Conflict Prevention
+### 5. Apply same portal pattern to ArtistVideosSection
 
-The comment sheet sits on top of the video and needs isolated scroll:
-- The sheet's scrollable area: `overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y`
-- The backdrop blocks all touch events from reaching the video
-- The feed's swipe-to-close is disabled when the comment sheet is open (checked via ref)
-- Swipe-down on the comment panel (deltaY > 60px) collapses the sheet
+**File: `src/components/artist/ArtistVideosSection.tsx`**
+- If this file also renders `FullScreenVideoFeed` inline, apply the same portal fix
 
----
-
-## Files Summary
+## Technical Summary
 
 | File | Change |
 |------|--------|
-| `src/index.css` | Add `touch-action: pan-x pinch-zoom` and `will-change: scroll-position` to `.tabs-scrollable` |
-| `src/components/ui/ScrollableTabs.tsx` | Add `touch-action: pan-x` style to scrollable container |
-| `src/pages/FanFeed.tsx` | Add `-webkit-overflow-scrolling: touch` to main element |
-| `src/components/video/VideoCommentSheet.tsx` | **New** -- bottom-sheet with comment trigger icon, slide-up panel, embeds `VideoCommentsSection` |
-| `src/components/video/FullScreenVideoItem.tsx` | Add comment icon to right action bar, render `VideoCommentSheet`, block tap-to-pause when sheet open |
-| `src/components/video/FullScreenVideoFeed.tsx` | Track comment sheet state to disable swipe-to-close when open |
+| `src/components/feed/FeedVideosTab.tsx` | Wrap feed in `createPortal` |
+| `src/components/video/FullScreenVideoFeed.tsx` | Toggle body class to hide bottom nav |
+| `src/index.css` | CSS rule to hide bottom nav when feed is open |
+| `src/components/mobile/BottomNavBarFan.tsx` | Add targeting class |
+| `src/components/mobile/BottomNavBarStudio.tsx` | Add targeting class (same fix for artist portal) |
+| `src/components/video/VideoCaption.tsx` | Increase bottom spacing with safe area |
+| `src/components/video/FullScreenVideoItem.tsx` | Adjust action bar bottom position |
+| `src/components/video/VideoCommentSheet.tsx` | Add `key={videoId}`, lazy-mount comments, reset state on videoId change |
 
----
-
-## Technical Details
-
-### VideoCommentSheet anatomy
-
-```text
-+---------------------------+
-|  [backdrop: black/50]     |  <-- tap to close
-|                           |
-|  +---------------------+  |
-|  | [drag handle bar]   |  |  <-- swipe down to close
-|  | Comments (5)        |  |
-|  |---------------------|  |
-|  | [scrollable list]   |  |  <-- overscroll-contain
-|  |  Comment 1          |  |
-|  |  Comment 2          |  |
-|  |  ...                |  |
-|  |---------------------|  |
-|  | [input] [send btn]  |  |
-|  +---------------------+  |
-+---------------------------+
-```
-
-### Right action bar layout (video feed)
-
-```text
-  [Heart]  <-- existing
-    123
-  [Share]  <-- existing
-  [Chat]   <-- NEW comment trigger
-    5
-```
-
-### No database changes needed
-The `video_comments` table already exists with all required columns (id, video_id, user_id, text, parent_comment_id, created_at, is_pinned, is_hidden). The existing `VideoCommentsSection` component handles all CRUD operations.
-
+## Acceptance Criteria
+- Full-screen video feed covers the entire screen (no bottom nav visible)
+- Artist profile and caption are visible at the bottom of the video
+- Comment icon and count are visible and not cut off
+- Comments are correctly associated with each video (not all on video 1)
+- Swiping between videos maintains correct comment isolation
+- Browser back button still works to close the feed
