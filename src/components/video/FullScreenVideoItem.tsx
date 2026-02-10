@@ -311,12 +311,14 @@ export function FullScreenVideoItem({
           </div>
         </button>
 
-        {/* Comments */}
-        <VideoCommentSheet
-          videoId={video.id}
-          artistId={video.artistId}
-          onOpenChange={handleCommentSheetChange}
-        />
+        {/* Comments — only mount on active video to prevent cross-contamination */}
+        {isActive && (
+          <VideoCommentSheet
+            videoId={video.id}
+            artistId={video.artistId}
+            onOpenChange={handleCommentSheetChange}
+          />
+        )}
       </div>
 
       {/* Bottom info — artist + caption with fade preview */}
