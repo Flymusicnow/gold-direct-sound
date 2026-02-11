@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PaywallCard } from './PaywallCard';
 import { InlineComments } from './InlineComments';
+import { CommentsPanel } from './CommentsPanel';
 import { useNavigate } from 'react-router-dom';
 import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
 
@@ -57,7 +58,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { step } = useFlightRecorder();
-  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
+  const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
   
   const { reactionCount, hasReacted, isLoading, toggleReaction } = usePostReactions(post.id);
   const displayReactionCount = reactionCount;
@@ -72,10 +73,8 @@ export const PostCard: React.FC<PostCardProps> = ({
 
   const handleCommentToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isCommentsExpanded) {
-      step('community_reply_open', 'ok', { postId: post.id });
-    }
-    setIsCommentsExpanded(!isCommentsExpanded);
+    step('community_reply_open', 'ok', { postId: post.id });
+    setIsCommentsPanelOpen(true);
   };
 
   const handleShare = async () => {
@@ -207,17 +206,14 @@ export const PostCard: React.FC<PostCardProps> = ({
               <span>{displayReactionCount}</span>
             </Button>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className={cn(
-                "gap-2",
-                isCommentsExpanded && "text-primary"
-              )}
-              onClick={handleCommentToggle}
-              title="Click to view and add comments"
-            >
-              <MessageCircle className={cn("h-4 w-4", isCommentsExpanded && "fill-current")} />
+              <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-2"
+            onClick={handleCommentToggle}
+            title="Click to view and add comments"
+          >
+              <MessageCircle className="h-4 w-4" />
               <span>{displayCommentCount}</span>
             </Button>
 
@@ -232,19 +228,18 @@ export const PostCard: React.FC<PostCardProps> = ({
             </Button>
           </div>
           
-          {/* Inline comments section */}
-          {isCommentsExpanded && (
-            <InlineComments
-              postId={post.id}
-              communityArtistUserId={communityArtistUserId}
-              maxVisible={3}
-              onViewAll={() => {
-                step('community_post_open_detail', 'ok', { postId: post.id, source: 'view_all' });
-                navigate(`/post/${post.id}`);
-              }}
-            />
-          )}
         </CardFooter>
+      )}
+      
+      {/* Comments Panel (Drawer on mobile, Sheet on desktop) */}
+      {canAccess && (
+        <CommentsPanel
+          postId={post.id}
+          isOpen={isCommentsPanelOpen}
+          onOpenChange={setIsCommentsPanelOpen}
+          communityArtistUserId={communityArtistUserId}
+          commentCount={displayCommentCount}
+        />
       )}
     </Card>
   );

@@ -120,25 +120,20 @@ const CommentItem: React.FC<{
 
   return (
     <div className={cn(
-      "relative",
-      depth === 1 && "ml-3 sm:ml-4",
-      depth >= 2 && "sm:ml-4"
+      "relative max-w-full w-full overflow-hidden",
+      depth >= 1 && "ml-3"
     )}>
-      {/* Threading visual connector - hidden on mobile for depth 2+ */}
+      {/* Threading visual connector - always visible */}
       {depth > 0 && (
         <div className={cn(
-          "absolute -left-3 sm:-left-4 top-0 bottom-0 border-l-2",
-          depth >= 2 && "hidden sm:block",
+          "absolute -left-3 top-0 bottom-0 border-l-2",
           getDepthStyles(depth - 1)
         )} />
       )}
       
-      {/* Reply connector line - hidden on mobile for depth 2+ */}
+      {/* Reply connector line - always visible */}
       {depth > 0 && (
-        <div className={cn(
-          "absolute -left-3 sm:-left-4 top-4 w-2 sm:w-3 border-t-2 border-muted-foreground/20",
-          depth >= 2 && "hidden sm:block"
-        )} />
+        <div className="absolute -left-3 top-4 w-2 border-t-2 border-muted-foreground/20" />
       )}
 
       <div className={cn(
@@ -182,7 +177,7 @@ const CommentItem: React.FC<{
               isOwnContent={false}
             />
           </div>
-          <p className="text-sm text-foreground whitespace-pre-wrap break-words">
+          <p className="text-sm text-foreground whitespace-pre-wrap" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
             {comment.content}
           </p>
           
@@ -192,7 +187,7 @@ const CommentItem: React.FC<{
               variant="ghost"
               size="sm"
               className={cn(
-                "h-7 px-2 gap-1",
+                "min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 h-7 px-2 gap-1",
                 hasLiked ? "text-primary" : "text-muted-foreground"
               )}
               onClick={() => user ? toggleLike(comment.id) : toast.error('Please sign in to like')}
@@ -205,7 +200,7 @@ const CommentItem: React.FC<{
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 px-2 text-muted-foreground"
+                className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 h-7 px-2 text-muted-foreground"
                 onClick={() => onReply(comment.id, displayName)}
               >
                 <MessageCircle className="h-3 w-3 mr-1" />
@@ -410,7 +405,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   }
 
   return (
-    <div className="divide-y divide-border">
+    <div className="divide-y divide-border max-w-full w-full overflow-hidden">
       {comments.map((comment) => (
         <CommentItem
           key={comment.id}

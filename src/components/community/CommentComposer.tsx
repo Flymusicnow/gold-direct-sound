@@ -67,7 +67,7 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
   if (!user) return null;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
       {parentCommentId && replyToAuthor && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Replying to {replyToAuthor}</span>
