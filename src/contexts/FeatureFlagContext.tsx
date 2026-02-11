@@ -10,7 +10,8 @@ export type FeatureFlagKey =
   | 'COMMUNITY_FEED'
   | 'SUBSCRIPTION_TIERS'
   | 'SPOTLIGHT_CAROUSEL'
-  | 'ARTIST_GOALS';
+  | 'ARTIST_GOALS'
+  | 'REFERRALS_ENABLED';
 
 interface FeatureFlag {
   id: string;

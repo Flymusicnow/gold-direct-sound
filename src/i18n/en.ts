@@ -269,6 +269,8 @@ export const en = {
     likes: 'likes',
     comments: 'comments',
     shares: 'shares',
+    feed: 'Feed',
+    communityActivity: 'Community Activity',
   },
   videoPlayer: {
     video: 'Video',
@@ -780,6 +782,7 @@ export const en = {
     welcome: 'Welcome to your studio',
     welcomeBack: 'Welcome back',
     controlRoom: 'Control Room',
+    creatorControlRoom: 'Creator Control Room',
     learnFlyMusic: 'Learn how to use FlyMusic',
     trackImpact: 'Track your impact and grow your fanbase',
     yourFanCommunity: 'Your fan community',

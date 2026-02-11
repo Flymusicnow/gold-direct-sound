@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFlightdeck, FlightdeckItem } from "@/contexts/FlightdeckContext";
 import { useReproMode } from "@/contexts/ReproModeContext";
 import { useLikes } from "@/contexts/LikesContext";
-import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users, Video, Info } from "lucide-react";
+import { ArrowLeft, Award, Crown, Music, ShoppingBag, Play, Disc, ChevronDown, ChevronUp, Eye, Music2, Home, AlertTriangle, Users, Video, Info, MessageSquare } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -43,6 +43,9 @@ import { useArtistSpotlight } from "@/hooks/useArtistSpotlight";
 import { useInboundTracking } from "@/hooks/useInboundTracking";
 import { QuickAddButton } from "@/components/QuickAddButton";
 import { ArtistGoalCard } from "@/components/artist/ArtistGoalCard";
+import { ArtistActivityFeed } from "@/components/artist/ArtistActivityFeed";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { safeT } from "@/lib/i18nSafe";
 
 interface Artist {
   id: string;
@@ -91,6 +94,7 @@ export default function ArtistProfile() {
   const { isReproMode, issueId, reproLog, trackApiCall } = useReproMode();
   const isMobile = useIsMobile();
   const { isPreviewMode } = usePreviewMode();
+  const { t } = useLanguage();
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -572,6 +576,9 @@ export default function ArtistProfile() {
                   <AnimatedTabTrigger value="community" icon={<Users className="w-4 h-4" />}>
                     Community
                   </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="feed" icon={<MessageSquare className="w-4 h-4" />}>
+                    {safeT(t, 'artist.feed', 'Feed')}
+                  </AnimatedTabTrigger>
                 </TabsList>
               </ScrollableTabsList>
 
@@ -757,6 +764,11 @@ export default function ArtistProfile() {
                     Enter Community
                   </Button>
                 </div>
+              </TabsContent>
+
+              {/* Feed Tab */}
+              <TabsContent value="feed" className="mt-0">
+                <ArtistActivityFeed artistId={artist.id} />
               </TabsContent>
             </Tabs>
           </div>
