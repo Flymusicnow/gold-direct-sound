@@ -269,6 +269,8 @@ export const sv = {
     likes: 'gillanden',
     comments: 'kommentarer',
     shares: 'delningar',
+    feed: 'Flöde',
+    communityActivity: 'Community-aktivitet',
   },
   videoPlayer: {
     video: 'Video',
@@ -749,6 +751,7 @@ export const sv = {
     welcome: 'Välkommen till din studio',
     welcomeBack: 'Välkommen tillbaka',
     controlRoom: 'Kontrollrum',
+    creatorControlRoom: 'Kreativt kontrollrum',
     learnFlyMusic: 'Lär dig använda FlyMusic',
     trackImpact: 'Spåra din påverkan och väx din fanbase',
     yourFanCommunity: 'Din fan-community',

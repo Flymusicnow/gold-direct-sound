@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Copy, Users, Award, CheckCircle2 } from "lucide-react";
+import { Copy, Users, Award, CheckCircle2, Lock } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useFeatureFlag } from "@/hooks/useFeatureFlag";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface ReferralStats {
   code: string;
@@ -15,21 +17,24 @@ interface ReferralStats {
 
 export function InviteFriendsCard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
+  const referralsEnabled = useFeatureFlag('REFERRALS_ENABLED');
   const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && referralsEnabled) {
       fetchReferralStats();
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [user, referralsEnabled]);
 
   const fetchReferralStats = async () => {
     if (!user) return;
 
     try {
-      // Fetch referral code
       const { data: codeData } = await supabase
         .from("artist_referral_codes")
         .select("code, current_uses")
@@ -37,7 +42,6 @@ export function InviteFriendsCard() {
         .eq("is_active", true)
         .maybeSingle();
 
-      // Fetch beta access for bonus tier
       const { data: betaData } = await supabase
         .from("artist_beta_access")
         .select("referral_bonus_tier")
@@ -110,8 +114,41 @@ export function InviteFriendsCard() {
     }
   };
 
-  const tierInfo = referralStats?.bonusTier ? getTierInfo(referralStats.bonusTier) : null;
+  // === COMING SOON STATE (feature flag OFF) ===
+  if (!referralsEnabled) {
+    return (
+      <Card className="border-border/50 bg-card/50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-background/30 backdrop-blur-[1px] z-10 pointer-events-none" />
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center">
+                <Users className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <CardTitle className="text-xl text-muted-foreground">Invite Friends</CardTitle>
+                <CardDescription>Earn bonus perks by inviting artists</CardDescription>
+              </div>
+            </div>
+            <Badge variant="secondary" className="gap-1 text-xs">
+              <Lock className="h-3 w-3" />
+              {t('common.comingSoon')}
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4 relative z-20">
+          <p className="text-sm text-muted-foreground">
+            Coming in a future update. Focus now: community + profiles.
+          </p>
+          <Button disabled className="w-full opacity-50">
+            Generate My Referral Code
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
+  // === LOADING ===
   if (loading) {
     return (
       <Card>
@@ -122,6 +159,7 @@ export function InviteFriendsCard() {
     );
   }
 
+  // === NO CODE YET ===
   if (!referralStats) {
     return (
       <Card className="border-primary/20 bg-primary/5">
@@ -148,6 +186,9 @@ export function InviteFriendsCard() {
     );
   }
 
+  // === ACTIVE REFERRAL CODE ===
+  const tierInfo = referralStats?.bonusTier ? getTierInfo(referralStats.bonusTier) : null;
+
   return (
     <Card className="border-primary/20">
       <CardHeader>
@@ -170,7 +211,6 @@ export function InviteFriendsCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Referral Code */}
         <div className="p-4 bg-muted rounded-lg space-y-2">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Your Referral Code</p>
           <div className="flex items-center justify-between">
@@ -181,7 +221,6 @@ export function InviteFriendsCard() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 gap-4">
           <div className="p-3 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground mb-1">Artists Invited</p>
@@ -195,7 +234,6 @@ export function InviteFriendsCard() {
           </div>
         </div>
 
-        {/* Tier Progress */}
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground uppercase tracking-wide">Reward Tiers</p>
           <div className="space-y-2">

@@ -36,7 +36,8 @@ export function usePushNotifications() {
     if (user && permission === "granted") {
       try {
         const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
+        const pm = (registration as any).pushManager;
+        const subscription = pm ? await pm.getSubscription() : null;
         isSubscribed = !!subscription;
       } catch (error) {
         console.error("Error checking subscription:", error);
@@ -90,7 +91,8 @@ export function usePushNotifications() {
       }
 
       // Subscribe to push
-      const subscription = await registration.pushManager.subscribe({
+      const pm = (registration as any).pushManager;
+      const subscription = await pm.subscribe({
         userVisibleOnly: true,
         applicationServerKey: vapidPublicKey,
       });
@@ -139,7 +141,8 @@ export function usePushNotifications() {
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const pm = (registration as any).pushManager;
+      const subscription = pm ? await pm.getSubscription() : null;
 
       if (subscription) {
         await subscription.unsubscribe();

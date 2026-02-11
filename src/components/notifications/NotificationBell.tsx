@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,26 +26,35 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const pendingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const debouncedFetch = useCallback(() => {
+    if (pendingRef.current) clearTimeout(pendingRef.current);
+    pendingRef.current = setTimeout(() => {
+      fetchNotifications();
+    }, 100);
+  }, []);
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
       
-      // Subscribe to real-time notifications
+      // Subscribe to real-time notifications with debounced batching
       const channel = supabase
         .channel('notifications-updates')
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
-          () => fetchNotifications()
+          () => debouncedFetch()
         )
         .subscribe();
 
       return () => {
+        if (pendingRef.current) clearTimeout(pendingRef.current);
         supabase.removeChannel(channel);
       };
     }
-  }, [user]);
+  }, [user, debouncedFetch]);
 
   const fetchNotifications = async () => {
     if (!user) return;

@@ -5,6 +5,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { FlyMusicLogo } from "@/components/FlyMusicLogo";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { safeT } from "@/lib/i18nSafe";
 import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export function StudioSidebar() {
             <NotificationBell />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground ml-10">{t('studio.creatorControlRoom')}</p>
+        <p className="text-xs text-muted-foreground ml-10">{safeT(t, 'studio.creatorControlRoom', 'Creator Control Room')}</p>
       </div>
 
       {/* Onboarding Progress Banner */}
