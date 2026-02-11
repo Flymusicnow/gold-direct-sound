@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, Pin, ChevronDown, ChevronUp, CornerDownRight, Heart } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,6 +102,7 @@ const CommentItem: React.FC<{
   toggleLike,
 }) => {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
   
@@ -124,10 +126,10 @@ const CommentItem: React.FC<{
 
   return (
     <div className={cn(
-      "relative max-w-full w-full overflow-hidden",
-      depth >= 1 && "ml-3"
+      "relative max-w-full w-full min-w-0 overflow-hidden",
+      depth >= 1 && (isMobile ? (depth <= 2 ? "ml-3" : "") : "ml-3")
     )}>
-      {/* Threading visual connector - always visible */}
+      {/* Threading visual connector */}
       {depth > 0 && (
         <div className={cn(
           "absolute -left-3 top-0 bottom-0 border-l-2",
@@ -135,16 +137,17 @@ const CommentItem: React.FC<{
         )} />
       )}
       
-      {/* Reply connector line - always visible */}
+      {/* Reply connector line */}
       {depth > 0 && (
         <div className="absolute -left-3 top-4 w-2 border-t-2 border-muted-foreground/20" />
       )}
 
       <div className={cn(
-        "py-3 space-y-1",
+        "py-3 space-y-1 max-w-full w-full min-w-0",
         comment.is_pinned && "bg-primary/5 -mx-2 px-2 rounded-lg"
       )}>
-        <div className="min-w-0">
+        <div className="min-w-0 w-full max-w-full">
+          {/* Row 1: Avatar + Name + Badge + Timestamp + Menu */}
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Avatar className="h-6 w-6 shrink-0">
               <AvatarImage src={avatarUrl || undefined} />
@@ -173,7 +176,6 @@ const CommentItem: React.FC<{
               {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
             </span>
             
-            {/* Artist control menu */}
             <ArtistControlMenu
               type="comment"
               itemId={comment.id}
@@ -181,12 +183,14 @@ const CommentItem: React.FC<{
               isOwnContent={false}
             />
           </div>
-          <p className="text-sm text-foreground whitespace-pre-wrap" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+
+          {/* Row 2: Content (full width, never beside avatar) */}
+          <p className="text-sm text-foreground whitespace-pre-wrap w-full max-w-full" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
             {comment.content}
           </p>
           
+          {/* Row 3: Actions */}
           <div className="flex items-center gap-2 mt-2">
-            {/* Like button */}
             <Button
               variant="ghost"
               size="sm"
@@ -235,7 +239,7 @@ const CommentItem: React.FC<{
           </div>
 
           {replyingTo === comment.id && (
-            <div className="mt-3">
+            <div className="mt-3 w-full max-w-full min-w-0">
               <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
                 <CornerDownRight className="h-3 w-3" />
                 Replying to {displayName}
