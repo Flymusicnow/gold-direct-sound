@@ -1,44 +1,55 @@
 
 
-# Fix: Comments Always Showing Video 1's Data
+# Fix: Video Comments Not Working
 
 ## Root Cause
 
-Every `FullScreenVideoItem` in the feed renders its own `VideoCommentSheet` at all times, even when the video is off-screen. Since the comment sheet uses `fixed bottom-0` positioning for its backdrop and panel, all sheets occupy the same screen space in the DOM. When you tap the comment icon on video 2 or 3, the touch event can hit the wrong sheet (video 1's), because it sits earlier in the DOM stacking order.
+The `VideoCommentSheet` renders its fixed-position backdrop and panel as DOM children of the right-side action bar, which is itself a child of the main video container div that has `onClick={handleTap}`. This causes two problems:
 
-## Fix (1 file, 1 change)
+1. **Taps on the comment trigger button** bubble up to the parent and fire `handleTap`, which triggers play/pause logic with a 300ms double-tap delay. This can swallow or interfere with the sheet opening.
 
-**File: `src/components/video/FullScreenVideoItem.tsx`**
+2. **Taps inside the opened comment panel** (on the text input, send button, etc.) also bubble up through the fixed-positioned elements back to the parent's `handleTap`, causing the video to pause/play or triggering the double-tap like animation instead of interacting with the comment form.
 
-Only render `VideoCommentSheet` when the video is currently active. The `isActive` prop is already available.
+## Fix
 
-Before:
-```tsx
-{/* Comments */}
-<VideoCommentSheet
-  videoId={video.id}
-  artistId={video.artistId}
-  onOpenChange={handleCommentSheetChange}
-/>
+### File: `src/components/video/FullScreenVideoItem.tsx`
+
+**Move `VideoCommentSheet` outside the action bar div** and render it as a direct child of the root container, but wrapped in its own `stopPropagation` container. This separates the trigger button (which stays in the action bar) from the sheet overlay.
+
+Actually, the simpler fix: the `handleTap` callback on the root div needs to check if the event target is inside an interactive element before acting. But that's fragile.
+
+The cleanest fix is to **stop propagation on the action bar div itself**, so no taps inside it (including comment trigger, like, share) ever reach the root `handleTap`. Currently each button does its own `stopPropagation`, but taps on children of the comment sheet (backdrop, panel, input) don't have this protection.
+
+**Change 1**: Add `onClick={(e) => e.stopPropagation()}` to the action bar container div (line 270). This prevents ALL taps inside the action bar from reaching the root `handleTap`.
+
+**Change 2**: Move the `VideoCommentSheet` component rendering **outside** the action bar div, as a sibling at the root level. The trigger button will remain inside the action bar (we'll split it). But actually this requires restructuring the component.
+
+Simpler approach -- **just add stopPropagation to the action bar wrapper**:
+
+```
+<div 
+  className="absolute right-3 bottom-36 ..."
+  onClick={(e) => e.stopPropagation()}
+  onTouchEnd={(e) => e.stopPropagation()}
+>
 ```
 
-After:
-```tsx
-{/* Comments — only mount on active video to prevent cross-contamination */}
-{isActive && (
-  <VideoCommentSheet
-    videoId={video.id}
-    artistId={video.artistId}
-    onOpenChange={handleCommentSheetChange}
-  />
-)}
-```
+This ensures that tapping the comment button, the like button, the share button, or anything inside the comment sheet panel doesn't trigger `handleTap` on the parent.
 
-This ensures only one `VideoCommentSheet` exists in the DOM at any time, always for the currently visible video. When you swipe to a new video, the old sheet unmounts and a fresh one mounts with the correct `videoId`.
+### File: `src/components/video/VideoCommentSheet.tsx`
 
-## Why this works
-- Only the active video's comment trigger is rendered, so taps always target the correct video
-- The sheet unmounts on swipe, cleaning up real-time subscriptions and state automatically
-- The `key={videoId}` on the inner `VideoCommentsSection` is retained as extra safety
-- Comment counts on non-active videos don't need to be visible (they're off-screen)
+**Add stopPropagation to the panel's touch events** to prevent any touch inside the comment panel from leaking up:
 
+- On the panel `motion.div`: add `onTouchEnd={(e) => e.stopPropagation()}`
+- On the scrollable content area: already has `onTouchStart` and `onTouchMove` stopPropagation, which is good
+
+Also ensure the **textarea and send button inside `VideoCommentsSection`** are interactive. The `pointer-events-auto` classes are already there in the `VideoCommentsSection` component, which is correct.
+
+## Summary
+
+| File | Change |
+|------|--------|
+| `src/components/video/FullScreenVideoItem.tsx` | Add `onClick` and `onTouchEnd` stopPropagation to the action bar wrapper div |
+| `src/components/video/VideoCommentSheet.tsx` | Add `onTouchEnd` stopPropagation to the panel motion.div |
+
+This is a 2-line fix that prevents the parent tap handler from interfering with all interactive elements in the action bar and comment sheet.
