@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { MessageSquare, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -114,90 +115,93 @@ export function VideoCommentSheet({
         )}
       </button>
 
-      {/* Bottom sheet overlay */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="comment-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-[120] bg-black/50"
-              onClick={handleBackdropTap}
-              onTouchEnd={(e) => {
-                e.stopPropagation();
-                close();
-              }}
-            />
-
-            {/* Panel */}
-            <motion.div
-              key="comment-panel"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={{ top: 0, bottom: 0.6 }}
-              onDragEnd={handleDragEnd}
-              onClick={(e) => e.stopPropagation()}
-              onTouchEnd={(e) => e.stopPropagation()}
-              className="fixed bottom-0 left-0 right-0 z-[130] rounded-t-2xl bg-card/95 backdrop-blur-xl border-t border-border/30"
-              style={{
-                maxHeight: "55dvh",
-                touchAction: "none",
-              }}
-            >
-              {/* Drag handle */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
-              </div>
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 pb-2">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Comments{commentCount > 0 ? ` (${commentCount})` : ""}
-                </h3>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    close();
-                  }}
-                  className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center touch-manipulation"
-                  aria-label="Close comments"
-                >
-                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                </button>
-              </div>
-
-              {/* Scrollable comments area */}
-              <div
-                ref={scrollRef}
-                className="overflow-y-auto px-4 pb-4"
-                style={{
-                  maxHeight: "calc(55dvh - 72px)",
-                  overscrollBehavior: "contain",
-                  touchAction: "pan-y",
-                  WebkitOverflowScrolling: "touch",
+      {/* Bottom sheet overlay — rendered via portal to avoid IntersectionObserver interference */}
+      {createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                key="comment-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-[120] bg-black/50"
+                onClick={handleBackdropTap}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                  close();
                 }}
+              />
+
+              {/* Panel */}
+              <motion.div
+                key="comment-panel"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 300 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0, bottom: 0.6 }}
+                onDragEnd={handleDragEnd}
                 onClick={(e) => e.stopPropagation()}
-                onTouchStart={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
+                className="fixed bottom-0 left-0 right-0 z-[130] rounded-t-2xl bg-card/95 backdrop-blur-xl border-t border-border/30"
+                style={{
+                  maxHeight: "55dvh",
+                  touchAction: "none",
+                }}
               >
-                <VideoCommentsSection
-                  key={videoId}
-                  videoId={videoId}
-                  artistId={artistId}
-                />
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+                {/* Drag handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-muted-foreground/30" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 pb-2">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Comments{commentCount > 0 ? ` (${commentCount})` : ""}
+                  </h3>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      close();
+                    }}
+                    className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center touch-manipulation"
+                    aria-label="Close comments"
+                  >
+                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Scrollable comments area */}
+                <div
+                  ref={scrollRef}
+                  className="overflow-y-auto px-4 pb-4"
+                  style={{
+                    maxHeight: "calc(55dvh - 72px)",
+                    overscrollBehavior: "contain",
+                    touchAction: "pan-y",
+                    WebkitOverflowScrolling: "touch",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
+                  <VideoCommentsSection
+                    key={videoId}
+                    videoId={videoId}
+                    artistId={artistId}
+                  />
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
