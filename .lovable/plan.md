@@ -1,98 +1,112 @@
 
 
-# Global i18n Reset: No-Dot Policy
+# Comments UI Overhaul -- Mobile + Desktop Unified
 
-## Root Cause
+## Architecture Overview
 
-One line causes all key leaks:
+Currently there are **two separate comment systems**:
+1. **Community comments** (`CommentThread`, `CommentComposer`, `InlineComments`) for community posts
+2. **Video comments** (`VideoCommentsSection`, `VideoCommentSheet`) for video posts
 
-```
-// LanguageContext.tsx line 83
-return value || key;  // <-- returns "studio.creatorControlRoom" when missing
-```
+Both share the same problems: comments render inline inside narrow card containers, causing layout compression on mobile. The fix introduces a responsive presentation layer that wraps the existing thread/composer components.
 
-With 938+ `t()` calls across 31+ files, fixing each call site is impractical and fragile. The fix must happen at the translation function itself.
+## Solution: `CommentsPanel` -- One Component, Two Presentations
 
-## Solution: Fail-Closed `t()` Function
+A single new component that uses `useIsMobile()` to pick the right container:
+- **Mobile**: Vaul `Drawer` (bottom sheet) -- already in the project
+- **Desktop**: Radix `Sheet` (right side panel, 480px) -- already in the project
 
-### File 1: `src/contexts/LanguageContext.tsx`
+Both wrap the **same** `CommentThread` + `CommentComposer` internals. No duplication.
 
-Replace the `t()` function (lines 77-84) with a fail-closed version:
-
-```typescript
-const t = (key: string): string => {
-  const keys = key.split('.');
-  let value: any = translations[language];
-  for (const k of keys) {
-    value = value?.[k];
-  }
-
-  // FAIL-CLOSED: never expose internal keys
-  if (typeof value === 'string' && value.length > 0) {
-    return value;
-  }
-
-  // Key is missing -- log it, return last segment as human-readable fallback
-  if (import.meta.env.DEV) {
-    console.warn(`[i18n] Missing key: "${key}" (lang: ${language})`);
-  }
-
-  // Extract last segment and convert camelCase to words
-  // e.g. "studio.creatorControlRoom" -> "Creator Control Room"
-  const lastSegment = keys[keys.length - 1];
-  return lastSegment
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (s) => s.toUpperCase())
-    .trim();
-};
+```text
+CommentsPanel (new)
+  |
+  +--> Mobile? --> Drawer (vaul, bottom sheet)
+  |                  Header: post info + close
+  |                  Body: CommentThread (scrollable)
+  |                  Footer: CommentComposer (sticky)
+  |
+  +--> Desktop? --> Sheet side="right" (radix)
+                     Header: post info + close
+                     Body: CommentThread (scrollable)
+                     Footer: CommentComposer (sticky)
 ```
 
-This single change:
-- Prevents ALL 938+ `t()` calls from ever leaking dotted keys
-- Converts `creatorControlRoom` to `Creator Control Room` as a readable fallback
-- Logs missing keys in dev mode for easy debugging
-- Requires zero changes to any component files
+## Files to Create
 
-### File 2: `src/contexts/LanguageContext.tsx` (DEV fallback)
+### 1. `src/components/community/CommentsPanel.tsx` (NEW)
 
-The `useLanguage` DEV fallback (line 103) also returns raw keys:
-```typescript
-t: (key: string) => key,  // <-- also leaks
+Single responsive wrapper:
+- Props: `postId`, `isOpen`, `onOpenChange`, `communityArtistUserId?`
+- Uses `useIsMobile()` to choose Drawer vs Sheet
+- Layout: flex column, header + scrollable thread + sticky footer composer
+- Thread area: `overflow-y-auto`, `overscroll-behavior: contain`
+- Footer: `sticky bottom-0` with `CommentComposer`
+- Sheet width: `w-full sm:max-w-[480px]`
+
+## Files to Modify
+
+### 2. `src/components/community/PostCard.tsx`
+
+Replace inline `InlineComments` expansion with `CommentsPanel`:
+- Comment button opens `CommentsPanel` instead of toggling `isCommentsExpanded`
+- Remove inline `InlineComments` render
+- Keep inline preview of latest 2 comments (optional, can keep `InlineComments` in read-only preview mode without composer)
+
+### 3. `src/components/community/CommentThread.tsx` -- Indentation Fix
+
+Current indentation logic (lines 122-126):
+```
+depth === 1 && "ml-3 sm:ml-4"
+depth >= 2 && "sm:ml-4"
 ```
 
-Replace with the same fail-closed logic:
-```typescript
-t: (key: string) => {
-  const segments = key.split('.');
-  const last = segments[segments.length - 1];
-  return last.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
-},
+Replace with capped indentation + thread line:
+- `ml-3` for depth 1, `ml-3` for depth 2+ (cap at 12px * 2 = 24px max)
+- Thread line (left border) always visible at all depths, including mobile
+- Remove the `hidden sm:block` on thread lines for depth 2+ (lines 131, 140) -- these should always show
+
+### 4. `src/components/community/CommentThread.tsx` -- Text Wrapping
+
+Line 185 already has `break-words` which is correct. Add explicit guard:
+```css
+word-break: normal;
+overflow-wrap: break-word;
 ```
 
-### File 3 + 4: `src/i18n/en.ts` and `src/i18n/sv.ts`
+### 5. `src/components/community/CommentThread.tsx` -- Actions Touch Targets
 
-Add missing keys that are actively used but not defined. Based on the codebase scan, these keys need to be added (the fail-closed `t()` makes this non-urgent, but they should exist for proper translations):
+Lines 191-214: Like/Reply buttons use `h-7` (28px). Increase to `min-h-[44px] min-w-[44px]` on mobile for accessibility.
 
-**studio section** (both files):
-- `studio.profileSettings` (EN: "Profile Settings", SV: "Profilinställningar")
-- Any other `studio.*` keys found during the audit pass
+### 6. `src/components/community/InlineComments.tsx` -- Becomes Read-Only Preview
 
-Run a quick audit: search for all `t('...')` calls, extract the keys, diff against the en/sv objects, and add any missing ones. The fail-closed `t()` protects the UI while this audit is ongoing.
+When used inside `PostCard`, it shows latest 2-3 comments as preview only (no composer). The composer moves to `CommentsPanel`. Add prop `showComposer?: boolean` (default false when used inline).
 
-## What This Does NOT Require
+### 7. `src/components/community/PostDetail.tsx` -- Use CommentsPanel
 
-- No render-gate / Suspense wrapper needed: translations are bundled statically via `import { en }` and `import { sv }`, not loaded async. They are available at module evaluation time, before any React render. There is no network fetch to wait for.
-- No namespace system changes: the app uses a flat object approach, not i18next namespaces.
-- No CI pipeline changes (this is a runtime-only fix that covers all cases).
-- No changes to 31+ component files: the fix is centralized in one function.
+The full post detail page also benefits: replace the inline `CommentThread` + `CommentComposer` at the bottom with `CommentsPanel` on desktop (or keep inline since PostDetail is already a full-width page -- optional, lower priority).
 
-## Summary
+## Summary of Changes
 
-| File | Change |
-|------|--------|
-| `src/contexts/LanguageContext.tsx` | Make `t()` fail-closed: never return dotted keys, log missing, return humanized fallback |
-| `src/i18n/en.ts` | Add confirmed missing keys |
-| `src/i18n/sv.ts` | Add confirmed missing keys (Swedish translations) |
+| File | Action | What |
+|------|--------|------|
+| `src/components/community/CommentsPanel.tsx` | CREATE | Responsive wrapper: Drawer (mobile) / Sheet (desktop) |
+| `src/components/community/PostCard.tsx` | EDIT | Comment button opens CommentsPanel instead of inline expand |
+| `src/components/community/CommentThread.tsx` | EDIT | Cap indent at 24px, always show thread lines, 44px touch targets |
+| `src/components/community/InlineComments.tsx` | EDIT | Add `showComposer` prop, default false for inline use |
+| `src/components/community/CommentComposer.tsx` | EDIT | Minor: ensure `word-break: normal` on textarea wrapper |
 
-Total: 3 files. One architectural fix that protects all 938+ translation call sites permanently.
+## CSS Guardrails (applied in CommentThread)
+
+- Thread container: `max-w-full w-full overflow-hidden`
+- Comment text: `word-break: normal; overflow-wrap: break-word;` (already mostly correct)
+- No `break-all` on comment content
+- Indent: max `ml-6` (24px), thread line replaces deeper indentation
+- Actions: `min-h-[44px]` touch targets on mobile
+
+## What This Does NOT Change
+
+- Video comment system (`VideoCommentSheet`) -- already uses a portal-based bottom sheet and works correctly
+- `CommentsSection` (artist profile legacy comments) -- separate system, not in scope
+- No new database tables or migrations needed
 
