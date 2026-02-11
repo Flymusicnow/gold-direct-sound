@@ -14,6 +14,7 @@ import { InlineComments } from './InlineComments';
 import { CommentsPanel } from './CommentsPanel';
 import { useNavigate } from 'react-router-dom';
 import { useFlightRecorder } from '@/contexts/FlightRecorderContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CommunityPost {
   id: string;
@@ -58,7 +59,9 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { step } = useFlightRecorder();
+  const isMobile = useIsMobile();
   const [isCommentsPanelOpen, setIsCommentsPanelOpen] = useState(false);
+  const [isCommentsExpanded, setIsCommentsExpanded] = useState(false);
   
   const { reactionCount, hasReacted, isLoading, toggleReaction } = usePostReactions(post.id);
   const displayReactionCount = reactionCount;
@@ -74,7 +77,11 @@ export const PostCard: React.FC<PostCardProps> = ({
   const handleCommentToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     step('community_reply_open', 'ok', { postId: post.id });
-    setIsCommentsPanelOpen(true);
+    if (isMobile) {
+      setIsCommentsPanelOpen(true);
+    } else {
+      setIsCommentsExpanded(prev => !prev);
+    }
   };
 
   const handleShare = async () => {
@@ -227,12 +234,24 @@ export const PostCard: React.FC<PostCardProps> = ({
               Share
             </Button>
           </div>
-          
+
+          {/* Desktop: Facebook-style inline comments */}
+          {!isMobile && isCommentsExpanded && (
+            <div className="w-full border-t border-border/50 pt-3">
+              <InlineComments
+                postId={post.id}
+                communityArtistUserId={communityArtistUserId}
+                maxVisible={10}
+                onViewAll={() => navigate(`/post/${post.id}`)}
+                showComposer={true}
+              />
+            </div>
+          )}
         </CardFooter>
       )}
       
-      {/* Comments Panel (Drawer on mobile, Sheet on desktop) */}
-      {canAccess && (
+      {/* Mobile: Reddit-style drawer */}
+      {canAccess && isMobile && (
         <CommentsPanel
           postId={post.id}
           isOpen={isCommentsPanelOpen}
