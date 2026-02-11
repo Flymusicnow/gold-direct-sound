@@ -28,6 +28,7 @@ interface InlineCommentsProps {
   communityArtistUserId?: string;
   maxVisible?: number;
   onViewAll: () => void;
+  showComposer?: boolean;
 }
 
 // Role badge component
@@ -50,6 +51,7 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
   communityArtistUserId,
   maxVisible = 3,
   onViewAll,
+  showComposer = false,
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -256,7 +258,7 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
       )}
 
       {/* Quick reply composer */}
-      {user && (
+      {showComposer && user && (
         <div className="pt-2 border-t border-border/50">
           <CommentComposer
             postId={postId}

@@ -34,6 +34,7 @@ interface Comment {
 interface CommentThreadProps {
   postId: string;
   maxDepth?: number;
+  defaultVisibleReplies?: number;
   communityArtistUserId?: string;
 }
 
@@ -74,6 +75,7 @@ const CommentItem: React.FC<{
   comment: Comment;
   depth: number;
   maxDepth: number;
+  defaultVisibleReplies: number;
   onReply: (commentId: string, authorName: string) => void;
   replyingTo: string | null;
   onCancelReply: () => void;
@@ -86,7 +88,8 @@ const CommentItem: React.FC<{
 }> = ({
   comment, 
   depth, 
-  maxDepth, 
+  maxDepth,
+  defaultVisibleReplies,
   onReply, 
   replyingTo, 
   onCancelReply, 
@@ -99,6 +102,7 @@ const CommentItem: React.FC<{
 }) => {
   const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showAllReplies, setShowAllReplies] = useState(false);
   
   // Get like data for this comment
   const { likeCount, hasLiked } = getLikeData(comment.id);
@@ -248,24 +252,46 @@ const CommentItem: React.FC<{
         </div>
       </div>
 
-      {/* Nested replies */}
-      {!isCollapsed && comment.replies?.map((reply) => (
-        <CommentItem
-          key={reply.id}
-          comment={reply}
-          depth={depth + 1}
-          maxDepth={maxDepth}
-          onReply={onReply}
-          replyingTo={replyingTo}
-          onCancelReply={onCancelReply}
-          onCommentCreated={onCommentCreated}
-          identityMap={identityMap}
-          communityArtistUserId={communityArtistUserId}
-          onProfileClick={onProfileClick}
-          getLikeData={getLikeData}
-          toggleLike={toggleLike}
-        />
-      ))}
+      {/* Nested replies with gating */}
+      {!isCollapsed && comment.replies && (() => {
+        const visibleReplies = showAllReplies 
+          ? comment.replies 
+          : comment.replies.slice(0, defaultVisibleReplies);
+        const hiddenCount = comment.replies.length - visibleReplies.length;
+        
+        return (
+          <>
+            {visibleReplies.map((reply) => (
+              <CommentItem
+                key={reply.id}
+                comment={reply}
+                depth={depth + 1}
+                maxDepth={maxDepth}
+                defaultVisibleReplies={defaultVisibleReplies}
+                onReply={onReply}
+                replyingTo={replyingTo}
+                onCancelReply={onCancelReply}
+                onCommentCreated={onCommentCreated}
+                identityMap={identityMap}
+                communityArtistUserId={communityArtistUserId}
+                onProfileClick={onProfileClick}
+                getLikeData={getLikeData}
+                toggleLike={toggleLike}
+              />
+            ))}
+            {hiddenCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-3 text-xs text-muted-foreground h-7 mt-1"
+                onClick={() => setShowAllReplies(true)}
+              >
+                View {hiddenCount} more {hiddenCount === 1 ? 'reply' : 'replies'}
+              </Button>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 };
@@ -273,6 +299,7 @@ const CommentItem: React.FC<{
 export const CommentThread: React.FC<CommentThreadProps> = ({ 
   postId, 
   maxDepth = 3,
+  defaultVisibleReplies = 2,
   communityArtistUserId,
 }) => {
   const navigate = useNavigate();
@@ -412,6 +439,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
           comment={comment}
           depth={0}
           maxDepth={maxDepth}
+          defaultVisibleReplies={defaultVisibleReplies}
           onReply={handleReply}
           replyingTo={replyingTo}
           onCancelReply={handleCancelReply}
