@@ -267,7 +267,7 @@ export function FullScreenVideoItem({
       </button>
 
       {/* Right-side action bar */}
-      <div className="absolute right-3 bottom-36 flex flex-col items-center gap-5 z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <div className="absolute right-3 bottom-36 flex flex-col items-center gap-5 z-20" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }} onClick={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
         {/* Like */}
         <button
           onClick={handleLike}
