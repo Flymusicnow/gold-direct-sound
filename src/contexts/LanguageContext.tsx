@@ -80,7 +80,22 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     for (const k of keys) {
       value = value?.[k];
     }
-    return value || key;
+
+    // FAIL-CLOSED: never expose internal dotted keys
+    if (typeof value === 'string' && value.length > 0) {
+      return value;
+    }
+
+    // Key is missing — log in dev, return humanized last segment
+    if (import.meta.env.DEV) {
+      console.warn(`[i18n] Missing key: "${key}" (lang: ${language})`);
+    }
+
+    const lastSegment = keys[keys.length - 1];
+    return lastSegment
+      .replace(/([A-Z])/g, ' $1')
+      .replace(/^./, (s) => s.toUpperCase())
+      .trim();
   };
 
   return (
@@ -100,7 +115,11 @@ export const useLanguage = () => {
       return {
         language: 'en' as Language,
         setLanguage: async () => {},
-        t: (key: string) => key,
+        t: (key: string) => {
+          const segments = key.split('.');
+          const last = segments[segments.length - 1];
+          return last.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim();
+        },
       };
     }
     throw new Error('useLanguage must be used within a LanguageProvider');
