@@ -1,55 +1,61 @@
 
 
-# Fix: Video Comments Not Working
+# Fix: Comment Sheet Flashing on Video 2/3
 
 ## Root Cause
 
-The `VideoCommentSheet` renders its fixed-position backdrop and panel as DOM children of the right-side action bar, which is itself a child of the main video container div that has `onClick={handleTap}`. This causes two problems:
+The `VideoCommentSheet` renders its fixed-position backdrop (z-120) and panel (z-130) as DOM children inside the snap-scroll container. When the sheet opens on video 2 or 3:
 
-1. **Taps on the comment trigger button** bubble up to the parent and fire `handleTap`, which triggers play/pause logic with a 300ms double-tap delay. This can swallow or interfere with the sheet opening.
+1. The backdrop covers the scroll container
+2. This can interfere with the `IntersectionObserver` (threshold 0.6) or the snap-scroll mechanics
+3. `isActive` briefly toggles, which unmounts the entire `VideoCommentSheet` (due to `{isActive && ...}`)
+4. The sheet appears then immediately disappears -- the "flash"
 
-2. **Taps inside the opened comment panel** (on the text input, send button, etc.) also bubble up through the fixed-positioned elements back to the parent's `handleTap`, causing the video to pause/play or triggering the double-tap like animation instead of interacting with the comment form.
+Video 1 works because it's at the top of the scroll container and the observer is more stable there.
 
-## Fix
+## Fix: Render the sheet overlay via a React Portal
 
-### File: `src/components/video/FullScreenVideoItem.tsx`
+Split the `VideoCommentSheet` into two parts:
+- **Trigger button**: stays inline in the action bar (inside the scroll container)
+- **Overlay (backdrop + panel)**: rendered via `createPortal(...)` to `document.body`, completely outside the scroll container
 
-**Move `VideoCommentSheet` outside the action bar div** and render it as a direct child of the root container, but wrapped in its own `stopPropagation` container. This separates the trigger button (which stays in the action bar) from the sheet overlay.
+This way:
+- The overlay never interferes with the scroll container or IntersectionObserver
+- No event bubbling from the overlay reaches the video's tap handler
+- The `isActive` guard can stay to control which trigger button is visible
+- Even if `isActive` briefly flickers, the portal-rendered overlay is independent
 
-Actually, the simpler fix: the `handleTap` callback on the root div needs to check if the event target is inside an interactive element before acting. But that's fragile.
+## Changes (1 file)
 
-The cleanest fix is to **stop propagation on the action bar div itself**, so no taps inside it (including comment trigger, like, share) ever reach the root `handleTap`. Currently each button does its own `stopPropagation`, but taps on children of the comment sheet (backdrop, panel, input) don't have this protection.
+### `src/components/video/VideoCommentSheet.tsx`
 
-**Change 1**: Add `onClick={(e) => e.stopPropagation()}` to the action bar container div (line 270). This prevents ALL taps inside the action bar from reaching the root `handleTap`.
+1. Import `createPortal` from `react-dom`
+2. Wrap the `AnimatePresence` block (backdrop + panel) in `createPortal(..., document.body)`
+3. The trigger button stays as-is (inline in the action bar)
 
-**Change 2**: Move the `VideoCommentSheet` component rendering **outside** the action bar div, as a sibling at the root level. The trigger button will remain inside the action bar (we'll split it). But actually this requires restructuring the component.
+This is a minimal, surgical change -- only the rendering target of the overlay changes.
 
-Simpler approach -- **just add stopPropagation to the action bar wrapper**:
+## Technical Detail
 
 ```
-<div 
-  className="absolute right-3 bottom-36 ..."
-  onClick={(e) => e.stopPropagation()}
-  onTouchEnd={(e) => e.stopPropagation()}
->
+Before:
+  FullScreenVideoFeed (snap-scroll container)
+    -> FullScreenVideoItem (100dvh)
+      -> action bar (absolute, z-20)
+        -> VideoCommentSheet
+          -> trigger button (inline)
+          -> backdrop (fixed, z-120)  <-- INSIDE scroll container
+          -> panel (fixed, z-130)     <-- INSIDE scroll container
+
+After:
+  FullScreenVideoFeed (snap-scroll container)
+    -> FullScreenVideoItem (100dvh)
+      -> action bar (absolute, z-20)
+        -> VideoCommentSheet
+          -> trigger button (inline)
+
+  document.body (via Portal)
+    -> backdrop (fixed, z-120)  <-- OUTSIDE scroll container
+    -> panel (fixed, z-130)     <-- OUTSIDE scroll container
 ```
 
-This ensures that tapping the comment button, the like button, the share button, or anything inside the comment sheet panel doesn't trigger `handleTap` on the parent.
-
-### File: `src/components/video/VideoCommentSheet.tsx`
-
-**Add stopPropagation to the panel's touch events** to prevent any touch inside the comment panel from leaking up:
-
-- On the panel `motion.div`: add `onTouchEnd={(e) => e.stopPropagation()}`
-- On the scrollable content area: already has `onTouchStart` and `onTouchMove` stopPropagation, which is good
-
-Also ensure the **textarea and send button inside `VideoCommentsSection`** are interactive. The `pointer-events-auto` classes are already there in the `VideoCommentsSection` component, which is correct.
-
-## Summary
-
-| File | Change |
-|------|--------|
-| `src/components/video/FullScreenVideoItem.tsx` | Add `onClick` and `onTouchEnd` stopPropagation to the action bar wrapper div |
-| `src/components/video/VideoCommentSheet.tsx` | Add `onTouchEnd` stopPropagation to the panel motion.div |
-
-This is a 2-line fix that prevents the parent tap handler from interfering with all interactive elements in the action bar and comment sheet.
