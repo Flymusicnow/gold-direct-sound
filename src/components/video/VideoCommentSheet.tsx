@@ -145,6 +145,7 @@ export function VideoCommentSheet({
               dragElastic={{ top: 0, bottom: 0.6 }}
               onDragEnd={handleDragEnd}
               onClick={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
               className="fixed bottom-0 left-0 right-0 z-[130] rounded-t-2xl bg-card/95 backdrop-blur-xl border-t border-border/30"
               style={{
                 maxHeight: "55dvh",
