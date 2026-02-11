@@ -1,107 +1,124 @@
-# Implement exactly as spec. Do not use right-side sheet for comments on desktop. Mobile comments must be drawer/fullscreen with sticky composer.Comments UX: Mobile = Reddit, Desktop = Facebook
+# Fix Mobile Comment Layout -- Text Below Avatar
 
-## Current State vs Target
+## Problem
 
+From the screenshots: nested comments on mobile become unreadably narrow. The current layout places avatar + name + timestamp + content all in a horizontal arrangement within `min-w-0`. Combined with `ml-3` indentation per depth level, replies get squeezed into a ~60px wide column where text breaks word-by-word vertically.
 
-| &nbsp;      | Current                   | Target                                                     |
-| ----------- | ------------------------- | ---------------------------------------------------------- |
-| **Mobile**  | Bottom drawer with thread | Same drawer, more Reddit-like (collapse, "view more")      |
-| **Desktop** | Right side Sheet panel    | Facebook-style: inline under post, always-visible composer |
+## Root Cause
 
-
-## Architecture
-
-Same data layer (`CommentThread`, `CommentComposer`, `CommentItem`). The `PostCard` uses `useIsMobile()` to pick the presentation:
+In `CommentThread.tsx` (lines 147-186), the comment body layout is:
 
 ```text
-PostCard
-  |
-  +--> Mobile? --> Comment button opens CommentsPanel (Drawer, Reddit-style)
-  |                  - Sticky composer at bottom
-  |                  - Collapsible replies
-  |                  - "View X more replies" gating
-  |
-  +--> Desktop? --> Comment button toggles inline section (Facebook-style)
-                     - InlineComments expands below the post card
-                     - CommentComposer always visible at bottom
-                     - Reply composer appears inline under each comment
+[Avatar] [Name] [Badge] [Timestamp]
+[Content text -- constrained to same narrow column]
 ```
 
-## Changes
+The content paragraph (line 184) sits inside a `min-w-0` div that inherits the remaining width after indentation. At depth 2+, this remaining width is tiny on a 375px screen.
 
-### 1. `src/components/community/PostCard.tsx`
+## Solution
 
-Split behavior by breakpoint:
+Change the `CommentItem` layout so on mobile the **content text renders full-width below the header row** (avatar + name + timestamp). This is a standard pattern used by Reddit, Twitter, and YouTube comments:
 
-- Import `useIsMobile`
-- Add `isCommentsExpanded` state (for desktop inline toggle)
-- **Mobile**: Comment button opens `CommentsPanel` (drawer) -- same as now
-- **Desktop**: Comment button toggles `isCommentsExpanded`, which renders `InlineComments` below the card footer with full composer
-- Remove `CommentsPanel` render on desktop (Sheet is no longer used for comments)
+```text
+[Avatar] [Name] [Timestamp]
+[Content text -- full width of the comment container]
+[Like] [Reply] [More]
+```
 
-### 2. `src/components/community/InlineComments.tsx`
+### Changes to `src/components/community/CommentThread.tsx`
 
-Already has the right structure for Facebook-style. Minor updates:
+1. **Restructure the comment body** (lines 147-186): Change from a single `min-w-0` wrapper to a proper stacked layout:
+  - Top row: Avatar + Name + Badge + Timestamp (horizontal, `flex items-center`)
+  - Below: Content paragraph at full container width (not indented under avatar)
+  - Below: Action buttons
+2. **Reduce nested reply indentation on mobile**: Currently `ml-3` (12px) per level. The content is full-width within each level, so even with indentation the text has much more room. But cap at 2 levels max indent to be safe.
 
-- Add `showComposer` prop (default `true`) so it can be used as read-only preview if needed
-- Add "Reply" button per comment that opens an inline reply composer under that comment (Facebook pattern)
-- Add `onViewAll` handler that, on desktop, can expand to show all comments instead of navigating away
-- Ensure composer is always visible when `showComposer` is true (Facebook "Write a comment..." feel)
+### Specific code change
 
-### 3. `src/components/community/CommentsPanel.tsx`
+Replace the inner layout block (lines 147-186) from:
 
-Keep as-is for mobile (Drawer). Remove Sheet branch since desktop no longer uses it. This simplifies the component to mobile-only.
+```tsx
+<div className="min-w-0">
+  <div className="flex items-center gap-2 mb-1 flex-wrap">
+    <Avatar>...</Avatar>
+    <Name />
+    <Badge />
+    <Timestamp />
+    <Menu />
+  </div>
+  <p>content</p>
+</div>
+```
 
-Alternatively, keep the Sheet branch but only render CommentsPanel on mobile in PostCard. The component itself stays unchanged for reuse elsewhere.
+To:
 
-Decision: Keep component unchanged, just don't render it on desktop in PostCard. Simpler, no risk of breaking other consumers.
+```tsx
+<div className="min-w-0 w-full">
+  <div className="flex items-center gap-2 mb-1 flex-wrap">
+    <Avatar>...</Avatar>
+    <Name />
+    <Badge />
+    <Timestamp />
+    <Menu />
+  </div>
+  <p className="text-sm ... pl-0">content</p>
+</div>
+```
 
-### 4. `src/components/community/CommentThread.tsx`
+The key difference: ensure the content `<p>` tag has `pl-0` (no left padding that would align it under the avatar) and the outer container uses `w-full` to take all available space. The content text spans the full width of the comment container, not just the space to the right of the avatar.
 
-Add "View X more replies" gating:
+3. **Also ensure the CommentsPanel drawer body** allows proper scrolling: the `bodyContent` div already uses `overflow-y-auto overscroll-contain`, which is correct. No changes needed there.
 
-- New prop: `defaultVisibleReplies?: number` (default 2)
-- Each `CommentItem` shows only `defaultVisibleReplies` replies initially
-- "View X more replies" button expands the rest
-- Collapse toggle already exists -- keep it
-
-### 5. `src/components/community/PostDetail.tsx`
-
-Already has inline comments (Facebook-style) with `CommentThread` + `CommentComposer`. No changes needed -- this page is already correct for the desktop pattern.
-
-## File Summary
-
-
-| File                                          | Action    | What                                                                   |
-| --------------------------------------------- | --------- | ---------------------------------------------------------------------- |
-| `src/components/community/PostCard.tsx`       | EDIT      | Breakpoint split: mobile opens drawer, desktop toggles inline comments |
-| `src/components/community/InlineComments.tsx` | EDIT      | Add `showComposer` prop, inline reply support per comment              |
-| `src/components/community/CommentThread.tsx`  | EDIT      | Add "View X more replies" gating with `defaultVisibleReplies` prop     |
-| `src/components/community/CommentsPanel.tsx`  | NO CHANGE | Kept as-is, only rendered on mobile                                    |
+## Files to Change
 
 
-## Key Details
+| File                                         | What                                                                                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `src/components/community/CommentThread.tsx` | Restructure CommentItem inner layout so content text is full-width below avatar+name row, not squeezed beside it |
 
-**Desktop inline comment section** renders inside the Card, after the footer actions bar:
 
-- Full `InlineComments` component with composer always visible
-- Clicking "Reply" on a comment shows inline reply composer under that comment
-- "View all X comments" expands the thread (no navigation away)
+## Result
 
-**Mobile drawer** stays Reddit-like:
+- Comments at any nesting depth will have readable text on mobile
+- Avatar + name stay on one line as a compact header
+- Content text uses the full available width below
+- Thread lines and indentation still work but no longer squeeze content
+- No changes to data model, CommentsPanel, or CommentComposer
 
-- Full-height drawer (85dvh)
-- Sticky composer at bottom
-- Thread with collapse/expand and "View more replies"
-- Thread lines for nesting visualization
+&nbsp;
 
-**Global CSS rules** (already applied from previous overhaul):
+&nbsp;
 
-- `word-break: normal`, `overflow-wrap: break-word`
-- Indent cap at 24px (ml-3 per level, max 2 levels)
-- Touch targets 44px minimum
-- Thread lines always visible
+---
 
-## No database changes needed
+We agree with the root cause analysis, but we are replacing the previous layout suggestion with a stricter implementation requirement.
 
-All data is shared. The only difference is presentation layer routing via `useIsMobile()`.
+Please implement the mobile comment layout exactly as follows. No alternative layouts.
+
+1. On mobile, comment content text must render full width below the avatar/name row.
+2. Content must never share horizontal space with the avatar.
+3. Comment structure must be:
+  - Row 1: Avatar + Name + Badge + Timestamp + Menu
+  - Row 2: Content (full width)
+  - Row 3: Actions (Like / Reply / More)
+4. Indentation rules:
+  - 12px per level
+  - Maximum 24px total indent
+  - Use thread-line for deeper nesting instead of increasing indent
+5. Wrapping rules (mandatory):
+  - Remove any `word-break: break-all`
+  - Use `word-break: normal`
+  - Use `overflow-wrap: break-word`
+6. Every wrapper in the comment tree must enforce:
+  - w-full
+  - max-w-full
+  - min-w-0
+7. This change applies to mobile only.  
+Desktop layout must remain unchanged.
+
+Non-negotiable:  
+No comment or reply may render as a narrow vertical column on a 375px screen.
+
+Replace the previous layout suggestion with this implementation.
+
+---
