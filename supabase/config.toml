@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.admin-onboarding-debug]
 verify_jwt = true
+
+[functions.track-event]
+verify_jwt = false

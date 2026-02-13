@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useSupportScore } from './useSupportScore';
 import { useMissions } from './useMissions';
+import { trackEventDirect } from './useEventTracker';
 
 export function useLikeTrack(trackId: string, artistId: string, initialLiked: boolean = false) {
   const { user } = useAuth();
@@ -38,6 +39,9 @@ export function useLikeTrack(trackId: string, artistId: string, initialLiked: bo
           .insert({ user_id: user.id, track_id: trackId });
         setLiked(true);
         toast.success('Added to liked tracks');
+        
+        // Track save event
+        try { trackEventDirect('save', { trackId }); } catch {}
         
         // Update support score
         updateSupportScore(artistId, 'like_track');
