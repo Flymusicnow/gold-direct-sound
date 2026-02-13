@@ -2,6 +2,7 @@ import { createContext, useContext, useState, ReactNode, useCallback, useEffect,
 import { useSupportScore } from '@/hooks/useSupportScore';
 import { useVideoPlayback } from './VideoPlaybackContext';
 import { supabase } from '@/integrations/supabase/client';
+import { trackEventDirect } from '@/hooks/useEventTracker';
 
 export interface FlightdeckItem {
   id: string;
@@ -103,6 +104,11 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     setQueueState([queueItem]);
     setCurrentIndex(0);
     setIsPlaying(true);
+    
+    // Track play event
+    if (item.type === 'track') {
+      try { trackEventDirect('play', { trackId: item.id, metadata: { position_seconds: 0 } }); } catch {}
+    }
   }, [pauseAllVideos]);
 
   const addToQueue = useCallback((item: FlightdeckItem) => {
@@ -112,8 +118,12 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playNext = useCallback(() => {
+    // Track skip event for current track
+    if (currentItem?.type === 'track') {
+      try { trackEventDirect('skip', { trackId: currentItem.id, metadata: { position_seconds: Math.round(currentTime) } }); } catch {}
+    }
+    
     if (repeatMode === 'one') {
-      // Restart current track
       setCurrentTime(0);
       return;
     }
@@ -122,11 +132,10 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
       setCurrentIndex(prev => prev + 1);
       setIsPlaying(true);
     } else if (repeatMode === 'all' && queue.length > 0) {
-      // Loop back to start
       setCurrentIndex(0);
       setIsPlaying(true);
     }
-  }, [currentIndex, queue.length, repeatMode]);
+  }, [currentIndex, queue.length, repeatMode, currentItem, currentTime]);
 
   const playPrev = useCallback(() => {
     if (currentIndex > 0) {

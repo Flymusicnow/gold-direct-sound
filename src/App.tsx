@@ -102,6 +102,7 @@ import AdminFlightRecorder from "./pages/admin/AdminFlightRecorder";
 import AdminStripeTierRepair from "./pages/admin/AdminStripeTierRepair";
 import AdminEdgeFunctions from "./pages/admin/AdminEdgeFunctions";
 import AdminOnboardingDebug from "./pages/admin/AdminOnboardingDebug";
+import AdminEventLog from "./pages/admin/AdminEventLog";
 import AdminArtistPricing from "./pages/admin/AdminArtistPricing";
 import AdminAccessDenied from "./pages/admin/AdminAccessDenied";
 import StudioSmartLink from "./pages/studio/StudioSmartLink";
@@ -539,6 +540,7 @@ const App = () => (
             <Route path="/admin/stripe-tier-repair" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminStripeTierRepair /></ProtectedRoute>} />
             <Route path="/admin/onboarding-debug" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminOnboardingDebug /></ProtectedRoute>} />
             <Route path="/admin/edge-functions" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEdgeFunctions /></ProtectedRoute>} />
+            <Route path="/admin/event-log" element={<ProtectedRoute allowedRoles={['admin', 'super_admin']}><AdminEventLog /></ProtectedRoute>} />
             
             {/* Brand protected routes */}
             <Route path="/brand/onboarding" element={

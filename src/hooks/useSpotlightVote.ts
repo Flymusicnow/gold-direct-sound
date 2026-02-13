@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import confetti from 'canvas-confetti';
 import { useSupportScore } from './useSupportScore';
 import { useFanAchievementChecker } from './useFanAchievementChecker';
+import { trackEventDirect } from './useEventTracker';
 
 export function useSpotlightVote(entryId: string, campaignId: string, artistId: string, initialVoted: boolean = false) {
   const { user } = useAuth();
@@ -65,6 +66,9 @@ export function useSpotlightVote(entryId: string, campaignId: string, artistId: 
         
         step('submit_vote', 'ok');
         setHasVoted(true);
+        
+        // Track vote event
+        try { trackEventDirect('vote', { metadata: { entry_id: entryId, campaign_id: campaignId } }); } catch {}
         
         // Update support score
         step('update_support_score', 'start');

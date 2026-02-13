@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { useSupportScore } from './useSupportScore';
+import { trackEventDirect } from './useEventTracker';
 
 export function useFollowArtist(artistId: string, initialFollowing: boolean = false) {
   const { user } = useAuth();
@@ -36,6 +37,9 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
           .from('follows')
           .insert({ fan_id: user.id, artist_id: artistId });
         setIsFollowing(true);
+        
+        // Track follow event
+        try { trackEventDirect('follow', { metadata: { artist_id: artistId } }); } catch {}
         
         // Update supporter XP and check fan achievements
         await updateSupportScore(artistId, 'follow');
