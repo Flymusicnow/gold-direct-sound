@@ -103,7 +103,7 @@ const CommentItem: React.FC<{
 }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const navigate = useNavigate();
   const [showAllReplies, setShowAllReplies] = useState(false);
   
   // Get like data for this comment
@@ -120,6 +120,9 @@ const CommentItem: React.FC<{
   const canReply = depth < maxDepth;
   const hasReplies = comment.replies && comment.replies.length > 0;
   const replyCount = comment.replies?.length || 0;
+  
+  // Replies collapsed by default when they exist
+  const [isCollapsed, setIsCollapsed] = useState(!!hasReplies);
 
   // Don't render hidden comments (unless we add admin view later)
   if (comment.is_hidden) return null;
@@ -216,6 +219,19 @@ const CommentItem: React.FC<{
                 Reply
               </Button>
             )}
+
+            {/* Open Conversation for deep threads */}
+            {depth >= maxDepth - 1 && hasReplies && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 h-7 px-2 text-muted-foreground"
+                onClick={() => navigate(`/post/${comment.post_id}`)}
+              >
+                <MessageCircle className="h-3 w-3 mr-1" />
+                Open Conversation
+              </Button>
+            )}
             
             {hasReplies && (
               <Button
@@ -227,7 +243,7 @@ const CommentItem: React.FC<{
                 {isCollapsed ? (
                   <>
                     <ChevronDown className="h-3 w-3 mr-1" />
-                    Show {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
+                    View {replyCount} {replyCount === 1 ? 'reply' : 'replies'}
                   </>
                 ) : (
                   <>
