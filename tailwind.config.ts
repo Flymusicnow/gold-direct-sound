@@ -85,10 +85,32 @@ export default {
             height: "0",
           },
         },
+        "comment-pop-in": {
+          "0%": { opacity: "0", transform: "scale(0.97)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "energy-pulse": {
+          "0%, 100%": { borderColor: "rgba(232, 191, 26, 0.25)" },
+          "50%": { borderColor: "rgba(232, 191, 26, 0.5)" },
+        },
+        "artist-glow": {
+          "0%": { boxShadow: "0 0 0 0 rgba(232, 191, 26, 0)" },
+          "50%": { boxShadow: "0 0 12px 2px rgba(232, 191, 26, 0.15)" },
+          "100%": { boxShadow: "0 0 0 0 rgba(232, 191, 26, 0)" },
+        },
+        "tap-pop": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.3)" },
+          "100%": { transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "comment-pop-in": "comment-pop-in 200ms ease-out",
+        "energy-pulse": "energy-pulse 600ms ease-in-out",
+        "artist-glow": "artist-glow 1.2s ease-in-out",
+        "tap-pop": "tap-pop 120ms ease-out",
       },
     },
   },
