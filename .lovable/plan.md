@@ -1,174 +1,119 @@
 
 
-# ENERGY THREADS Comments v1 -- Implementation Plan
+# Energy Threads v1 -- Remaining Gaps Fix
 
-## Current State
-
-The comment system already has:
-- Mobile: Drawer (CommentsPanel) with sticky composer
-- Desktop: Inline under post (Facebook-style)
-- Thread lines, indent cap at 24px, reply gating ("View X more replies")
-- Touch targets 44px, word-break guardrails
+## What's Already Done (no changes needed)
+- Card styling with energy line (border-l-2 #E8BF1A/25)
+- Text 15px / 1.5 line-height
+- word-break: normal + overflow-wrap: break-word
+- Pop-in, energy-pulse, artist-glow, tap-pop animations in tailwind config
+- Community Energy Bar on PostCard
+- Drawer height 60dvh (min 50%, max 75%)
+- Desktop inline comments with max-w-[720px]
+- Reply gating ("View X more replies")
+- Touch targets 44px
 - Emoji in composer
+- Chronological sorting (newest at bottom)
+- Artist badge and highlight
 
-What's **missing** from the Energy Threads spec:
+## Gaps to Fix
 
-## Changes Required
+### 1. Replies collapsed by default (`CommentThread.tsx`)
 
-### 1. Comment Card Visual Overhaul (`CommentThread.tsx`)
+**Current:** `isCollapsed` defaults to `false` -- replies are expanded on load.
+**Spec:** "View X replies" collapsed by default. User expands manually.
 
-Current: bare `py-3 space-y-1` with dividers between comments. No card styling.
+**Fix:** Change `useState(false)` to `useState(true)` for `isCollapsed` when the comment has replies. This makes the Reply Band show "View X replies" by default, matching the Reddit/Energy Stack pattern.
 
-Target per spec:
-- Each comment wrapped in a styled card: `rounded-2xl p-4 mb-3 bg-card/50` (dark tone)
-- Left "energy line": `border-l-2 border-[#E8BF1A]/25` on every comment
-- Text size: `text-[15px] leading-[1.5]` (up from `text-sm`)
-- Remove `divide-y divide-border` on the outer container (cards handle spacing now)
+### 2. "Open Conversation" for deep threads (`CommentThread.tsx`)
 
-### 2. Artist Comment Highlight (`CommentThread.tsx`)
+**Current:** At depth >= maxDepth, the Reply button is hidden (`canReply = depth < maxDepth`). No way to view deeper threads.
+**Spec:** If more than 2 reply levels exist, show an "Open Conversation" button that opens the full thread in a bottom sheet (mobile) or navigates to PostDetail (desktop).
 
-When `roleBadge === 'artist'`:
-- Card gets `border border-[#E8BF1A]/15` (subtle gold border)
-- Badge already shows "Artist" -- keep as-is
-- On initial render, a brief gold glow animation (CSS `animate-artist-glow`, 1.2s)
+**Fix:** When `depth >= maxDepth - 1` and a comment has replies that themselves have replies, show an "Open Conversation" button instead of rendering deeper. On click:
+- Mobile: open a Drawer with the sub-thread
+- Desktop: navigate to `/post/{postId}` (PostDetail page, which already shows full threads)
 
-### 3. Microinteractions (`CommentThread.tsx` + `tailwind.config.ts`)
+For v1 simplicity: "Open Conversation" navigates to `/post/{postId}` on both platforms. This keeps it simple and the PostDetail page already renders full threads with CommentThread.
 
-Add to tailwind config:
-- `comment-pop-in`: scale(0.97) to scale(1), opacity 0 to 1, 200ms ease-out
-- `energy-pulse`: border-opacity pulse from 25% to 50% and back, 600ms
-- `artist-glow`: box-shadow gold glow fade in and out, 1.2s
+### 3. Desktop InlineComments energy card styling (`InlineComments.tsx`)
 
-Apply `animate-comment-pop-in` to each CommentItem wrapper.
-Apply `animate-energy-pulse` on the energy line when a new comment appears (via CSS animation on mount).
+**Current:** Comments use a basic `flex gap-2` layout with avatar beside text. No card styling, no energy line.
+**Spec:** Same energy card treatment on desktop: rounded-2xl, p-4, bg-card/50, left energy line, artist glow.
 
-### 4. Like "Tap Pop" (`CommentThread.tsx`)
+**Fix:** Apply the same card wrapper to each comment in InlineComments:
+- `p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 animate-comment-pop-in`
+- Artist highlight: `border border-[#E8BF1A]/15 animate-artist-glow`
+- Move content below the avatar+name row (stacked layout, same as CommentThread)
 
-On the Heart icon click, add a brief scale animation:
-- CSS class `animate-tap-pop`: scale(1.3) then back to 1, 120ms
+### 4. Collapse toggle label refinement (`CommentThread.tsx`)
 
-### 5. Community Energy Bar (`PostCard.tsx`)
+**Current:** "Show X replies" / "Hide replies"
+**Spec:** "View X replies" (collapsed default)
 
-Under the actions row (Heart/Comment/Share), add a thin bar:
-- 2px height, full width
-- Gold gradient fill (`bg-gradient-to-r from-[#E8BF1A]/10 via-[#E8BF1A]/40 to-[#E8BF1A]/10`)
-- Width proportional to activity (comments + reactions in last 2h)
-- Since we don't track time-windowed activity yet, use a simple formula: `min((comment_count + reaction_count) / 20, 1) * 100%` as fill percentage
-- No number shown by default (spec says tap for details -- skip details modal in v1, just show the bar)
+**Fix:** Change button text to "View X replies" when collapsed.
 
-### 6. Mobile Drawer Height (`CommentsPanel.tsx`)
+## Files to Change
 
-Current: `max-h-[85dvh]`
-Spec says: 60% height, min 50%, max 75%
-
-Change to: `h-[60dvh] min-h-[50dvh] max-h-[75dvh]`
-
-### 7. Desktop Comment List Max-Width (`InlineComments.tsx` + `PostCard.tsx`)
-
-Spec says comments max 680-760px in center column.
-Add `max-w-[720px] mx-auto` to the inline comments container in PostCard.
-
-### 8. Sorting Confirmation
-
-Current: `order('created_at', { ascending: true })` -- chronological, newest last. This matches the spec (democratic, no like-based reorder). No change needed.
-
-## File Summary
-
-| File | Action | What |
-|------|--------|------|
-| `src/components/community/CommentThread.tsx` | EDIT | Card styling with energy line, artist glow, pop-in animation, text size increase, remove outer dividers |
-| `src/components/community/CommentsPanel.tsx` | EDIT | Drawer height 60dvh (min 50%, max 75%) |
-| `src/components/community/PostCard.tsx` | EDIT | Add Energy Bar under actions, max-width on inline comments |
-| `tailwind.config.ts` | EDIT | Add keyframes/animations: comment-pop-in, energy-pulse, artist-glow, tap-pop |
+| File | What |
+|------|------|
+| `src/components/community/CommentThread.tsx` | Default replies to collapsed; add "Open Conversation" nav for deep threads; fix toggle label |
+| `src/components/community/InlineComments.tsx` | Apply energy card styling to each comment; stacked layout (avatar+name row, then content below) |
 
 ## Technical Details
 
-### CommentThread.tsx changes
+### CommentThread.tsx
 
-**Outer container** (line 439):
-```
-Before: "divide-y divide-border max-w-full w-full overflow-hidden"
-After:  "space-y-3 max-w-full w-full overflow-hidden"
-```
-
-**CommentItem wrapper** (lines 145-147):
-```
-Before: "py-3 space-y-1 max-w-full w-full min-w-0"
-After:  "p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 
-         max-w-full w-full min-w-0 animate-comment-pop-in"
-         + conditional: roleBadge === 'artist' && "border border-[#E8BF1A]/15 animate-artist-glow"
-```
-
-**Content text** (line 188):
-```
-Before: "text-sm"
-After:  "text-[15px] leading-[1.5]"
-```
-
-**Like button Heart**: Add `animate-tap-pop` class on click via state toggle.
-
-### CommentsPanel.tsx changes
-
-Line 76:
-```
-Before: max-h-[85dvh]
-After:  h-[60dvh] min-h-[50dvh] max-h-[75dvh]
-```
-
-### PostCard.tsx changes
-
-After the actions div (line 236), before the inline comments section:
+Line 106 -- change initial collapsed state:
 ```tsx
-{/* Community Energy Bar */}
-<div className="w-full h-[2px] bg-muted/30 overflow-hidden rounded-full">
-  <div 
-    className="h-full bg-gradient-to-r from-[#E8BF1A]/10 via-[#E8BF1A]/40 to-[#E8BF1A]/10 transition-all duration-700"
-    style={{ width: `${Math.min(((displayCommentCount + displayReactionCount) / 20) * 100, 100)}%` }}
-  />
+// Before
+const [isCollapsed, setIsCollapsed] = useState(false);
+
+// After -- collapsed by default when there are replies
+const [isCollapsed, setIsCollapsed] = useState(true);
+```
+
+Add "Open Conversation" button when depth >= maxDepth and comment has deeper replies:
+```tsx
+{depth >= maxDepth - 1 && hasReplies && (
+  <Button
+    variant="ghost"
+    size="sm"
+    className="h-7 px-2 text-muted-foreground"
+    onClick={() => navigate(`/post/${comment.post_id}`)}
+  >
+    Open Conversation
+  </Button>
+)}
+```
+
+This requires passing `navigate` into CommentItem (or using `useNavigate` inside it -- it's already a component so this is fine).
+
+### InlineComments.tsx
+
+Replace the per-comment layout (lines 190-241) from plain flex to energy card:
+```tsx
+<div className={cn(
+  "p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 animate-comment-pop-in w-full",
+  roleBadge === 'artist' && "border border-[#E8BF1A]/15 animate-artist-glow",
+  isOptimistic && "opacity-70"
+)}>
+  {/* Row 1: Avatar + Name + Badge + Timestamp */}
+  <div className="flex items-center gap-2 mb-1 flex-wrap">
+    <Avatar className="h-6 w-6 shrink-0">...</Avatar>
+    <Name />
+    <RoleBadge />
+    <Timestamp />
+  </div>
+  {/* Row 2: Content full width */}
+  <p className="text-[15px] leading-[1.5] text-foreground whitespace-pre-wrap w-full"
+     style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+    {comment.content}
+  </p>
+  {/* Row 3: Like action */}
+  <Button>...</Button>
 </div>
 ```
 
-Inline comments wrapper gets `max-w-[720px] mx-auto`.
-
-### tailwind.config.ts additions
-
-```js
-keyframes: {
-  'comment-pop-in': {
-    '0%': { opacity: '0', transform: 'scale(0.97)' },
-    '100%': { opacity: '1', transform: 'scale(1)' },
-  },
-  'energy-pulse': {
-    '0%, 100%': { borderColor: 'rgba(232, 191, 26, 0.25)' },
-    '50%': { borderColor: 'rgba(232, 191, 26, 0.5)' },
-  },
-  'artist-glow': {
-    '0%': { boxShadow: '0 0 0 0 rgba(232, 191, 26, 0)' },
-    '50%': { boxShadow: '0 0 12px 2px rgba(232, 191, 26, 0.15)' },
-    '100%': { boxShadow: '0 0 0 0 rgba(232, 191, 26, 0)' },
-  },
-  'tap-pop': {
-    '0%': { transform: 'scale(1)' },
-    '50%': { transform: 'scale(1.3)' },
-    '100%': { transform: 'scale(1)' },
-  },
-},
-animation: {
-  'comment-pop-in': 'comment-pop-in 200ms ease-out',
-  'energy-pulse': 'energy-pulse 600ms ease-in-out',
-  'artist-glow': 'artist-glow 1.2s ease-in-out',
-  'tap-pop': 'tap-pop 120ms ease-out',
-},
-```
-
-## What This Does NOT Change
-
-- No database changes
-- No sorting algorithm changes (stays chronological)
-- No economy/pay features
-- No leaderboards
-- Desktop stays Facebook-style inline
-- Mobile stays Reddit-style drawer
-- Composer unchanged (already has emoji + send)
-- Reply gating unchanged (already has "View X more replies")
-
+## No database or config changes needed
+All changes are purely presentational -- existing animations and tailwind config already support this.
