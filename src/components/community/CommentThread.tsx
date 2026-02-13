@@ -130,23 +130,23 @@ const CommentItem: React.FC<{
   return (
     <div className={cn(
       "relative max-w-full w-full min-w-0 overflow-hidden",
-      depth >= 1 && (isMobile ? (depth <= 2 ? "ml-3" : "") : "ml-3")
+      depth >= 1 && (isMobile ? (depth <= 2 ? "ml-2" : "") : "ml-2")
     )}>
       {/* Threading visual connector */}
       {depth > 0 && (
         <div className={cn(
-          "absolute -left-3 top-0 bottom-0 border-l-2",
+          "absolute -left-2 top-0 bottom-0 border-l-2",
           getDepthStyles(depth - 1)
         )} />
       )}
       
       {/* Reply connector line */}
       {depth > 0 && (
-        <div className="absolute -left-3 top-4 w-2 border-t-2 border-muted-foreground/20" />
+        <div className="absolute -left-2 top-4 w-1.5 border-t-2 border-muted-foreground/20" />
       )}
 
       <div className={cn(
-        "p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 max-w-full w-full min-w-0 animate-comment-pop-in",
+        "p-3 sm:p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 max-w-full w-full min-w-0 animate-comment-pop-in",
         comment.is_pinned && "bg-primary/5",
         roleBadge === 'artist' && "border border-[#E8BF1A]/15 animate-artist-glow"
       )}>
