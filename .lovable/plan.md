@@ -1,42 +1,130 @@
 
 
-# Tighten Thread Indentation for Maximum Width
+# Event Tracking (MVP) -- Implementation Plan
 
-## Current State (already correct)
+## Context
 
-The avatar is already **inside** the comment card. The 3-row stacked layout is already implemented:
-- Row 1: Avatar + Name + Badge + Timestamp (inline)
-- Row 2: Content (full width)
-- Row 3: Actions
+The project already has a `telemetry_events` table and FlightRecorder system, but that's flow-based telemetry (trace_id, flow, step, status). The MVP spec calls for a **separate, simpler `events` table** for append-only user action logging (play, skip, save, follow, vote, search, etc.) with its own edge function endpoint and frontend helper.
 
-## The Real Space Waster
+## 1. Database: Create `events` table
 
-The width loss comes from **nesting indentation**:
-- Each reply level adds `ml-3` (12px)
-- Thread connector lines sit at `-left-3` (another 12px visual offset)
-- At depth 2: you lose ~24px of content width
+New migration to create:
 
-## Proposed Fix
+```sql
+CREATE TABLE public.events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  event_type text NOT NULL,
+  track_id uuid,
+  session_id text,
+  metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
 
-Reduce reply indent from 12px to 8px on mobile, and tighten thread connector lines to match.
+-- Indexes for query performance
+CREATE INDEX idx_events_user_created ON public.events (user_id, created_at DESC);
+CREATE INDEX idx_events_track_created ON public.events (track_id, created_at DESC);
+CREATE INDEX idx_events_type_created ON public.events (event_type, created_at DESC);
 
-### Changes to `src/components/community/CommentThread.tsx`
+-- RLS: append-only for authenticated users (insert own, no update/delete)
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 
-1. **Reduce mobile indent** from `ml-3` (12px) to `ml-2` (8px) per level:
-   - Line 133: `depth <= 2 ? "ml-3"` becomes `depth <= 2 ? "ml-2"`
+CREATE POLICY "Users can insert own events"
+  ON public.events FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
 
-2. **Adjust thread connector lines** to match the tighter indent:
-   - Line 138: `absolute -left-3` becomes `absolute -left-2` (vertical line)
-   - Line 145: `absolute -left-3 top-4 w-2` becomes `absolute -left-2 top-4 w-1.5` (horizontal connector)
+-- Admin read-only access
+CREATE POLICY "Admins can read all events"
+  ON public.events FOR SELECT TO authenticated
+  USING (public.is_admin());
+```
 
-3. **Reduce card padding on mobile** from `p-4` (16px) to `p-3` (12px) on small screens:
-   - Line 149: add responsive padding `p-3 sm:p-4`
+No UPDATE or DELETE policies -- enforces append-only at the database level.
 
-This recovers ~8px per indent level + 8px padding = ~16px more content width on a 375px screen. Combined with the existing 2-level cap, replies stay compact and readable.
+## 2. Edge Function: `POST /track-event`
 
-### File Summary
+New edge function at `supabase/functions/track-event/index.ts`:
 
-| File | Change |
-|------|--------|
-| `src/components/community/CommentThread.tsx` | Tighter mobile indent (ml-2), adjusted thread lines, responsive card padding |
+- Validates JWT via `getClaims()`
+- Validates `event_type` against allowlist: `session_start`, `session_end`, `play`, `skip`, `complete`, `save`, `follow`, `vote`, `search`
+- Validates `track_id` is required for: `play`, `skip`, `complete`, `save`, `vote`
+- Validates `metadata` is an object if provided
+- Inserts into `events` table using service role client
+- Returns `{ ok: true }` on success
+- Never crashes the caller on failure
+
+Config in `supabase/config.toml`:
+```toml
+[functions.track-event]
+verify_jwt = false
+```
+
+## 3. Frontend Helper: `useEventTracker` hook
+
+New file: `src/hooks/useEventTracker.ts`
+
+Provides a single function:
+```ts
+trackEvent(eventType, { trackId?, sessionId?, metadata? })
+```
+
+Key behaviors:
+- Fire-and-forget (no await, no crash on failure)
+- Uses the edge function endpoint
+- Includes auth token in headers
+- Console warns on failure in dev mode
+- Returns void (caller never waits)
+
+## 4. Instrumentation Points
+
+Wire `trackEvent` calls into existing components:
+
+| Event | Where | Metadata |
+|-------|-------|----------|
+| `session_start` | `App.tsx` on auth state change (login) | -- |
+| `session_end` | `App.tsx` on logout | -- |
+| `play` | FlightdeckContext `playNow()` | `{ position_seconds: 0 }` |
+| `skip` | FlightdeckContext next track / skip action | `{ position_seconds }` |
+| `complete` | FlightdeckContext on track end | `{ duration_seconds }` |
+| `save` | `useLikeTrack` toggle on | -- |
+| `follow` | `useFollowArtist` toggle on | -- |
+| `vote` | `useSpotlightVote` toggle on | -- |
+| `search` | Search input on submit | `{ query }` |
+
+Each call is wrapped in try/catch so the app never crashes from event tracking.
+
+## 5. Admin Event Log Page
+
+New page: `src/pages/admin/AdminEventLog.tsx`
+
+- Route: `/admin/event-log` (admin-protected)
+- Shows latest 100 events (created_at DESC)
+- Filters: event_type dropdown, user_id text input, track_id text input
+- Each row shows: timestamp, event_type (badge), user_id, track_id, session_id, metadata (collapsible JSON)
+- Auto-refresh button
+- Uses direct Supabase client query (admin RLS policy allows SELECT)
+
+## File Summary
+
+| File | Action | What |
+|------|--------|------|
+| Migration SQL | CREATE | `events` table + indexes + RLS |
+| `supabase/functions/track-event/index.ts` | CREATE | Edge function with validation |
+| `supabase/config.toml` | EDIT | Add `[functions.track-event]` |
+| `src/hooks/useEventTracker.ts` | CREATE | Frontend helper hook |
+| `src/pages/admin/AdminEventLog.tsx` | CREATE | Admin debug view |
+| `src/App.tsx` | EDIT | Add route + session_start/end tracking |
+| `src/contexts/FlightdeckContext.tsx` | EDIT | Add play/skip/complete tracking |
+| `src/hooks/useLikeTrack.ts` | EDIT | Add save event |
+| `src/hooks/useFollowArtist.ts` | EDIT | Add follow event |
+| `src/hooks/useSpotlightVote.ts` | EDIT | Add vote event |
+| Search component (TBD) | EDIT | Add search event |
+
+## What This Does NOT Do
+
+- No recommendations or ranking logic
+- No AI processing of events
+- No frontend behavior changes based on event data
+- No rate limiting in v1 (noted as TODO in edge function)
+- Events are strictly append-only (no UPDATE/DELETE policies)
 
