@@ -191,52 +191,53 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
               <div
                 key={comment.id}
                 className={cn(
-                  "flex gap-2",
+                  "p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 animate-comment-pop-in w-full",
+                  roleBadge === 'artist' && "border border-[#E8BF1A]/15 animate-artist-glow",
                   isOptimistic && "opacity-70"
                 )}
               >
-                <Avatar className="h-6 w-6 shrink-0">
-                  <AvatarImage src={avatarUrl || undefined} />
-                  <AvatarFallback className="text-xs">
-                    {displayName[0]?.toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {isAnonymous ? (
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {displayName}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => handleProfileClick(comment.author_id, identity)}
-                        className="text-xs font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
-                      >
-                        {displayName}
-                      </button>
-                    )}
-                    <RoleBadge role={roleBadge} />
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                {/* Row 1: Avatar + Name + Badge + Timestamp */}
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <Avatar className="h-6 w-6 shrink-0">
+                    <AvatarImage src={avatarUrl || undefined} />
+                    <AvatarFallback className="text-xs">
+                      {displayName[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  {isAnonymous ? (
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {displayName}
                     </span>
-                  </div>
-                  <p className="text-sm text-foreground mt-0.5 break-words">
-                    {comment.content}
-                  </p>
-                  {/* Like button */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "h-6 px-1.5 gap-1 mt-1",
-                      hasLiked ? "text-primary" : "text-muted-foreground"
-                    )}
-                    onClick={() => user ? toggleLike(comment.id) : toast.error('Please sign in to like')}
-                  >
-                    <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
-                    {likeCount > 0 && <span className="text-xs">{likeCount}</span>}
-                  </Button>
+                  ) : (
+                    <button
+                      onClick={() => handleProfileClick(comment.author_id, identity)}
+                      className="text-xs font-medium hover:text-primary hover:underline cursor-pointer transition-colors"
+                    >
+                      {displayName}
+                    </button>
+                  )}
+                  <RoleBadge role={roleBadge} />
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                  </span>
                 </div>
+                {/* Row 2: Content full width */}
+                <p className="text-[15px] leading-[1.5] text-foreground whitespace-pre-wrap w-full" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+                  {comment.content}
+                </p>
+                {/* Row 3: Like action */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "h-6 px-1.5 gap-1 mt-1",
+                    hasLiked ? "text-primary" : "text-muted-foreground"
+                  )}
+                  onClick={() => user ? toggleLike(comment.id) : toast.error('Please sign in to like')}
+                >
+                  <Heart className={cn("h-3 w-3", hasLiked && "fill-current")} />
+                  {likeCount > 0 && <span className="text-xs">{likeCount}</span>}
+                </Button>
               </div>
             );
           })}
