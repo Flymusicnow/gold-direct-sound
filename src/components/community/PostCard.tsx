@@ -235,9 +235,17 @@ export const PostCard: React.FC<PostCardProps> = ({
             </Button>
           </div>
 
+          {/* Community Energy Bar */}
+          <div className="w-full h-[2px] bg-muted/30 overflow-hidden rounded-full mt-2">
+            <div 
+              className="h-full bg-gradient-to-r from-[#E8BF1A]/10 via-[#E8BF1A]/40 to-[#E8BF1A]/10 transition-all duration-700"
+              style={{ width: `${Math.min(((displayCommentCount + displayReactionCount) / 20) * 100, 100)}%` }}
+            />
+          </div>
+
           {/* Desktop: Facebook-style inline comments */}
           {!isMobile && isCommentsExpanded && (
-            <div className="w-full border-t border-border/50 pt-3">
+            <div className="w-full border-t border-border/50 pt-3 max-w-[720px] mx-auto">
               <InlineComments
                 postId={post.id}
                 communityArtistUserId={communityArtistUserId}

@@ -73,7 +73,7 @@ export const CommentsPanel: React.FC<CommentsPanelProps> = ({
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[85dvh] flex flex-col">
+        <DrawerContent className="h-[60dvh] min-h-[50dvh] max-h-[75dvh] flex flex-col">
           <DrawerHeader className="flex-shrink-0 flex items-center justify-between pb-2">
             <DrawerTitle>{headerContent}</DrawerTitle>
           </DrawerHeader>

@@ -143,8 +143,9 @@ const CommentItem: React.FC<{
       )}
 
       <div className={cn(
-        "py-3 space-y-1 max-w-full w-full min-w-0",
-        comment.is_pinned && "bg-primary/5 -mx-2 px-2 rounded-lg"
+        "p-4 rounded-2xl bg-card/50 border-l-2 border-[#E8BF1A]/25 max-w-full w-full min-w-0 animate-comment-pop-in",
+        comment.is_pinned && "bg-primary/5",
+        roleBadge === 'artist' && "border border-[#E8BF1A]/15 animate-artist-glow"
       )}>
         <div className="min-w-0 w-full max-w-full">
           {/* Row 1: Avatar + Name + Badge + Timestamp + Menu */}
@@ -185,7 +186,7 @@ const CommentItem: React.FC<{
           </div>
 
           {/* Row 2: Content (full width, never beside avatar) */}
-          <p className="text-sm text-foreground whitespace-pre-wrap w-full max-w-full" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
+          <p className="text-[15px] leading-[1.5] text-foreground whitespace-pre-wrap w-full max-w-full" style={{ wordBreak: 'normal', overflowWrap: 'break-word' }}>
             {comment.content}
           </p>
           
@@ -436,7 +437,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({
   }
 
   return (
-    <div className="divide-y divide-border max-w-full w-full overflow-hidden">
+    <div className="space-y-3 max-w-full w-full overflow-hidden">
       {comments.map((comment) => (
         <CommentItem
           key={comment.id}
