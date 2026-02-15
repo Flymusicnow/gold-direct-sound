@@ -193,6 +193,12 @@ const navSections = [
         description: "Se all adminaktivitet och ändringar. Spåra vem som gjort vad och när"
       },
       { 
+        title: "Event Log", 
+        url: "/admin/event-log", 
+        icon: Activity,
+        description: "Se senaste user events (play, skip, save, follow, vote). Append-only MVP-logg for debugging"
+      },
+      { 
         title: "Payouts", 
         url: "/admin/payouts", 
         icon: CreditCard,
