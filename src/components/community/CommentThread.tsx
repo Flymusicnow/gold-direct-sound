@@ -153,7 +153,7 @@ const CommentItem: React.FC<{
         <div className="min-w-0 w-full max-w-full">
           {/* Row 1: Avatar + Name + Badge + Timestamp + Menu */}
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Avatar className="h-6 w-6 shrink-0">
+            <Avatar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0">
               <AvatarImage src={avatarUrl || undefined} />
               <AvatarFallback className="text-xs">{displayName[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
