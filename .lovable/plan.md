@@ -1,36 +1,19 @@
 
 
-# Add Event Log to Admin Sidebar
+# Reduce Comment Avatar Size on Mobile
 
-## What's Already Done
-- The route `/admin/event-log` is registered in `App.tsx` (line 543)
-- It's protected with `ProtectedRoute allowedRoles={['admin', 'super_admin']}`
-- The `AdminEventLog` component is imported and exported correctly
-- The page itself works -- it just has no navigation link
+## Problem
+Community comment avatars take up horizontal space that could be used for text content, especially on narrow mobile screens.
 
-## What's Missing
-The `AdminSidebar.tsx` has no entry for "Event Log" in any section. That's why you can't find it.
+## Change
+In both `CommentThread.tsx` and `InlineComments.tsx`, change the comment avatar from a fixed `h-6 w-6` (24px) to responsive `h-5 w-5 sm:h-6 sm:w-6` -- 20px on mobile, 24px on desktop.
 
-## Fix
-
-Add one nav item to the **System** section in `src/components/admin/AdminSidebar.tsx`:
-
-```ts
-{
-  title: "Event Log",
-  url: "/admin/event-log",
-  icon: Activity,
-  description: "Se senaste user events (play, skip, save, follow, vote). Append-only MVP-logg for debugging"
-}
-```
-
-This will be inserted into the System section's `items` array, after the existing "Activity Log" entry to keep them grouped logically.
-
-## File Summary
+## Files
 
 | File | Change |
 |------|--------|
-| `src/components/admin/AdminSidebar.tsx` | Add "Event Log" nav item to System section |
+| `src/components/community/CommentThread.tsx` (line 156) | `h-6 w-6` to `h-5 w-5 sm:h-6 sm:w-6` |
+| `src/components/community/InlineComments.tsx` (line 201) | `h-6 w-6` to `h-5 w-5 sm:h-6 sm:w-6` |
 
-No database, route, or component changes needed -- everything else is already wired up.
+This reclaims 4px per comment row on mobile, reducing the chance of text wrapping into narrow columns while keeping full-size avatars on desktop.
 
