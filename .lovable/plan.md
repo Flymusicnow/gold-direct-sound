@@ -1,86 +1,81 @@
 
-# Bugfix: Goal meter does not update after donation
+# Add Supabase Realtime to Artist Goals + Verify Animation Fix
 
-## Root Cause
+## Current State
 
-Two problems compound to cause the stale UI:
+The optimistic update and 10s polling are already implemented in `useActiveGoal.ts`. The goal meter will update immediately after a donation without a page refresh.
 
-1. **Double `useActiveGoal` instance**: `ArtistGoalCard` creates its own hook instance (`const { goal, loading } = useActiveGoal(artistId)`) and `GoalDonationModal` creates a *separate* instance (`const { donate } = useActiveGoal(artistId)`). After the donation succeeds, only the modal's internal `fetchActiveGoal` runs — the card's state is never updated.
+## What to Add: Realtime Subscription
 
-2. **No optimistic update**: The `donate` function in `useActiveGoal` waits for the full round-trip before calling `fetchActiveGoal`, so even in the single-instance case there is a visible delay and no animation.
+Replace (or supplement) the 10-second polling with a Supabase Realtime subscription on the `artist_goals` table. This means:
 
-## Fix Strategy
+- When **any** fan donates to an artist's goal, the DB row is updated by the `donate_to_goal` RPC.
+- Realtime will push a `UPDATE` event to all connected clients subscribed to that row.
+- The goal card updates **instantly** (< 200ms) instead of waiting up to 10 seconds.
 
-### 1. Lift state — single `useActiveGoal` instance
-In `ArtistGoalCard`, pass `donate` down to `GoalDonationModal` as a prop instead of letting the modal instantiate its own hook. This ensures one source of truth.
+The polling will be kept as a fallback for cases where the Realtime WebSocket is temporarily unavailable.
 
-### 2. Optimistic update in `useActiveGoal.donate()`
-After calling the RPC and getting a success response:
-- Immediately call `setGoal(prev => ({ ...prev, current_amount: prev.current_amount + amount, supporter_count: prev.supporter_count + 1 }))` so the card reflects the new value instantly.
-- Then call `fetchActiveGoal()` in the background to sync with the real DB value.
-- On RPC error: do not optimistically update; just return the error.
+## Database Change Required
 
-### 3. Animated amount counter
-Add a `useAnimatedCounter` hook (already exists at `src/hooks/use-animated-counter.ts`) to `ArtistGoalCard` so the displayed amount animates from old → new value (700ms ease-out).
+The `artist_goals` table must be added to the Supabase Realtime publication. This is a one-line SQL migration:
 
-### 4. Animated progress bar
-The progress bar `<div>` already has `transition-all duration-500 ease-out` — the CSS transition will fire automatically when `goal.current_amount` changes, which means steps 1+2 above will make it animate for free.
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.artist_goals;
+```
 
-### 5. Polling every 10 seconds
-Add a `useInterval` (or `useEffect` with `setInterval`) inside `useActiveGoal` to call `fetchActiveGoal` every 10 seconds while the hook is mounted, so donations from other users appear without a refresh.
+## Code Change: `src/hooks/useActiveGoal.ts`
+
+Add a `useEffect` that:
+1. Creates a Supabase channel scoped to `artist_goals:artist_id=eq.<artistId>`.
+2. Listens for `UPDATE` events on the `artist_goals` table.
+3. On receiving an update, merges the incoming payload into state — but only if the authoritative `current_amount` is ≥ the local optimistic value (never roll back a fresh optimistic update).
+4. Cleans up the channel subscription on unmount or when `artistId` changes.
+
+### Key snippet
+
+```ts
+useEffect(() => {
+  if (!artistId) return;
+
+  const channel = supabase
+    .channel(`artist_goals:${artistId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'artist_goals',
+        filter: `artist_id=eq.${artistId}`,
+      },
+      (payload) => {
+        const updated = payload.new as ArtistGoal;
+        // Only apply if the realtime value is >= optimistic state
+        // to avoid rolling back a just-applied optimistic update
+        setGoal(prev => {
+          if (!prev) return updated;
+          if (updated.current_amount >= prev.current_amount) return updated;
+          return prev; // keep optimistic until next poll/event catches up
+        });
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [artistId]);
+```
 
 ## Files to Change
 
 | File | Change |
 |------|--------|
-| `src/hooks/useActiveGoal.ts` | Optimistic update after donate, 10s polling, expose `donate` |
-| `src/components/artist/ArtistGoalCard.tsx` | Pass `donate` to modal, wire animated counter to `goal.current_amount` |
-| `src/components/artist/GoalDonationModal.tsx` | Accept `donate` as prop instead of calling `useActiveGoal` again |
+| Database migration | `ALTER PUBLICATION supabase_realtime ADD TABLE public.artist_goals` |
+| `src/hooks/useActiveGoal.ts` | Add Realtime subscription `useEffect`; keep 10s polling as fallback |
 
-## Technical Detail
+## What This Achieves
 
-### useActiveGoal.ts — key change
-```ts
-// Optimistic update before refetch
-setGoal(prev => prev ? {
-  ...prev,
-  current_amount: prev.current_amount + amount,
-  supporter_count: prev.supporter_count + 1,
-} : prev);
-
-// Background sync — does NOT block the UI
-fetchActiveGoal();
-return { success: true };
-```
-
-### Polling
-```ts
-useEffect(() => {
-  if (!artistId) return;
-  const id = setInterval(fetchActiveGoal, 10_000);
-  return () => clearInterval(id);
-}, [artistId, fetchActiveGoal]);
-```
-
-### Animated counter in ArtistGoalCard.tsx
-```tsx
-const { count: displayAmount } = useAnimatedCounter(
-  goal.current_amount, 700, true
-);
-```
-The existing `useAnimatedCounter` hook handles rapid re-targeting: because `target` is a prop, any new value will kick off a fresh animation from where it currently sits.
-
-### GoalDonationModal.tsx — prop instead of hook
-```tsx
-interface GoalDonationModalProps {
-  ...
-  donate: (amount: number) => Promise<{ success: boolean; error?: string }>;
-}
-// Remove: const { donate } = useActiveGoal(artistId);
-```
-
-## Rollback Safety
-- The optimistic update only fires after a confirmed `result.success === true` from the RPC.
-- If the RPC errors, no optimistic update is applied and the error is surfaced to the user.
-- The background `fetchActiveGoal()` that follows every successful donation will overwrite the optimistic state with the authoritative DB value within one network round-trip.
-- The 10s polling also continuously corrects any drift.
+- Own donation: optimistic update fires instantly → Realtime confirms within ~200ms → polling syncs authoritative value every 10s.
+- Other fan's donation: Realtime pushes the update in real time (< 200ms) instead of up to 10s delay.
+- Network hiccup: polling catches up within 10 seconds even if Realtime drops.
+- RPC failure: optimistic update is never applied; the error is returned to the UI.
