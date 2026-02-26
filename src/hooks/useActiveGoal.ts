@@ -33,14 +33,22 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
     if (error) {
       console.error('[useActiveGoal] Error fetching goal:', error);
     }
-    
+
     setGoal((data as ArtistGoal) || null);
     setLoading(false);
   }, [artistId]);
 
+  // Initial fetch
   useEffect(() => {
     fetchActiveGoal();
   }, [fetchActiveGoal]);
+
+  // Poll every 10 seconds so donations from other users appear without a refresh
+  useEffect(() => {
+    if (!artistId) return;
+    const id = setInterval(fetchActiveGoal, 10_000);
+    return () => clearInterval(id);
+  }, [artistId, fetchActiveGoal]);
 
   const donate = async (amount: number): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
@@ -55,7 +63,6 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
       return { success: false, error: 'Amount must be positive' };
     }
 
-    // Use the atomic RPC function to handle donation + goal update
     const { data, error } = await supabase.rpc('donate_to_goal', {
       p_goal_id: goal.id,
       p_amount: amount,
@@ -66,13 +73,25 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
       return { success: false, error: error.message };
     }
 
-    // Check the response from the function
     const result = data as { success: boolean; error?: string };
     if (!result.success) {
       return { success: false, error: result.error || 'Donation failed' };
     }
 
-    await fetchActiveGoal();
+    // Optimistic update — reflect new totals immediately
+    setGoal(prev =>
+      prev
+        ? {
+            ...prev,
+            current_amount: prev.current_amount + amount,
+            supporter_count: prev.supporter_count + 1,
+          }
+        : prev
+    );
+
+    // Background sync — authoritative value overwrites the optimistic state
+    fetchActiveGoal();
+
     return { success: true };
   };
 

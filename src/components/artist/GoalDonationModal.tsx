@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { useActiveGoal } from '@/hooks/useActiveGoal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import confetti from 'canvas-confetti';
@@ -22,20 +21,20 @@ interface GoalDonationModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   goal: ArtistGoal;
-  artistId: string;
+  /** Passed in from ArtistGoalCard so a single useActiveGoal instance stays authoritative */
+  donate: (amount: number) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDonationModalProps) {
+export function GoalDonationModal({ open, onOpenChange, goal, donate }: GoalDonationModalProps) {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { donate } = useActiveGoal(artistId);
   const [amount, setAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const handleDonate = async () => {
     const numAmount = parseInt(amount, 10);
-    
+
     if (!numAmount || numAmount <= 0) {
       toast.error(t('goals.invalidAmount') || 'Please enter a valid amount');
       return;
@@ -52,8 +51,7 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
 
     if (result.success) {
       setShowSuccess(true);
-      
-      // Trigger confetti
+
       confetti({
         particleCount: 100,
         spread: 70,
@@ -104,9 +102,7 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
             <Coins className="h-5 w-5 text-primary" />
             {t('goals.supportGoal') || 'Support This Goal'}
           </DialogTitle>
-          <DialogDescription>
-            {goal.title}
-          </DialogDescription>
+          <DialogDescription>{goal.title}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
@@ -120,12 +116,12 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
             </div>
             <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-gold rounded-full"
+                className="h-full bg-gradient-gold rounded-full transition-all duration-700 ease-out"
                 style={{ width: `${Math.min((goal.current_amount / goal.target_amount) * 100, 100)}%` }}
               />
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {remaining > 0 
+              {remaining > 0
                 ? `${remaining.toLocaleString()} ${t('goals.remaining') || 'remaining to goal'}`
                 : t('goals.goalComplete') || 'Goal complete!'}
             </p>
@@ -156,11 +152,7 @@ export function GoalDonationModal({ open, onOpenChange, goal, artistId }: GoalDo
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-          >
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             {t('common.cancel') || 'Cancel'}
           </Button>
           <Button
