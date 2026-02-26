@@ -43,12 +43,44 @@ export function useActiveGoal(artistId: string | undefined): UseActiveGoalResult
     fetchActiveGoal();
   }, [fetchActiveGoal]);
 
-  // Poll every 10 seconds so donations from other users appear without a refresh
+  // Poll every 10 seconds as a fallback for when Realtime is unavailable
   useEffect(() => {
     if (!artistId) return;
     const id = setInterval(fetchActiveGoal, 10_000);
     return () => clearInterval(id);
   }, [artistId, fetchActiveGoal]);
+
+  // Realtime subscription — updates the card instantly when any fan donates
+  useEffect(() => {
+    if (!artistId) return;
+
+    const channel = supabase
+      .channel(`artist_goals:${artistId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'artist_goals',
+          filter: `artist_id=eq.${artistId}`,
+        },
+        (payload) => {
+          const updated = payload.new as ArtistGoal;
+          // Only apply if the realtime value is >= our optimistic state
+          // to avoid rolling back a just-applied optimistic update
+          setGoal(prev => {
+            if (!prev) return updated;
+            if ((updated.current_amount ?? 0) >= (prev.current_amount ?? 0)) return updated;
+            return prev;
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [artistId]);
 
   const donate = async (amount: number): Promise<{ success: boolean; error?: string }> => {
     if (!user) {
