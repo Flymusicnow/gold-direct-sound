@@ -1,80 +1,119 @@
 
-# What Needs to Happen
+# UI Vision: "FlyMusic Poppar" — Premium Motion Upgrade
 
-The Global Home Feed infrastructure is already fully built. The one missing piece is wiring the **💬 comment button** in `GlobalFeedCard` to open the existing `CommentsPanel` (Drawer on mobile, Sheet on desktop) instead of navigating away to the artist page.
+## Analys av nuläget
 
-Everything else — filter chips, feed cards, new-content pill, infinite scroll — is already live.
+FlyMusic har redan ett sofistikerat designsystem:
+- Gold-färgpalett med HSL-tokens
+- `interactive-card`, `menu-item-premium`, `list-row-premium`, `btn-gold-premium` CSS-klasser
+- Framer Motion på feeds och PageTransition
+- Gold shimmer-animationer på skeletons och tickets
+
+Men dessa klasser används **inte konsekvent** genom hela appen. Och flera begärda element saknas:
+- Ingen Montserrat/Poppins — bara Playfair Display och Inter
+- Ingen `bounce`-effekt på knapptryckningar
+- Ingen gold focus-ring på Input-komponenten
+- Inga "living text"-hover-effekter på interaktiva etiketter
+- Cards i feeden saknar `.interactive-card`-klassen
+
+Det här är ett **design-system consistency pass** — vi lägger till det som fattas och kopplar ihop de klasser som redan finns.
 
 ---
 
-## The Single Change: Wire Comments Inline in GlobalFeedCard
+## Vad vi bygger
 
-**File: `src/components/feed/GlobalFeedCard.tsx`**
+### 1. Typografi: Lägg till Montserrat
 
-Currently the comment button does:
+Playfair Display används för premium-rubriker. Vi byter INTE — men lägger till **Montserrat** som alternativt display-typsnitt för UI-etiketter (nav, knappar, filter-chips). Inter behålls för brödtext.
+
+**Ändring i `index.html`:** Lägg till Montserrat-fonten från Google Fonts.
+**Ändring i `tailwind.config.ts`:** Lägg till `'montserrat'` i `fontFamily`.
+**Ändring i `index.css`:** Ny utility-klass `.label-premium` med Montserrat för UI-etiketter.
+
+### 2. Input-komponenten: Gold Focus Ring
+
+Nuläget: standard Tailwind `ring-ring` (guld men ingen glow).
+Nytt: Gold focus-ring med glow-shadow + smooth border-color transition.
+
+**Ändring i `src/components/ui/input.tsx`:**
 ```tsx
-onClick={() => navigate(`/artist/${item.artistUserId}`)
+// Ersätt focus-visible klasserna med:
+"border-input transition-all duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-0 focus-visible:border-primary/60 focus-visible:shadow-[0_0_12px_hsla(45,82%,51%,0.15)]"
 ```
 
-It needs to:
-1. Add local state: `const [commentsOpen, setCommentsOpen] = useState(false)`
-2. Import and render `CommentsPanel` from `@/components/community/CommentsPanel`
-3. Change the comment button `onClick` to `() => setCommentsOpen(true)`
-4. Pass the raw post ID (not `post_${id}`) to `CommentsPanel`'s `postId` prop — the prefix `post_` is only used for the feed item key, the actual DB id is needed
+### 3. Button: Bounce/Press-effekt
 
-The `GlobalFeedItem` currently stores `id` as `post_${p.id}` (with prefix). We need the raw DB `postId` to pass to `CommentsPanel`. Two options:
+Nuläget: `hover:-translate-y-0.5` — bara lift, ingen press-känsla.
+Nytt: Active-state ger `scale(0.97)` + snabb bounce-återgång.
 
-**Option A (cleanest):** Add a `rawId` field to `GlobalFeedItem` alongside the prefixed `id`.
-- In `useGlobalFeed.ts`: add `rawId: p.id` to post items
-- In `GlobalFeedCard.tsx`: use `item.rawId` for `CommentsPanel`
+**Ändring i `src/components/ui/button.tsx`:**
+Lägg till `active:scale-[0.97] active:shadow-none` på base-klassen och `transition-all` inkluderar `transform`.
 
-**Option B:** Strip the `post_` prefix in the card: `item.id.replace('post_', '')`
+### 4. Feed Cards: Koppla `.interactive-card`
 
-Option B is simpler with no hook changes — we'll use that since it's a one-liner and safe (video items will never hit the comments panel since only posts show the comment button).
+`GlobalFeedCard` och liknande kort använder inte `.interactive-card`-klassen, så hover-glow och lift-effekten aktiveras inte. Vi lägger till klassen.
 
----
+**Ändring i `src/components/feed/GlobalFeedCard.tsx`:** Lägg till `interactive-card` på `motion.div`.
 
-## Files to Change
+### 5. Index.css: Ny "Living Text"-effekt
 
-| File | Change |
-|------|--------|
-| `src/components/feed/GlobalFeedCard.tsx` | Add `commentsOpen` state, import `CommentsPanel`, wire comment button to open drawer, strip `post_` prefix for postId |
+Interaktiva etiketter (filter-chips, nav-labels) ska "andas" vid hover. Ny CSS-klass `.text-live`:
+- Subtil `letter-spacing`-transition (tight → normal)
+- Mjuk opacity-förändring
+- Ingen `translateY` — bara känsla av att texten aktiveras
 
-That's it. One file, surgical change.
+### 6. Index.css: Modal/Drawer Bounce-animation
 
----
-
-## Technical Detail
-
-```tsx
-// State
-const [commentsOpen, setCommentsOpen] = useState(false);
-const rawPostId = item.id.replace('post_', '');
-
-// Comment button (was navigate, now opens panel)
-<button onClick={() => setCommentsOpen(true)} ...>
-  <MessageCircle className="h-4 w-4" />
-  <span>{formatCount(item.commentCount ?? 0)}</span>
-</button>
-
-// Panel (renders inline, portal-based — won't disrupt scroll)
-{item.type === 'post' && (
-  <CommentsPanel
-    postId={rawPostId}
-    isOpen={commentsOpen}
-    onOpenChange={setCommentsOpen}
-    commentCount={item.commentCount}
-  />
-)}
+Nuläget: Modals glider in neutralt (vaul/radix standard).
+Ny keyframe `modal-bounce-in`:
+```css
+@keyframes modal-bounce-in {
+  0%   { transform: translateY(100%) scale(0.98); opacity: 0; }
+  65%  { transform: translateY(-4%) scale(1.005); opacity: 1; }
+  85%  { transform: translateY(1%); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
 ```
+Ny klass `.modal-bounce` som kan appliceras på Drawer-innehåll.
 
-The `CommentsPanel` already handles mobile (Drawer, 60dvh bottom sheet) and desktop (Sheet, right side panel) automatically via `useIsMobile()`. No additional work needed.
+### 7. Filter Chips i GlobalFeedFilters: Montserrat + Bounce
+
+Aktiva filter-chips ska kännas responsiva. Lägg till `active:scale-[0.96]` och font-klassen `.label-premium` på chip-texten.
 
 ---
 
-## Result
+## Filer som ändras
 
-- Tapping 💬 on any post card in the Home Feed opens a bottom drawer on mobile with the full comment thread + composer
-- No navigation away from the feed — scroll position is preserved
-- On desktop, opens as a right-side panel
-- All existing CommentsPanel UX (threading, replies, energy lines) works out of the box
+| Fil | Ändring |
+|-----|---------|
+| `index.html` | Lägg till Montserrat i Google Fonts-länken |
+| `tailwind.config.ts` | Lägg till `montserrat` i `fontFamily` |
+| `src/index.css` | `.label-premium`, `.text-live`, `modal-bounce-in` + `.modal-bounce` |
+| `src/components/ui/input.tsx` | Gold focus-ring med glow-shadow |
+| `src/components/ui/button.tsx` | `active:scale-[0.97]` press-effekt |
+| `src/components/feed/GlobalFeedCard.tsx` | Lägg till `interactive-card` på wrapper-div |
+| `src/components/feed/GlobalFeedFilters.tsx` | `active:scale-[0.96]` på chips, `.label-premium` |
+
+---
+
+## Vad som INTE ändras
+
+- Färgpalett — guld och mörk bakgrund behålls exakt
+- Befintliga animationsklasser (`ticket-gold-animated`, `btn-gold-premium`, etc.)
+- Playfair Display för premium-rubriker
+- Inter för brödtext
+- Frekvensbegränsningar på animationer (inga blinkande element)
+- Existerande Framer Motion-konfiguration
+
+---
+
+## Resultat
+
+Efter dessa ändringar:
+- Knappar **bouncar** subtilt vid tryck — ger physical feedback-känsla
+- Input-fält får en **gold glow** vid fokus — visuell koppling till varumärket
+- Feed-kort aktiverar den befintliga **gold hover-glöden** som redan var designad men inte kopplad
+- Nya `Montserrat`-klassen ger UI-etiketter en precision och vikt som kompletterar Playfair
+- Modals/Drawers får en **bouncy reveal** som känns levande
+- Allt sker inom det befintliga motion-systemets regler: ingen blinkning, inga strobeeffekter, guld glöder mjukt
