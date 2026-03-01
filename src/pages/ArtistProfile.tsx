@@ -46,6 +46,8 @@ import { ArtistGoalCard } from "@/components/artist/ArtistGoalCard";
 import { ArtistActivityFeed } from "@/components/artist/ArtistActivityFeed";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { safeT } from "@/lib/i18nSafe";
+import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
+import { CommunityFeed } from "@/components/community/CommunityFeed";
 
 interface Artist {
   id: string;
@@ -95,6 +97,7 @@ export default function ArtistProfile() {
   const isMobile = useIsMobile();
   const { isPreviewMode } = usePreviewMode();
   const { t } = useLanguage();
+  const { isEnabled } = useFeatureFlags();
 
   const [artist, setArtist] = useState<Artist | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -558,24 +561,26 @@ export default function ArtistProfile() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content - 2/3 width on desktop */}
           <div className="lg:col-span-2">
-            <Tabs defaultValue="tracks" className="w-full">
+            <Tabs defaultValue="community" className="w-full">
               <ScrollableTabsList>
                 <TabsList className="w-full justify-start bg-transparent border-b border-border rounded-none p-0 h-auto gap-0 mb-0 min-w-max md:min-w-0">
+                  <AnimatedTabTrigger value="community" icon={<Users className="w-4 h-4" />}>
+                    Community
+                  </AnimatedTabTrigger>
+                  <AnimatedTabTrigger value="about" icon={<Info className="w-4 h-4" />}>
+                    About
+                  </AnimatedTabTrigger>
                   <AnimatedTabTrigger value="tracks" icon={<Music className="w-4 h-4" />}>
                     Tracks
                   </AnimatedTabTrigger>
                   <AnimatedTabTrigger value="videos" icon={<Video className="w-4 h-4" />}>
                     Videos
                   </AnimatedTabTrigger>
-                  <AnimatedTabTrigger value="merch" icon={<ShoppingBag className="w-4 h-4" />}>
-                    Merch
-                  </AnimatedTabTrigger>
-                  <AnimatedTabTrigger value="about" icon={<Info className="w-4 h-4" />}>
-                    About
-                  </AnimatedTabTrigger>
-                  <AnimatedTabTrigger value="community" icon={<Users className="w-4 h-4" />}>
-                    Community
-                  </AnimatedTabTrigger>
+                  {isEnabled('merch_enabled') && (
+                    <AnimatedTabTrigger value="merch" icon={<ShoppingBag className="w-4 h-4" />}>
+                      Merch
+                    </AnimatedTabTrigger>
+                  )}
                   <AnimatedTabTrigger value="feed" icon={<MessageSquare className="w-4 h-4" />}>
                     {safeT(t, 'artist.feed', 'Feed')}
                   </AnimatedTabTrigger>
@@ -750,20 +755,7 @@ export default function ArtistProfile() {
 
               {/* Community Tab */}
               <TabsContent value="community" className="mt-0">
-                <div className="text-center py-12 bg-card/50 rounded-xl border border-border">
-                  <Users className="h-16 w-16 mx-auto text-primary/50 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Join {artist.artist_name}'s Community</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    Get exclusive posts, behind-the-scenes content and connect with other fans.
-                  </p>
-                  <Button 
-                    onClick={() => navigate(`/artist/${artist.id}/community`)} 
-                    className="gap-2 bg-primary hover:bg-primary/90"
-                  >
-                    <Crown className="h-4 w-4" />
-                    Enter Community
-                  </Button>
-                </div>
+                <CommunityFeed artistId={artist.id} />
               </TabsContent>
 
               {/* Feed Tab */}
@@ -775,14 +767,13 @@ export default function ArtistProfile() {
 
           {/* Sidebar - 1/3 width on desktop */}
           <div className="space-y-6">
-            {/* Spotlight Carousel - FIRST in sidebar for focus */}
-            <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
-
-            {/* Artist Stats Card */}
-            <ArtistStatsCard artistId={artist.id} />
+            {/* Spotlight Carousel - only when spotlight is enabled */}
+            {isEnabled('spotlight_enabled') && (
+              <SpotlightSection artistId={artist.id} artistName={artist.artist_name} />
+            )}
 
             {/* Spotlight Card */}
-            {spotlightEntry && (
+            {isEnabled('spotlight_enabled') && spotlightEntry && (
               <ArtistSpotlightCard
                 campaignId={spotlightEntry.campaignId}
                 campaignName={spotlightEntry.campaignName}
@@ -792,7 +783,7 @@ export default function ArtistProfile() {
             )}
 
             {/* Become a Supporter */}
-            {user && artist.user_id !== user.id && (
+            {isEnabled('subscriptions_enabled') && user && artist.user_id !== user.id && (
               <Button
                 onClick={() => setShowSupporterModal(true)}
                 className="w-full bg-gradient-gold hover:opacity-90"
@@ -802,16 +793,18 @@ export default function ArtistProfile() {
               </Button>
             )}
 
-            {/* Achievements Link - with spacing */}
-            <Link to={`/artist/${userId}/achievements`} className="mt-4 block">
-              <Button
-                variant="outline"
-                className="w-full border-primary/50 hover:border-primary hover:bg-primary/10"
-              >
-                <Award className="h-4 w-4 mr-2" />
-                View Achievements
-              </Button>
-            </Link>
+            {/* Achievements Link */}
+            {isEnabled('artist_achievements_enabled') && (
+              <Link to={`/artist/${userId}/achievements`} className="mt-4 block">
+                <Button
+                  variant="outline"
+                  className="w-full border-primary/50 hover:border-primary hover:bg-primary/10"
+                >
+                  <Award className="h-4 w-4 mr-2" />
+                  View Achievements
+                </Button>
+              </Link>
+            )}
 
             {/* Top Supporters */}
             {topSupporters.length > 0 && (
