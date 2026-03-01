@@ -1,208 +1,234 @@
 
-# Community First Rebuild — Wave 1 Lock-In
+# Global Home Feed — "FlyMusic er levende"
 
-## What This Is
+## Hva dette er
 
-This is a large-scale restructuring of FlyMusic to make **Community the default experience** on the artist page, while simultaneously gating all Wave 2+ features (Spotlight, Merch, Subscriptions, Events, Livestreams, Promo, etc.) so they are completely invisible to fans and artists until toggled ON by an admin.
-
-This is not a rebuild from scratch. The community infrastructure (posts, comments, reactions, moderation) already exists. The work is about **restructuring what is shown and when**.
+En ekte **Global Feed** som erstatter `/fan/dashboard` som første side etter innlogging. Feeden er kronologisk, filtrerbar, og aggregerer community-posts + videos fra alle artister (ikke bare de du følger). Den er doomscroll-vennlig men transparent — ingen svart boks, ingen skjulte rank-signaler i Wave 1.
 
 ---
 
-## Current State
+## Navigasjonsstruktur (ny)
 
-**Artist Page (`/artist/:id`):**
-- Default tab is "Tracks"
-- Community is one of 6 tabs (Tracks, Videos, Merch, About, Community, Feed)
-- Community tab just redirects to `/artist/:id/community` — it does not render inline
-- Spotlight, Stats, Merch, Supporters sidebar are always visible
-
-**Studio Dashboard (`/studio`):**
-- Shows Spotlight stats, Posts, Quick Actions — all mixed together
-- `StudioCommunity` page (`/studio/community`) exists with Settings + Moderators + Analytics tabs — this is already good
-
-**Navigation:**
-- Desktop shows: Brand Opportunities, My Artist Page, My Studio (for artists)
-- Fan mobile bottom bar: Home, Feed, Vote, Board, More
-
-**Feature Flags:**
-- `FeatureFlagContext` exists but flags are fetched from `feature_flags` table
-- Many flags exist (`SPOTLIGHT_CAROUSEL`, `COMMUNITY_FEED`, etc.)
-- **No flags currently gate Spotlight, Merch, Events, Subscriptions in the UI**
-
----
-
-## What Needs to Change
-
-### 1. Artist Page — Community as Default Tab
-
-**File: `src/pages/ArtistProfile.tsx`**
-
-- Change `defaultValue="tracks"` → `defaultValue="community"` on the `<Tabs>` component
-- The Community tab currently shows a placeholder that redirects to a separate page. Instead, render `CommunityFeed` directly inline within the tab (as already done on `/artist/:id/community`)
-- Remove the "Enter Community" redirect button — community is now the default experience
-- Gate the following tabs/sections behind feature flags:
-  - **Merch tab** → gate behind `merch_enabled` flag (hidden when OFF)
-  - **Spotlight sidebar card** (`ArtistSpotlightCard`) → gate behind `spotlight_enabled`
-  - **Spotlight section** (`SpotlightSection`) → gate behind `spotlight_enabled`
-  - **Become a Supporter** button → gate behind `subscriptions_enabled`
-  - **Feed tab** — keep as-is (it's an activity feed, not a Spotlight/Economic feature)
-
-### 2. Artist Page — Tab Order and Visibility
-
-New tab order:
-1. **Community** (default) — inline CommunityFeed
-2. **About**
-3. **Tracks**
-4. **Videos**
-5. ~~Merch~~ — hidden when `merch_enabled = false`
-6. ~~Feed~~ — keep (it's basic activity, not a gated feature)
-
-### 3. Artist Page — Sidebar Cleanup
-
-Remove or gate in sidebar:
-- `SpotlightSection` and `ArtistSpotlightCard` → only show when `spotlight_enabled = true`
-- `TopSupportersCard` → keep (it shows community engagement)
-- "Become a Supporter" button → only show when `subscriptions_enabled = true`
-- "View Achievements" button → gate behind `artist_achievements_enabled`
-
-### 4. Studio Navigation — Community as Primary Entry Point
-
-**File: `src/components/layouts/StudioLayout.tsx`** (need to check)
-
-The Studio sidebar/navigation should surface **Community** prominently and hide gated items:
-- Move "Community" to the top of the sidebar (after Dashboard)
-- Hide or de-emphasize: Spotlight, Earnings, Merch, Live Streams, Promo, Subscriptions, Events, Opportunities
-- These should only appear when their respective feature flags are ON
-
-### 5. Feature Flag Sync — Add Wave 1 Flags to Database
-
-The following flag keys need to exist in the `feature_flags` table (many may already exist, need to insert the missing ones):
-
-**Wave 1 ON flags (insert with `is_enabled = true`):**
-- `community_enabled`
-- `community_feed_enabled`
-- `community_post_creation_artist_only`
-- `community_comments_enabled`
-- `community_reactions_enabled`
-- `community_pinned_post_enabled`
-- `community_reporting_enabled`
-- `community_moderators_enabled`
-- `artist_profile_enabled`
-- `artist_follow_enabled`
-
-**Wave 2+ OFF flags (insert with `is_enabled = false`):**
-- `spotlight_enabled`
-- `merch_enabled`
-- `livestream_enabled`
-- `events_enabled`
-- `subscriptions_enabled`
-- `flycoins_enabled`
-- `earnings_dashboard_enabled`
-- `stripe_connect_enabled`
-- `brand_opportunities_enabled`
-- `promo_links_enabled`
-- `deep_links_enabled`
-- `artist_stats_visible`
-- `artist_achievements_enabled`
-- `advanced_analytics_enabled`
-
-### 6. Studio Sidebar — Gate Navigation Items
-
-**File: `src/components/layouts/StudioLayout.tsx`**
-
-Using `useFeatureFlags` hook, hide nav items for:
-- Spotlight (`/studio/spotlight`) → hide when `spotlight_enabled = false`
-- Pulse (`/studio/pulse`) → always hide (no flag needed, link just removed)
-- Earnings (`/studio/earnings`) → hide when `earnings_dashboard_enabled = false`
-- Merch (`/studio/merch`) → hide when `merch_enabled = false`
-- Live Streams (`/studio/live-streams`) → hide when `livestream_enabled = false`
-- Events (`/studio/events`) → hide when `events_enabled = false`
-- Promo (`/studio/promo`) → hide when `promo_links_enabled = false`
-- Subscription (`/studio/subscription`) → hide when `subscriptions_enabled = false`
-- Opportunities (`/studio/opportunities`) → hide when `brand_opportunities_enabled = false`
-- Smart Link (`/studio/smart-link`) → keep visible (it's a basic sharing tool)
-
-### 7. Fan Navigation — Remove Gated Feature Links
-
-**File: `src/components/mobile/BottomNavBarFan.tsx`**
-
-Current items: Home, Feed, Vote (→ Spotlight!), Board (→ Spotlight leaderboard!), More
-
-- Remove **Vote** tab (links to `/fan/vote` → Spotlight) when `spotlight_enabled = false`
-- Remove **Board** tab (links to `/fan/leaderboard`) when `spotlight_enabled = false`
-- Replace with: Home, Feed, Explore, More
-
-**File: `src/components/fan/MobileFanNav.tsx`** (need to check)
-
-Apply same gating for Spotlight-related items in the "More" sheet.
-
-**File: `src/components/Navigation.tsx`**
-
-No changes needed for core nav — Explore and Search are always ON.
-
-### 8. CommunityFeed Inline on Artist Page
-
-The existing `ArtistCommunityPage` already has a full community experience. The inline version for the tab needs:
-- Import `CommunityFeed` directly into `ArtistProfile.tsx`
-- Pass `artistId={artist.id}` directly
-- The `CommunityFeed` component already handles `isArtistOwner` and shows the composer for the artist
-
----
-
-## Files to Change
-
-| File | Change |
-|------|--------|
-| `src/pages/ArtistProfile.tsx` | Community default tab, inline CommunityFeed, gate Merch/Spotlight/Subscriptions |
-| `src/components/layouts/StudioLayout.tsx` | Gate sidebar nav items behind feature flags |
-| `src/components/mobile/BottomNavBarFan.tsx` | Remove Vote/Board tabs, add Explore; gate Spotlight items |
-| `src/components/fan/MobileFanNav.tsx` | Gate Spotlight items |
-| Database migration | Insert Wave 1 ON + Wave 2 OFF flags into `feature_flags` table |
-
----
-
-## What Does NOT Change
-
-- `/artist/:id/community` page — still accessible directly (used for "full page" community view)
-- `StudioCommunity.tsx` — already has Settings + Moderators + Analytics tabs, no changes needed
-- Auth / signup / login flows — untouched
-- All existing Spotlight/Earnings/etc. pages — still exist and work, just not linked from nav
-- Admin panel — admins can still access all pages directly and toggle flags
-
----
-
-## Technical Notes
-
-### Gating Pattern
-Using the existing `useFeatureFlags` hook:
-```tsx
-const { isEnabled } = useFeatureFlags();
-// In render:
-{isEnabled('spotlight_enabled') && <SpotlightSection ... />}
+```text
+Bottom Nav (Fan):
+  🏠 Home     → /home          (Global Feed — NYE SIDE)
+  📡 Feed     → /fan/feed      (Dine artister — eksisterende)
+  🔍 Explore  → /explore       (Artist discovery — eksisterende)
+  ☰  More     → Sheet
 ```
 
-### Community Tab Inline Rendering
-```tsx
-<TabsContent value="community" className="mt-0">
-  <CommunityFeed artistId={artist.id} />
-</TabsContent>
-```
-The `CommunityFeed` already handles empty/loading states and polls for updates.
-
-### Flag Key Convention
-All new flags use `snake_case` matching the existing `FeatureFlagKey` type. New keys must be added to the `FeatureFlagKey` union in `src/contexts/FeatureFlagContext.tsx`.
-
-### Database
-Flags are inserted via the data insert tool (not schema migration), as this is data not schema change.
+`/fan/dashboard` beholdes som rute men `Home`-kortet i bunnavigasjon peker nå på `/home`.
 
 ---
 
-## Result
+## Hva den globale feeden viser
 
-After this change:
-- A fan visiting `/artist/:id` sees **Community first** — posts, reactions, comments
-- No Spotlight/Voting/Merch/Subscription buttons visible anywhere unless flags are turned ON
-- Artists in Studio see Community prominently, Spotlight/Earnings/Merch nav hidden
-- Admin can toggle any feature flag ON in the Admin → Features panel to re-enable gated features
-- The codebase remains intact — nothing is deleted, just conditionally rendered
+Innhold aggregert fra to tabeller:
+- `community_posts` (artist posts) — via `communities` → `artist_profiles`
+- `artist_video_posts` — direkte fra `artist_profiles`
+
+Kun `tier_required = 'free'` vises i global feed (paywalled posts vises ikke globalt).
+
+Filter-chips øverst:
+- **All** (default)
+- **Posts** (community_posts type)
+- **Videos** (artist_video_posts type)
+- **New Artists** (artister opprettet siste 30 dager)
+- **Trending** (siste 24h / 7 dager — transparently defined)
+
+---
+
+## Datastruktur — ingen ny tabell nødvendig
+
+Feed bygges direkte fra eksisterende tabeller med to parallelle queries:
+
+```ts
+// Query 1: Community posts (free tier only)
+supabase
+  .from('community_posts')
+  .select('id, content, media_urls, created_at, reaction_count, comment_count, author_type, communities!inner(artist_id, artist_profiles!inner(id, artist_name, avatar_url, user_id, created_at))')
+  .eq('tier_required', 'free')
+  .eq('is_archived', false)
+  .order('created_at', { ascending: false })
+  .limit(20)
+
+// Query 2: Video posts
+supabase
+  .from('artist_video_posts')
+  .select('id, video_url, caption, thumbnail_url, like_count, view_count, created_at, artist_profiles!inner(id, artist_name, avatar_url, user_id, created_at)')
+  .order('created_at', { ascending: false })
+  .limit(20)
+```
+
+Resultater merges og sorteres etter `created_at` på klienten.
+
+---
+
+## Filer som endres / opprettes
+
+| Fil | Endring |
+|-----|---------|
+| `src/pages/Home.tsx` (ny fil) | Global Feed page — ny side på `/home` |
+| `src/hooks/useGlobalFeed.ts` (ny fil) | Data-fetching hook for merged feed |
+| `src/components/feed/GlobalFeedCard.tsx` (ny fil) | Unified card for post + video items |
+| `src/components/feed/GlobalFeedFilters.tsx` (ny fil) | Filter chips: All/Posts/Videos/New Artists/Trending |
+| `src/components/mobile/BottomNavBarFan.tsx` | `Home` → `/home`, `Feed` beholdes |
+| `src/App.tsx` | Legg til `<Route path="/home" element={<GlobalHomeFeed />} />` |
+| Database | Legg til `global_feed_enabled` og relaterte toggles i `feature_flags` |
+
+---
+
+## Side: `/home` — GlobalHomeFeed
+
+Layout følger Unified Layout Contract:
+- `pt-16` topp, `pb-52` bunnpadding for mobile player
+- Sticky filter-chips under topnav
+- Infinite scroll med IntersectionObserver
+- "New content" pill (ikke hopp feeden) når nye posts kommer
+
+### Skjelett-struktur:
+```tsx
+<>
+  <MobileFanNav />
+  <div className="flex w-full pt-16 min-h-[100dvh]">
+    <FanSidebar />
+    <main className="flex-1 overflow-y-auto pb-52 md:pb-8">
+      {/* Sticky header + filter chips */}
+      <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-sm border-b">
+        <h1>Home</h1>
+        <GlobalFeedFilters activeFilter={filter} onFilterChange={setFilter} />
+      </div>
+
+      {/* Feed */}
+      <div className="max-w-2xl mx-auto space-y-4 px-4 pt-4">
+        {items.map(item => <GlobalFeedCard key={item.id} item={item} />)}
+        <div ref={loadMoreRef} />
+      </div>
+    </main>
+  </div>
+  <BottomNavBarFan />
+</>
+```
+
+---
+
+## GlobalFeedCard — card-design
+
+For **posts**:
+```text
+┌────────────────────────────────────┐
+│ [Avatar] ArtistName  · 2h          │
+│                                    │
+│ Post content text here...          │
+│ [image if media_urls present]      │
+│                                    │
+│ ❤️ 12   💬 4   ➕ Følg   ↗ Del    │
+└────────────────────────────────────┘
+```
+
+For **videos**:
+```text
+┌────────────────────────────────────┐
+│ [Avatar] ArtistName  · 2h          │
+│                                    │
+│ ┌──────────────────────────────┐   │
+│ │  [Video thumbnail 16:9]      │   │
+│ │  ▶ play overlay              │   │
+│ └──────────────────────────────┘   │
+│ Caption text                       │
+│ 👁 1.2k   ❤️ 34   ↗ Del          │
+└────────────────────────────────────┘
+```
+
+Actions:
+- **Reaction** (❤️ tap → reaction pop animation per motion system)
+- **Comments** → opens sheet/drawer (ikke ny side)
+- **Follow** — vises bare hvis fan ikke følger artisten ennå
+- **Share** → native Web Share API, fallback copy-link
+
+---
+
+## Hook: useGlobalFeed
+
+```ts
+interface GlobalFeedItem {
+  id: string;
+  type: 'post' | 'video';
+  createdAt: string;
+  artistId: string;
+  artistName: string;
+  artistAvatar: string | null;
+  artistUserId: string;
+  // Post-specific
+  content?: string;
+  mediaUrls?: string[];
+  reactionCount?: number;
+  commentCount?: number;
+  // Video-specific
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  caption?: string;
+  likeCount?: number;
+  viewCount?: number;
+}
+```
+
+Merger posts + videos, sorterer etter `createdAt DESC`, paginerer med cursor. Filter-logikken skjer i hook: `activeFilter` bestemmer hvilke queries som kjøres.
+
+**Trending-filter**: Henter items der `created_at > NOW() - 7 days` sortert etter `reaction_count + comment_count` for posts, `like_count + view_count` for videos.
+
+**New Artists-filter**: Henter artist_profiles med `created_at > NOW() - 30 days` og viser deres siste post/video.
+
+---
+
+## Micro-interactions (per motion system)
+
+- **Hover-lift** på cards: `transition-transform duration-200 hover:-translate-y-0.5`
+- **Reaction pop**: scale 1 → 1.3 → 1 over 200ms, soft easing
+- **New content pill**: slides in from top with `translate-y` animation, fade-in
+- **Card enter**: `opacity-0 translate-y-2` → `opacity-1 translate-y-0` over 180ms, staggered per item
+- **Follow button**: instant state update (optimistic), confirmatory glow
+
+---
+
+## Feature flags som legges til i database
+
+```json
+{
+  "global_feed_enabled": true,
+  "global_feed_filters_enabled": true,
+  "global_feed_video_mode_enabled": true,
+  "global_feed_trending_view_enabled": true,
+  "global_feed_personalization_enabled": false,
+  "global_feed_algorithmic_ranking_enabled": false
+}
+```
+
+Implementert som ON/OFF type i eksisterende `FeatureFlagKey` union.
+
+---
+
+## Moderation (fra dag 1)
+
+`GlobalFeedCard` har alltid en rapporter-knapp (skjult under "..." meny) som poster til eksisterende `report`-flyt. Rate limiting håndteres av eksisterende backend-logikk.
+
+---
+
+## Hva som IKKE endres
+
+- `/fan/feed` forblir uendret (din personlige feed fra artister du følger)
+- `/discover` forblir uendret (algoritmisk/kurert discovery)
+- `/explore` forblir uendret
+- `ArtistProfile` community-tab forblir uendret
+- All eksisterende navigasjon for artist/admin forblir
+
+---
+
+## Resultat
+
+Etter denne endringen:
+- En fan som logger inn ser **Global Feed** som første side — levende, scrollbart, real content
+- Bottom nav: Home (global) | Feed (dine) | Explore | More
+- Feeden er gjennomsiktig: filter-chips er tydelige, "Trending" er definert, ingen skjult rangering
+- Community-aktivitet fra artister gir effekt i global feed → `LISTEN → ACT → SEE EFFECT → BELONG`
+- Wave 2 personalisering og algoritmisk rangering er flagged OFF, klar til å skrus på
