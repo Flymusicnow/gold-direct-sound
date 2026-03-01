@@ -11,6 +11,7 @@ import { GlobalFeedItem } from "@/hooks/useGlobalFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { CommentsPanel } from "@/components/community/CommentsPanel";
 
 interface GlobalFeedCardProps {
   item: GlobalFeedItem;
@@ -30,6 +31,8 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
   const [reacted, setReacted] = useState(false);
   const [reactionCount, setReactionCount] = useState(item.reactionCount ?? item.likeCount ?? 0);
   const [isFollowing, setIsFollowing] = useState(followedArtistIds.has(item.artistId));
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const rawPostId = item.id.replace('post_', '');
 
   const timeAgo = formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
   const initials = item.artistName.slice(0, 2).toUpperCase();
@@ -68,6 +71,7 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
@@ -177,7 +181,7 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
         {/* Comments */}
         {item.type === 'post' && (
           <button
-            onClick={() => navigate(`/artist/${item.artistUserId}`)}
+            onClick={() => setCommentsOpen(true)}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-all min-h-[44px]"
           >
             <MessageCircle className="h-4 w-4" />
@@ -216,5 +220,14 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
         </button>
       </div>
     </motion.div>
+    {item.type === 'post' && (
+      <CommentsPanel
+        postId={rawPostId}
+        isOpen={commentsOpen}
+        onOpenChange={setCommentsOpen}
+        commentCount={item.commentCount}
+      />
+    )}
+    </>
   );
 }
