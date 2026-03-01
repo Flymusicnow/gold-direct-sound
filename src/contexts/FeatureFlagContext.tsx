@@ -37,7 +37,14 @@ export type FeatureFlagKey =
   | 'deep_links_enabled'
   | 'artist_stats_visible'
   | 'artist_achievements_enabled'
-  | 'advanced_analytics_enabled';
+  | 'advanced_analytics_enabled'
+  // Global Feed flags
+  | 'global_feed_enabled'
+  | 'global_feed_filters_enabled'
+  | 'global_feed_video_mode_enabled'
+  | 'global_feed_trending_view_enabled'
+  | 'global_feed_personalization_enabled'
+  | 'global_feed_algorithmic_ranking_enabled';
 
 interface FeatureFlag {
   id: string;

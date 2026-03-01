@@ -7,7 +7,7 @@ import { MobileFanNav } from "@/components/fan/MobileFanNav";
 import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 
 const coreNavItems = [
-  { icon: Home, label: "Home", path: "/fan/dashboard" },
+  { icon: Home, label: "Home", path: "/home" },
   { icon: Rss, label: "Feed", path: "/fan/feed" },
   { icon: Compass, label: "Explore", path: "/explore" },
 ];
