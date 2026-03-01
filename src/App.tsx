@@ -25,6 +25,7 @@ import { VerificationBanner } from "@/components/verification/VerificationBanner
 import { PreferencesSync } from "@/components/settings/PreferencesSync";
 import { initNetworkErrorTracker } from "@/lib/networkErrorTracker";
 import Home from "./pages/Home";
+import GlobalHomeFeed from "./pages/GlobalHomeFeed";
 
 // Initialize network error tracking
 initNetworkErrorTracker();
@@ -210,6 +211,11 @@ const App = () => (
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/home" element={
+              <ProtectedRoute allowedRoles={['fan']}>
+                <GlobalHomeFeed />
+              </ProtectedRoute>
+            } />
             <Route path="/link/:slug" element={<PromoPreview />} />
             <Route path="/epk/:slug" element={<PublicPresskit />} />
             <Route path="/@:slug" element={<SmartLinkPage />} />
