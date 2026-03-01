@@ -11,7 +11,33 @@ export type FeatureFlagKey =
   | 'SUBSCRIPTION_TIERS'
   | 'SPOTLIGHT_CAROUSEL'
   | 'ARTIST_GOALS'
-  | 'REFERRALS_ENABLED';
+  | 'REFERRALS_ENABLED'
+  // Wave 1 ON flags
+  | 'community_enabled'
+  | 'community_feed_enabled'
+  | 'community_post_creation_artist_only'
+  | 'community_comments_enabled'
+  | 'community_reactions_enabled'
+  | 'community_pinned_post_enabled'
+  | 'community_reporting_enabled'
+  | 'community_moderators_enabled'
+  | 'artist_profile_enabled'
+  | 'artist_follow_enabled'
+  // Wave 2+ OFF flags
+  | 'spotlight_enabled'
+  | 'merch_enabled'
+  | 'livestream_enabled'
+  | 'events_enabled'
+  | 'subscriptions_enabled'
+  | 'flycoins_enabled'
+  | 'earnings_dashboard_enabled'
+  | 'stripe_connect_enabled'
+  | 'brand_opportunities_enabled'
+  | 'promo_links_enabled'
+  | 'deep_links_enabled'
+  | 'artist_stats_visible'
+  | 'artist_achievements_enabled'
+  | 'advanced_analytics_enabled';
 
 interface FeatureFlag {
   id: string;

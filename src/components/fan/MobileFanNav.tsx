@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rss, Users, ListMusic, Activity, Settings, Menu, Search, X, Trophy, Award, Target, Sparkles } from "lucide-react";
+import { Home, Rss, Users, ListMusic, Activity, Settings, Menu, Search, X, Trophy, Award, Target, Sparkles, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,36 +14,38 @@ import {
 } from "@/components/ui/sheet";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 
 const navSections = [
   {
     title: "Browse",
     items: [
-      { icon: Home, label: "Dashboard", path: "/fan/dashboard" },
-      { icon: Rss, label: "Feed", path: "/fan/feed" },
-      { icon: Sparkles, label: "Vote", path: "/fan/vote" },
-      { icon: Trophy, label: "Leaderboard", path: "/fan/leaderboard" },
-      { icon: Target, label: "Missions", path: "/fan/missions" },
+      { icon: Home, label: "Dashboard", path: "/fan/dashboard", gatedBy: null },
+      { icon: Rss, label: "Feed", path: "/fan/feed", gatedBy: null },
+      { icon: Compass, label: "Explore", path: "/explore", gatedBy: null },
+      { icon: Sparkles, label: "Vote", path: "/fan/vote", gatedBy: 'spotlight_enabled' as const },
+      { icon: Trophy, label: "Leaderboard", path: "/fan/leaderboard", gatedBy: 'spotlight_enabled' as const },
+      { icon: Target, label: "Missions", path: "/fan/missions", gatedBy: null },
     ]
   },
   {
     title: "Collect",
     items: [
-      { icon: Users, label: "My Artists", path: "/fan/artists" },
-      { icon: ListMusic, label: "Playlists", path: "/fan/playlists" },
-      { icon: Award, label: "Achievements", path: "/fan/achievements" },
+      { icon: Users, label: "My Artists", path: "/fan/artists", gatedBy: null },
+      { icon: ListMusic, label: "Playlists", path: "/fan/playlists", gatedBy: null },
+      { icon: Award, label: "Achievements", path: "/fan/achievements", gatedBy: null },
     ]
   },
   {
     title: "Account",
     items: [
-      { icon: Activity, label: "Activity", path: "/fan/activity" },
-      { icon: Settings, label: "Settings", path: "/fan/settings" },
+      { icon: Activity, label: "Activity", path: "/fan/activity", gatedBy: null },
+      { icon: Settings, label: "Settings", path: "/fan/settings", gatedBy: null },
     ]
   }
 ];
 
-// Flatten for search functionality
+// Flatten for search functionality (all items, gating applied at render)
 const allNavItems = navSections.flatMap(section => section.items);
 
 interface MobileFanNavProps {
@@ -55,6 +57,12 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
   const location = useLocation();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { isEnabled } = useFeatureFlags();
+
+  const isItemVisible = (item: { gatedBy: string | null }) => {
+    if (!item.gatedBy) return true;
+    return isEnabled(item.gatedBy as any);
+  };
 
   useSwipeGesture({
     onSwipeLeft: () => setSheetOpen(false),
@@ -70,7 +78,7 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
     // If searching, show flat filtered list
     if (searchQuery) {
       const filteredItems = allNavItems.filter(item =>
-        item.label.toLowerCase().includes(searchQuery.toLowerCase())
+        isItemVisible(item) && item.label.toLowerCase().includes(searchQuery.toLowerCase())
       );
 
       if (filteredItems.length === 0) {
@@ -109,7 +117,7 @@ export function MobileFanNav({ inSheet = false, onNavigate }: MobileFanNavProps 
         <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
           {section.title}
         </p>
-        {section.items.map((item) => {
+        {section.items.filter(isItemVisible).map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 

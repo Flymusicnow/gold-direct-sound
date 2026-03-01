@@ -10,9 +10,23 @@ import { useUserAccessState } from "@/hooks/useUserAccessState";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { artistNavConfig } from "@/config/navigation";
+import { useFeatureFlags, FeatureFlagKey } from "@/contexts/FeatureFlagContext";
 
-// Use centralized navigation config
-const navSections = artistNavConfig.sections;
+// Map nav item paths to the feature flags that gate them
+const GATED_NAV_PATHS: Record<string, FeatureFlagKey> = {
+  '/studio/spotlight': 'spotlight_enabled',
+  '/studio/earnings': 'earnings_dashboard_enabled',
+  '/studio/merch': 'merch_enabled',
+  '/studio/live': 'livestream_enabled',
+  '/studio/events': 'events_enabled',
+  '/studio/promo': 'promo_links_enabled',
+  '/studio/subscription': 'subscriptions_enabled',
+  '/studio/opportunities': 'brand_opportunities_enabled',
+  '/studio/collaborations': 'brand_opportunities_enabled',
+};
+
+// Paths that are always hidden regardless of flags
+const ALWAYS_HIDDEN_PATHS = new Set(['/studio/pulse']);
 
 // Onboarding progress banner component
 function OnboardingProgressBanner() {
@@ -20,10 +34,8 @@ function OnboardingProgressBanner() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   
-  // If already onboarded, don't show the banner
   if (artistOnboarded) return null;
   
-  // Get step from sessionStorage
   const savedStep = sessionStorage.getItem('studio-onboarding-step');
   const currentStep = savedStep ? parseInt(savedStep, 10) : 0;
   const totalSteps = 4;
@@ -58,6 +70,14 @@ function OnboardingProgressBanner() {
 export function StudioSidebar() {
   const location = useLocation();
   const { t } = useLanguage();
+  const { isEnabled } = useFeatureFlags();
+
+  const isItemVisible = (path: string): boolean => {
+    if (ALWAYS_HIDDEN_PATHS.has(path)) return false;
+    const flagKey = GATED_NAV_PATHS[path];
+    if (flagKey) return isEnabled(flagKey);
+    return true;
+  };
 
   return (
     <aside className="w-64 h-[calc(100vh-64px)] overflow-hidden bg-[hsl(0,0%,5%)] border-r border-border/50 flex flex-col shadow-elegant z-40 hidden md:flex">
@@ -83,36 +103,41 @@ export function StudioSidebar() {
 
       {/* Menu - SCROLLABLE ONLY IF OVERFLOW */}
       <nav className="flex-1 min-h-0 overflow-y-auto p-6 pt-4 space-y-1 scrollbar-auto-hide">
-        {navSections.map((section, sectionIndex) => (
-          <div key={section.title}>
-            {sectionIndex > 0 && (
-              <div className="my-3 border-t border-border/30" />
-            )}
-            <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
-              {section.i18nKey ? t(section.i18nKey) : section.title}
-            </p>
-            {section.items.map((item) => {
-              const isActive = location.pathname === item.path;
-              const Icon = item.icon;
+        {artistNavConfig.sections.map((section, sectionIndex) => {
+          const visibleItems = section.items.filter(item => isItemVisible(item.path));
+          if (visibleItems.length === 0) return null;
 
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg focus-premium",
-                    isActive
-                      ? "border-l-2 border-primary bg-primary/10 text-primary font-semibold shadow-sm"
-                      : "menu-item-premium text-muted-foreground"
-                  )}
-                >
-                  <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-                  <span>{item.i18nKey ? t(item.i18nKey) : item.label}</span>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+          return (
+            <div key={section.title}>
+              {sectionIndex > 0 && (
+                <div className="my-3 border-t border-border/30" />
+              )}
+              <p className="px-4 py-2 text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider">
+                {section.i18nKey ? t(section.i18nKey) : section.title}
+              </p>
+              {visibleItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-lg focus-premium",
+                      isActive
+                        ? "border-l-2 border-primary bg-primary/10 text-primary font-semibold shadow-sm"
+                        : "menu-item-premium text-muted-foreground"
+                    )}
+                  >
+                    <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
+                    <span>{item.i18nKey ? t(item.i18nKey) : item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })}
       </nav>
     </aside>
   );

@@ -1,15 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rss, Menu, Sparkles, Trophy } from "lucide-react";
+import { Home, Rss, Menu, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { MobileFanNav } from "@/components/fan/MobileFanNav";
+import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 
-const mainNavItems = [
+const coreNavItems = [
   { icon: Home, label: "Home", path: "/fan/dashboard" },
   { icon: Rss, label: "Feed", path: "/fan/feed" },
-  { icon: Sparkles, label: "Vote", path: "/fan/vote" },
-  { icon: Trophy, label: "Board", path: "/fan/leaderboard" },
+  { icon: Compass, label: "Explore", path: "/explore" },
 ];
 
 export function BottomNavBarFan() {
@@ -19,7 +19,7 @@ export function BottomNavBarFan() {
   return (
     <div className="bottom-nav-bar fixed bottom-0 left-0 right-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-sm pb-safe">
       <nav className="flex items-center justify-around h-16 px-4">
-        {mainNavItems.map((item) => {
+        {coreNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           const Icon = item.icon;
 
