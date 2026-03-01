@@ -1189,6 +1189,53 @@ All colors MUST be HSL.
       transform: translateX(0);
     }
   }
+
+  /* ============================================
+     Premium UI Label Typography - Montserrat
+     ============================================ */
+  .label-premium {
+    font-family: 'Montserrat', system-ui, sans-serif;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+
+  /* "Living text" - interaktiva etiketter som andas */
+  .text-live {
+    display: inline-block;
+    letter-spacing: -0.01em;
+    opacity: 0.85;
+    transition:
+      letter-spacing 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .text-live:hover,
+  button:hover .text-live,
+  a:hover .text-live {
+    letter-spacing: 0.02em;
+    opacity: 1;
+  }
+
+  /* Modal / Drawer bouncy reveal */
+  @keyframes modal-bounce-in {
+    0%   { transform: translateY(100%) scale(0.98); opacity: 0; }
+    65%  { transform: translateY(-3%) scale(1.004); opacity: 1; }
+    85%  { transform: translateY(0.5%); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  .modal-bounce {
+    animation: modal-bounce-in 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .modal-bounce {
+      animation: none;
+    }
+    .text-live {
+      transition: none;
+    }
+  }
 }
 
 @layer base {

@@ -22,8 +22,8 @@ export function GlobalFeedFilters({ activeFilter, onFilterChange }: GlobalFeedFi
           key={f.key}
           onClick={() => onFilterChange(f.key)}
           title={f.description}
-          className={cn(
-            "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+            className={cn(
+            "flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium font-label transition-all duration-200 active:scale-[0.96] select-none",
             activeFilter === f.key
               ? "bg-primary text-primary-foreground shadow-sm"
               : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"

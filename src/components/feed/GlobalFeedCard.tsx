@@ -76,7 +76,7 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, delay: Math.min(index * 0.04, 0.3), ease: [0.22, 1, 0.36, 1] }}
-      className="bg-card border border-border rounded-xl overflow-hidden transition-transform duration-200 hover:-translate-y-0.5"
+      className="interactive-card bg-card border border-border rounded-xl overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
