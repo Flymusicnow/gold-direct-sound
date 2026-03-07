@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, ChevronRight, Heart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -56,8 +56,6 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { step } = useFlightRecorder();
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  
   const [comments, setComments] = useState<Comment[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -142,18 +140,6 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
     step('community_post_open_detail', 'ok', { postId, source: 'view_all_link' });
     onViewAll();
   };
-
-  // Focus input externally
-  const focusInput = useCallback(() => {
-    inputRef.current?.focus();
-  }, []);
-
-  // Expose focus method via ref
-  React.useImperativeHandle(
-    React.useRef(null),
-    () => ({ focusInput }),
-    [focusInput]
-  );
 
   const displayComments = optimisticComment 
     ? [...comments, optimisticComment]
@@ -271,7 +257,3 @@ export const InlineComments: React.FC<InlineCommentsProps> = ({
   );
 };
 
-// Export focus helper type
-export type InlineCommentsRef = {
-  focusInput: () => void;
-};
