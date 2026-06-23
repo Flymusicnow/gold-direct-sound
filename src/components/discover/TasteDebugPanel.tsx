@@ -21,20 +21,17 @@ interface ArtistInfo {
 }
 
 export const TasteDebugPanel = () => {
+  const isDev = import.meta.env.DEV;
   const { user } = useAuth();
   const [tasteProfile, setTasteProfile] = useState<TasteProfile | null>(null);
   const [artistInfo, setArtistInfo] = useState<Map<string, ArtistInfo>>(new Map());
   const [isOpen, setIsOpen] = useState(false);
 
-  // Only show in development mode
-  if (!import.meta.env.DEV) {
-    return null;
-  }
-
   useEffect(() => {
+    if (!isDev) return;
     if (!user || !isOpen) return;
     fetchTasteProfile();
-  }, [user, isOpen]);
+  }, [isDev, user, isOpen]);
 
   const fetchTasteProfile = async () => {
     if (!user) return;
@@ -76,6 +73,11 @@ export const TasteDebugPanel = () => {
       console.error('Error fetching taste profile:', error);
     }
   };
+
+  // Only show in development mode
+  if (!isDev) {
+    return null;
+  }
 
   const getTopGenres = () => {
     if (!tasteProfile?.genres) return [];

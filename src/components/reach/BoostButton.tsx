@@ -21,7 +21,7 @@ interface BoostButtonProps {
 
 export function BoostButton({ artistId, artistName, variant = 'outline', size = 'sm' }: BoostButtonProps) {
   const { user } = useAuth();
-  const { tokensAvailable, useBoost } = useBoostTokens();
+  const { tokensAvailable, useBoost: applyBoost } = useBoostTokens();
   const [isBoosting, setIsBoosting] = useState(false);
 
   const handleBoost = async (boostType: 'discover' | 'trending' | 'spotlight' | 'feed') => {
@@ -36,7 +36,7 @@ export function BoostButton({ artistId, artistName, variant = 'outline', size = 
     }
 
     setIsBoosting(true);
-    const success = await useBoost(artistId, boostType);
+    const success = await applyBoost(artistId, boostType);
     
     if (success) {
       confetti({

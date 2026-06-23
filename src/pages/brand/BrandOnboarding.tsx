@@ -233,7 +233,7 @@ export default function BrandOnboarding() {
     }
 
     // Generate base slug
-    let baseSlug = formData.name
+    const baseSlug = formData.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");

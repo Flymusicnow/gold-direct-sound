@@ -117,7 +117,7 @@ export function useMultiUpload(): UseMultiUploadReturn {
     const results: ValidationResult[] = [];
     const validFiles: UploadFile[] = [];
 
-    let currentFiles = [...files];
+    const currentFiles = [...files];
 
     for (const file of newFiles) {
       const validation = validateFile(file, currentFiles);

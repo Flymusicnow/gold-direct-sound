@@ -12,6 +12,8 @@ export default function StudioGoals() {
   const { t } = useLanguage();
   const isGoalsEnabled = useFeatureFlag('ARTIST_GOALS');
   const { goals, loading, activeGoal } = useArtistGoals();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [editingGoal, setEditingGoal] = useState<string | null>(null);
 
   // Feature flag gate
   if (!isGoalsEnabled) {
@@ -25,8 +27,6 @@ export default function StudioGoals() {
       </StudioLayout>
     );
   }
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<string | null>(null);
 
   const handleEditGoal = (goalId: string) => {
     setEditingGoal(goalId);

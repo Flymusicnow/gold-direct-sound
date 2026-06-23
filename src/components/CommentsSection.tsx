@@ -158,7 +158,7 @@ export const CommentsSection = ({ artistId, currentUserId }: CommentsSectionProp
       };
     });
 
-    let sortedData = commentsWithProfiles;
+    const sortedData = commentsWithProfiles;
     if (sortBy === "top") {
       sortedData.sort((a, b) => (b.comment_likes?.length || 0) - (a.comment_likes?.length || 0));
     } else {

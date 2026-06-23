@@ -53,7 +53,7 @@ export function ManageSubscriptionCard() {
         
         // Fetch tier info for subscriptions with tier_id
         const tierIds = data?.filter(s => s.tier_id).map(s => s.tier_id) || [];
-        let tierMap = new Map<string, { name: string; price_cents: number }>();
+        const tierMap = new Map<string, { name: string; price_cents: number }>();
         
         if (tierIds.length > 0) {
           const { data: tiers } = await supabase
