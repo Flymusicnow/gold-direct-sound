@@ -107,7 +107,9 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
     
     // Track play event
     if (item.type === 'track') {
-      try { trackEventDirect('play', { trackId: item.id, metadata: { position_seconds: 0 } }); } catch {}
+      try { trackEventDirect('play', { trackId: item.id, metadata: { position_seconds: 0 } }); } catch {
+        // Playback must continue even if event tracking is unavailable.
+      }
     }
   }, [pauseAllVideos]);
 
@@ -120,7 +122,9 @@ export function FlightdeckProvider({ children }: { children: ReactNode }) {
   const playNext = useCallback(() => {
     // Track skip event for current track
     if (currentItem?.type === 'track') {
-      try { trackEventDirect('skip', { trackId: currentItem.id, metadata: { position_seconds: Math.round(currentTime) } }); } catch {}
+      try { trackEventDirect('skip', { trackId: currentItem.id, metadata: { position_seconds: Math.round(currentTime) } }); } catch {
+        // Skipping must continue even if event tracking is unavailable.
+      }
     }
     
     if (repeatMode === 'one') {

@@ -41,7 +41,9 @@ export function useLikeTrack(trackId: string, artistId: string, initialLiked: bo
         toast.success('Added to liked tracks');
         
         // Track save event
-        try { trackEventDirect('save', { trackId }); } catch {}
+        try { trackEventDirect('save', { trackId }); } catch {
+          // Liking should not fail if event tracking is unavailable.
+        }
         
         // Update support score
         updateSupportScore(artistId, 'like_track');

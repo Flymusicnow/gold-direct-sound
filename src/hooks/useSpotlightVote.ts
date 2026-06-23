@@ -68,7 +68,9 @@ export function useSpotlightVote(entryId: string, campaignId: string, artistId: 
         setHasVoted(true);
         
         // Track vote event
-        try { trackEventDirect('vote', { metadata: { entry_id: entryId, campaign_id: campaignId } }); } catch {}
+        try { trackEventDirect('vote', { metadata: { entry_id: entryId, campaign_id: campaignId } }); } catch {
+          // Voting should not fail if event tracking is unavailable.
+        }
         
         // Update support score
         step('update_support_score', 'start');

@@ -67,7 +67,9 @@ export function GlobalFeedCard({ item, index, followedArtistIds, onFollow }: Glo
         await navigator.clipboard.writeText(url);
         toast.success('Link copied');
       }
-    } catch {}
+    } catch {
+      // Sharing is best-effort; keep the feed action non-blocking.
+    }
   };
 
   return (

@@ -39,7 +39,9 @@ export function useFollowArtist(artistId: string, initialFollowing: boolean = fa
         setIsFollowing(true);
         
         // Track follow event
-        try { trackEventDirect('follow', { metadata: { artist_id: artistId } }); } catch {}
+        try { trackEventDirect('follow', { metadata: { artist_id: artistId } }); } catch {
+          // Following should not fail if event tracking is unavailable.
+        }
         
         // Update supporter XP and check fan achievements
         await updateSupportScore(artistId, 'follow');
