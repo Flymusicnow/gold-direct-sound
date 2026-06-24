@@ -1,6 +1,44 @@
 # Beta Waitlist Automation Plan
 
-This document prepares a safe MVP implementation package for FlyMusic beta waitlist automation. It is intentionally documentation-only: no Supabase connection, no SQL execution, no new Edge Functions, and no app-code changes are included in this phase.
+This document prepares a safe MVP implementation package for FlyMusic beta waitlist automation. Phase 1 is now implemented in the repository without connecting to Supabase, running SQL, changing RLS, or exposing secrets.
+
+## Phase 1 implementation status
+
+Status: **implemented in code; pending manual Supabase deploy and live verification**.
+
+Implemented repository changes:
+
+- Added the `waitlist-confirmation` Supabase Edge Function at `supabase/functions/waitlist-confirmation/index.ts`.
+- The function accepts `email` and `user_type`, validates the email format, and only allows `user_type` values of `fan` or `artist`.
+- The function reads `RESEND_API_KEY`, `EMAIL_FROM`, `WAITLIST_ADMIN_EMAIL`, and `APP_BASE_URL` from Supabase Edge Function secrets with `Deno.env.get`. It does not hardcode or return secret values.
+- The function sends a confirmation email to the submitted user email and an admin notification email to `WAITLIST_ADMIN_EMAIL` through the Resend HTTP API.
+- The function returns safe JSON with booleans and a correlation ID only. It does not return provider API responses, secrets, or access tokens.
+- The waitlist form now invokes `waitlist-confirmation` only after a successful `beta_waitlist` insert. Duplicate email inserts remain duplicate-as-success and do not send another confirmation email.
+- If the email function fails after the waitlist row is saved, the UI keeps the saved-row success state and shows a safe warning instead of deleting or retrying the row.
+
+Manual deploy command:
+
+```bash
+supabase functions deploy waitlist-confirmation
+```
+
+Manual test checklist after deploy:
+
+1. Confirm the Edge Function secrets are configured in Supabase without printing their values: `RESEND_API_KEY`, `EMAIL_FROM`, `WAITLIST_ADMIN_EMAIL`, and `APP_BASE_URL`.
+2. Open `/fan` on the deployed site and submit a new test fan email address that is not already in `beta_waitlist`.
+3. Confirm the UI shows the saved waitlist success state and tells the user to check email.
+4. Confirm the test user inbox receives the FlyMusic beta waitlist confirmation email.
+5. Confirm `WAITLIST_ADMIN_EMAIL` receives a new fan signup notification.
+6. Open `/artist` on the deployed site and submit a new test artist email address that is not already in `beta_waitlist`.
+7. Confirm the test user inbox receives the confirmation email and the admin inbox receives an artist notification.
+8. Submit a duplicate email and confirm the UI still shows “already on the list” without requiring another email send.
+9. Temporarily test an invalid function request body from the Supabase dashboard or a local non-secret request and confirm it returns safe validation JSON only.
+10. Review Edge Function logs for correlation IDs and status steps only; logs should not contain API keys, bearer tokens, cookies, or secret values.
+
+Rollback:
+
+- If email delivery causes production issues, remove or disable the frontend invocation of `waitlist-confirmation` and redeploy the web app. Existing waitlist inserts remain unaffected.
+
 
 ## Current state
 
