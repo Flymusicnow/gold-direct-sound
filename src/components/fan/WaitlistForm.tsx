@@ -33,6 +33,8 @@ export function WaitlistForm({ disabled = false, defaultArtist = false, hideRole
       return;
     }
 
+    const userType = isArtist ? 'artist' : 'fan';
+
     setLoading(true);
 
     try {
@@ -41,7 +43,7 @@ export function WaitlistForm({ disabled = false, defaultArtist = false, hideRole
         .from('beta_waitlist')
         .insert({
           email: trimmedEmail,
-          user_type: isArtist ? 'artist' : 'fan',
+          user_type: userType,
           status: 'pending'
         });
 
@@ -58,8 +60,28 @@ export function WaitlistForm({ disabled = false, defaultArtist = false, hideRole
         return;
       }
 
-      setSuccess(true);
-      toast.success("You're on the list!");
+      try {
+        const { error: emailError } = await supabase.functions.invoke('waitlist-confirmation', {
+          body: {
+            email: trimmedEmail,
+            user_type: userType
+          }
+        });
+
+        setSuccess(true);
+
+        if (emailError) {
+          console.error('Waitlist confirmation email error:', emailError);
+          toast.warning("You're on the list, but we couldn't send the confirmation email. We'll still keep your spot.");
+          return;
+        }
+
+        toast.success("You're on the list! Check your email for confirmation.");
+      } catch (emailErr) {
+        setSuccess(true);
+        console.error('Waitlist confirmation email error:', emailErr);
+        toast.warning("You're on the list, but we couldn't send the confirmation email. We'll still keep your spot.");
+      }
     } catch (err) {
       console.error('Waitlist error:', err);
       toast.error('Something went wrong. Please try again.');
