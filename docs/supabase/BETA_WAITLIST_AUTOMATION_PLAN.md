@@ -1,10 +1,10 @@
 # Beta Waitlist Automation Plan
 
-This document prepares a safe MVP implementation package for FlyMusic beta waitlist automation. Phase 1 is now implemented in the repository without connecting to Supabase, running SQL, changing RLS, or exposing secrets.
+This document prepares a safe MVP implementation package for FlyMusic beta waitlist automation. Phase 1 is now implemented, deployed, and live-tested successfully without Codex connecting to Supabase, running SQL, changing RLS, or exposing secrets.
 
 ## Phase 1 implementation status
 
-Status: **implemented in code; pending manual Supabase deploy and live verification**.
+Status: **live-tested and working on `flymusic.se`**.
 
 Implemented repository changes:
 
@@ -38,6 +38,32 @@ Manual test checklist after deploy:
 Rollback:
 
 - If email delivery causes production issues, remove or disable the frontend invocation of `waitlist-confirmation` and redeploy the web app. Existing waitlist inserts remain unaffected.
+
+## Phase 1 Live Test Result
+
+Status: **passed — Phase 1 is live-tested and working**.
+
+Live project context:
+
+- Production site: `flymusic.se`.
+- Supabase project ID: `suqddnnfrhrclmrtsqof`.
+- `public.beta_waitlist` accepts the live fan and artist waitlist submissions.
+- Fan waitlist rows insert correctly with `user_type = fan`.
+- Artist waitlist rows insert correctly with `user_type = artist`.
+- The `waitlist-confirmation` Edge Function is deployed live and callable after successful waitlist insertion.
+- Resend delivery works for the verified `flymusic.se` sender domain.
+- `EMAIL_FROM` must remain configured as `FlyMusic <info@flymusic.se>` in Supabase Edge Function secrets. Do not use an unverified sender identity.
+- A confirmation email was received successfully during the live test.
+- Admin notification remains part of the operational check: each live verification pass should confirm that the admin notification path still sends to the intended admin recipient and does not expose secrets or unnecessary invite data.
+
+Phase 1 live-test result summary:
+
+1. `beta_waitlist` insert works for both role-specific entry points.
+2. The confirmation function is deployed and runs after successful insert.
+3. Resend accepts the verified FlyMusic sender.
+4. Confirmation email delivery works.
+5. Rows retain the correct `user_type` values (`fan` and `artist`).
+6. Admin notification should continue to be checked whenever the function or sender configuration changes.
 
 
 ## Current state
@@ -85,6 +111,61 @@ Use Supabase Edge Functions as the only automation boundary for email sending, i
 - Admin authorization can be checked server-side before status transitions or invite creation.
 - Audit logging can be centralized and made append-only.
 - Frontend remains a thin caller with the user session token; no payment, payout, ranking, voting weight, or admin permission logic needs to change.
+
+## Phase 2 Invite Approval Plan
+
+Status: **prepared only — do not implement until explicitly approved**.
+
+Phase 2 objective: add a safe admin-controlled approval path that turns one pending waitlist row into one invite email without automatic approval and without changing economy, payment, payout, ranking, voting, subscription, or admin permission logic.
+
+Required user-facing and admin behavior:
+
+1. Admin can view pending `beta_waitlist` rows in the existing admin waitlist UI.
+2. Admin can approve exactly one eligible row at a time.
+3. The server-side approval path generates a new invite code or attaches/reuses an existing safe invite record.
+4. The approved user receives an invite email only after the row passes server-side admin authorization and eligibility checks.
+5. The invite code unlocks the correct fan or artist route through the existing invite redemption flow.
+6. Approval and invite actions are audit logged with sanitized metadata.
+
+Required live schema verification before Phase 2 implementation:
+
+- `public.beta_waitlist`: verify `id`, `email`, `user_type`, `status`, `created_at`, `invited_at`, `invited_by`, and whether `approved_at`, `approved_by`, and `invite_id` already exist.
+- `public.beta_invites` or equivalent invite table: verify invite `code`, `email`, role/status fields, sent/redeemed timestamps, creator fields, waitlist linkage, and any code-rotation fields referenced by deployed functions.
+- `public.user_roles` / admin role checks: verify the live admin/super_admin role source used by Edge Functions and the admin UI.
+- Audit log table, if available: verify whether `admin_activity_logs` is sufficient or whether a dedicated `waitlist_audit_log` migration should be prepared but not executed by Codex.
+
+Required Edge Function boundaries for Phase 2:
+
+- Add `approve-waitlist-entry` as the single-row admin approval and invite orchestration function.
+- Possibly reuse `send-beta-invites` only if its live schema assumptions, authorization checks, idempotency, logging, and invite-code handling are confirmed safe.
+- Keep `validate-invite-code` as the redemption boundary; frontend code must not directly read invite rows by code.
+
+Phase 2 safety rules:
+
+- No public `SELECT` access to waitlist emails.
+- No service-role key in frontend code, browser logs, or client-exposed environment variables.
+- Admin authorization must happen server-side in the Edge Function using the caller JWT and `user_roles`/admin role checks.
+- Invite codes must not be logged in full; logs should use correlation IDs and masked code fragments only if needed.
+- No automatic approval: every invite must be triggered by an explicit admin action.
+- No payment, payout, economy, ranking, voting, subscription, or unrelated admin permission changes.
+- Do not weaken RLS to make approval easier.
+
+Exact next Codex prompt for Phase 2 implementation — **Do not run yet**:
+
+```text
+Implement Phase 2 of FlyMusic Beta Waitlist Automation.
+Do not connect to Supabase. Do not run SQL. Do not print secrets. Do not weaken RLS. Do not push.
+Add a Supabase Edge Function named approve-waitlist-entry for admin-only single-row approval and invite sending.
+The function must verify the caller's JWT server-side, check admin or super_admin role through user_roles, approve exactly one eligible beta_waitlist row, create or reuse a beta_invites invite code, send the invite email through Resend, update invited status only after email success, and insert sanitized audit logs.
+Before coding, inspect repository code only to confirm existing beta_waitlist, beta_invites, user_roles/admin checks, audit log usage, send-beta-invites behavior, and validate-invite-code boundaries.
+Add a migration file only if needed for approved_at, approved_by, invite_id, or waitlist_audit_log; do not execute it.
+Wire the existing admin waitlist UI to call approve-waitlist-entry for one selected row while preserving existing list/filter behavior and existing bulk invite behavior unless it is unsafe.
+Do not expose service-role keys, full invite codes, tokens, cookies, provider responses, or secrets in frontend code, API responses, logs, or documentation.
+Do not change payment, payout, economy, ranking, voting, subscription, or unrelated admin permission logic.
+Run npm run build.
+Commit changes and prepare PR.
+```
+
 
 ## Email provider recommendation
 
@@ -558,4 +639,82 @@ Commit changes and prepare PR.
 
 ## Next safest implementation step
 
+<<<<<<< ours
+Phase 1 is live-tested and working. The next safest implementation step is manual approval for Phase 2 only after explicit approval: inspect repository assumptions, then add `approve-waitlist-entry` for one admin-approved row at a time while preserving `validate-invite-code` as the redemption boundary and avoiding payment, payout, economy, ranking, voting, subscription, unrelated admin permission, or RLS changes.
+=======
 Start with Phase 0 manual verification, then implement Phase 1 only: add `waitlist-confirmation` as an Edge Function and invoke it after successful waitlist insert. This delivers user/admin email notifications without changing approval, invite redemption, payments, payouts, economy, ranking, voting, admin permission logic, or RLS.
+
+## Phase 2 implementation status — invite approval flow
+
+Phase 2 is implemented as a preview-safe approval path for approving one pending waitlist row and emailing a beta invite code.
+
+### Files added or updated
+
+- Added SQL patch: `supabase/preview/004_preview_invite_approval.sql`.
+- Added Edge Function: `supabase/functions/approve-waitlist-entry/index.ts`.
+- Updated existing admin waitlist single-invite action to call `approve-waitlist-entry` instead of the bulk invite sender.
+- Updated `send-beta-invites` so its JSON response no longer includes full invite codes.
+
+### Required SQL run order
+
+Do not run SQL from automation. Manually run these files in Supabase SQL Editor for the preview project:
+
+1. `supabase/preview/001_preview_schema.sql`
+2. `supabase/preview/002_preview_seed.sql`
+3. `supabase/preview/003_preview_waitlist_fix.sql`
+4. `supabase/preview/004_preview_invite_approval.sql`
+
+The Phase 2 patch is needed when the preview database does not already have the complete `beta_invites` invite table, approval metadata on `beta_waitlist`, admin/super-admin RLS policies for invite approval, and admin activity logging support.
+
+### Required Supabase deploy command
+
+Deploy the Phase 2 approval function manually:
+
+```bash
+supabase functions deploy approve-waitlist-entry
+```
+
+The existing invite-code redemption boundary remains `validate-invite-code`; do not bypass it in frontend signup flows.
+
+### Required Edge Function secrets
+
+Confirm these secrets exist without printing their values:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `EMAIL_FROM`
+- `APP_BASE_URL`
+
+`EMAIL_FROM` should remain the verified Resend sender, for example `FlyMusic <info@flymusic.se>`.
+
+### Manual test checklist
+
+1. Confirm the SQL patches above have been run in order on the preview project.
+2. Deploy `approve-waitlist-entry`.
+3. Sign in as an admin or super admin.
+4. Open the existing admin waitlist page.
+5. Choose one `pending` waitlist row and click `Invite`.
+6. Confirm the UI reports one invite sent and does not display the full invite code.
+7. Confirm the recipient receives the invite email.
+8. Confirm the waitlist row status becomes `invited` and has `invited_at`, `invited_by`, `approved_at`, `approved_by`, and `invite_id` populated.
+9. Confirm one `beta_invites` row exists for the waitlist row with `status = 'sent'`.
+10. Confirm a non-admin authenticated user cannot call `approve-waitlist-entry` successfully.
+11. Confirm anonymous users cannot select from `beta_invites` or `beta_waitlist`.
+12. Redeem the invite only through the existing invite-code validation flow.
+
+### Rollback steps
+
+1. If invite approval email delivery fails, stop using the admin waitlist `Invite` action and redeploy the previous web build if needed.
+2. If the Edge Function is faulty, remove or disable it in Supabase and redeploy after a fix.
+3. If the SQL patch causes preview issues, revoke admin access to the affected preview workflow first, then manually revert only the Phase 2 objects/columns after backing up preview data.
+4. Do not delete existing `beta_waitlist` rows during rollback; they are user-submitted access requests.
+
+### Data protection notes
+
+- The approval function requires a caller JWT and verifies `admin` or `super_admin` server-side before reading or updating waitlist/invite data.
+- Invite codes are sent by email but are not returned in API JSON responses and are not logged in full.
+- Public users can insert waitlist requests through the existing public insert policy, but the preview patches do not add public `SELECT` policies for waitlist emails or invite codes.
+- The frontend never uses the service-role key; privileged reads and writes stay inside Supabase Edge Functions.
+- The Phase 2 SQL patch does not weaken RLS and does not expose waitlist emails publicly.
+>>>>>>> theirs

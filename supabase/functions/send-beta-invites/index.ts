@@ -139,7 +139,7 @@ async function sendEmailViaResend(
       Authorization: `Bearer ${resendApiKey}`,
     },
     body: JSON.stringify({
-      from: "FlyMusic <info@flymusic.se>",
+      from: Deno.env.get("EMAIL_FROM") || "FlyMusic <info@flymusic.se>",
       to: [to],
       subject,
       html,
@@ -256,7 +256,7 @@ serve(async (req) => {
     }
 
     const baseUrl = "https://flymusic.se";
-    const sent: Array<{ email: string; role: string; code: string }> = [];
+    const sent: Array<{ email: string; role: string }> = [];
     const failed: Array<{ email: string; error: string }> = [];
     const skipped: Array<{ email: string; reason: string }> = [];
 
@@ -439,7 +439,7 @@ serve(async (req) => {
             .eq("email", email);
         }
 
-        sent.push({ email, role, code });
+        sent.push({ email, role });
 
         // Rate limiting delay
         await delay(200);
