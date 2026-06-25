@@ -26,7 +26,7 @@ interface WaitlistEntry {
 }
 
 interface InviteResult {
-  sent: Array<{ email: string; role: string; code: string }>;
+  sent: Array<{ email: string; role: string }>;
   failed: Array<{ email: string; error: string }>;
   skipped: Array<{ email: string; reason: string }>;
 }
@@ -155,14 +155,6 @@ export default function AdminWaitlist() {
     setShowConfirmDialog(false);
 
     try {
-      const invites = pendingInvites.map(entry => ({
-        email: entry.email,
-        role: bulkRole === 'auto' 
-          ? (entry.user_type === 'artist' ? 'artist' : 'fan') as 'fan' | 'artist'
-          : bulkRole as 'fan' | 'artist',
-        waitlistId: entry.id,
-      }));
-
       const { data: sessionData } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast.error('Not authenticated');
@@ -170,18 +162,51 @@ export default function AdminWaitlist() {
         return;
       }
 
-      const response = await supabase.functions.invoke('send-beta-invites', {
-        body: { invites },
-      });
+      let results: InviteResult;
 
-      if (response.error) {
-        console.error('Invite error:', response.error);
-        toast.error(response.error.message || 'Failed to send invites');
-        setIsSending(false);
-        return;
+      if (inviteMode === 'single') {
+        const entry = pendingInvites[0];
+        const response = await supabase.functions.invoke('approve-waitlist-entry', {
+          body: { waitlist_id: entry.id },
+        });
+
+        if (response.error) {
+          console.error('Invite approval error:', response.error);
+          toast.error(response.error.message || 'Failed to approve waitlist entry');
+          setIsSending(false);
+          return;
+        }
+
+        results = {
+          sent: [{
+            email: entry.email,
+            role: response.data?.role || (entry.user_type === 'artist' ? 'artist' : 'fan'),
+          }],
+          failed: [],
+          skipped: [],
+        };
+      } else {
+        const invites = pendingInvites.map(entry => ({
+          email: entry.email,
+          role: bulkRole === 'auto'
+            ? (entry.user_type === 'artist' ? 'artist' : 'fan') as 'fan' | 'artist'
+            : bulkRole as 'fan' | 'artist',
+          waitlistId: entry.id,
+        }));
+
+        const response = await supabase.functions.invoke('send-beta-invites', {
+          body: { invites },
+        });
+
+        if (response.error) {
+          console.error('Invite error:', response.error);
+          toast.error(response.error.message || 'Failed to send invites');
+          setIsSending(false);
+          return;
+        }
+
+        results = response.data;
       }
-
-      const results: InviteResult = response.data;
       setInviteResults(results);
       setShowResultsDialog(true);
 
@@ -561,7 +586,7 @@ export default function AdminWaitlist() {
                     <ul className="space-y-1 text-sm">
                       {inviteResults.sent.map(item => (
                         <li key={item.email} className="text-muted-foreground">
-                          {item.email} ({item.role}) - Code: {item.code}
+                          {item.email} ({item.role})
                         </li>
                       ))}
                     </ul>
