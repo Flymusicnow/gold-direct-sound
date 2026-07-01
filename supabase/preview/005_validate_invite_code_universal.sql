@@ -4,15 +4,60 @@
 
 begin;
 
+create extension if not exists pgcrypto;
+
+create table if not exists public.fan_invite_sessions (
+  id uuid primary key default gen_random_uuid(),
+  token text unique not null,
+  code_id uuid,
+  email text,
+  expires_at timestamptz not null default (now() + interval '24 hours'),
+  used_at timestamptz,
+  created_at timestamptz default now()
+);
+
+alter table public.fan_invite_sessions
+  add column if not exists token text,
+  add column if not exists code_id uuid,
+  add column if not exists email text,
+  add column if not exists expires_at timestamptz not null default (now() + interval '24 hours'),
+  add column if not exists used_at timestamptz,
+  add column if not exists created_at timestamptz default now();
+
+alter table public.fan_invite_sessions enable row level security;
+
+drop policy if exists "preview_invite_sessions_token_select" on public.fan_invite_sessions;
+drop policy if exists "preview_invite_sessions_token_update" on public.fan_invite_sessions;
+
+-- The frontend only receives an opaque invite session token; invite codes and waitlist emails stay private.
+create policy "preview_invite_sessions_token_select"
+on public.fan_invite_sessions
+for select
+to anon, authenticated
+using (token is not null and expires_at > now() and used_at is null and email is null);
+
+create policy "preview_invite_sessions_token_update"
+on public.fan_invite_sessions
+for update
+to anon, authenticated
+using (token is not null and expires_at > now() and used_at is null and email is null)
+with check (token is not null and email is null);
+
+create index if not exists idx_fan_invite_sessions_token on public.fan_invite_sessions(token);
+create index if not exists idx_fan_invite_sessions_expires_at on public.fan_invite_sessions(expires_at);
+
 create or replace function public.validate_invite_code_universal(_code text)
 returns jsonb
 language plpgsql
 security definer
-set search_path = public
+set search_path = public, extensions
 as $$
 declare
   _normalized_code text;
   _invite record;
+  _token text;
+  _expires_at timestamptz;
+  _badge_name text;
 begin
   _normalized_code := upper(regexp_replace(coalesce(_code, ''), '[^A-Za-z0-9]', '', 'g'));
 
@@ -50,19 +95,35 @@ begin
     return jsonb_build_object('valid', false, 'reason', 'invalid_status');
   end if;
 
+  _token := encode(gen_random_bytes(32), 'hex');
+  _expires_at := now() + interval '24 hours';
+  _badge_name := case
+    when _invite.role = 'artist' then 'Early Artist'
+    when _invite.role = 'fan' then 'Early Supporter'
+    else 'Beta Tester'
+  end;
+
+  insert into public.fan_invite_sessions (token, expires_at)
+  values (_token, _expires_at);
+
   return jsonb_build_object(
     'valid', true,
+    'token', _token,
+    'expires_at', _expires_at,
+    'badge_name', _badge_name,
     'invite_id', _invite.id,
-    'email', _invite.email,
     'role', _invite.role,
-    'status', _invite.status,
-    'expires_at', _invite.expires_at
+    'status', _invite.status
   );
 end;
 $$;
 
 revoke all on function public.validate_invite_code_universal(text) from public;
-grant execute on function public.validate_invite_code_universal(text) to anon, authenticated, service_role;
+revoke execute on function public.validate_invite_code_universal(text) from anon, authenticated;
+grant execute on function public.validate_invite_code_universal(text) to service_role;
+
+grant select, update on public.fan_invite_sessions to anon, authenticated;
+grant select, insert, update on public.fan_invite_sessions to service_role;
 
 notify pgrst, 'reload schema';
 
