@@ -29,20 +29,6 @@ alter table public.fan_invite_sessions enable row level security;
 drop policy if exists "preview_invite_sessions_token_select" on public.fan_invite_sessions;
 drop policy if exists "preview_invite_sessions_token_update" on public.fan_invite_sessions;
 
--- The frontend only receives an opaque invite session token; invite codes and waitlist emails stay private.
-create policy "preview_invite_sessions_token_select"
-on public.fan_invite_sessions
-for select
-to anon, authenticated
-using (token is not null and expires_at > now() and used_at is null and email is null);
-
-create policy "preview_invite_sessions_token_update"
-on public.fan_invite_sessions
-for update
-to anon, authenticated
-using (token is not null and expires_at > now() and used_at is null and email is null)
-with check (token is not null and email is null);
-
 create index if not exists idx_fan_invite_sessions_token on public.fan_invite_sessions(token);
 create index if not exists idx_fan_invite_sessions_expires_at on public.fan_invite_sessions(expires_at);
 
@@ -103,8 +89,8 @@ begin
     else 'Beta Tester'
   end;
 
-  insert into public.fan_invite_sessions (token, expires_at)
-  values (_token, _expires_at);
+  insert into public.fan_invite_sessions (token, code_id, expires_at)
+  values (_token, _invite.id, _expires_at);
 
   return jsonb_build_object(
     'valid', true,
@@ -122,7 +108,6 @@ revoke all on function public.validate_invite_code_universal(text) from public;
 revoke execute on function public.validate_invite_code_universal(text) from anon, authenticated;
 grant execute on function public.validate_invite_code_universal(text) to service_role;
 
-grant select, update on public.fan_invite_sessions to anon, authenticated;
 grant select, insert, update on public.fan_invite_sessions to service_role;
 
 notify pgrst, 'reload schema';

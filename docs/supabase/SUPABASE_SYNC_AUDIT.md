@@ -20,8 +20,8 @@ Supabase's 2026 Data API change means new public tables may not be exposed autom
 | `src/components/fan/InviteCodeUnlock.tsx` | `validate-invite-code` | Edge Function invoke | Function uses `service_role`; RPC `EXECUTE` only for `service_role` | Keeps direct invite-code table/RPC access out of frontend. |
 | `src/pages/fan/FanInvite.tsx` | `validate-invite-code` | Edge Function invoke | Same as above | Stores opaque token only. |
 | `src/pages/studio/ArtistInvite.tsx` | `validate-invite-code` | Edge Function invoke | Same as above | Stores opaque token and invite id for signup flow. |
-| `src/hooks/useFanInviteAccess.ts` | `fan_invite_sessions` | `select`, `update` | `anon/authenticated SELECT/UPDATE`; preview RPC writes no email to sessions | Token responses must stay limited to session fields. |
-| `src/hooks/useInviteAccess.ts` | `fan_invite_sessions` | `select`, `update` | Same as above | Shared fan/artist token validation. |
+| `src/hooks/useFanInviteAccess.ts` | `fan_invite_sessions` | `select`, `update` in existing frontend code | Preview SQL keeps table service-role only | Existing frontend validation will need an Edge Function boundary before this preview SQL is applied. |
+| `src/hooks/useInviteAccess.ts` | `fan_invite_sessions` | `select`, `update` in existing frontend code | Preview SQL keeps table service-role only | Shared token validation should move server-side. |
 | `src/pages/auth/JoinFan.tsx` | `user_roles`, `fan_beta_access`, `beta_invites` | `insert`, `insert`, `update` | Authenticated own-role insert; own beta-access insert; beta invite update currently needs authenticated update policy | Risk: invite redemption status is updated directly from frontend after signup. |
 | `src/pages/auth/JoinArtist.tsx` | `user_roles`, `artist_beta_access`, `beta_invites` | `insert`, `insert`, `update` | Same role/access grants; beta invite update currently needs authenticated update policy | Risk: same direct invite redemption update. |
 | `src/pages/admin/AdminWaitlist.tsx` | `beta_waitlist` | `select`, `update` through UI/actions | Authenticated admin/super_admin `SELECT/UPDATE` via RLS | Admin visibility must remain server-side/RLS backed. |
@@ -69,7 +69,7 @@ Supabase's 2026 Data API change means new public tables may not be exposed autom
 ### Missing Policies
 
 - `edge_function_logs` preview admin read policy was missing. Added in `006`.
-- `fan_invite_sessions` preview token select/update policies were missing. Added in `005`.
+- `fan_invite_sessions` intentionally has no anon/authenticated policies in preview SQL; invite sessions are service-role only.
 
 ### Missing Docs
 
@@ -85,7 +85,7 @@ Supabase's 2026 Data API change means new public tables may not be exposed autom
 
 - No public `SELECT` policy was found for `beta_waitlist` emails in preview SQL.
 - No public `SELECT` policy was found for `beta_invites` codes in preview SQL.
-- `fan_invite_sessions` has public reads for unexpired anonymous invite-session validation. Preview RPC writes no email into this table, but a future hardening pass should move session validation behind an Edge Function.
+- `fan_invite_sessions` has no public reads in preview SQL. Invite sessions are service-role only and must be validated through a server-side boundary.
 
 ## Required Manual SQL Run Order
 
@@ -115,6 +115,6 @@ supabase functions deploy validate-invite-code
 
 - `validate-invite-code` still logs full original and normalized invite codes in `CODE_NORMALIZED`; mask this in a follow-up Edge Function hardening pass.
 - Fan/artist signup pages update `beta_invites.status = redeemed` directly from the frontend after signup. A stricter model would redeem inside a server-side function.
-- `fan_invite_sessions` is readable from the frontend for invite-session validation; preview rows omit email, but tokens must stay high entropy and short lived. Consider moving session validation server-side.
+- `fan_invite_sessions` is service-role only in preview SQL; existing frontend token validation code must move behind a server-side boundary before this model is fully compatible.
 - The deployed Supabase database and deployed Edge Function versions were not inspected live in this audit.
 - Existing untracked local files and an existing `main` branch ahead commit were left untouched.
