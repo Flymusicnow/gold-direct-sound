@@ -85,6 +85,7 @@ Phase 1 live-test result summary:
   - send single or bulk invites through `send-beta-invites`.
 - `send-beta-invites` already uses a server-side Supabase service-role client, verifies the caller is an admin or super admin, creates `beta_invites`, sends invite email through Resend, updates `beta_waitlist` to `invited`, and writes Edge Function summary logs.
 - `validate-invite-code` already uses a server-side Supabase service-role client and validates codes through `validate_invite_code_universal`.
+- Preview SQL `005_validate_invite_code_universal.sql` must be run after `004_preview_invite_approval.sql`; the deployed `validate-invite-code` Edge Function requires this RPC to exist in the PostgREST schema cache.
 - Resend is already present in the Edge Function layer through `RESEND_API_KEY` usage.
 - Existing database/migration artifacts show `beta_invites`, `beta_waitlist.invited_at`, `beta_waitlist.invited_by`, admin-only beta invite policies, and a preview waitlist RLS shape, but the live database must be verified manually before any implementation phase.
 
@@ -373,8 +374,10 @@ Needed hardening before using broadly:
 Recommended MVP decision:
 
 - Keep current validation boundary.
+- Ensure preview SQL `005_validate_invite_code_universal.sql` is applied after `004_preview_invite_approval.sql`; without `public.validate_invite_code_universal(_code text)`, `validate-invite-code` fails with a missing RPC/schema-cache error.
 - Ensure it never logs full codes, tokens, or secrets.
 - Review current normalized-code logging because full normalized invite code logging should be removed before production hardening.
+- Full invite codes must never be returned in UI responses, API responses, Edge Function logs, SQL logs, or stored client state.
 
 ## Secrets needed and where they should live
 
@@ -690,7 +693,7 @@ Confirm these secrets exist without printing their values:
 
 ### Manual test checklist
 
-1. Confirm the SQL patches above have been run in order on the preview project.
+1. Confirm the SQL patches above have been run in order on the preview project, including `005_validate_invite_code_universal.sql` after `004_preview_invite_approval.sql`.
 2. Deploy `approve-waitlist-entry`.
 3. Sign in as an admin or super admin.
 4. Open the existing admin waitlist page.
@@ -701,7 +704,10 @@ Confirm these secrets exist without printing their values:
 9. Confirm one `beta_invites` row exists for the waitlist row with `status = 'sent'`.
 10. Confirm a non-admin authenticated user cannot call `approve-waitlist-entry` successfully.
 11. Confirm anonymous users cannot select from `beta_invites` or `beta_waitlist`.
-12. Redeem the invite only through the existing invite-code validation flow.
+12. Call `validate-invite-code` with empty, unknown, expired, redeemed, invalid-status, and valid invite codes; confirm invalid responses are rejected and the valid response contains no full invite code.
+13. Confirm `validate-invite-code` no longer reports `PGRST202` for missing `public.validate_invite_code_universal(_code)`.
+14. Redeem the invite only through the existing invite-code validation flow.
+15. Review UI/API responses and Edge Function logs to confirm full invite codes are never returned or logged.
 
 ### Rollback steps
 
